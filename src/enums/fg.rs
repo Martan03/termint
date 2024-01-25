@@ -1,5 +1,6 @@
 use std::fmt;
 
+/// Foreground colors enum
 pub enum Fg {
     Black,
     Red,
@@ -21,6 +22,7 @@ pub enum Fg {
 }
 
 impl Fg {
+    /// Gets foreground ANSI color code
     pub fn to_ansi(&self) -> &'static str {
         match self {
             Fg::Black => "\x1b[30m",

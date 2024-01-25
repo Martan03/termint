@@ -1,5 +1,6 @@
 use std::fmt;
 
+/// Background colors enum
 pub enum Bg {
     Black,
     Red,
@@ -21,6 +22,7 @@ pub enum Bg {
 }
 
 impl Bg {
+    /// Gets background color ANSI code
     pub fn to_ansi(&self) -> &'static str {
         match self {
             Bg::Black => "\x1b[40m",
