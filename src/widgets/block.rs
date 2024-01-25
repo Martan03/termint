@@ -46,23 +46,37 @@ impl Block {
             }
         }
 
-        if (self.borders & (Border::TOP | Border::LEFT)) ==
-            (Border::TOP | Border::LEFT) {
-            println!("{}\u{250C}", Cursor::Pos(pos.x, pos.y));
-        }
-        if (self.borders & (Border::TOP | Border::RIGHT)) ==
-            (Border::TOP | Border::RIGHT) {
-            println!("{}\u{2510}", Cursor::Pos(pos.x + size.x, pos.y));
-        }
-        if (self.borders & (Border::BOTTOM | Border::LEFT)) ==
-            (Border::BOTTOM | Border::LEFT) {
-            println!("{}\u{2514}", Cursor::Pos(pos.x, pos.y + size.y));
-        }
-        if (self.borders & (Border::BOTTOM | Border::RIGHT)) ==
-            (Border::BOTTOM | Border::RIGHT) {
-            println!("{}\u{2518}", Cursor::Pos(pos.x + size.x, pos.y + size.y));
-        }
+        self.render_corner(
+            '\u{250C}',
+            pos.x,
+            pos.y,
+            Border::TOP | Border::LEFT,
+        );
+        self.render_corner(
+            '\u{2510}',
+            pos.x + size.x,
+            pos.y,
+            Border::TOP | Border::RIGHT,
+        );
+        self.render_corner(
+            '\u{2514}',
+            pos.x,
+            pos.y + size.y,
+            Border::BOTTOM | Border::LEFT,
+        );
+        self.render_corner(
+            '\u{2518}',
+            pos.x + size.x,
+            pos.y + size.y,
+            Border::BOTTOM | Border::RIGHT,
+        );
 
         println!("{}{}", Cursor::Pos(pos.x + 2, pos.y), self.title);
+    }
+
+    fn render_corner(&self, c: char, x: usize, y: usize, border: u8) {
+        if (self.borders & border) == border {
+            println!("{}{c}", Cursor::Pos(x, y));
+        }
     }
 }
