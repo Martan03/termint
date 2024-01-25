@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub enum Bg {
     Black,
     Red,
@@ -7,6 +9,14 @@ pub enum Bg {
     Magenta,
     Cyan,
     White,
+    BrightBlack,
+    BrightRed,
+    BrightGreen,
+    BrightYellow,
+    BrightBlue,
+    BrightMagenta,
+    BrightCyan,
+    BrightWhite,
     Default,
 }
 
@@ -21,7 +31,21 @@ impl Bg {
             Bg::Magenta => "\x1b[45m",
             Bg::Cyan => "\x1b[46m",
             Bg::White => "\x1b[47m",
+            Bg::BrightBlack => "\x1b[100m",
+            Bg::BrightRed => "\x1b[101m",
+            Bg::BrightGreen => "\x1b[102m",
+            Bg::BrightYellow => "\x1b[103m",
+            Bg::BrightBlue => "\x1b[104m",
+            Bg::BrightMagenta => "\x1b[105m",
+            Bg::BrightCyan => "\x1b[106m",
+            Bg::BrightWhite => "\x1b[107m",
             Bg::Default => "\x1b[49m",
         }
+    }
+}
+
+impl fmt::Display for Bg {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_ansi())
     }
 }

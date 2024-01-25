@@ -20,7 +20,7 @@ impl Span {
     pub fn get(&self) -> String {
         format!(
             "{}{}{}\x1b[0m",
-            self.fg.to_ansi(), self.bg.to_ansi(), self.text
+            self.fg, self.bg, self.text
         )
     }
 
