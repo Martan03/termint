@@ -51,9 +51,14 @@ mod tests {
 
     #[test]
     fn span_set_fg_bg() {
-        let span = "Span fg bg".fg(Fg::Blue).bg(Bg::Yellow);
+        let span = "Span fg bg"
+            .fg(Fg::RGB(0, 150, 150))
+            .bg(Bg::RGB(255, 255, 0));
         println!("{}", span);
 
-        assert_eq!(span.get(), "\x1b[34m\x1b[43mSpan fg bg\x1b[0m");
+        assert_eq!(
+            span.get(),
+            "\x1b[38;2;0;150;150m\x1b[48;2;255;255;0mSpan fg bg\x1b[0m"
+        );
     }
 }
