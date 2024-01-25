@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::enums::{bg::Bg, fg::Fg};
 
 pub struct Span {
@@ -7,9 +9,9 @@ pub struct Span {
 }
 
 impl Span {
-    pub fn new(text: String) -> Self {
+    pub fn new<T: Into<String>>(text: T) -> Self {
         Self {
-            text: text,
+            text: text.into(),
             fg: Fg::Default,
             bg: Bg::Default,
         }
@@ -22,13 +24,19 @@ impl Span {
         )
     }
 
-    pub fn fg(&mut self, fg: Fg) -> &mut Self {
+    pub fn fg(mut self, fg: Fg) -> Self {
         self.fg = fg;
         self
     }
 
-    pub fn bg(&mut self, bg: Bg) -> &mut Self {
+    pub fn bg(mut self, bg: Bg) -> Self {
         self.bg = bg;
         self
+    }
+}
+
+impl fmt::Display for Span {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.get())
     }
 }
