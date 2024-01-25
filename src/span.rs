@@ -23,15 +23,13 @@ impl Span {
 
     /// Gets [`Span`] as string
     pub fn get(&self) -> String {
-        let m = self.modifier
+        let m = self
+            .modifier
             .iter()
             .map(|m| m.to_ansi())
             .collect::<Vec<&str>>()
             .join("");
-        format!(
-            "{}{}{}{}\x1b[0m",
-            self.fg, self.bg, m, self.text
-        )
+        format!("{}{}{}{}\x1b[0m", self.fg, self.bg, m, self.text)
     }
 
     /// Sets foreground of [`Span`] to given color
@@ -56,5 +54,31 @@ impl Span {
 impl fmt::Display for Span {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
+    }
+}
+
+/// Enables creating [`Span`] by calling one of the functions on &str
+pub trait StrSpanExtension {
+    /// Creates [`Span`] from &str and sets its fg to given color
+    fn fg(self, fg: Fg) -> Span;
+
+    /// Creates [`Span`] from &str and sets its bg to given color
+    fn bg(self, bg: Bg) -> Span;
+
+    /// Creates [`Span`] from &str and sets its modifier to given values
+    fn modifier(self, mods: Vec<Modifier>) -> Span;
+}
+
+impl StrSpanExtension for &str {
+    fn fg(self, fg: Fg) -> Span {
+        Span::new(self).fg(fg)
+    }
+
+    fn bg(self, bg: Bg) -> Span {
+        Span::new(self).bg(bg)
+    }
+
+    fn modifier(self, mods: Vec<Modifier>) -> Span {
+        Span::new(self).modifier(mods)
     }
 }
