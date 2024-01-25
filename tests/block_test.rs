@@ -6,7 +6,7 @@ mod tests {
 
     #[test]
     fn block_render() {
-        let block = Block::new("Block");
+        let block = Block::new().title("Block");
         block.render(Coords::new(15, 5), Coords::new(0, 0));
     }
 }

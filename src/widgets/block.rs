@@ -11,11 +11,17 @@ pub struct Block {
 
 impl Block {
     /// Creates new [`Block`] with given title and all borders
-    pub fn new<T: Into<String>>(title: T) -> Self {
+    pub fn new() -> Self {
         Self {
-            title: title.into(),
+            title: "".to_string(),
             borders: Border::ALL,
         }
+    }
+
+    /// Sets title of [`Block`]
+    pub fn title<T: Into<String>>(mut self, title: T) -> Self {
+        self.title = title.into();
+        self
     }
 
     /// Sets on which sides border of the [`Block`] should be rendered
