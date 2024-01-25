@@ -1,7 +1,4 @@
-use termite::{
-    geometry::coords::Coords,
-    widgets::block::Block,
-};
+use termite::{geometry::coords::Coords, widgets::block::Block};
 
 fn main() {
     test_block();
