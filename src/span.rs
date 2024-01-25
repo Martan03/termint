@@ -1,11 +1,12 @@
 use std::fmt;
 
-use crate::enums::{bg::Bg, fg::Fg};
+use crate::enums::{bg::Bg, fg::Fg, modifier::Modifier};
 
 pub struct Span {
     text: String,
     fg: Fg,
     bg: Bg,
+    modifier: Vec<Modifier>,
 }
 
 impl Span {
@@ -14,13 +15,19 @@ impl Span {
             text: text.into(),
             fg: Fg::Default,
             bg: Bg::Default,
+            modifier: Vec::new(),
         }
     }
 
     pub fn get(&self) -> String {
+        let m = self.modifier
+            .iter()
+            .map(|m| m.to_ansi())
+            .collect::<Vec<&str>>()
+            .join("");
         format!(
-            "{}{}{}\x1b[0m",
-            self.fg, self.bg, self.text
+            "{}{}{}{}\x1b[0m",
+            self.fg, self.bg, m, self.text
         )
     }
 
@@ -31,6 +38,11 @@ impl Span {
 
     pub fn bg(mut self, bg: Bg) -> Self {
         self.bg = bg;
+        self
+    }
+
+    pub fn modifier(mut self, mods: Vec<Modifier>) -> Self {
+        self.modifier = mods;
         self
     }
 }

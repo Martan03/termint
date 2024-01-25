@@ -6,7 +6,7 @@ pub enum Modifier {
     Italic,
     Underline,
     Blink,
-    Reverse,
+    Inverse,
     Hidden,
     Strike,
 }
@@ -19,7 +19,7 @@ impl Modifier {
             Modifier::Italic => "\x1b[3m",
             Modifier::Underline => "\x1b[4m",
             Modifier::Blink => "\x1b[5m",
-            Modifier::Reverse => "\x1b[7m",
+            Modifier::Inverse => "\x1b[7m",
             Modifier::Hidden => "\x1b[8m",
             Modifier::Strike => "\x1b[9m",
         }
