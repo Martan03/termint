@@ -6,7 +6,7 @@ extern crate termite;
 mod tests {
     use termite::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
-        span::{Span, StrSpanExtension},
+        widgets::span::{Span, StrSpanExtension},
     };
 
     #[test]
