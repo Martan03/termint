@@ -1,12 +1,15 @@
 extern crate termite;
 
-// Import the standard testing library
 #[cfg(test)]
 mod tests {
-    // Import necessary items from the standard testing library
+    use termite::{enums::{bg::Bg, fg::Fg}, span::Span};
+
     #[test]
-    fn it_works() {
-        // Use functions from your library to test its behavior
-        assert_eq!(termite::add(2, 2), 4);
+    fn span_test() {
+        let mut span = Span::new("Testing".to_owned());
+        assert_eq!(span.get(), "\x1b[39m\x1b[49mTesting\x1b[0m");
+
+        span.fg(Fg::Red).bg(Bg::Cyan);
+        assert_eq!(span.get(), "\x1b[31m\x1b[46mTesting\x1b[0m");
     }
 }

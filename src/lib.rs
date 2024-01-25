@@ -1,3 +1,6 @@
+pub mod span;
+pub mod enums;
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
