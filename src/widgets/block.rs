@@ -74,6 +74,7 @@ impl Block {
         println!("{}{}", Cursor::Pos(pos.x + 2, pos.y), self.title);
     }
 
+    /// Renders corner of [`Block`] border if needed based on `border` value
     fn render_corner(&self, c: char, x: usize, y: usize, border: u8) {
         if (self.borders & border) == border {
             println!("{}{c}", Cursor::Pos(x, y));
