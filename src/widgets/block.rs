@@ -24,6 +24,7 @@ impl Block {
         self
     }
 
+    /// Renders [`Block`] with selected borders and title
     pub fn render(&self, size: Coords, pos: Coords) {
         let hor_border: String = repeat('\u{2500}').take(size.x).collect();
 
@@ -45,16 +46,20 @@ impl Block {
             }
         }
 
-        if (self.borders & (Border::TOP | Border::LEFT)) != 0 {
+        if (self.borders & (Border::TOP | Border::LEFT)) ==
+            (Border::TOP | Border::LEFT) {
             println!("\x1b[{};{}H\u{250C}", pos.y, pos.x)
         }
-        if (self.borders & (Border::TOP | Border::RIGHT)) != 0 {
+        if (self.borders & (Border::TOP | Border::RIGHT)) ==
+            (Border::TOP | Border::RIGHT) {
             println!("\x1b[{};{}H\u{2510}", pos.y, pos.x + size.x)
         }
-        if (self.borders & (Border::BOTTOM | Border::LEFT)) != 0 {
+        if (self.borders & (Border::BOTTOM | Border::LEFT)) ==
+            (Border::BOTTOM | Border::LEFT) {
             println!("\x1b[{};{}H\u{2514}", pos.y + size.y, pos.x)
         }
-        if (self.borders & (Border::BOTTOM | Border::RIGHT)) != 0 {
+        if (self.borders & (Border::BOTTOM | Border::RIGHT)) ==
+            (Border::BOTTOM | Border::RIGHT) {
             println!("\x1b[{};{}H\u{2518}", pos.y + size.y, pos.x + size.x)
         }
 
