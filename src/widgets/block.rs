@@ -40,7 +40,7 @@ impl Block {
 
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
-    fn render(&self, pos: Coords, size: Coords) {
+    fn render(&self, pos: &Coords, size: &Coords) {
         if (self.borders & Border::LEFT) != 0 {
             for y in 0..=size.y {
                 println!("{}\u{2502}", Cursor::Pos(pos.x, pos.y + y));
