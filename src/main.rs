@@ -1,3 +1,5 @@
+use std::sync::Condvar;
+
 use termite::{
     geometry::{constrain::Constrain, coords::Coords},
     widgets::{block::Block, layout::Layout, widget::Widget},
@@ -20,16 +22,15 @@ fn test_block() {
 
 fn test_layout() {
     println!("\x1b[2J");
-    let mut layout = Layout::vertical();
+    let mut block = Block::new().title("This is cool");
 
-    let block = Block::new().title("Title");
-    layout.child(Box::new(block), Constrain::Percent(80));
+    let block1 = Block::new().title("Sub block");
+    block.add_child(Box::new(block1), Constrain::Percent(50));
 
-    let block2 = Block::new().title("Block");
-    layout.child(Box::new(block2), Constrain::Length(3));
+    let block2 = Block::new().title("Another");
+    block.add_child(Box::new(block2), Constrain::Percent(50));
 
-    let block3 = Block::new().title("Ending");
-    layout.child(Box::new(block3), Constrain::Length(1));
+    block.render(&Coords::new(1, 1), &Coords::new(21, 10));
 
-    layout.render(&Coords::new(1, 1), &Coords::new(30, 7));
+    println!("\x1b[4B");
 }

@@ -39,8 +39,14 @@ impl Layout {
         }
     }
 
+    /// Sets [`Direction`] of the [`Layout`]
+    pub fn direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
+    }
+
     /// Adds child with its [`Constrain`] to [`Layout`]
-    pub fn child(&mut self, child: Box<dyn Widget>, constrain: Constrain) {
+    pub fn add_child(&mut self, child: Box<dyn Widget>, constrain: Constrain) {
         self.children.push(child);
         self.constrain.push(constrain);
     }
@@ -50,9 +56,8 @@ impl Layout {
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
-            let mut child_size =
-                self.child_size(&self.constrain[i], size);
-            if child_size.y + coords.y > size.y {
+            let mut child_size = self.child_size(&self.constrain[i], size);
+            if child_size.y + coords.y - pos.y > size.y {
                 child_size.y = size.y - coords.y;
             }
             self.children[i].render(&coords, &child_size);
@@ -67,10 +72,9 @@ impl Layout {
         let size = Coords::new(size.y, size.x);
 
         for i in 0..self.children.len() {
-            let mut child_size =
-                self.child_size(&self.constrain[i], &size);
+            let mut child_size = self.child_size(&self.constrain[i], &size);
             child_size.transpone();
-            if child_size.x + coords.x > size.y {
+            if child_size.x + coords.x - pos.x > size.y {
                 child_size.x = size.y - coords.x;
             }
 
@@ -81,16 +85,11 @@ impl Layout {
     }
 
     /// Gets given child size in vertical layout
-    fn child_size(
-        &self,
-        constrain: &Constrain,
-        size: &Coords,
-    ) -> Coords {
+    fn child_size(&self, constrain: &Constrain, size: &Coords) -> Coords {
         match constrain {
             Constrain::Length(len) => Coords::new(size.x, *len),
             Constrain::Percent(p) => {
-                let percent =
-                    (*p as f32 / 100.0 * size.y as f32).round() as usize;
+                let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
                 Coords::new(size.x, percent)
             }
         }

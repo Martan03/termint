@@ -1,12 +1,16 @@
 use std::iter::repeat;
 
-use crate::{enums::cursor::Cursor, geometry::coords::Coords};
+use crate::{
+    enums::cursor::Cursor,
+    geometry::{constrain::Constrain, coords::Coords, direction::Direction},
+};
 
-use super::{border::Border, widget::Widget};
+use super::{border::Border, layout::Layout, widget::Widget};
 
 pub struct Block {
     title: String,
     borders: u8,
+    layout: Layout,
 }
 
 impl Block {
@@ -15,6 +19,7 @@ impl Block {
         Self {
             title: "".to_string(),
             borders: Border::ALL,
+            layout: Layout::vertical(),
         }
     }
 
@@ -28,6 +33,17 @@ impl Block {
     pub fn borders(mut self, borders: u8) -> Self {
         self.borders = borders;
         self
+    }
+
+    /// Sets [`Direction`] of the [`Block`]'s [`Layout`]
+    pub fn direction(mut self, direction: Direction) -> Self {
+        self.layout = self.layout.direction(direction);
+        self
+    }
+
+    /// Adds child to the [`Block`]'s [`Layout`]
+    pub fn add_child(&mut self, child: Box<dyn Widget>, constrain: Constrain) {
+        self.layout.add_child(child, constrain);
     }
 
     /// Renders corner of [`Block`] border if needed based on `border` value
@@ -90,7 +106,11 @@ impl Widget for Block {
                 Border::BOTTOM | Border::RIGHT,
             );
         }
-
         println!("{}{}", Cursor::Pos(pos.x + 1, pos.y), self.title);
+
+        self.layout.render(
+            &Coords::new(pos.x + 1, pos.y + 1),
+            &Coords::new(size.x - 2, size.y - 2),
+        );
     }
 }
