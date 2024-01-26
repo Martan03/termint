@@ -54,7 +54,7 @@ impl Layout {
                 self.child_size_vertical(&self.constrain[i], size);
             self.children[i].render(&coords, &child_size);
 
-            coords.y += child_size.y + 1;
+            coords.y += child_size.y;
         }
     }
 

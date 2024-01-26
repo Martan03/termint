@@ -4,7 +4,17 @@ use termite::{
 };
 
 fn main() {
+    // test_block();
     test_layout();
+}
+
+fn test_block() {
+    println!("\x1b[2J");
+
+    let block = Block::new().title("Not easy");
+    block.render(&Coords::new(1, 1), &Coords::new(20, 1));
+
+    println!("\x1b[4B");
 }
 
 fn test_layout() {
@@ -17,7 +27,10 @@ fn test_layout() {
     let block2 = Block::new().title("Block 2");
     layout.child(Box::new(block2), Constrain::Length(5));
 
-    layout.render(&Coords::new(0, 0), &Coords::new(30, 20));
+    let block3 = Block::new().title("Not easy");
+    layout.child(Box::new(block3), Constrain::Length(1));
+
+    layout.render(&Coords::new(1, 1), &Coords::new(30, 20));
 
     println!("\x1b[4B");
 }

@@ -42,13 +42,16 @@ impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
     fn render(&self, pos: &Coords, size: &Coords) {
         if (self.borders & Border::LEFT) != 0 {
-            for y in 0..=size.y {
+            for y in 0..size.y {
                 println!("{}\u{2502}", Cursor::Pos(pos.x, pos.y + y));
             }
         }
         if (self.borders & Border::RIGHT) != 0 {
-            for y in 0..=size.y {
-                println!("{}\u{2502}", Cursor::Pos(pos.x + size.x, pos.y + y));
+            for y in 0..size.y {
+                println!(
+                    "{}\u{2502}",
+                    Cursor::Pos(pos.x + size.x - 1, pos.y + y)
+                );
             }
         }
 
@@ -58,7 +61,7 @@ impl Widget for Block {
             println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
         }
         if (self.borders & Border::BOTTOM) != 0 {
-            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y));
+            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y - 1));
         }
 
         if size.x != 1 && size.y != 1 {
@@ -70,24 +73,24 @@ impl Widget for Block {
             );
             self.render_corner(
                 '\u{2510}',
-                pos.x + size.x,
+                pos.x + size.x - 1,
                 pos.y,
                 Border::TOP | Border::RIGHT,
             );
             self.render_corner(
                 '\u{2514}',
                 pos.x,
-                pos.y + size.y,
+                pos.y + size.y - 1,
                 Border::BOTTOM | Border::LEFT,
             );
             self.render_corner(
                 '\u{2518}',
-                pos.x + size.x,
-                pos.y + size.y,
+                pos.x + size.x - 1,
+                pos.y + size.y - 1,
                 Border::BOTTOM | Border::RIGHT,
             );
         }
 
-        println!("{}{}", Cursor::Pos(pos.x + 2, pos.y), self.title);
+        println!("{}{}", Cursor::Pos(pos.x + 1, pos.y), self.title);
     }
 }
