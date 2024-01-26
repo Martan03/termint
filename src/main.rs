@@ -1,7 +1,10 @@
 use termite::{
     enums::{bg::Bg, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
-    widgets::{block::Block, span::StrSpanExtension, widget::Widget},
+    widgets::{
+        block::Block, border::BorderType, span::StrSpanExtension,
+        widget::Widget,
+    },
 };
 
 fn main() {
@@ -23,7 +26,8 @@ fn test_layout() {
     println!("\x1b[2J");
     let mut block = Block::new()
         .title("This is cool")
-        .direction(Direction::Horizontal);
+        .direction(Direction::Horizontal)
+        .border_type(BorderType::Double);
 
     let block1 = Block::new().title("Sub block");
     block.add_child(Box::new(block1), Constrain::Percent(50));
