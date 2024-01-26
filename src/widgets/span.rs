@@ -76,7 +76,7 @@ impl Span {
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
             let len = word.len();
-            if coords.x + len > size.x {
+            if coords.x + len + 1 > size.x {
                 coords.x = 0;
                 coords.y += 1;
                 print!("{}", Cursor::Pos(pos.x, coords.y));
@@ -86,8 +86,13 @@ impl Span {
                 }
             }
 
-            print!("{word} ");
-            coords.x += len + 1;
+            if coords.x == 0 {
+                print!("{word}");
+                coords.x += len;
+            } else {
+                print!(" {word}");
+                coords.x += len + 1;
+            }
         }
     }
 
@@ -96,12 +101,12 @@ impl Span {
         let chars = size.x * size.y;
 
         for (i, c) in self.text.chars().enumerate() {
-            if i % size.x == 0 {
-                print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
-            }
-
             if i >= chars {
                 break;
+            }
+
+            if i % size.x == 0 {
+                print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
             }
 
             print!("{c}");

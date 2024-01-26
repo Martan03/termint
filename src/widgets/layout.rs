@@ -58,6 +58,7 @@ impl Layout {
         for i in 0..self.children.len() {
             let mut child_size = self.child_size(&self.constrain[i], size);
             if child_size.y + coords.y - pos.y > size.y {
+                // TODO: overflow error
                 child_size.y = size.y - coords.y;
             }
             self.children[i].render(&coords, &child_size);
