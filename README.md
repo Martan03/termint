@@ -19,7 +19,7 @@ println!("{}", "Bold red text".fg(Fg::Red).modifiers(vec![Modifier::Bold]));
 
 println!("{}", "Text with RGB value".fg(Fg::RGB(2, 249, 171)));
 ```
-![image](https://github.com/Martan03/termite/assets/46300167/bcb501dc-113f-41e7-a3d4-c83bbf4a88c0)
+![image](https://github.com/Martan03/termite/assets/46300167/36408874-d9d1-4430-a204-9a60d90c2e62)
 
 You can see all the colors and modifiers in the documentation.
 
@@ -51,6 +51,7 @@ main.add_child(Box::new(block2), Constrain::Percent(50));
 /// Renders the main block which renders all the children
 main.render(&Coords::new(1, 1), &Coords::new(30, 8));
 ```
+![image](https://github.com/Martan03/termite/assets/46300167/4d820421-a607-44d5-99ec-8bd31c3c2fdf)
 
 ## Usage:
 
