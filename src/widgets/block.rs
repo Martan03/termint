@@ -2,7 +2,7 @@ use std::iter::repeat;
 
 use crate::{enums::cursor::Cursor, geometry::coords::Coords};
 
-use super::border::Border;
+use super::{border::Border, widget::Widget};
 
 pub struct Block {
     title: String,
@@ -30,8 +30,17 @@ impl Block {
         self
     }
 
+    /// Renders corner of [`Block`] border if needed based on `border` value
+    fn render_corner(&self, c: char, x: usize, y: usize, border: u8) {
+        if (self.borders & border) == border {
+            println!("{}{c}", Cursor::Pos(x, y));
+        }
+    }
+}
+
+impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
-    pub fn render(&self, size: Coords, pos: Coords) {
+    fn render(&self, pos: Coords, size: Coords) {
         if (self.borders & Border::LEFT) != 0 {
             for y in 0..=size.y {
                 println!("{}\u{2502}", Cursor::Pos(pos.x, pos.y + y));
@@ -80,12 +89,5 @@ impl Block {
         }
 
         println!("{}{}", Cursor::Pos(pos.x + 2, pos.y), self.title);
-    }
-
-    /// Renders corner of [`Block`] border if needed based on `border` value
-    fn render_corner(&self, c: char, x: usize, y: usize, border: u8) {
-        if (self.borders & border) == border {
-            println!("{}{c}", Cursor::Pos(x, y));
-        }
     }
 }
