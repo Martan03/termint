@@ -32,15 +32,6 @@ impl Block {
 
     /// Renders [`Block`] with selected borders and title
     pub fn render(&self, size: Coords, pos: Coords) {
-        let hor_border: String = repeat('\u{2500}').take(size.x).collect();
-
-        if (self.borders & Border::TOP) != 0 {
-            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
-        }
-        if (self.borders & Border::BOTTOM) != 0 {
-            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y));
-        }
-
         if (self.borders & Border::LEFT) != 0 {
             for y in 0..=size.y {
                 println!("{}\u{2502}", Cursor::Pos(pos.x, pos.y + y));
@@ -52,30 +43,41 @@ impl Block {
             }
         }
 
-        self.render_corner(
-            '\u{250C}',
-            pos.x,
-            pos.y,
-            Border::TOP | Border::LEFT,
-        );
-        self.render_corner(
-            '\u{2510}',
-            pos.x + size.x,
-            pos.y,
-            Border::TOP | Border::RIGHT,
-        );
-        self.render_corner(
-            '\u{2514}',
-            pos.x,
-            pos.y + size.y,
-            Border::BOTTOM | Border::LEFT,
-        );
-        self.render_corner(
-            '\u{2518}',
-            pos.x + size.x,
-            pos.y + size.y,
-            Border::BOTTOM | Border::RIGHT,
-        );
+        let hor_border: String = repeat('\u{2500}').take(size.x).collect();
+
+        if (self.borders & Border::TOP) != 0 {
+            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
+        }
+        if (self.borders & Border::BOTTOM) != 0 {
+            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y));
+        }
+
+        if size.x != 1 && size.y != 1 {
+            self.render_corner(
+                '\u{250C}',
+                pos.x,
+                pos.y,
+                Border::TOP | Border::LEFT,
+            );
+            self.render_corner(
+                '\u{2510}',
+                pos.x + size.x,
+                pos.y,
+                Border::TOP | Border::RIGHT,
+            );
+            self.render_corner(
+                '\u{2514}',
+                pos.x,
+                pos.y + size.y,
+                Border::BOTTOM | Border::LEFT,
+            );
+            self.render_corner(
+                '\u{2518}',
+                pos.x + size.x,
+                pos.y + size.y,
+                Border::BOTTOM | Border::RIGHT,
+            );
+        }
 
         println!("{}{}", Cursor::Pos(pos.x + 2, pos.y), self.title);
     }
