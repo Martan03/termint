@@ -10,7 +10,7 @@ pub struct Block {
 }
 
 impl Block {
-    /// Creates new [`Block`] with given title and all borders
+    /// Creates new [`Block`] with no title and all borders
     pub fn new() -> Self {
         Self {
             title: "".to_string(),

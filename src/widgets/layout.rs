@@ -13,39 +13,35 @@ pub struct Layout {
 
 impl Layout {
     /// Creates new [`Layout`] that flexes in given [`Direction`]
-    pub fn new(direction: Direction, constrain: Vec<Constrain>) -> Self {
+    pub fn new(direction: Direction) -> Self {
         Self {
             direction: direction,
-            constrain: constrain,
+            constrain: Vec::new(),
             children: Vec::new(),
         }
     }
 
     /// Creates [`Layout`] with vertical [`Direction`]
-    pub fn vertical(constrain: Vec<Constrain>) -> Self {
+    pub fn vertical() -> Self {
         Self {
             direction: Direction::Vertical,
-            constrain: constrain,
+            constrain: Vec::new(),
             children: Vec::new(),
         }
     }
 
     /// Creates [`Layout`] with horizontal [`Direction`]
-    pub fn horizontal(constrain: Vec<Constrain>) -> Self {
+    pub fn horizontal() -> Self {
         Self {
             direction: Direction::Horizontal,
-            constrain: constrain,
+            constrain: Vec::new(),
             children: Vec::new(),
         }
     }
 
     /// Adds child with its [`Constrain`] to [`Layout`]
-    pub fn child<T: Into<Box<dyn Widget>>>(
-        &mut self,
-        child: T,
-        constrain: Constrain,
-    ) {
-        self.children.push(child.into());
+    pub fn child(&mut self, child: Box<dyn Widget>, constrain: Constrain) {
+        self.children.push(child);
         self.constrain.push(constrain);
     }
 
@@ -57,7 +53,8 @@ impl Layout {
             let child_size =
                 self.child_size_vertical(&self.constrain[i], size);
             self.children[i].render(&coords, &child_size);
-            coords.y += child_size.y;
+
+            coords.y += child_size.y + 1;
         }
     }
 
