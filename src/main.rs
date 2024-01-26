@@ -1,5 +1,5 @@
 use termite::{
-    enums::{bg::Bg, fg::Fg},
+    enums::{bg::Bg, fg::Fg, modifier::Modifier},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::{
         block::Block, border::BorderType, span::StrSpanExtension,
@@ -24,23 +24,22 @@ fn test_block() {
 
 fn test_layout() {
     println!("\x1b[2J");
-    let mut block = Block::new()
-        .title("This is cool")
+    let mut main = Block::new()
+        .title("Termite")
         .direction(Direction::Horizontal)
         .border_type(BorderType::Double);
 
-    let block1 = Block::new().title("Sub block");
-    block.add_child(Box::new(block1), Constrain::Percent(50));
+    let mut block1 = Block::new().title("Sub block");
+    let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
+    block1.add_child(Box::new(span1), Constrain::Percent(100));
+    main.add_child(Box::new(block1), Constrain::Percent(50));
 
     let mut block2 = Block::new().title("Another");
-    let span = "This is really cool, right?".fg(Fg::Blue);
-    let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
-    block2.add_child(Box::new(span), Constrain::Length(3));
-    block2.add_child(Box::new(span1), Constrain::Length(1));
+    let span2 = "This is really cool, right?".fg(Fg::Blue);
+    block2.add_child(Box::new(span2), Constrain::Percent(100));
+    main.add_child(Box::new(block2), Constrain::Percent(50));
 
-    block.add_child(Box::new(block2), Constrain::Percent(50));
+    main.render(&Coords::new(1, 1), &Coords::new(30, 8));
 
-    block.render(&Coords::new(1, 1), &Coords::new(31, 8));
-
-    println!("\x1b[1B");
+    println!("\x1b[2B");
 }
