@@ -20,16 +20,16 @@ fn test_block() {
 
 fn test_layout() {
     println!("\x1b[2J");
-    let mut layout = Layout::horizontal();
+    let mut layout = Layout::vertical();
 
     let block = Block::new().title("Title");
     layout.child(Box::new(block), Constrain::Percent(80));
 
     let block2 = Block::new().title("Block");
-    layout.child(Box::new(block2), Constrain::Length(10));
+    layout.child(Box::new(block2), Constrain::Length(3));
 
     let block3 = Block::new().title("Ending");
-    layout.child(Box::new(block3), Constrain::Length(10));
+    layout.child(Box::new(block3), Constrain::Length(1));
 
     layout.render(&Coords::new(1, 1), &Coords::new(30, 7));
 }

@@ -50,8 +50,11 @@ impl Layout {
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
-            let child_size =
+            let mut child_size =
                 self.child_size(&self.constrain[i], size);
+            if child_size.y + coords.y > size.y {
+                child_size.y = size.y - coords.y;
+            }
             self.children[i].render(&coords, &child_size);
 
             coords.y += child_size.y;
@@ -67,6 +70,10 @@ impl Layout {
             let mut child_size =
                 self.child_size(&self.constrain[i], &size);
             child_size.transpone();
+            if child_size.x + coords.x > size.y {
+                child_size.x = size.y - coords.x;
+            }
+
             self.children[i].render(&coords, &child_size);
 
             coords.x += child_size.x;
