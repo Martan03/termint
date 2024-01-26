@@ -1,6 +1,11 @@
 use std::fmt;
 
-use crate::enums::{bg::Bg, fg::Fg, modifier::Modifier};
+use crate::{
+    enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier},
+    geometry::coords::Coords,
+};
+
+use super::widget::Widget;
 
 /// [`Span`] makes easier text modifications such as foreground, background,...
 pub struct Span {
@@ -23,13 +28,7 @@ impl Span {
 
     /// Gets [`Span`] as string
     pub fn get(&self) -> String {
-        let m = self
-            .modifier
-            .iter()
-            .map(|m| m.to_ansi())
-            .collect::<Vec<&str>>()
-            .join("");
-        format!("{}{}{}{}\x1b[0m", self.fg, self.bg, m, self.text)
+        format!("{}{}\x1b[0m", self.get_ansi(), self.text)
     }
 
     /// Sets foreground of [`Span`] to given color
@@ -48,6 +47,37 @@ impl Span {
     pub fn modifier(mut self, mods: Vec<Modifier>) -> Self {
         self.modifier = mods;
         self
+    }
+
+    /// Gets ANSI codes to set fg, bg and other [`Span`] properties
+    fn get_ansi(&self) -> String {
+        let m = self
+            .modifier
+            .iter()
+            .map(|m| m.to_ansi())
+            .collect::<Vec<&str>>()
+            .join("");
+        format!("{}{}{}", self.fg, self.bg, m)
+    }
+}
+
+impl Widget for Span {
+    fn render(&self, pos: &Coords, size: &Coords) {
+        print!("{}", self.get_ansi());
+        let chars = size.x * size.y;
+
+        for (i, c) in self.text.chars().enumerate() {
+            if i % size.x == 0 {
+                print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
+            }
+
+            if i >= chars {
+                break;
+            }
+
+            print!("{c}");
+        }
+        println!("\x1b[0m");
     }
 }
 

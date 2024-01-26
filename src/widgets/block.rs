@@ -72,7 +72,6 @@ impl Widget for Block {
         }
 
         let hor_border: String = repeat('\u{2500}').take(size.x).collect();
-
         if (self.borders & Border::TOP) != 0 {
             println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
         }
