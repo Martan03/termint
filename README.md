@@ -19,6 +19,7 @@ println!("{}", "Bold red text".fg(Fg::Red).modifiers(vec![Modifier::Bold]));
 
 println!("{}", "Text with RGB value".fg(Fg::RGB(2, 249, 171)));
 ```
+![image](https://github.com/Martan03/termite/assets/46300167/bcb501dc-113f-41e7-a3d4-c83bbf4a88c0)
 
 You can see all the colors and modifiers in the documentation.
 
