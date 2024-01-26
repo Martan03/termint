@@ -15,9 +15,9 @@ println!("{}", "Cyan text".fg(Fg::Cyan));
 
 println!("{}", "Cyan text on white background".fg(Fg::Cyan).bg(Bg::White));
 
-println!("{}", "Bold red text".fg(Fg::Red).modifiers(vec![Modifier::Bold]));
+println!("{}", "Bold red text".fg(Fg::Red).modifier(vec![Modifier::Bold]));
 
-println!("{}", "Text with RGB value".fg(Fg::RGB(2, 249, 171)));
+println!("{}", "Text with RGB value".fg(Fg::RGB(0, 249, 210)));
 ```
 ![image](https://github.com/Martan03/termite/assets/46300167/36408874-d9d1-4430-a204-9a60d90c2e62)
 
@@ -25,7 +25,8 @@ You can see all the colors and modifiers in the documentation.
 
 ## Advanced example:
 
-You can also create TUIs using this library:
+You can also create TUIs using this library. This example shows how you can
+use Block widget and add children to it and creating Layout:
 
 ```rust
 // Creates main block and sets its properties

@@ -1,5 +1,5 @@
 use termite::{
-    enums::{bg::Bg, fg::Fg, modifier::Modifier},
+    enums::{bg::Bg, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::{
         block::Block, border::BorderType, span::StrSpanExtension,
