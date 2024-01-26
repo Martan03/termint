@@ -57,6 +57,11 @@ impl Block {
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
     fn render(&self, pos: &Coords, size: &Coords) {
+        self.layout.render(
+            &Coords::new(pos.x + 1, pos.y + 1),
+            &Coords::new(size.x - 2, size.y - 2),
+        );
+
         if (self.borders & Border::LEFT) != 0 {
             for y in 0..size.y {
                 println!("{}\u{2502}", Cursor::Pos(pos.x, pos.y + y));
@@ -106,10 +111,5 @@ impl Widget for Block {
             );
         }
         println!("{}{}", Cursor::Pos(pos.x + 1, pos.y), self.title);
-
-        self.layout.render(
-            &Coords::new(pos.x + 1, pos.y + 1),
-            &Coords::new(size.x - 2, size.y - 2),
-        );
     }
 }

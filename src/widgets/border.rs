@@ -10,3 +10,6 @@ impl Border {
     pub const NONE: u8 = 0b0000;
     pub const ALL: u8 = 0b1111;
 }
+
+// Double border: ═║╔╗╚╝
+// Rounded corners: ─│╭╮╰╯

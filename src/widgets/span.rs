@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier},
+    enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::coords::Coords,
 };
 
@@ -13,6 +13,7 @@ pub struct Span {
     fg: Fg,
     bg: Bg,
     modifier: Vec<Modifier>,
+    wrap: Wrap,
 }
 
 impl Span {
@@ -23,6 +24,7 @@ impl Span {
             fg: Fg::Default,
             bg: Bg::Default,
             modifier: Vec::new(),
+            wrap: Wrap::Word,
         }
     }
 
@@ -49,6 +51,12 @@ impl Span {
         self
     }
 
+    /// Sets [`Wrap`] of [`Span`] to given value
+    pub fn wrap(mut self, wrap: Wrap) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
     /// Gets ANSI codes to set fg, bg and other [`Span`] properties
     fn get_ansi(&self) -> String {
         let m = self
@@ -59,11 +67,32 @@ impl Span {
             .join("");
         format!("{}{}{}", self.fg, self.bg, m)
     }
-}
 
-impl Widget for Span {
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_ansi());
+    /// Renders [`Span`] with word wrapping
+    fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
+        let mut coords = Coords::new(0, pos.y);
+        print!("{}", Cursor::Pos(pos.x, pos.y));
+
+        let words: Vec<&str> = self.text.split_whitespace().collect();
+        for word in words {
+            let len = word.len();
+            if coords.x + len > size.x {
+                coords.x = 0;
+                coords.y += 1;
+                print!("{}", Cursor::Pos(pos.x, coords.y));
+
+                if coords.y >= pos.y + size.y {
+                    break;
+                }
+            }
+
+            print!("{word} ");
+            coords.x += len + 1;
+        }
+    }
+
+    /// Renders [`Span`] with letter wrapping
+    fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
         let chars = size.x * size.y;
 
         for (i, c) in self.text.chars().enumerate() {
@@ -77,6 +106,18 @@ impl Widget for Span {
 
             print!("{c}");
         }
+    }
+}
+
+impl Widget for Span {
+    fn render(&self, pos: &Coords, size: &Coords) {
+        print!("{}", self.get_ansi());
+
+        match self.wrap {
+            Wrap::Letter => self.render_letter_wrap(pos, size),
+            Wrap::Word => self.render_word_wrap(pos, size),
+        }
+
         println!("\x1b[0m");
     }
 }
@@ -97,6 +138,9 @@ pub trait StrSpanExtension {
 
     /// Creates [`Span`] from &str and sets its modifier to given values
     fn modifier(self, mods: Vec<Modifier>) -> Span;
+
+    /// Converts &str to [`Span`]
+    fn to_span(self) -> Span;
 }
 
 impl StrSpanExtension for &str {
@@ -110,5 +154,9 @@ impl StrSpanExtension for &str {
 
     fn modifier(self, mods: Vec<Modifier>) -> Span {
         Span::new(self).modifier(mods)
+    }
+
+    fn to_span(self) -> Span {
+        Span::new(self)
     }
 }

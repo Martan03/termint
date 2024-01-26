@@ -1,5 +1,5 @@
 use termite::{
-    enums::fg::Fg, geometry::{constrain::Constrain, coords::Coords, direction::Direction}, widgets::{block::Block, span::StrSpanExtension, widget::Widget}
+    enums::{fg::Fg, wrap::Wrap}, geometry::{constrain::Constrain, coords::Coords, direction::Direction}, widgets::{block::Block, span::StrSpanExtension, widget::Widget}
 };
 
 fn main() {
@@ -34,5 +34,5 @@ fn test_layout() {
 
     block.render(&Coords::new(1, 1), &Coords::new(31, 8));
 
-    println!("\x1b[2B");
+    println!("\x1b[6B");
 }
