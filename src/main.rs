@@ -8,6 +8,7 @@ fn main() {
     test_layout();
 }
 
+#[allow(unused)]
 fn test_block() {
     println!("\x1b[2J");
 
@@ -19,18 +20,16 @@ fn test_block() {
 
 fn test_layout() {
     println!("\x1b[2J");
-    let mut layout = Layout::vertical();
+    let mut layout = Layout::horizontal();
 
-    let block = Block::new().title("Block");
-    layout.child(Box::new(block), Constrain::Length(3));
+    let block = Block::new().title("Title");
+    layout.child(Box::new(block), Constrain::Percent(80));
 
-    let block2 = Block::new().title("Block 2");
-    layout.child(Box::new(block2), Constrain::Length(5));
+    let block2 = Block::new().title("Block");
+    layout.child(Box::new(block2), Constrain::Length(10));
 
-    let block3 = Block::new().title("Not easy");
-    layout.child(Box::new(block3), Constrain::Length(1));
+    let block3 = Block::new().title("Ending");
+    layout.child(Box::new(block3), Constrain::Length(10));
 
-    layout.render(&Coords::new(1, 1), &Coords::new(30, 20));
-
-    println!("\x1b[4B");
+    layout.render(&Coords::new(1, 1), &Coords::new(30, 7));
 }

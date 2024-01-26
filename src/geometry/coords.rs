@@ -11,6 +11,10 @@ impl Coords {
     pub fn new(x: usize, y: usize) -> Self {
         Self { x: x, y: y }
     }
+
+    pub fn transpone(&mut self) {
+        (self.x, self.y) = (self.y, self.x);
+    }
 }
 
 impl Add for Coords {

@@ -51,22 +51,41 @@ impl Layout {
 
         for i in 0..self.children.len() {
             let child_size =
-                self.child_size_vertical(&self.constrain[i], size);
+                self.child_size(&self.constrain[i], size);
             self.children[i].render(&coords, &child_size);
 
             coords.y += child_size.y;
         }
     }
 
-    /// Gets given child size
-    fn child_size_vertical(
+    /// Renders [`Layout`] in horizontal [`Direction`]
+    fn render_horizontal(&self, pos: &Coords, size: &Coords) {
+        let mut coords = Coords::new(pos.x, pos.y);
+        let size = Coords::new(size.y, size.x);
+
+        for i in 0..self.children.len() {
+            let mut child_size =
+                self.child_size(&self.constrain[i], &size);
+            child_size.transpone();
+            self.children[i].render(&coords, &child_size);
+
+            coords.x += child_size.x;
+        }
+    }
+
+    /// Gets given child size in vertical layout
+    fn child_size(
         &self,
         constrain: &Constrain,
         size: &Coords,
     ) -> Coords {
         match constrain {
             Constrain::Length(len) => Coords::new(size.x, *len),
-            Constrain::Percent(_) => todo!(),
+            Constrain::Percent(p) => {
+                let percent =
+                    (*p as f32 / 100.0 * size.y as f32).round() as usize;
+                Coords::new(size.x, percent)
+            }
         }
     }
 }
@@ -74,9 +93,13 @@ impl Layout {
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
     fn render(&self, pos: &Coords, size: &Coords) {
+        if size.x == 0 || size.y == 0 {
+            return;
+        }
+
         match self.direction {
             Direction::Vertical => self.render_vertical(pos, size),
-            Direction::Horizontal => todo!(),
+            Direction::Horizontal => self.render_horizontal(pos, size),
         }
     }
 }
