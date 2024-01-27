@@ -1,8 +1,9 @@
 use std::iter::repeat;
 
 use crate::{
-    enums::cursor::Cursor,
+    enums::{cursor::Cursor, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
+    widgets::span::Span,
 };
 
 use super::{
@@ -12,9 +13,10 @@ use super::{
 };
 
 pub struct Block {
-    title: String,
+    title: Span,
     borders: u8,
     border_type: BorderType,
+    border_color: Fg,
     layout: Layout,
 }
 
@@ -22,16 +24,17 @@ impl Block {
     /// Creates new [`Block`] with no title and all borders
     pub fn new() -> Self {
         Self {
-            title: "".to_string(),
+            title: Span::new(""),
             borders: Border::ALL,
             border_type: BorderType::Normal,
+            border_color: Fg::Default,
             layout: Layout::vertical(),
         }
     }
 
     /// Sets title of [`Block`]
-    pub fn title<T: Into<String>>(mut self, title: T) -> Self {
-        self.title = title.into();
+    pub fn title(mut self, title: Span) -> Self {
+        self.title = title;
         self
     }
 
@@ -44,6 +47,12 @@ impl Block {
     /// Sets [`BorderType`] of the [`Block`]
     pub fn border_type(mut self, border_type: BorderType) -> Self {
         self.border_type = border_type;
+        self
+    }
+
+    /// Sets [`Block`] border color
+    pub fn border_color(mut self, color: Fg) -> Self {
+        self.border_color = color;
         self
     }
 
@@ -70,6 +79,7 @@ impl Block {
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
     fn render(&self, pos: &Coords, size: &Coords) {
+        print!("{}", self.border_color);
         let ver = self.border_type.get(Border::LEFT);
         if (self.borders & Border::LEFT) != 0 {
             for y in 0..size.y {
@@ -112,7 +122,11 @@ impl Widget for Block {
                 Border::BOTTOM | Border::RIGHT,
             );
         }
-        println!("{}{}", Cursor::Pos(pos.x + 1, pos.y), self.title);
+
+        self.title.render(
+            &Coords::new(pos.x + 1, pos.y),
+            &Coords::new(size.x.saturating_sub(1), 1),
+        );
 
         self.layout.render(
             &Coords::new(pos.x + 1, pos.y + 1),
