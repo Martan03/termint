@@ -1,18 +1,34 @@
 use std::fmt;
 
+/// Enum for modifier ANSI codes
+///
+/// You can use macro to get vector with Modifers:
+/// ```rust
+/// // Gets vector with Bold and Italic modifier
+/// let modifiers = modifiers!(Bold, Italic);
+/// ```
 #[derive(Debug)]
 pub enum Modifier {
+    /// Bold mode
     Bold,
+    /// Dim/faint mode
     Dim,
+    /// Italic mode
     Italic,
+    /// Underline mode
     Underline,
+    /// Blinking mode
     Blink,
+    /// Inverse/reverse mode
     Inverse,
+    /// Hidden/invisible mode
     Hidden,
+    /// Strikethrough mode
     Strike,
 }
 
 impl Modifier {
+    /// Converts [`Modifier`] to ANSI code
     pub fn to_ansi(&self) -> &'static str {
         match self {
             Modifier::Bold => "\x1b[1m",
@@ -28,6 +44,7 @@ impl Modifier {
 }
 
 impl fmt::Display for Modifier {
+    /// Automatically converts [`Modifier`] to ANSI code when printing
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_ansi())
     }

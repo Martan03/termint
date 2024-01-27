@@ -1,6 +1,6 @@
 use std::fmt;
 
-/// Background colors enum
+/// Enum for background colors
 #[derive(Debug)]
 pub enum Bg {
     Black,
@@ -50,6 +50,7 @@ impl Bg {
 }
 
 impl fmt::Display for Bg {
+    /// Automatically converts [`Bg`] to ANSI code when printing
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_ansi())
     }

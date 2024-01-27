@@ -4,7 +4,21 @@ use crate::geometry::{
 
 use super::widget::Widget;
 
-/// [`Layout`] helps creating layout for widgets
+/// Creates layout for widgets
+///
+/// ## Example usage:
+/// ```rust
+/// // Creates horizontal layout containing two blocks each covering 50%
+/// let block1 = Block::new().title("Block 1".to_span());
+/// let block2 = Block::new().title("Block 2".to_span());
+///
+/// let mut layout = Layout::horizontal();
+/// layout.add_child(Box::new(block1), Constrain::Percent(50));
+/// layout.add_child(Box::new(block2), Constrain::Percent(50));
+///
+/// // Renders layout on coordinates 1, 1 with width 20 and height 5
+/// layout.render(&Coords::new(1, 1), &Coords::new(20, 5));
+/// ```
 #[derive(Debug)]
 pub struct Layout {
     direction: Direction,

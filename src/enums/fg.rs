@@ -1,6 +1,6 @@
 use std::fmt;
 
-/// Foreground colors enum
+/// Enum for foreground colors
 #[derive(Debug)]
 pub enum Fg {
     Black,
@@ -50,6 +50,7 @@ impl Fg {
 }
 
 impl fmt::Display for Fg {
+    /// Automatically converts [`Fg`] to ANSI code when printing
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_ansi())
     }

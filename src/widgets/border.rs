@@ -1,3 +1,16 @@
+/// Border sides definition
+///
+/// Combining sides:
+/// Using binary or (`|`):
+/// ```rust
+/// // Border containing top and left side
+/// let sides = Border::TOP | Border::LEFT;
+/// ```
+/// Using macro:
+/// ```rust
+/// // Border containing top and left side
+/// let sides = borders!(TOP, LEFT);
+/// ```
 pub struct Border(u8);
 
 #[allow(unused)]
@@ -11,10 +24,14 @@ impl Border {
     pub const ALL: u8 = 0b1111;
 }
 
+/// BorderType enum
 #[derive(Debug)]
 pub enum BorderType {
+    /// Simple line
     Normal,
+    /// Line with rounded corners
     Rounded,
+    /// Double line
     Double,
 }
 

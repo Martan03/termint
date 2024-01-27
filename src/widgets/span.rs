@@ -8,6 +8,29 @@ use crate::{
 use super::widget::Widget;
 
 /// [`Span`] makes easier text modifications such as foreground, background,...
+///
+/// ## Example usage:
+/// ```rust
+/// // Creating span using new with red foreground:
+/// let span = Span::new("Red text").fg(Fg::Red);
+/// // Creating span using &str conversion with red text and white background
+/// let span = "Red text on white".fg(Fg::Red).bg(Bg::White);
+///
+/// // Cyan bold and italic text on yellow background
+/// // Using macro for getting modifiers
+/// let span = "Cyan bold and italic on yellow"
+///     .fg(Fg::Cyan)
+///     .bg(Bg::Yellow)
+///     .modifier(modifiers!(Bold, Italic));
+///
+/// // Span can be printed like this
+/// println!("{span}");
+///
+/// // Or rendered on given coordinates and given size
+/// // Text will be wrapping based on set value in wrap (Wrap::Word is default)
+/// // Text will use ellipsis when can't fit ("..." is default)
+/// span.render(&Coords::new(1, 1), &Coords::new(10, 3));
+/// ```
 #[derive(Debug)]
 pub struct Span {
     text: String,

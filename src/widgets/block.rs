@@ -12,6 +12,29 @@ use super::{
     widget::Widget,
 };
 
+/// Layout widget with addition of border and title
+///
+/// ## Example usage:
+/// ```rust
+/// // Creates block with title Termint in red
+/// // with double line border in lightgray
+/// // Block layout will be horizontal
+/// let mut main = Block::new()
+///     .title("Termint".fg(Fg::Red))
+///     .direction(Direction::Horizontal)
+///     .border_type(BorderType::Double)
+///     .border_color(Fg::LightGray);
+///
+/// // Adds two Block widgets as children for demonstration
+/// let mut block1 = Block::new().title("Sub block".to_span());
+/// main.add_child(Box::new(block1), Constrain::Percent(50));
+///
+/// let mut block2 = Block::new().title("Another".to_span());
+/// main.add_child(Box::new(block2), Constrain::Percent(50));
+///
+/// // Renders block on coordinates 1, 1, with width 30 and height 8
+/// main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+/// ```
 #[derive(Debug)]
 pub struct Block {
     title: Span,

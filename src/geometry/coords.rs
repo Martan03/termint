@@ -13,6 +13,7 @@ impl Coords {
         Self { x: x, y: y }
     }
 
+    /// Transpones [`Coords`]
     pub fn transpone(&mut self) {
         (self.x, self.y) = (self.y, self.x);
     }

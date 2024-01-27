@@ -2,6 +2,7 @@ use std::fmt;
 
 use crate::geometry::coords::Coords;
 
+/// Trait for widgets to implement
 pub trait Widget {
     /// Renders [`Widget`] on given position with given size
     fn render(&self, pos: &Coords, size: &Coords);
