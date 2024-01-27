@@ -9,5 +9,10 @@ readme = "README.md"
 license-file = "LICENSE"
 edition = "2021"
 
+exclude = [
+    "src/main.rs",
+    ".github"
+]
+
 [dependencies]
 term_size = "0.3.2"
