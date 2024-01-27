@@ -1,5 +1,5 @@
 use termite::{
-    enums::{bg::Bg, fg::Fg, modifier::Modifier},
+    enums::{bg::Bg, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::{
         block::Block, border::BorderType, span::StrSpanExtension,
@@ -25,7 +25,7 @@ fn test_block() {
 fn test_layout() {
     println!("\x1b[2J");
     let mut main = Block::new()
-        .title("Termite".fg(Fg::Red).modifier(vec![Modifier::Strike]))
+        .title("Termite".fg(Fg::Red))
         .direction(Direction::Horizontal)
         .border_type(BorderType::Double)
         .border_color(Fg::LightGray);

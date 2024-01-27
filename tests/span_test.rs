@@ -7,6 +7,7 @@ extern crate termite;
 mod tests {
     use termite::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
+        modifiers,
         widgets::span::{Span, StrSpanExtension},
     };
 
@@ -90,6 +91,14 @@ mod tests {
             Modifier::Italic,
             Modifier::Inverse,
         ]);
+        assert_eq!(
+            span.get(),
+            "\x1b[39m\x1b[49m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
+        );
+
+        // Using modifiers macro
+        let span =
+            "Span modifier".modifier(modifiers!(Bold, Blink, Italic, Inverse));
         assert_eq!(
             span.get(),
             "\x1b[39m\x1b[49m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"

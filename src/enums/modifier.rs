@@ -31,3 +31,11 @@ impl fmt::Display for Modifier {
         write!(f, "{}", self.to_ansi())
     }
 }
+
+/// Creates vector with given [`Modifier`]
+#[macro_export]
+macro_rules! modifiers {
+    ($($mod:ident),*) => {
+        vec![$(Modifier::$mod, )*]
+    };
+}
