@@ -1,11 +1,12 @@
 use core::fmt;
+use std::cmp;
 
 use crate::{
     enums::{
         bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, rgb::RGB,
         wrap::Wrap,
     },
-    geometry::coords::Coords,
+    geometry::{coords::Coords, direction::Direction},
 };
 
 use super::widget::Widget;
@@ -15,6 +16,7 @@ pub struct Grad {
     text: String,
     fg_start: RGB,
     fg_end: RGB,
+    direction: Direction,
     bg: Bg,
     modifier: Vec<Modifier>,
     wrap: Wrap,
@@ -31,6 +33,7 @@ impl Grad {
             text: text.into(),
             fg_start: start.into(),
             fg_end: end.into(),
+            direction: Direction::Horizontal,
             bg: Bg::Default,
             modifier: Vec::new(),
             wrap: Wrap::Word,
@@ -59,6 +62,12 @@ impl Grad {
         return res;
     }
 
+    /// Sets gradient direction of [`Grad`]
+    pub fn direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
+    }
+
     /// Sets background of [`Grad`] to given color
     pub fn bg(mut self, bg: Bg) -> Self {
         self.bg = bg;
@@ -68,6 +77,12 @@ impl Grad {
     /// Sets modifiers of [`Grad`] to given modifiers
     pub fn modifier(mut self, modifier: Vec<Modifier>) -> Self {
         self.modifier = modifier;
+        self
+    }
+
+    /// Sets wrap of [`Grad`] to given value
+    pub fn wrap(mut self, wrap: Wrap) -> Self {
+        self.wrap = wrap;
         self
     }
 
@@ -84,6 +99,14 @@ impl Grad {
 
     /// Renders [`Grad`] with word wrapping
     fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
+        match self.direction {
+            Direction::Vertical => self.render_word_wrap_ver(pos, size),
+            Direction::Horizontal => self.render_word_wrap_hor(pos, size),
+        }
+    }
+
+    /// Renders [`Grad`] with word wrapping and horizontal gradient
+    fn render_word_wrap_hor(&self, pos: &Coords, size: &Coords) {
         let (r_step, g_step, b_step) = self.get_step(size.x as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
@@ -97,7 +120,7 @@ impl Grad {
             if coords.x + len + 1 > size.x {
                 coords.y += 1;
 
-                if coords.y >= pos.y + size.y {
+                if coords.y >= pos.y + size.y || len > size.x {
                     break;
                 }
 
@@ -121,8 +144,54 @@ impl Grad {
         }
     }
 
+    /// Renders [`Grad`] with word wrapping and vertical gradient
+    fn render_word_wrap_ver(&self, pos: &Coords, size: &Coords) {
+        let height = cmp::min(self.height_word_wrap(size.x), size.y);
+        let (r_step, g_step, b_step) = self.get_step(height as i16);
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+
+        let mut coords = Coords::new(0, pos.y);
+        print!("{}", Cursor::Pos(pos.x, pos.y));
+
+        let words: Vec<&str> = self.text.split_whitespace().collect();
+        for word in words {
+            let len = word.len();
+            if coords.x + len + 1 > size.x {
+                coords.y += 1;
+
+                if coords.y >= pos.y + size.y || len > size.x {
+                    break;
+                }
+
+                coords.x = 0;
+                print!("{}", Cursor::Pos(pos.x, coords.y));
+                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+            }
+
+            if coords.x != 0 {
+                print!(" ");
+                coords.x += 1;
+            }
+
+            for c in word.chars() {
+                print!("{}{c}", Fg::RGB(r, g, b));
+            }
+            coords.x += len;
+        }
+    }
+
+
     /// Renders [`Grad`] with letter wrapping
     fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
+        match self.direction {
+            Direction::Vertical => self.render_letter_wrap_ver(pos, size),
+            Direction::Horizontal => self.render_letter_wrap_hor(pos, size),
+        }
+    }
+
+    /// Renders [`Grad`] with letter wrapping and horizontal gradient
+    fn render_letter_wrap_hor(&self, pos: &Coords, size: &Coords) {
         let (r_step, g_step, b_step) = self.get_step(size.x as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
@@ -142,6 +211,29 @@ impl Grad {
 
             print!("{}{c}", Fg::RGB(r, g, b));
             (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+        }
+    }
+
+    /// Renders [`Grad`] with letter wrapping and vertical gradient
+    fn render_letter_wrap_ver(&self, pos: &Coords, size: &Coords) {
+        let height = cmp::min(self.height_letter_wrap(size.x), size.y);
+        let (r_step, g_step, b_step) = self.get_step(height as i16);
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+
+        let chars = size.x * size.y;
+
+        for (i, c) in self.text.chars().enumerate() {
+            if i >= chars {
+                break;
+            }
+
+            if i % size.x == 0 {
+                print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
+                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+            }
+
+            print!("{}{c}", Fg::RGB(r, g, b));
         }
     }
 
@@ -165,6 +257,31 @@ impl Grad {
             (rgb.1 as i16 + step.1) as u8,
             (rgb.2 as i16 + step.2) as u8,
         )
+    }
+
+    /// Gets height of the [`Grad`] when using word wrap
+    fn height_word_wrap(&self, width: usize) -> usize {
+        let mut coords = Coords::new(0, 0);
+
+        let words: Vec<&str> = self.text.split_whitespace().collect();
+        for word in words {
+            let len = word.len();
+            if coords.x + len + 1 > width {
+                coords.y += 1;
+                coords.x = 0;
+            }
+
+            if coords.x != 0 {
+                coords.x += 1;
+            }
+            coords.x += len;
+        }
+        coords.y + 1
+    }
+
+    /// Gets height of the [`Grad`] when using letter wrap
+    fn height_letter_wrap(&self, width: usize) -> usize {
+        (self.text.len() as f32 / width as f32).ceil() as usize
     }
 }
 

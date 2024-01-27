@@ -111,7 +111,7 @@ impl Span {
             if coords.x + len + 1 > size.x {
                 coords.y += 1;
 
-                if coords.y >= pos.y + size.y {
+                if coords.y >= pos.y + size.y || len > size.x {
                     if coords.x + self.ellipsis.len() >= size.x {
                         let sum = coords.x + self.ellipsis.len();
                         print!("{}", Cursor::Left(sum - size.x));

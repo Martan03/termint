@@ -9,7 +9,7 @@ use termint::{
 
 fn main() {
     let grad = Grad::new(
-        "This is a test of long text",
+        "This is a test of long text, but it is not that long so I have to add",
         (0, 220, 255),
         (200, 60, 255),
     );
