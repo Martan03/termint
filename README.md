@@ -4,7 +4,11 @@ Rust library for colored printing and Terminal User Interfaces
 
 ## Installation:
 
-This library will be available on crates.io (not yet)
+This library is available on [crates.io](https://crates.io/crates/termint).
+You can add it to your projects using cargo:
+```terminal
+cargo add termint
+```
 
 ## Basic example:
 
@@ -21,7 +25,8 @@ println!("{}", "Text with RGB value".fg(Fg::RGB(0, 249, 210)));
 ```
 ![image](https://github.com/Martan03/termite/assets/46300167/36408874-d9d1-4430-a204-9a60d90c2e62)
 
-You can see all the colors and modifiers in the documentation.
+You can see all the colors and modifiers in the
+[documentation](https://docs.rs/termint/latest/termint/).
 
 ## Advanced example:
 
@@ -57,7 +62,8 @@ main.render(&Coords::new(1, 1), &Coords::new(30, 8));
 ## Usage:
 
 Code blocks above are just examples of the usage. To see more about functions,
-Widgets and more, please visit the documentation.
+Widgets and more, please visit the
+[documentation](https://docs.rs/termint/latest/termint/).
 
 ## Technologies
 
@@ -68,4 +74,6 @@ Obviously this library was created in Rust, but I also used library called
 
 - **Author:** [Martan03](https://github.com/Martan03)
 - **GitHub repository:** [termint](https://github.com/Martan03/termint)
+- **Package**: [crates.io](https://crates.io/crates/termint)
+- **Documentation**: [docs.rs](https://docs.rs/termint/latest/termint/)
 - **Author website:** [martan03.github.io](https://martan03.github.io)
