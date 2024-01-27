@@ -59,6 +59,12 @@ impl Span {
         self
     }
 
+    /// Sets [`Span`] ellipsis to given string
+    pub fn ellipsis(mut self, ellipsis: &str) -> Self {
+        self.ellipsis = ellipsis.to_string();
+        self
+    }
+
     /// Gets ANSI codes to set fg, bg and other [`Span`] properties
     fn get_ansi(&self) -> String {
         let m = self
