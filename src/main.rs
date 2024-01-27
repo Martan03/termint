@@ -2,14 +2,21 @@ use termint::{
     enums::{bg::Bg, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::{
-        block::Block, border::BorderType, span::StrSpanExtension,
+        block::Block, border::BorderType, grad::Grad, span::StrSpanExtension,
         widget::Widget,
     },
 };
 
 fn main() {
+    let grad = Grad::new(
+        "This is a test of long text",
+        (0, 220, 255),
+        (200, 60, 255),
+    );
+    println!("\x1b[2J");
+    grad.render(&Coords::new(1, 1), &Coords::new(10, 5));
     // test_block();
-    test_layout();
+    // test_layout();
 }
 
 #[allow(unused)]
