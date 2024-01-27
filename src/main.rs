@@ -35,12 +35,14 @@ fn test_layout() {
     block1.add_child(Box::new(span1), Constrain::Percent(100));
     main.add_child(Box::new(block1), Constrain::Percent(50));
 
-    let mut block2 = Block::new().title("Another really long text".to_span());
-    let span2 = "This is really cool, right?".fg(Fg::Blue);
+    let mut block2 = Block::new().title("Another".to_span());
+    let span2 =
+        "This is really cool, right? This is the best place for testing"
+            .fg(Fg::Blue);
     block2.add_child(Box::new(span2), Constrain::Percent(100));
     main.add_child(Box::new(block2), Constrain::Percent(50));
 
     main.render(&Coords::new(1, 1), &Coords::new(30, 8));
 
-    println!("\x1b[2B");
+    println!("\x1b[1B");
 }

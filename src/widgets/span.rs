@@ -14,6 +14,7 @@ pub struct Span {
     bg: Bg,
     modifier: Vec<Modifier>,
     wrap: Wrap,
+    ellipsis: String,
 }
 
 impl Span {
@@ -25,6 +26,7 @@ impl Span {
             bg: Bg::Default,
             modifier: Vec::new(),
             wrap: Wrap::Word,
+            ellipsis: "...".to_string(),
         }
     }
 
@@ -77,13 +79,19 @@ impl Span {
         for word in words {
             let len = word.len();
             if coords.x + len + 1 > size.x {
-                coords.x = 0;
                 coords.y += 1;
-                print!("{}", Cursor::Pos(pos.x, coords.y));
 
                 if coords.y >= pos.y + size.y {
+                    if coords.x + self.ellipsis.len() >= size.x {
+                        let sum = coords.x + self.ellipsis.len();
+                        print!("{}", Cursor::Left(sum - size.x));
+                    }
+                    print!("{}", self.ellipsis);
                     break;
                 }
+
+                coords.x = 0;
+                print!("{}", Cursor::Pos(pos.x, coords.y));
             }
 
             if coords.x == 0 {
@@ -99,9 +107,11 @@ impl Span {
     /// Renders [`Span`] with letter wrapping
     fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
         let chars = size.x * size.y;
+        let ellipsis_len = self.ellipsis.len();
 
         for (i, c) in self.text.chars().enumerate() {
-            if i >= chars {
+            if i + ellipsis_len >= chars {
+                print!("{}", self.ellipsis);
                 break;
             }
 
