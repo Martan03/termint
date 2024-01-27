@@ -22,6 +22,7 @@ fn test_block() {
     println!("\x1b[4B");
 }
 
+#[allow(unused)]
 fn test_layout() {
     println!("\x1b[2J");
     let mut main = Block::new()

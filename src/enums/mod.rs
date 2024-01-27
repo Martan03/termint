@@ -6,5 +6,7 @@ pub mod cursor;
 pub mod fg;
 /// Defines enum for modifier ANSI codes (bold, italic,...)
 pub mod modifier;
+/// Defines RGB structure for better work with colors
+pub mod rgb;
 /// Defines enum for wrap
 pub mod wrap;
