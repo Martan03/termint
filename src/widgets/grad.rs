@@ -33,18 +33,13 @@ impl Grad {
             fg_end: end.into(),
             bg: Bg::Default,
             modifier: Vec::new(),
-            wrap: Wrap::Letter,
+            wrap: Wrap::Word,
         }
     }
 
     /// Gets [`Grad`] as string
     pub fn get(&self) -> String {
-        let len = self.text.len() as i16;
-        let (r_step, g_step, b_step): (i16, i16, i16) = (
-            (self.fg_end.r as i16 - self.fg_start.r as i16) / len,
-            (self.fg_end.g as i16 - self.fg_start.g as i16) / len,
-            (self.fg_end.b as i16 - self.fg_start.b as i16) / len,
-        );
+        let (r_step, g_step, b_step) = self.get_step(self.text.len() as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -88,18 +83,47 @@ impl Grad {
     }
 
     /// Renders [`Grad`] with word wrapping
-    fn render_word_wrap(&self, _pos: &Coords, _size: &Coords) {
-        todo!();
+    fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
+        let (r_step, g_step, b_step) = self.get_step(size.x as i16);
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+
+        let mut coords = Coords::new(0, pos.y);
+        print!("{}", Cursor::Pos(pos.x, pos.y));
+
+        let words: Vec<&str> = self.text.split_whitespace().collect();
+        for word in words {
+            let len = word.len();
+            if coords.x + len + 1 > size.x {
+                coords.y += 1;
+
+                if coords.y >= pos.y + size.y {
+                    break;
+                }
+
+                coords.x = 0;
+                print!("{}", Cursor::Pos(pos.x, coords.y));
+                (r, g, b) =
+                    (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+            }
+
+            if coords.x != 0 {
+                print!(" ");
+                coords.x += 1;
+                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+            }
+
+            for c in word.chars() {
+                print!("{}{c}", Fg::RGB(r, g, b));
+                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+            }
+            coords.x += len;
+        }
     }
 
     /// Renders [`Grad`] with letter wrapping
     fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
-        let len = size.x as i16;
-        let (r_step, g_step, b_step): (i16, i16, i16) = (
-            (self.fg_end.r as i16 - self.fg_start.r as i16) / len,
-            (self.fg_end.g as i16 - self.fg_start.g as i16) / len,
-            (self.fg_end.b as i16 - self.fg_start.b as i16) / len,
-        );
+        let (r_step, g_step, b_step) = self.get_step(size.x as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -117,12 +141,30 @@ impl Grad {
             }
 
             print!("{}{c}", Fg::RGB(r, g, b));
-            (r, g, b) = (
-                (r as i16 + r_step) as u8,
-                (g as i16 + g_step) as u8,
-                (b as i16 + b_step) as u8,
-            );
+            (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
         }
+    }
+
+    /// Gets step per character based on start and end foreground color
+    fn get_step(&self, len: i16) -> (i16, i16, i16) {
+        (
+            (self.fg_end.r as i16 - self.fg_start.r as i16) / len,
+            (self.fg_end.g as i16 - self.fg_start.g as i16) / len,
+            (self.fg_end.b as i16 - self.fg_start.b as i16) / len,
+        )
+    }
+
+    /// Adds given step to RGB value in tuple
+    fn add_step(
+        &self,
+        rgb: (u8, u8, u8),
+        step: (i16, i16, i16),
+    ) -> (u8, u8, u8) {
+        (
+            (rgb.0 as i16 + step.0) as u8,
+            (rgb.1 as i16 + step.1) as u8,
+            (rgb.2 as i16 + step.2) as u8,
+        )
     }
 }
 
