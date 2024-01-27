@@ -5,6 +5,7 @@ authors = ["Martin Slezák (github.com/Martan03)"]
 description = "Library for colored printing and Terminal User Interfaces"
 keywords = ["tui", "terminal", "termint"]
 repository = "https://github.com/Martan03/termint"
+documentation = "https://docs.rs/termint/latest/termint/"
 readme = "README.md"
 license-file = "LICENSE"
 edition = "2021"
