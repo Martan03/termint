@@ -1,4 +1,4 @@
-# termite
+# termint
 
 Rust library for colored printing and Terminal User Interfaces
 
@@ -67,5 +67,5 @@ Obviously this library was created in Rust, but I also used library called
 ## Links
 
 - **Author:** [Martan03](https://github.com/Martan03)
-- **GitHub repository:** [termite](https://github.com/Martan03/termite)
+- **GitHub repository:** [termint](https://github.com/Martan03/termint)
 - **Author website:** [martan03.github.io](https://martan03.github.io)

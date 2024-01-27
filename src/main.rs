@@ -1,4 +1,4 @@
-use termite::{
+use termint::{
     enums::{bg::Bg, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::{

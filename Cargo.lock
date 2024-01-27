@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "termite"
+name = "termint"
 version = "0.1.0"
 dependencies = [
  "term_size",

@@ -1,11 +1,11 @@
-extern crate termite;
+extern crate termint;
 
 // These test print out the result
 // To display stdout start tests with `cargo test -- --nocapture`
 
 #[cfg(test)]
 mod tests {
-    use termite::{
+    use termint::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
         modifiers,
         widgets::span::{Span, StrSpanExtension},

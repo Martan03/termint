@@ -1,8 +1,8 @@
-extern crate termite;
+extern crate termint;
 
 #[cfg(test)]
 mod tests {
-    use termite::{
+    use termint::{
         geometry::coords::Coords,
         widgets::{block::Block, span::StrSpanExtension, widget::Widget},
     };

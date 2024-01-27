@@ -1,10 +1,10 @@
 [package]
-name = "termite"
+name = "termint"
 version = "0.1.0"
 authors = ["Martin Slezák (github.com/Martan03)"]
 description = "Library for colored printing and Terminal User Interfaces"
-keywords = ["tui", "terminal", "termite"]
-repository = "https://github.com/Martan03/termite"
+keywords = ["tui", "terminal", "termint"]
+repository = "https://github.com/Martan03/termint"
 readme = "README.md"
 license-file = "LICENSE"
 edition = "2021"

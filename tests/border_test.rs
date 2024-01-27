@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use termite::{
+    use termint::{
         borders,
         widgets::border::{Border, BorderType},
     };
