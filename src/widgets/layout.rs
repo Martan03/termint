@@ -5,6 +5,7 @@ use crate::geometry::{
 use super::widget::Widget;
 
 /// [`Layout`] helps creating layout for widgets
+#[derive(Debug)]
 pub struct Layout {
     direction: Direction,
     constrain: Vec<Constrain>,

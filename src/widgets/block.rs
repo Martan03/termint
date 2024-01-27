@@ -12,6 +12,7 @@ use super::{
     widget::Widget,
 };
 
+#[derive(Debug)]
 pub struct Block {
     title: Span,
     borders: u8,

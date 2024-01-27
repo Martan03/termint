@@ -11,6 +11,7 @@ impl Border {
     pub const ALL: u8 = 0b1111;
 }
 
+#[derive(Debug)]
 pub enum BorderType {
     Normal,
     Rounded,

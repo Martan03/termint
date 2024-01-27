@@ -1,6 +1,7 @@
 use std::fmt;
 
 /// Background colors enum
+#[derive(Debug)]
 pub enum Bg {
     Black,
     DarkRed,

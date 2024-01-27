@@ -8,6 +8,7 @@ use crate::{
 use super::widget::Widget;
 
 /// [`Span`] makes easier text modifications such as foreground, background,...
+#[derive(Debug)]
 pub struct Span {
     text: String,
     fg: Fg,
