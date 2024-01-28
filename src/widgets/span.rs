@@ -162,6 +162,31 @@ impl Span {
             print!("{c}");
         }
     }
+
+    /// Gets height of the [`Span`] when using word wrap
+    fn height_word_wrap(&self, size: &Coords) -> usize {
+        let mut coords = Coords::new(0, 0);
+
+        let words: Vec<&str> = self.text.split_whitespace().collect();
+        for word in words {
+            let len = word.len();
+            if coords.x + len + 1 > size.x {
+                coords.y += 1;
+                coords.x = 0;
+            }
+
+            if coords.x != 0 {
+                coords.x += 1;
+            }
+            coords.x += len;
+        }
+        coords.y + 1
+    }
+
+    /// Gets height of the [`Span`] when using letter wrap
+    fn height_letter_wrap(&self, size: &Coords) -> usize {
+        (self.text.len() as f32 / size.x as f32).floor() as usize + 1
+    }
 }
 
 impl Widget for Span {
@@ -174,6 +199,13 @@ impl Widget for Span {
         }
 
         println!("\x1b[0m");
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.height_letter_wrap(size),
+            Wrap::Word => self.height_word_wrap(size),
+        }
     }
 }
 

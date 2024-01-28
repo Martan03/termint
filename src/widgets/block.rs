@@ -1,6 +1,7 @@
 use std::iter::repeat;
 
 use crate::{
+    borders,
     enums::{cursor::Cursor, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::span::Span,
@@ -165,7 +166,19 @@ impl Widget for Block {
 
         self.layout.render(
             &Coords::new(pos.x + 1, pos.y + 1),
-            &Coords::new(size.x - 2, size.y - 2),
+            &Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2)),
         );
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        let top_bottom = borders!(TOP, BOTTOM);
+        let height = if (self.borders & top_bottom) == top_bottom {
+            2
+        } else if (self.borders & top_bottom) != 0 {
+            1
+        } else {
+            0
+        };
+        height + self.layout.height(size)
     }
 }

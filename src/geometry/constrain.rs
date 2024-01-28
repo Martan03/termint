@@ -3,4 +3,5 @@
 pub enum Constrain {
     Length(usize),
     Percent(usize),
+    Min(usize),
 }

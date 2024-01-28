@@ -1,5 +1,5 @@
 use core::fmt;
-use std::cmp;
+use std::cmp::min;
 
 use crate::{
     enums::{
@@ -140,7 +140,7 @@ impl Grad {
 
     /// Renders [`Grad`] with word wrapping and vertical gradient
     fn render_word_wrap_ver(&self, pos: &Coords, size: &Coords) {
-        let height = cmp::min(self.height_word_wrap(size.x), size.y);
+        let height = min(self.height_word_wrap(size) - 1, size.y);
         let step = self.get_step(height as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
@@ -209,7 +209,7 @@ impl Grad {
 
     /// Renders [`Grad`] with letter wrapping and vertical gradient
     fn render_letter_wrap_ver(&self, pos: &Coords, size: &Coords) {
-        let height = cmp::min(self.height_letter_wrap(size.x), size.y);
+        let height = min(self.height_letter_wrap(size) - 1, size.y);
         let step = self.get_step(height as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
@@ -253,13 +253,13 @@ impl Grad {
     }
 
     /// Gets height of the [`Grad`] when using word wrap
-    fn height_word_wrap(&self, width: usize) -> usize {
+    fn height_word_wrap(&self, size: &Coords) -> usize {
         let mut coords = Coords::new(0, 0);
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
             let len = word.len();
-            if coords.x + len + 1 > width {
+            if coords.x + len + 1 > size.x {
                 coords.y += 1;
                 coords.x = 0;
             }
@@ -269,12 +269,12 @@ impl Grad {
             }
             coords.x += len;
         }
-        coords.y
+        coords.y + 1
     }
 
     /// Gets height of the [`Grad`] when using letter wrap
-    fn height_letter_wrap(&self, width: usize) -> usize {
-        (self.text.len() as f32 / width as f32).floor() as usize
+    fn height_letter_wrap(&self, size: &Coords) -> usize {
+        (self.text.len() as f32 / size.x as f32).floor() as usize + 1
     }
 }
 
@@ -288,6 +288,13 @@ impl Widget for Grad {
         }
 
         println!("\x1b[0m");
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.height_letter_wrap(size),
+            Wrap::Word => self.height_word_wrap(size),
+        }
     }
 }
 

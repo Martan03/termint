@@ -31,7 +31,8 @@ mod tests {
     #[test]
     fn grad_with_modifiers() {
         let grad = Grad::new("Gradient", (0, 220, 255), (175, 80, 255))
-            .modifier(modifiers!(Bold, Underline)).bg(Bg::White);
+            .modifier(modifiers!(Bold, Underline))
+            .bg(Bg::White);
         let assert_val = format!(
             "{}{}{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
             Bg::White,

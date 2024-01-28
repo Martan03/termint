@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use crate::geometry::{
     constrain::Constrain, coords::Coords, direction::Direction,
 };
@@ -79,7 +81,8 @@ impl Layout {
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
-            let mut child_size = self.child_size(&self.constrain[i], size);
+            let mut child_size =
+                self.child_size(&self.children[i], &self.constrain[i], size);
             if child_size.y + coords.y - pos.y > size.y {
                 child_size.y = size.y.saturating_sub(coords.y);
             }
@@ -95,7 +98,8 @@ impl Layout {
         let size = Coords::new(size.y, size.x);
 
         for i in 0..self.children.len() {
-            let mut child_size = self.child_size(&self.constrain[i], &size);
+            let mut child_size =
+                self.child_size(&self.children[i], &self.constrain[i], &size);
             child_size.transpone();
             if child_size.x + coords.x - pos.x > size.y {
                 child_size.x = size.y - coords.x;
@@ -108,12 +112,20 @@ impl Layout {
     }
 
     /// Gets given child size in vertical layout
-    fn child_size(&self, constrain: &Constrain, size: &Coords) -> Coords {
+    fn child_size(
+        &self,
+        child: &Box<dyn Widget>,
+        constrain: &Constrain,
+        size: &Coords,
+    ) -> Coords {
         match constrain {
             Constrain::Length(len) => Coords::new(size.x, *len),
             Constrain::Percent(p) => {
                 let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
                 Coords::new(size.x, percent)
+            }
+            Constrain::Min(val) => {
+                Coords::new(size.x, max(child.height(size), *val))
             }
         }
     }
@@ -130,5 +142,13 @@ impl Widget for Layout {
             Direction::Vertical => self.render_vertical(pos, size),
             Direction::Horizontal => self.render_horizontal(pos, size),
         }
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        let mut height = 0;
+        for child in self.children.iter() {
+            height += child.height(size);
+        }
+        height
     }
 }
