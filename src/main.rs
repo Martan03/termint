@@ -1,5 +1,5 @@
 use termint::{
-    enums::{bg::Bg, fg::Fg, wrap::Wrap},
+    enums::{bg::Bg, fg::Fg},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::{
         block::Block, border::BorderType, grad::Grad, span::StrSpanExtension,
@@ -23,8 +23,7 @@ fn test_block() {
     let mut block1 = Block::new();
 
     let grad =
-        Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255))
-            .wrap(Wrap::Letter);
+        Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
     block1.add_child(Box::new(grad), Constrain::Percent(100));
     block.add_child(Box::new(block1), Constrain::Min(0));
 

@@ -193,6 +193,16 @@ impl Span {
         (self.text.len() as f32 / size.x as f32).floor() as usize + 1
     }
 
+    /// Gets width of the [`Span`] when using word wrap
+    fn width_word_wrap(&self, size: &Coords) -> usize {
+        let mut guess = Coords::new(self.width_letter_wrap(size), 0);
+
+        while self.height_word_wrap(&guess) > size.y {
+            guess.x += 1;
+        }
+        guess.x
+    }
+
     /// Gets with of the [`Span`] when using letter wrap
     fn width_letter_wrap(&self, size: &Coords) -> usize {
         (self.text.len() as f32 / size.y as f32).floor() as usize + 1
@@ -221,7 +231,7 @@ impl Widget for Span {
     fn width(&self, size: &Coords) -> usize {
         match self.wrap {
             Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => todo!(),
+            Wrap::Word => self.width_word_wrap(size),
         }
     }
 }
