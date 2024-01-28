@@ -81,9 +81,14 @@ impl Layout {
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
+            if coords.y - pos.y >= size.y {
+                break;
+            }
+
             let mut child_size = self.child_size_ver(
                 &self.children[i],
                 &self.constrain[i],
+                coords.y - pos.y,
                 size,
             );
             if child_size.y + coords.y - pos.y > size.y {
@@ -100,9 +105,14 @@ impl Layout {
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
+            if coords.x - pos.x >= size.x {
+                break;
+            }
+
             let mut child_size = self.child_size_hor(
                 &self.children[i],
                 &self.constrain[i],
+                coords.x - pos.x,
                 size,
             );
             if child_size.x + coords.x - pos.x > size.x {
@@ -120,6 +130,7 @@ impl Layout {
         &self,
         child: &Box<dyn Widget>,
         constrain: &Constrain,
+        used: usize,
         size: &Coords,
     ) -> Coords {
         match constrain {
@@ -127,10 +138,11 @@ impl Layout {
             Constrain::Percent(p) => {
                 let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
                 Coords::new(size.x, percent)
-            }
+            },
             Constrain::Min(val) => {
                 Coords::new(size.x, max(child.height(size), *val))
-            }
+            },
+            Constrain::Fill => Coords::new(size.x, size.y - used),
         }
     }
 
@@ -139,6 +151,7 @@ impl Layout {
         &self,
         child: &Box<dyn Widget>,
         constrain: &Constrain,
+        used: usize,
         size: &Coords,
     ) -> Coords {
         match constrain {
@@ -146,10 +159,11 @@ impl Layout {
             Constrain::Percent(p) => {
                 let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
                 Coords::new(percent, size.y)
-            }
+            },
             Constrain::Min(val) => {
                 Coords::new(max(child.width(size), *val), size.y)
-            }
+            },
+            Constrain::Fill => Coords::new(size.x - used, size.y),
         }
     }
 }

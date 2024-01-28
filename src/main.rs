@@ -28,9 +28,14 @@ fn test_block() {
     block1.add_child(Box::new(grad), Constrain::Percent(100));
     block.add_child(Box::new(block1), Constrain::Min(0));
 
+    let block2 = Block::new().title("Test".to_span());
+    block.add_child(Box::new(block2), Constrain::Fill);
+    let block3 = Block::new().title("Test".to_span());
+    block.add_child(Box::new(block3), Constrain::Fill);
+
     block.render(&Coords::new(1, 1), &Coords::new(20, 9));
 
-    println!("\x1b[1B");
+    println!("\x1b[6B");
 }
 
 #[allow(unused)]
