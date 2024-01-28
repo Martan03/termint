@@ -138,10 +138,10 @@ impl Layout {
             Constrain::Percent(p) => {
                 let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
                 Coords::new(size.x, percent)
-            },
+            }
             Constrain::Min(val) => {
                 Coords::new(size.x, max(child.height(size), *val))
-            },
+            }
             Constrain::Fill => Coords::new(size.x, size.y - used),
         }
     }
@@ -159,10 +159,10 @@ impl Layout {
             Constrain::Percent(p) => {
                 let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
                 Coords::new(percent, size.y)
-            },
+            }
             Constrain::Min(val) => {
                 Coords::new(max(child.width(size), *val), size.y)
-            },
+            }
             Constrain::Fill => Coords::new(size.x - used, size.y),
         }
     }

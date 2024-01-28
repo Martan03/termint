@@ -101,7 +101,8 @@ impl Grad {
 
     /// Renders [`Grad`] with word wrapping and horizontal gradient
     fn render_word_wrap_hor(&self, pos: &Coords, size: &Coords) {
-        let step = self.get_step(size.x as i16);
+        let width = min(size.x, self.text.len());
+        let step = self.get_step(width as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -185,7 +186,8 @@ impl Grad {
 
     /// Renders [`Grad`] with letter wrapping and horizontal gradient
     fn render_letter_wrap_hor(&self, pos: &Coords, size: &Coords) {
-        let step = self.get_step(size.x as i16);
+        let width = min(size.x, self.text.len());
+        let step = self.get_step(width as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
