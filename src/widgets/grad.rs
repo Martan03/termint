@@ -42,7 +42,7 @@ impl Grad {
 
     /// Gets [`Grad`] as string
     pub fn get(&self) -> String {
-        let step = self.get_step(self.text.len() as i16);
+        let step = self.get_step(self.text.len() as i16 - 1);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -269,12 +269,12 @@ impl Grad {
             }
             coords.x += len;
         }
-        coords.y + 1
+        coords.y
     }
 
     /// Gets height of the [`Grad`] when using letter wrap
     fn height_letter_wrap(&self, width: usize) -> usize {
-        (self.text.len() as f32 / width as f32).ceil() as usize
+        (self.text.len() as f32 / width as f32).floor() as usize
     }
 }
 
