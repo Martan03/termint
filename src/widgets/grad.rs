@@ -42,20 +42,14 @@ impl Grad {
 
     /// Gets [`Grad`] as string
     pub fn get(&self) -> String {
-        let (r_step, g_step, b_step) = self.get_step(self.text.len() as i16);
+        let step = self.get_step(self.text.len() as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
-        println!("{}", self.get_ansi());
-
-        let mut res = "".to_string();
+        let mut res = self.get_ansi();
         for c in self.text.chars() {
             res += &format!("{}{c}", Fg::RGB(r, g, b));
-            (r, g, b) = (
-                (r as i16 + r_step) as u8,
-                (g as i16 + g_step) as u8,
-                (b as i16 + b_step) as u8,
-            );
+            (r, g, b) = self.add_step((r, g, b), step);
         }
         res += "\x1b[0m";
 
@@ -107,7 +101,7 @@ impl Grad {
 
     /// Renders [`Grad`] with word wrapping and horizontal gradient
     fn render_word_wrap_hor(&self, pos: &Coords, size: &Coords) {
-        let (r_step, g_step, b_step) = self.get_step(size.x as i16);
+        let step = self.get_step(size.x as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -133,12 +127,12 @@ impl Grad {
             if coords.x != 0 {
                 print!(" ");
                 coords.x += 1;
-                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+                (r, g, b) = self.add_step((r, g, b), step);
             }
 
             for c in word.chars() {
                 print!("{}{c}", Fg::RGB(r, g, b));
-                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+                (r, g, b) = self.add_step((r, g, b), step);
             }
             coords.x += len;
         }
@@ -147,7 +141,7 @@ impl Grad {
     /// Renders [`Grad`] with word wrapping and vertical gradient
     fn render_word_wrap_ver(&self, pos: &Coords, size: &Coords) {
         let height = cmp::min(self.height_word_wrap(size.x), size.y);
-        let (r_step, g_step, b_step) = self.get_step(height as i16);
+        let step = self.get_step(height as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -166,7 +160,7 @@ impl Grad {
 
                 coords.x = 0;
                 print!("{}", Cursor::Pos(pos.x, coords.y));
-                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+                (r, g, b) = self.add_step((r, g, b), step);
             }
 
             if coords.x != 0 {
@@ -181,7 +175,6 @@ impl Grad {
         }
     }
 
-
     /// Renders [`Grad`] with letter wrapping
     fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
         match self.direction {
@@ -192,7 +185,7 @@ impl Grad {
 
     /// Renders [`Grad`] with letter wrapping and horizontal gradient
     fn render_letter_wrap_hor(&self, pos: &Coords, size: &Coords) {
-        let (r_step, g_step, b_step) = self.get_step(size.x as i16);
+        let step = self.get_step(size.x as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -210,14 +203,14 @@ impl Grad {
             }
 
             print!("{}{c}", Fg::RGB(r, g, b));
-            (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+            (r, g, b) = self.add_step((r, g, b), step);
         }
     }
 
     /// Renders [`Grad`] with letter wrapping and vertical gradient
     fn render_letter_wrap_ver(&self, pos: &Coords, size: &Coords) {
         let height = cmp::min(self.height_letter_wrap(size.x), size.y);
-        let (r_step, g_step, b_step) = self.get_step(height as i16);
+        let step = self.get_step(height as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
@@ -230,7 +223,7 @@ impl Grad {
 
             if i % size.x == 0 {
                 print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
-                (r, g, b) = self.add_step((r, g, b), (r_step, g_step, b_step));
+                (r, g, b) = self.add_step((r, g, b), step);
             }
 
             print!("{}{c}", Fg::RGB(r, g, b));
