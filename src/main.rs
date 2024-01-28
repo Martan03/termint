@@ -1,5 +1,5 @@
 use termint::{
-    enums::{bg::Bg, fg::Fg},
+    enums::{bg::Bg, fg::Fg, wrap::Wrap},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::{
         block::Block, border::BorderType, grad::Grad, span::StrSpanExtension,
@@ -16,18 +16,21 @@ fn main() {
 fn test_block() {
     println!("\x1b[2J");
 
-    let mut block = Block::new().title("Not easy".to_span());
+    let mut block = Block::new()
+        .title("Not easy".to_span())
+        .direction(Direction::Horizontal);
 
     let mut block1 = Block::new();
 
     let grad =
-        Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
-    block1.add_child(Box::new(grad), Constrain::Min(0));
+        Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255))
+            .wrap(Wrap::Letter);
+    block1.add_child(Box::new(grad), Constrain::Percent(100));
     block.add_child(Box::new(block1), Constrain::Min(0));
 
     block.render(&Coords::new(1, 1), &Coords::new(20, 9));
 
-    println!("\x1b[4B");
+    println!("\x1b[1B");
 }
 
 #[allow(unused)]

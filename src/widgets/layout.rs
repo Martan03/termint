@@ -81,8 +81,11 @@ impl Layout {
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
-            let mut child_size =
-                self.child_size(&self.children[i], &self.constrain[i], size);
+            let mut child_size = self.child_size_ver(
+                &self.children[i],
+                &self.constrain[i],
+                size,
+            );
             if child_size.y + coords.y - pos.y > size.y {
                 child_size.y = size.y.saturating_sub(coords.y);
             }
@@ -95,14 +98,15 @@ impl Layout {
     /// Renders [`Layout`] in horizontal [`Direction`]
     fn render_horizontal(&self, pos: &Coords, size: &Coords) {
         let mut coords = Coords::new(pos.x, pos.y);
-        let size = Coords::new(size.y, size.x);
 
         for i in 0..self.children.len() {
-            let mut child_size =
-                self.child_size(&self.children[i], &self.constrain[i], &size);
-            child_size.transpone();
-            if child_size.x + coords.x - pos.x > size.y {
-                child_size.x = size.y - coords.x;
+            let mut child_size = self.child_size_hor(
+                &self.children[i],
+                &self.constrain[i],
+                size,
+            );
+            if child_size.x + coords.x - pos.x > size.x {
+                child_size.x = size.x.saturating_sub(coords.x);
             }
 
             self.children[i].render(&coords, &child_size);
@@ -112,7 +116,7 @@ impl Layout {
     }
 
     /// Gets given child size in vertical layout
-    fn child_size(
+    fn child_size_ver(
         &self,
         child: &Box<dyn Widget>,
         constrain: &Constrain,
@@ -126,6 +130,25 @@ impl Layout {
             }
             Constrain::Min(val) => {
                 Coords::new(size.x, max(child.height(size), *val))
+            }
+        }
+    }
+
+    /// Gets given child size in horizontal layout
+    fn child_size_hor(
+        &self,
+        child: &Box<dyn Widget>,
+        constrain: &Constrain,
+        size: &Coords,
+    ) -> Coords {
+        match constrain {
+            Constrain::Length(len) => Coords::new(*len, size.y),
+            Constrain::Percent(p) => {
+                let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
+                Coords::new(percent, size.y)
+            }
+            Constrain::Min(val) => {
+                Coords::new(max(child.width(size), *val), size.y)
             }
         }
     }
@@ -150,5 +173,13 @@ impl Widget for Layout {
             height += child.height(size);
         }
         height
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        let mut width = 0;
+        for child in self.children.iter() {
+            width += child.width(size);
+        }
+        width
     }
 }

@@ -99,6 +99,11 @@ impl Span {
         self
     }
 
+    /// Gets [`Span`] length
+    pub fn len(&self) -> usize {
+        self.text.len()
+    }
+
     /// Gets ANSI codes to set fg, bg and other [`Span`] properties
     fn get_ansi(&self) -> String {
         let m = self
@@ -187,6 +192,11 @@ impl Span {
     fn height_letter_wrap(&self, size: &Coords) -> usize {
         (self.text.len() as f32 / size.x as f32).floor() as usize + 1
     }
+
+    /// Gets with of the [`Span`] when using letter wrap
+    fn width_letter_wrap(&self, size: &Coords) -> usize {
+        (self.text.len() as f32 / size.y as f32).floor() as usize + 1
+    }
 }
 
 impl Widget for Span {
@@ -205,6 +215,13 @@ impl Widget for Span {
         match self.wrap {
             Wrap::Letter => self.height_letter_wrap(size),
             Wrap::Word => self.height_word_wrap(size),
+        }
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.width_letter_wrap(size),
+            Wrap::Word => todo!(),
         }
     }
 }

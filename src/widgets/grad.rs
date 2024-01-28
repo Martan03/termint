@@ -274,7 +274,12 @@ impl Grad {
 
     /// Gets height of the [`Grad`] when using letter wrap
     fn height_letter_wrap(&self, size: &Coords) -> usize {
-        (self.text.len() as f32 / size.x as f32).floor() as usize + 1
+        (self.text.len() as f32 / size.x as f32).ceil() as usize
+    }
+
+    /// Gets width of the [`Grad`] when using letter wrap
+    fn width_letter_wrap(&self, size: &Coords) -> usize {
+        (self.text.len() as f32 / size.y as f32).ceil() as usize
     }
 }
 
@@ -294,6 +299,13 @@ impl Widget for Grad {
         match self.wrap {
             Wrap::Letter => self.height_letter_wrap(size),
             Wrap::Word => self.height_word_wrap(size),
+        }
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.width_letter_wrap(size),
+            Wrap::Word => todo!(),
         }
     }
 }

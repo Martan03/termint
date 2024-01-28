@@ -1,4 +1,4 @@
-use std::iter::repeat;
+use std::{cmp::max, iter::repeat};
 
 use crate::{
     borders,
@@ -179,6 +179,22 @@ impl Widget for Block {
         } else {
             0
         };
-        height + self.layout.height(size)
+        let size =
+            Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
+        height + self.layout.height(&size)
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        let top_bottom = borders!(RIGHT, LEFT);
+        let width = if (self.borders & top_bottom) == top_bottom {
+            2
+        } else if (self.borders & top_bottom) != 0 {
+            1
+        } else {
+            0
+        };
+        let size =
+            Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
+        max(self.layout.width(&size), self.title.len()) + width
     }
 }

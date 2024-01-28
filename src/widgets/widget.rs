@@ -9,6 +9,9 @@ pub trait Widget {
 
     /// Gets height of the [`Widget`]
     fn height(&self, size: &Coords) -> usize;
+
+    /// Gets width of the [`Widget`]
+    fn width(&self, size: &Coords) -> usize;
 }
 
 impl fmt::Debug for dyn Widget {
