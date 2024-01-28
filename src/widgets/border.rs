@@ -3,11 +3,15 @@
 /// Combining sides:
 /// Using binary or (`|`):
 /// ```rust
+/// use termint::widgets::border::Border;
+///
 /// // Border containing top and left side
 /// let sides = Border::TOP | Border::LEFT;
 /// ```
 /// Using macro:
 /// ```rust
+/// use termint::{borders, widgets::border::Border};
+///
 /// // Border containing top and left side
 /// let sides = borders!(TOP, LEFT);
 /// ```

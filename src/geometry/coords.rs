@@ -10,7 +10,7 @@ pub struct Coords {
 impl Coords {
     /// Creates new [`Coords`] containing given x and y coordinates
     pub fn new(x: usize, y: usize) -> Self {
-        Self { x: x, y: y }
+        Self { x, y }
     }
 
     /// Transpones [`Coords`]

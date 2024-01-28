@@ -11,6 +11,16 @@ use super::widget::Widget;
 ///
 /// ## Example usage:
 /// ```rust
+/// use termint::{
+///     enums::{bg::Bg, fg::Fg, modifier::Modifier},
+///     geometry::coords::Coords,
+///     modifiers,
+///     widgets::{
+///         span::{Span, StrSpanExtension},
+///         widget::Widget,
+///     },
+/// };
+///
 /// // Creating span using new with red foreground:
 /// let span = Span::new("Red text").fg(Fg::Red);
 /// // Creating span using &str conversion with red text and white background
