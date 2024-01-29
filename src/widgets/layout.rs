@@ -78,6 +78,21 @@ impl Layout {
 
     /// Renders [`Layout`] in vertical [`Direction`]
     fn render_vertical(&self, pos: &Coords, size: &Coords) {
+        let mut sizes: Vec<Coords> = Vec::new();
+        let mut total = 0;
+        let mut fill = 0;
+        for i in 0..self.children.len() {
+            if self.constrain[i] == Constrain::Fill {
+                fill += 1;
+            }
+            sizes.push(self.child_size_ver(
+                &self.children[i],
+                &self.constrain[i],
+                size,
+            ));
+            total += sizes[i].y;
+        }
+
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
@@ -85,12 +100,12 @@ impl Layout {
                 break;
             }
 
-            let mut child_size = self.child_size_ver(
-                &self.children[i],
-                &self.constrain[i],
-                coords.y - pos.y,
-                size,
-            );
+            let mut child_size = match self.constrain[i] {
+                Constrain::Fill => {
+                    Coords::new(size.x, (size.y.saturating_sub(total)) / fill)
+                }
+                _ => sizes[i],
+            };
             if child_size.y + coords.y - pos.y > size.y {
                 child_size.y = size.y.saturating_sub(coords.y);
             }
@@ -102,6 +117,21 @@ impl Layout {
 
     /// Renders [`Layout`] in horizontal [`Direction`]
     fn render_horizontal(&self, pos: &Coords, size: &Coords) {
+        let mut sizes: Vec<Coords> = Vec::new();
+        let mut total = 0;
+        let mut fill = 0;
+        for i in 0..self.children.len() {
+            if self.constrain[i] == Constrain::Fill {
+                fill += 1;
+            }
+            sizes.push(self.child_size_hor(
+                &self.children[i],
+                &self.constrain[i],
+                size,
+            ));
+            total += sizes[i].x;
+        }
+
         let mut coords = Coords::new(pos.x, pos.y);
 
         for i in 0..self.children.len() {
@@ -109,12 +139,12 @@ impl Layout {
                 break;
             }
 
-            let mut child_size = self.child_size_hor(
-                &self.children[i],
-                &self.constrain[i],
-                coords.x - pos.x,
-                size,
-            );
+            let mut child_size = match self.constrain[i] {
+                Constrain::Fill => {
+                    Coords::new((size.x.saturating_sub(total)) / fill, size.y)
+                }
+                _ => sizes[i],
+            };
             if child_size.x + coords.x - pos.x > size.x {
                 child_size.x = size.x.saturating_sub(coords.x);
             }
@@ -130,7 +160,6 @@ impl Layout {
         &self,
         child: &Box<dyn Widget>,
         constrain: &Constrain,
-        used: usize,
         size: &Coords,
     ) -> Coords {
         match constrain {
@@ -142,7 +171,7 @@ impl Layout {
             Constrain::Min(val) => {
                 Coords::new(size.x, max(child.height(size), *val))
             }
-            Constrain::Fill => Coords::new(size.x, size.y - used),
+            Constrain::Fill => Coords::new(size.x, 0),
         }
     }
 
@@ -151,7 +180,6 @@ impl Layout {
         &self,
         child: &Box<dyn Widget>,
         constrain: &Constrain,
-        used: usize,
         size: &Coords,
     ) -> Coords {
         match constrain {
@@ -163,7 +191,7 @@ impl Layout {
             Constrain::Min(val) => {
                 Coords::new(max(child.width(size), *val), size.y)
             }
-            Constrain::Fill => Coords::new(size.x - used, size.y),
+            Constrain::Fill => Coords::new(0, size.y),
         }
     }
 }

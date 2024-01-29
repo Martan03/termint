@@ -1,5 +1,5 @@
 /// [`Constrain`] enum contains some constrains for when adjusting layout
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Constrain {
     /// Actual size
     Length(usize),
@@ -7,6 +7,6 @@ pub enum Constrain {
     Percent(usize),
     /// Minimum size of the widget
     Min(usize),
-    /// Fills rest of the space (other widgets will not have space left)
+    /// Fills rest of the space (space is divided by all widgets with fill)
     Fill,
 }

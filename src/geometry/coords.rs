@@ -1,7 +1,7 @@
 use std::ops::{Add, Sub};
 
 /// Contains x and y coordinates
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Coords {
     pub x: usize,
     pub y: usize,
