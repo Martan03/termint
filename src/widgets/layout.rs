@@ -77,20 +77,8 @@ impl Layout {
 
     /// Renders [`Layout`] in vertical [`Direction`]
     fn render_vertical(&self, pos: &Coords, size: &Coords) {
-        let mut sizes: Vec<Coords> = Vec::new();
-        let mut total = 0;
-        let mut fill = 0;
-        for i in 0..self.children.len() {
-            if self.constrain[i] == Constrain::Fill {
-                fill += 1;
-            }
-            sizes.push(self.child_size_ver(
-                &self.children[i],
-                &self.constrain[i],
-                size,
-            ));
-            total += sizes[i].y;
-        }
+        let (sizes, total, fill) = self
+            .get_sizes(size, |child, c, s| self.child_size_ver(child, c, s));
 
         let mut coords = Coords::new(pos.x, pos.y);
 
@@ -103,7 +91,7 @@ impl Layout {
                 Constrain::Fill => {
                     Coords::new(size.x, (size.y.saturating_sub(total)) / fill)
                 }
-                _ => sizes[i],
+                _ => Coords::new(size.x, sizes[i]),
             };
             if child_size.y + coords.y - pos.y > size.y {
                 child_size.y = size.y.saturating_sub(coords.y);
@@ -116,20 +104,8 @@ impl Layout {
 
     /// Renders [`Layout`] in horizontal [`Direction`]
     fn render_horizontal(&self, pos: &Coords, size: &Coords) {
-        let mut sizes: Vec<Coords> = Vec::new();
-        let mut total = 0;
-        let mut fill = 0;
-        for i in 0..self.children.len() {
-            if self.constrain[i] == Constrain::Fill {
-                fill += 1;
-            }
-            sizes.push(self.child_size_hor(
-                &self.children[i],
-                &self.constrain[i],
-                size,
-            ));
-            total += sizes[i].x;
-        }
+        let (sizes, total, fill) = self
+            .get_sizes(size, |child, c, s| self.child_size_hor(child, c, s));
 
         let mut coords = Coords::new(pos.x, pos.y);
 
@@ -142,7 +118,7 @@ impl Layout {
                 Constrain::Fill => {
                     Coords::new((size.x.saturating_sub(total)) / fill, size.y)
                 }
-                _ => sizes[i],
+                _ => Coords::new(sizes[i], size.y),
             };
             if child_size.x + coords.x - pos.x > size.x {
                 child_size.x = size.x.saturating_sub(coords.x);
@@ -160,17 +136,15 @@ impl Layout {
         child: &Box<dyn Widget>,
         constrain: &Constrain,
         size: &Coords,
-    ) -> Coords {
+    ) -> usize {
         match constrain {
-            Constrain::Length(len) => Coords::new(size.x, *len),
+            Constrain::Length(len) => *len,
             Constrain::Percent(p) => {
                 let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
-                Coords::new(size.x, percent)
+                percent
             }
-            Constrain::Min(val) => {
-                Coords::new(size.x, max(child.height(size), *val))
-            }
-            Constrain::Fill => Coords::new(size.x, 0),
+            Constrain::Min(val) => max(child.height(size), *val),
+            Constrain::Fill => 0,
         }
     }
 
@@ -180,18 +154,43 @@ impl Layout {
         child: &Box<dyn Widget>,
         constrain: &Constrain,
         size: &Coords,
-    ) -> Coords {
+    ) -> usize {
         match constrain {
-            Constrain::Length(len) => Coords::new(*len, size.y),
+            Constrain::Length(len) => *len,
             Constrain::Percent(p) => {
                 let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
-                Coords::new(percent, size.y)
+                percent
             }
-            Constrain::Min(val) => {
-                Coords::new(max(child.width(size), *val), size.y)
-            }
-            Constrain::Fill => Coords::new(0, size.y),
+            Constrain::Min(val) => max(child.width(size), *val),
+            Constrain::Fill => 0,
         }
+    }
+
+    /// Gets children sizes
+    fn get_sizes<F>(
+        &self,
+        size: &Coords,
+        child_size: F,
+    ) -> (Vec<usize>, usize, usize)
+    where
+        F: Fn(&Box<dyn Widget>, &Constrain, &Coords) -> usize,
+    {
+        let mut sizes: Vec<usize> = Vec::new();
+        let mut total = 0;
+        let mut fill = 0;
+        for i in 0..self.children.len() {
+            if self.constrain[i] == Constrain::Fill {
+                fill += 1;
+            }
+            sizes.push(child_size(
+                &self.children[i],
+                &self.constrain[i],
+                size,
+            ));
+            total += sizes[i];
+        }
+
+        (sizes, total, fill)
     }
 }
 
