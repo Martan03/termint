@@ -136,7 +136,7 @@ impl Span {
 
             coords.y += 1;
             if coords.y >= pos.y + size.y || print_str.len() > size.x {
-                self.ellipsis_move(&coords, pos, size);
+                self.render_ellipsis(&coords, size);
                 break;
             }
 
@@ -164,10 +164,11 @@ impl Span {
         }
     }
 
-    fn ellipsis_move(&self, coords: &Coords, pos: &Coords, size: &Coords) {
+    /// Renders ellipsis when rendering [`Span`] with word wrap
+    fn render_ellipsis(&self, coords: &Coords, size: &Coords) {
         let sum = coords.x + self.ellipsis.len();
         if sum > size.x {
-            if coords.x + size.x < pos.x + sum {
+            if size.x < self.ellipsis.len() {
                 return;
             }
 

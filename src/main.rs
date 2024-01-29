@@ -12,8 +12,8 @@ use termint::{
 };
 
 fn main() {
-    // test_block();
-    test_layout();
+    test_block();
+    // test_layout();
     // cool_example();
 }
 
@@ -31,7 +31,7 @@ fn test_block() {
     block1.add_child(Box::new(grad), Constrain::Percent(100));
     let block2 = Block::new().title("Test".to_span());
     let block3 = Block::new().grad_title(Grad::new(
-        "Test of really long title",
+        "Test",
         (100, 200, 100),
         (20, 160, 255),
     ));

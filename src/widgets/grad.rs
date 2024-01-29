@@ -132,49 +132,54 @@ impl Grad {
         print!("{}", Cursor::Pos(pos.x, pos.y));
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
-        let mut space = 0;
         for word in words {
-            let len = word.len();
-            if coords.x + len + space > size.x {
-                coords.y += 1;
+            let print_str = if coords.x == 0 {
+                format!("{word}")
+            } else {
+                format!(" {word}")
+            };
 
-                if coords.y >= pos.y + size.y || len > size.x {
-                    if coords.x + self.ellipsis.len() >= size.x {
-                        let sum = coords.x + self.ellipsis.len();
-                        if let Some(sub) = size.x.checked_sub(sum) {
-                            if sub < pos.x {
-                                break;
-                            }
-                        }
-                        let mv = sum - size.x;
-                        print!("{}", Cursor::Left(mv));
-                    }
-                    for c in self.ellipsis.chars() {
-                        print!("{}{c}", Fg::RGB(r, g, b));
-                        (r, g, b) = self.add_step((r, g, b), step);
-                    }
-                    break;
+            if coords.x + print_str.len() <= size.x {
+                for c in print_str.chars() {
+                    print!("{}{c}", Fg::RGB(r, g, b));
+                    (r, g, b) = self.add_step((r, g, b), step);
                 }
-
-                coords.x = 0;
-                space = 0;
-                print!("{}", Cursor::Pos(pos.x, coords.y));
-                (r, g, b) =
-                    (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+                coords.x += print_str.len();
+                continue;
             }
 
-            if coords.x != 0 {
-                print!(" ");
-                coords.x += 1;
-                (r, g, b) = self.add_step((r, g, b), step);
+            coords.y += 1;
+            if coords.y >= pos.y + size.y || print_str.len() > size.x {
+                self.render_ellipsis_hor(&coords, size, (r, g, b), step);
+                break;
             }
 
-            for c in word.chars() {
-                print!("{}{c}", Fg::RGB(r, g, b));
-                (r, g, b) = self.add_step((r, g, b), step);
-                space = 1;
+            coords.x = 0;
+            print!("{}", Cursor::Pos(pos.x, coords.y));
+            (r, g, b) = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        }
+    }
+
+    /// Renders [`Grad`] ellipsis when horizontal direction and word wrap
+    fn render_ellipsis_hor(
+        &self,
+        coords: &Coords,
+        size: &Coords,
+        rgb: (u8, u8, u8),
+        step: (i16, i16, i16),
+    ) {
+        let (mut r, mut g, mut b) = (rgb.0, rgb.1, rgb.2);
+        let sum = coords.x + self.ellipsis.len();
+        if sum > size.x {
+            if size.x < self.ellipsis.len() {
+                return;
             }
-            coords.x += len;
+
+            print!("{}", Cursor::Left(sum - size.x));
+        }
+        for c in self.ellipsis.chars() {
+            print!("{}{c}", Fg::RGB(r, g, b));
+            (r, g, b) = self.add_step((r, g, b), step);
         }
     }
 
