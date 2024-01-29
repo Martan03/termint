@@ -34,6 +34,7 @@ pub struct Grad {
     bg: Bg,
     modifier: Vec<Modifier>,
     wrap: Wrap,
+    ellipsis: String,
 }
 
 impl Grad {
@@ -51,6 +52,7 @@ impl Grad {
             bg: Bg::Default,
             modifier: Vec::new(),
             wrap: Wrap::Word,
+            ellipsis: "...".to_string(),
         }
     }
 
@@ -94,6 +96,12 @@ impl Grad {
         self
     }
 
+    /// Sets [`Grad`] ellipsis to given string
+    pub fn ellipsis(mut self, ellipsis: &str) -> Self {
+        self.ellipsis = ellipsis.to_string();
+        self
+    }
+
     /// Gets ANSI codes to set bg and modifiers properties
     fn get_ansi(&self) -> String {
         let m = self
@@ -131,6 +139,11 @@ impl Grad {
                 coords.y += 1;
 
                 if coords.y >= pos.y + size.y || len > size.x {
+                    if coords.x + self.ellipsis.len() > size.x {
+                        if coords.x == 0 {
+                            break;
+                        }
+                    }
                     break;
                 }
 
@@ -314,6 +327,9 @@ impl Grad {
 
 impl Widget for Grad {
     fn render(&self, pos: &Coords, size: &Coords) {
+        if size.x == 0 || size.y == 0 {
+            return;
+        }
         print!("{}", self.get_ansi());
 
         match self.wrap {

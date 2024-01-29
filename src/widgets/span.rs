@@ -124,15 +124,17 @@ impl Span {
         let mut space = 0;
         for word in words {
             let len = word.len();
-            if coords.x + len + space > size.x {
+            if coords.x + len + space >= size.x {
                 coords.y += 1;
 
                 if coords.y >= pos.y + size.y || len > size.x {
-                    if coords.x + self.ellipsis.len() > size.x {
-                        if coords.x == 0 {
-                            break;
-                        }
+                    if coords.x + self.ellipsis.len() >= size.x {
                         let sum = coords.x + self.ellipsis.len();
+                        if let Some(sub) = size.x.checked_sub(sum) {
+                            if sub < pos.x {
+                                break;
+                            }
+                        }
                         print!("{}", Cursor::Left(sum - size.x));
                     }
                     print!("{}", self.ellipsis);
