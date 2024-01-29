@@ -139,10 +139,19 @@ impl Grad {
                 coords.y += 1;
 
                 if coords.y >= pos.y + size.y || len > size.x {
-                    if coords.x + self.ellipsis.len() > size.x {
-                        if coords.x == 0 {
-                            break;
+                    if coords.x + self.ellipsis.len() >= size.x {
+                        let sum = coords.x + self.ellipsis.len();
+                        if let Some(sub) = size.x.checked_sub(sum) {
+                            if sub < pos.x {
+                                break;
+                            }
                         }
+                        let mv = sum - size.x;
+                        print!("{}", Cursor::Left(mv));
+                    }
+                    for c in self.ellipsis.chars() {
+                        print!("{}{c}", Fg::RGB(r, g, b));
+                        (r, g, b) = self.add_step((r, g, b), step);
                     }
                     break;
                 }
