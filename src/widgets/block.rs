@@ -161,7 +161,7 @@ impl Widget for Block {
 
         self.title.render(
             &Coords::new(pos.x + 1, pos.y),
-            &Coords::new(size.x.saturating_sub(1), 1),
+            &Coords::new(size.x.saturating_sub(2), 1),
         );
 
         self.layout.render(

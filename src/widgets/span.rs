@@ -128,6 +128,9 @@ impl Span {
 
                 if coords.y >= pos.y + size.y || len > size.x {
                     if coords.x + self.ellipsis.len() >= size.x {
+                        if coords.x == 0 {
+                            break;
+                        }
                         let sum = coords.x + self.ellipsis.len();
                         print!("{}", Cursor::Left(sum - size.x));
                     }

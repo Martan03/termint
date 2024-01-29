@@ -12,9 +12,9 @@ use termint::{
 };
 
 fn main() {
-    // test_block();
+    test_block();
     // test_layout();
-    cool_example();
+    // cool_example();
 }
 
 #[allow(unused)]
@@ -33,7 +33,7 @@ fn test_block() {
     block.add_child(Box::new(block1), Constrain::Min(0));
 
     let block2 = Block::new().title("Test".to_span());
-    block.add_child(Box::new(block2), Constrain::Fill);
+    block.add_child(Box::new(block2), Constrain::Min(0));
     let block3 = Block::new().title("Test".to_span());
     block.add_child(Box::new(block3), Constrain::Fill);
 
@@ -119,5 +119,5 @@ fn cool_example() {
     main.add_child(Box::new(fill), Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(40, 10));
-    println!("\x1b[10B");
+    println!("\x1b[1B");
 }
