@@ -128,19 +128,20 @@ impl Span {
                 format!(" {word}")
             };
 
-            if coords.x + print_str.len() > size.x {
-                coords.y += 1;
-                if coords.y >= pos.y + size.y || print_str.len() > size.x {
-                    self.ellipsis_move(&coords, pos, size);
-                    break;
-                }
-
-                coords.x = 0;
-                print!("{}", Cursor::Pos(pos.x, coords.y));
+            if coords.x + print_str.len() <= size.x {
+                print!("{print_str}");
+                coords.x += print_str.len();
+                continue;
             }
 
-            print!("{print_str}");
-            coords.x += print_str.len();
+            coords.y += 1;
+            if coords.y >= pos.y + size.y || print_str.len() > size.x {
+                self.ellipsis_move(&coords, pos, size);
+                break;
+            }
+
+            coords.x = 0;
+            print!("{}", Cursor::Pos(pos.x, coords.y));
         }
     }
 
@@ -164,9 +165,9 @@ impl Span {
     }
 
     fn ellipsis_move(&self, coords: &Coords, pos: &Coords, size: &Coords) {
-        if coords.x + self.ellipsis.len() >= size.x {
-            let sum = coords.x + self.ellipsis.len();
-            if size.x < pos.x + sum {
+        let sum = coords.x + self.ellipsis.len();
+        if sum > size.x {
+            if coords.x + size.x < pos.x + sum {
                 return;
             }
 

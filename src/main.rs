@@ -12,8 +12,8 @@ use termint::{
 };
 
 fn main() {
-    test_block();
-    // test_layout();
+    // test_block();
+    test_layout();
     // cool_example();
 }
 
@@ -29,7 +29,7 @@ fn test_block() {
     let grad =
         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
     block1.add_child(Box::new(grad), Constrain::Percent(100));
-    let block2 = Block::new().title("Test of redone render".to_span());
+    let block2 = Block::new().title("Test".to_span());
     let block3 = Block::new().grad_title(Grad::new(
         "Test of really long title",
         (100, 200, 100),

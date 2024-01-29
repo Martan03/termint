@@ -158,7 +158,7 @@ impl Layout {
         match constrain {
             Constrain::Length(len) => *len,
             Constrain::Percent(p) => {
-                let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
+                let percent = (*p as f32 / 100.0 * size.x as f32) as usize;
                 percent
             }
             Constrain::Min(val) => max(child.width(size), *val),
