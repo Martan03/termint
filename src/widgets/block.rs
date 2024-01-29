@@ -9,6 +9,7 @@ use crate::{
 
 use super::{
     border::{Border, BorderType},
+    grad::Grad,
     layout::Layout,
     widget::Widget,
 };
@@ -48,7 +49,7 @@ use super::{
 /// ```
 #[derive(Debug)]
 pub struct Block {
-    title: Span,
+    title: Box<dyn Widget>,
     borders: u8,
     border_type: BorderType,
     border_color: Fg,
@@ -59,7 +60,7 @@ impl Block {
     /// Creates new [`Block`] with no title and all borders
     pub fn new() -> Self {
         Self {
-            title: Span::new(""),
+            title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_color: Fg::Default,
@@ -67,9 +68,15 @@ impl Block {
         }
     }
 
-    /// Sets title of [`Block`]
+    /// Sets [`Span`] as a title of [`Block`]
     pub fn title(mut self, title: Span) -> Self {
-        self.title = title;
+        self.title = Box::new(title);
+        self
+    }
+
+    /// Sets [`Grad`] as a title of [`Block`]
+    pub fn grad_title(mut self, title: Grad) -> Self {
+        self.title = Box::new(title);
         self
     }
 
@@ -184,16 +191,19 @@ impl Widget for Block {
     }
 
     fn width(&self, size: &Coords) -> usize {
-        let top_bottom = borders!(RIGHT, LEFT);
-        let width = if (self.borders & top_bottom) == top_bottom {
+        let right_left = borders!(RIGHT, LEFT);
+        let width = if (self.borders & right_left) == right_left {
             2
-        } else if (self.borders & top_bottom) != 0 {
+        } else if (self.borders & right_left) != 0 {
             1
         } else {
             0
         };
         let size =
             Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
-        max(self.layout.width(&size), self.title.len()) + width
+        max(
+            self.layout.width(&size),
+            self.title.width(&Coords::new(0, 1)) - 1,
+        ) + width
     }
 }

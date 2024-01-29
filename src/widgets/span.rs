@@ -121,13 +121,14 @@ impl Span {
         print!("{}", Cursor::Pos(pos.x, pos.y));
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
+        let mut space = 0;
         for word in words {
             let len = word.len();
-            if coords.x + len + 1 > size.x {
+            if coords.x + len + space > size.x {
                 coords.y += 1;
 
                 if coords.y >= pos.y + size.y || len > size.x {
-                    if coords.x + self.ellipsis.len() >= size.x {
+                    if coords.x + self.ellipsis.len() > size.x {
                         if coords.x == 0 {
                             break;
                         }
@@ -139,15 +140,16 @@ impl Span {
                 }
 
                 coords.x = 0;
+                space = 0;
                 print!("{}", Cursor::Pos(pos.x, coords.y));
             }
-
             if coords.x == 0 {
                 print!("{word}");
                 coords.x += len;
             } else {
                 print!(" {word}");
                 coords.x += len + 1;
+                space = 1;
             }
         }
     }
