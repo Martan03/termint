@@ -10,14 +10,13 @@ use super::widget::Widget;
 ///
 /// ## Example usage:
 /// ```rust
-/// use termint::{
-///     geometry::{constrain::Constrain, coords::Coords},
-///     widgets::{
-///         block::Block, layout::Layout, span::StrSpanExtension,
-///         widget::Widget,
-///     },
-/// };
-///
+/// # use termint::{
+/// #     geometry::{constrain::Constrain, coords::Coords},
+/// #     widgets::{
+/// #         block::Block, layout::Layout, span::StrSpanExtension,
+/// #         widget::Widget,
+/// #     },
+/// # };
 /// // Creates horizontal layout containing two blocks each covering 50%
 /// let block1 = Block::new().title("Block 1".to_span());
 /// let block2 = Block::new().title("Block 2".to_span());

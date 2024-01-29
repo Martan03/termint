@@ -12,6 +12,20 @@ use crate::{
 use super::widget::Widget;
 
 /// Text with gradient foreground
+///
+/// ## Example usage:
+/// ```
+/// # use termint::{
+/// #     geometry::coords::Coords,
+/// #     widgets::{grad::Grad, widget::Widget},
+/// # };
+/// let grad = Grad::new(
+///     "This text will have a gradient foreground and word wrap",
+///     (0, 220, 255),
+///     (200, 60, 255),
+/// );
+/// grad.render(&Coords::new(1, 1), &Coords::new(10, 5));
+/// ```
 pub struct Grad {
     text: String,
     fg_start: RGB,

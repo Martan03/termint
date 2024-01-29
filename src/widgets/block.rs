@@ -17,17 +17,16 @@ use super::{
 ///
 /// ## Example usage:
 /// ```rust
-/// use termint::{
-///     enums::fg::Fg,
-///        geometry::{
-///         constrain::Constrain, coords::Coords, direction::Direction,
-///     },
-///     widgets::{
-///         block::Block, border::BorderType, span::StrSpanExtension,
-///         widget::Widget,
-///     },
-/// };
-///
+/// # use termint::{
+/// #     enums::fg::Fg,
+/// #        geometry::{
+/// #         constrain::Constrain, coords::Coords, direction::Direction,
+/// #     },
+/// #     widgets::{
+/// #         block::Block, border::BorderType, span::StrSpanExtension,
+/// #         widget::Widget,
+/// #     },
+/// # };
 /// // Creates block with title Termint in red
 /// // with double line border in lightgray
 /// // Block layout will be horizontal

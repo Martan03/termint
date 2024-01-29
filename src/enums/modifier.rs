@@ -4,8 +4,7 @@ use std::fmt;
 ///
 /// You can use macro to get vector with Modifers:
 /// ```rust
-/// use termint::{enums::modifier::Modifier, modifiers};
-///
+/// # use termint::{enums::modifier::Modifier, modifiers};
 /// // Gets vector with Bold and Italic modifier
 /// let modifiers = modifiers!(Bold, Italic);
 /// ```
