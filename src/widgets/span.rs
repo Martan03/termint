@@ -121,38 +121,26 @@ impl Span {
         print!("{}", Cursor::Pos(pos.x, pos.y));
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
-        let mut space = 0;
         for word in words {
-            let len = word.len();
-            if coords.x + len + space >= size.x {
-                coords.y += 1;
+            let print_str = if coords.x == 0 {
+                format!("{word}")
+            } else {
+                format!(" {word}")
+            };
 
-                if coords.y >= pos.y + size.y || len > size.x {
-                    if coords.x + self.ellipsis.len() >= size.x {
-                        let sum = coords.x + self.ellipsis.len();
-                        if let Some(sub) = size.x.checked_sub(sum) {
-                            if sub < pos.x {
-                                break;
-                            }
-                        }
-                        print!("{}", Cursor::Left(sum - size.x));
-                    }
-                    print!("{}", self.ellipsis);
+            if coords.x + print_str.len() > size.x {
+                coords.y += 1;
+                if coords.y >= pos.y + size.y || print_str.len() > size.x {
+                    self.ellipsis_move(&coords, pos, size);
                     break;
                 }
 
                 coords.x = 0;
-                space = 0;
                 print!("{}", Cursor::Pos(pos.x, coords.y));
             }
-            if coords.x == 0 {
-                print!("{word}");
-                coords.x += len;
-            } else {
-                print!(" {word}");
-                coords.x += len + 1;
-                space = 1;
-            }
+
+            print!("{print_str}");
+            coords.x += print_str.len();
         }
     }
 
@@ -173,6 +161,18 @@ impl Span {
 
             print!("{c}");
         }
+    }
+
+    fn ellipsis_move(&self, coords: &Coords, pos: &Coords, size: &Coords) {
+        if coords.x + self.ellipsis.len() >= size.x {
+            let sum = coords.x + self.ellipsis.len();
+            if size.x < pos.x + sum {
+                return;
+            }
+
+            print!("{}", Cursor::Left(sum - size.x));
+        }
+        print!("{}", self.ellipsis);
     }
 
     /// Gets height of the [`Span`] when using word wrap
