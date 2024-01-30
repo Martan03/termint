@@ -92,5 +92,7 @@
 pub mod enums;
 /// Contains structs for geometry, such as Coords
 pub mod geometry;
+/// Contains useful macros
+pub mod macros;
 /// Contains widgets (Layout, Block, Span)
 pub mod widgets;

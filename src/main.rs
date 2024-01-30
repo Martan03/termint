@@ -1,4 +1,5 @@
 use termint::{
+    create_help,
     enums::{bg::Bg, fg::Fg, modifier::Modifier},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     modifiers,
@@ -18,6 +19,15 @@ fn main() {
     // cool_example();
     // test_paragraph();
     readme_example();
+
+    create_help!(
+        "Test" => {"This is description"},
+        "Another test" => {
+            "Another description",
+            "This can contain multiple literals"
+        },
+        "Another test" => {"Another description"}
+    );
 }
 
 #[allow(unused)]
