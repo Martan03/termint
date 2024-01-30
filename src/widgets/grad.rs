@@ -103,7 +103,7 @@ impl Grad {
     }
 
     /// Gets ANSI codes to set bg and modifiers properties
-    fn get_ansi(&self) -> String {
+    pub fn get_ansi(&self) -> String {
         let m = self
             .modifier
             .iter()
@@ -112,7 +112,46 @@ impl Grad {
             .join("");
         format!("{}{}", self.bg, m)
     }
+}
 
+impl Widget for Grad {
+    fn render(&self, pos: &Coords, size: &Coords) {
+        if size.x == 0 || size.y == 0 {
+            return;
+        }
+        print!("{}", self.get_ansi());
+
+        match self.wrap {
+            Wrap::Letter => self.render_letter_wrap(pos, size),
+            Wrap::Word => self.render_word_wrap(pos, size),
+        }
+
+        println!("\x1b[0m");
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.size_letter_wrap(size.x),
+            Wrap::Word => self.height_word_wrap(size),
+        }
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.size_letter_wrap(size.y),
+            Wrap::Word => self.width_word_wrap(size),
+        }
+    }
+}
+
+impl fmt::Display for Grad {
+    /// Automatically converts [`Grad`] to String when printing
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.get())
+    }
+}
+
+impl Grad {
     /// Renders [`Grad`] with word wrapping
     fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
         match self.direction {
@@ -276,7 +315,7 @@ impl Grad {
 
     /// Renders [`Grad`] with letter wrapping and vertical gradient
     fn render_letter_wrap_ver(&self, pos: &Coords, size: &Coords) {
-        let height = min(self.height_letter_wrap(size) - 1, size.y);
+        let height = min(self.size_letter_wrap(size.x) - 1, size.y);
         let step = self.get_step(height as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
@@ -340,14 +379,9 @@ impl Grad {
         coords.y + 1
     }
 
-    /// Gets height of the [`Grad`] when using letter wrap
-    fn height_letter_wrap(&self, size: &Coords) -> usize {
-        (self.text.len() as f32 / size.x as f32).ceil() as usize
-    }
-
     /// Gets width of the [`Grad`] when using word wrap
     fn width_word_wrap(&self, size: &Coords) -> usize {
-        let mut guess = Coords::new(self.width_letter_wrap(size), 0);
+        let mut guess = Coords::new(self.size_letter_wrap(size.y), 0);
 
         while self.height_word_wrap(&guess) > size.y {
             guess.x += 1;
@@ -355,45 +389,8 @@ impl Grad {
         guess.x
     }
 
-    /// Gets width of the [`Grad`] when using letter wrap
-    fn width_letter_wrap(&self, size: &Coords) -> usize {
-        (self.text.len() as f32 / size.y as f32).ceil() as usize
-    }
-}
-
-impl Widget for Grad {
-    fn render(&self, pos: &Coords, size: &Coords) {
-        if size.x == 0 || size.y == 0 {
-            return;
-        }
-        print!("{}", self.get_ansi());
-
-        match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size),
-            Wrap::Word => self.render_word_wrap(pos, size),
-        }
-
-        println!("\x1b[0m");
-    }
-
-    fn height(&self, size: &Coords) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.height_letter_wrap(size),
-            Wrap::Word => self.height_word_wrap(size),
-        }
-    }
-
-    fn width(&self, size: &Coords) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => self.width_word_wrap(size),
-        }
-    }
-}
-
-impl fmt::Display for Grad {
-    /// Automatically converts [`Grad`] to String when printing
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
+    /// Gets size of the [`Grad`] when using letter wrap
+    fn size_letter_wrap(&self, size: usize) -> usize {
+        (self.text.len() as f32 / size as f32).ceil() as usize
     }
 }

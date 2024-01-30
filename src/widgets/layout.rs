@@ -74,7 +74,39 @@ impl Layout {
         self.children.push(child);
         self.constrain.push(constrain);
     }
+}
 
+impl Widget for Layout {
+    /// Renders [`Layout`] and its children inside of it
+    fn render(&self, pos: &Coords, size: &Coords) {
+        if size.x == 0 || size.y == 0 {
+            return;
+        }
+
+        match self.direction {
+            Direction::Vertical => self.render_vertical(pos, size),
+            Direction::Horizontal => self.render_horizontal(pos, size),
+        }
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        let mut height = 0;
+        for child in self.children.iter() {
+            height += child.height(size);
+        }
+        height
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        let mut width = 0;
+        for child in self.children.iter() {
+            width += child.width(size);
+        }
+        width
+    }
+}
+
+impl Layout {
     /// Renders [`Layout`] in vertical [`Direction`]
     fn render_vertical(&self, pos: &Coords, size: &Coords) {
         let (sizes, total, fill) = self
@@ -191,35 +223,5 @@ impl Layout {
         }
 
         (sizes, total, fill)
-    }
-}
-
-impl Widget for Layout {
-    /// Renders [`Layout`] and its children inside of it
-    fn render(&self, pos: &Coords, size: &Coords) {
-        if size.x == 0 || size.y == 0 {
-            return;
-        }
-
-        match self.direction {
-            Direction::Vertical => self.render_vertical(pos, size),
-            Direction::Horizontal => self.render_horizontal(pos, size),
-        }
-    }
-
-    fn height(&self, size: &Coords) -> usize {
-        let mut height = 0;
-        for child in self.children.iter() {
-            height += child.height(size);
-        }
-        height
-    }
-
-    fn width(&self, size: &Coords) -> usize {
-        let mut width = 0;
-        for child in self.children.iter() {
-            width += child.width(size);
-        }
-        width
     }
 }

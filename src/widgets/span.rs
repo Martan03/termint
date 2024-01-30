@@ -119,7 +119,42 @@ impl Span {
             .join("");
         format!("{}{}{}", self.fg, self.bg, m)
     }
+}
 
+impl Widget for Span {
+    fn render(&self, pos: &Coords, size: &Coords) {
+        print!("{}", self.get_ansi());
+
+        match self.wrap {
+            Wrap::Letter => self.render_letter_wrap(pos, size),
+            Wrap::Word => self.render_word_wrap(pos, size),
+        }
+
+        println!("\x1b[0m");
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.size_letter_wrap(size.x),
+            Wrap::Word => self.height_word_wrap(size),
+        }
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.size_letter_wrap(size.y),
+            Wrap::Word => self.width_word_wrap(size),
+        }
+    }
+}
+
+impl fmt::Display for Span {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.get())
+    }
+}
+
+impl Span {
     /// Renders [`Span`] with word wrapping
     fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
         let mut coords = Coords::new(0, pos.y);
@@ -203,14 +238,9 @@ impl Span {
         coords.y + 1
     }
 
-    /// Gets height of the [`Span`] when using letter wrap
-    fn height_letter_wrap(&self, size: &Coords) -> usize {
-        (self.text.len() as f32 / size.x as f32).ceil() as usize
-    }
-
     /// Gets width of the [`Span`] when using word wrap
     fn width_word_wrap(&self, size: &Coords) -> usize {
-        let mut guess = Coords::new(self.width_letter_wrap(size), 0);
+        let mut guess = Coords::new(self.size_letter_wrap(size.y), 0);
 
         while self.height_word_wrap(&guess) > size.y {
             guess.x += 1;
@@ -218,42 +248,9 @@ impl Span {
         guess.x
     }
 
-    /// Gets with of the [`Span`] when using letter wrap
-    fn width_letter_wrap(&self, size: &Coords) -> usize {
-        (self.text.len() as f32 / size.y as f32).ceil() as usize
-    }
-}
-
-impl Widget for Span {
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_ansi());
-
-        match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size),
-            Wrap::Word => self.render_word_wrap(pos, size),
-        }
-
-        println!("\x1b[0m");
-    }
-
-    fn height(&self, size: &Coords) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.height_letter_wrap(size),
-            Wrap::Word => self.height_word_wrap(size),
-        }
-    }
-
-    fn width(&self, size: &Coords) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => self.width_word_wrap(size),
-        }
-    }
-}
-
-impl fmt::Display for Span {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
+    /// Gets size of the [`Span`] when using letter wrap
+    fn size_letter_wrap(&self, size: usize) -> usize {
+        (self.text.len() as f32 / size as f32).ceil() as usize
     }
 }
 

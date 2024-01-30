@@ -108,14 +108,6 @@ impl Block {
     pub fn add_child(&mut self, child: Box<dyn Widget>, constrain: Constrain) {
         self.layout.add_child(child, constrain);
     }
-
-    /// Renders corner of [`Block`] border if needed based on `border` value
-    fn render_corner(&self, x: usize, y: usize, border: u8) {
-        let c = self.border_type.get(border);
-        if (self.borders & border) == border {
-            println!("{}{c}", Cursor::Pos(x, y));
-        }
-    }
 }
 
 impl Widget for Block {
@@ -205,5 +197,15 @@ impl Widget for Block {
             self.layout.width(&size),
             self.title.width(&Coords::new(0, 1)) - 1,
         ) + width
+    }
+}
+
+impl Block {
+    /// Renders corner of [`Block`] border if needed based on `border` value
+    fn render_corner(&self, x: usize, y: usize, border: u8) {
+        let c = self.border_type.get(border);
+        if (self.borders & border) == border {
+            println!("{}{c}", Cursor::Pos(x, y));
+        }
     }
 }
