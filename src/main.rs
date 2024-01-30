@@ -6,15 +6,17 @@ use termint::{
         block::Block,
         border::{Border, BorderType},
         grad::Grad,
+        paragraph::Paragraph,
         span::StrSpanExtension,
         widget::Widget,
     },
 };
 
 fn main() {
-    test_block();
+    // test_block();
     // test_layout();
     // cool_example();
+    test_paragraph();
 }
 
 #[allow(unused)]
@@ -123,4 +125,19 @@ fn cool_example() {
 
     main.render(&Coords::new(1, 1), &Coords::new(40, 10));
     println!("\x1b[1B");
+}
+
+#[allow(unused)]
+fn test_paragraph() {
+    println!("\x1b[2J");
+
+    let mut main = Block::new().title("Paragraph".to_span());
+
+    let mut p = Paragraph::new();
+    p.add("This is a test".fg(Fg::Red));
+    p.add("And this is as well".fg(Fg::Cyan));
+    main.add_child(Box::new(p), Constrain::Fill);
+
+    main.render(&Coords::new(1, 1), &Coords::new(20, 9));
+    println!("\x1b[5B");
 }

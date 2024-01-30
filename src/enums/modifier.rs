@@ -8,7 +8,7 @@ use std::fmt;
 /// // Gets vector with Bold and Italic modifier
 /// let modifiers = modifiers!(Bold, Italic);
 /// ```
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Modifier {
     /// Bold mode
     Bold,

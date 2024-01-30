@@ -69,6 +69,11 @@ impl Span {
         format!("{}{}\x1b[0m", self.get_ansi(), self.text)
     }
 
+    /// Gets [`Span`] text
+    pub fn get_text(&self) -> &str {
+        &self.text
+    }
+
     /// Sets foreground of [`Span`] to given color
     pub fn fg(mut self, fg: Fg) -> Self {
         self.fg = fg;
@@ -105,7 +110,7 @@ impl Span {
     }
 
     /// Gets ANSI codes to set fg, bg and other [`Span`] properties
-    fn get_ansi(&self) -> String {
+    pub fn get_ansi(&self) -> String {
         let m = self
             .modifier
             .iter()
