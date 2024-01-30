@@ -24,7 +24,7 @@ println!("{}", "Cyan text on white background".fg(Fg::Cyan).bg(Bg::White));
 println!("{}", "Bold red text".fg(Fg::Red).modifier(vec![Modifier::Bold]));
 println!("{}", "Text with RGB value".fg(Fg::RGB(0, 249, 210)));
 ```
-![image](https://github.com/Martan03/termite/assets/46300167/36408874-d9d1-4430-a204-9a60d90c2e62)
+![image](https://github.com/Martan03/termint/assets/46300167/c906a565-69b5-4664-9db0-ad89ff457cbb)
 
 You can see all the colors and modifiers in the
 [documentation](https://docs.rs/termint/latest/termint/).
@@ -58,7 +58,7 @@ main.add_child(Box::new(block2), Constrain::Fill);
 // Renders the main block which renders all the children
 main.render(&Coords::new(1, 1), &Coords::new(30, 8));
 ```
-![image](https://github.com/Martan03/termite/assets/46300167/4d820421-a607-44d5-99ec-8bd31c3c2fdf)
+![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)
 
 ## Usage:
 
