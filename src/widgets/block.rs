@@ -195,7 +195,7 @@ impl Widget for Block {
             Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
         max(
             self.layout.width(&size),
-            self.title.width(&Coords::new(0, 1)) - 1,
+            self.title.width(&Coords::new(0, 1)),
         ) + width
     }
 }

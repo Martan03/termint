@@ -48,7 +48,7 @@
 //!
 //! // Creates main block and sets its properties
 //! let mut main = Block::new()
-//!     .title("Termite".to_span())
+//!     .title("Termint".to_span())
 //!     .direction(Direction::Horizontal)
 //!     .border_type(BorderType::Double);
 //!
@@ -57,14 +57,14 @@
 //! let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
 //! block1.add_child(Box::new(span1), Constrain::Percent(100));
 //! /// Adds block1 as child of main block
-//! main.add_child(Box::new(block1), Constrain::Percent(50));
+//! main.add_child(Box::new(block1), Constrain::Min(0));
 //!
 //! /// Create block2 and adds span as its child
 //! let mut block2 = Block::new().title("Another".to_span());
 //! let span2 = "This is really cool, right?".fg(Fg::Blue);
 //! block2.add_child(Box::new(span2), Constrain::Percent(100));
 //! /// Adds block2 as child of main block
-//! main.add_child(Box::new(block2), Constrain::Percent(50));
+//! main.add_child(Box::new(block2), Constrain::Fill);
 //!
 //! /// Renders the main block which renders all the children
 //! main.render(&Coords::new(1, 1), &Coords::new(30, 8));

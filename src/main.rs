@@ -16,7 +16,8 @@ fn main() {
     // test_block();
     // test_layout();
     // cool_example();
-    test_paragraph();
+    // test_paragraph();
+    readme_example();
 }
 
 #[allow(unused)]
@@ -103,8 +104,6 @@ fn cool_example() {
     main.add_child(Box::new(span), Constrain::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
     main.add_child(Box::new(grad), Constrain::Min(0));
-    let span1 = "And not much more".modifier(modifiers!(Strike));
-    main.add_child(Box::new(span1), Constrain::Min(0));
 
     let mut fill = Block::new()
         .title("Layout features".modifier(modifiers!(Underline)))
@@ -123,7 +122,7 @@ fn cool_example() {
 
     main.add_child(Box::new(fill), Constrain::Fill);
 
-    main.render(&Coords::new(1, 1), &Coords::new(40, 10));
+    main.render(&Coords::new(1, 1), &Coords::new(40, 9));
     println!("\x1b[1B");
 }
 
@@ -150,4 +149,32 @@ fn test_paragraph() {
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));
     println!("\x1b[6B");
+}
+
+#[allow(unused)]
+fn readme_example() {
+    println!("\x1b[2J");
+
+    let mut main = Block::new()
+        .title("Termint".to_span())
+        .direction(Direction::Horizontal)
+        .border_type(BorderType::Double);
+
+    // Creates block1 and adds span as its child
+    let mut block1 = Block::new().title("Sub block".to_span());
+    let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
+    block1.add_child(Box::new(span1), Constrain::Percent(100));
+    // Adds block1 as child of main block
+    main.add_child(Box::new(block1), Constrain::Min(0));
+
+    // Create block2 and adds span as its child
+    let mut block2 = Block::new().title("Another".to_span());
+    let span2 = "This is really cool, right?".fg(Fg::Blue);
+    block2.add_child(Box::new(span2), Constrain::Percent(100));
+    // Adds block2 as child of main block
+    main.add_child(Box::new(block2), Constrain::Fill);
+
+    // Renders the main block which renders all the children
+    main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+    println!("\x1b[3B");
 }
