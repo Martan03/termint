@@ -122,26 +122,26 @@ impl Span {
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
-            let print_str = if coords.x == 0 {
+            let mut print_str = if coords.x == 0 {
                 format!("{word}")
             } else {
                 format!(" {word}")
             };
 
-            if coords.x + print_str.len() <= size.x {
-                print!("{print_str}");
-                coords.x += print_str.len();
-                continue;
+            if coords.x + print_str.len() > size.x {
+                coords.y += 1;
+                if coords.y >= pos.y + size.y || word.len() > size.x {
+                    self.render_ellipsis(&coords, size);
+                    break;
+                }
+
+                coords.x = 0;
+                print_str = word.to_string();
+                print!("{}", Cursor::Pos(pos.x, coords.y));
             }
 
-            coords.y += 1;
-            if coords.y >= pos.y + size.y || word.len() > size.x {
-                self.render_ellipsis(&coords, size);
-                break;
-            }
-
-            coords.x = 0;
-            print!("{}", Cursor::Pos(pos.x, coords.y));
+            print!("{print_str}");
+            coords.x += print_str.len();
         }
     }
 
