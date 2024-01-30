@@ -252,9 +252,14 @@ impl Grad {
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
         let chars = size.x * size.y;
+        let ellipsis_len = self.ellipsis.len();
 
         for (i, c) in self.text.chars().enumerate() {
-            if i >= chars {
+            if i + ellipsis_len >= chars {
+                for c in self.ellipsis.chars() {
+                    print!("{}{c}", Fg::RGB(r, g, b));
+                    (r, g, b) = self.add_step((r, g, b), step);
+                }
                 break;
             }
 
@@ -279,7 +284,8 @@ impl Grad {
         let chars = size.x * size.y;
 
         for (i, c) in self.text.chars().enumerate() {
-            if i >= chars {
+            if i + self.ellipsis.len() >= chars {
+                print!("{}", self.ellipsis);
                 break;
             }
 

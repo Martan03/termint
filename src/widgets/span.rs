@@ -148,10 +148,9 @@ impl Span {
     /// Renders [`Span`] with letter wrapping
     fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
         let chars = size.x * size.y;
-        let ellipsis_len = self.ellipsis.len();
 
         for (i, c) in self.text.chars().enumerate() {
-            if i + ellipsis_len >= chars {
+            if i + self.ellipsis.len() >= chars {
                 print!("{}", self.ellipsis);
                 break;
             }
@@ -184,7 +183,9 @@ impl Span {
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
             let len = word.len();
-            if coords.x + len + 1 > size.x {
+            if (coords.x == 0 && coords.x + len > size.x)
+                || (coords.x != 0 && coords.x + len + 1 > size.x)
+            {
                 coords.y += 1;
                 coords.x = 0;
             }
