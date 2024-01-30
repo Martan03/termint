@@ -205,7 +205,7 @@ impl Span {
 
     /// Gets height of the [`Span`] when using letter wrap
     fn height_letter_wrap(&self, size: &Coords) -> usize {
-        (self.text.len() as f32 / size.x as f32).floor() as usize + 1
+        (self.text.len() as f32 / size.x as f32).ceil() as usize
     }
 
     /// Gets width of the [`Span`] when using word wrap
@@ -220,7 +220,7 @@ impl Span {
 
     /// Gets with of the [`Span`] when using letter wrap
     fn width_letter_wrap(&self, size: &Coords) -> usize {
-        (self.text.len() as f32 / size.y as f32).floor() as usize + 1
+        (self.text.len() as f32 / size.y as f32).ceil() as usize
     }
 }
 

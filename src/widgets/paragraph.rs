@@ -43,7 +43,33 @@ impl Paragraph {
         }
         len + (self.children.len() - 1) * self.separator.len()
     }
+}
 
+impl Widget for Paragraph {
+    fn render(&self, pos: &Coords, size: &Coords) {
+        match self.wrap {
+            Wrap::Letter => self.render_letter_wrap(pos, size),
+            Wrap::Word => self.render_word_wrap(pos, size),
+        }
+        println!("\x1b[0m");
+    }
+
+    fn height(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.size_letter_wrap(size.x),
+            Wrap::Word => self.height_word_wrap(size),
+        }
+    }
+
+    fn width(&self, size: &Coords) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.size_letter_wrap(size.y),
+            Wrap::Word => self.width_word_wrap(size),
+        }
+    }
+}
+
+impl Paragraph {
     /// Renders [`Paragraph`] with word wrap
     fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
         let mut coords = Coords::new(0, pos.y);
@@ -108,26 +134,48 @@ impl Paragraph {
             }
         }
     }
-}
 
-impl Widget for Paragraph {
-    fn render(
-        &self,
-        pos: &crate::geometry::coords::Coords,
-        size: &crate::geometry::coords::Coords,
-    ) {
-        match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size),
-            Wrap::Word => self.render_word_wrap(pos, size),
+    /// Gets [`Paragraph`] height when using word wrap
+    fn height_word_wrap(&self, size: &Coords) -> usize {
+        let mut coords = Coords::new(0, 0);
+
+        for child in self.children.iter() {
+            let words: Vec<&str> =
+                child.get_text().split_whitespace().collect();
+            for word in words {
+                if (coords.x == 0 && coords.x + word.len() > size.x)
+                    || (coords.x != 0 && coords.x + word.len() + 1 > size.x)
+                {
+                    coords.y += 1;
+                    coords.x = 0;
+                }
+
+                if coords.x != 0 {
+                    coords.x += 1;
+                }
+                coords.x += word.len();
+            }
         }
-        println!("\x1b[0m");
+        coords.y + 1
     }
 
-    fn height(&self, _size: &crate::geometry::coords::Coords) -> usize {
-        todo!()
+    /// Gets width of [`Paragraph`] when using word wrap
+    fn width_word_wrap(&self, size: &Coords) -> usize {
+        let mut guess = Coords::new(self.size_letter_wrap(size.y), 0);
+
+        while self.height_word_wrap(&guess) > size.y {
+            guess.x += 1;
+        }
+        guess.x
     }
 
-    fn width(&self, _size: &crate::geometry::coords::Coords) -> usize {
-        todo!()
+    /// Gets size of other side of [`Paragraph`] when using letter wrap
+    /// When width given, gets height and other way around
+    fn size_letter_wrap(&self, size: usize) -> usize {
+        let mut len = 0;
+        for child in self.children.iter() {
+            len += child.get_text().len();
+        }
+        (len as f32 / size as f32).ceil() as usize
     }
 }
