@@ -131,13 +131,24 @@ fn cool_example() {
 fn test_paragraph() {
     println!("\x1b[2J");
 
-    let mut main = Block::new().title("Paragraph".to_span());
+    let mut main = Block::new()
+        .title("Paragraph".to_span())
+        .direction(Direction::Horizontal);
 
     let mut p = Paragraph::new();
     p.add("This is a test".fg(Fg::Red));
     p.add("And this is as well".fg(Fg::Cyan));
-    main.add_child(Box::new(p), Constrain::Fill);
+    p.add(
+        "another paragraph test"
+            .bg(Bg::Yellow)
+            .modifier(vec![Modifier::Bold]),
+    );
+
+    let block = Block::new();
+
+    main.add_child(Box::new(p), Constrain::Min(0));
+    main.add_child(Box::new(block), Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));
-    println!("\x1b[5B");
+    println!("\x1b[6B");
 }
