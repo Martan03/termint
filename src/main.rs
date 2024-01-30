@@ -135,14 +135,13 @@ fn test_paragraph() {
         .title("Paragraph".to_span())
         .direction(Direction::Horizontal);
 
-    let mut p = Paragraph::new();
-    p.add("This is a test".fg(Fg::Red));
-    p.add("And this is as well".fg(Fg::Cyan));
-    p.add(
-        "another paragraph test"
-            .bg(Bg::Yellow)
-            .modifier(vec![Modifier::Bold]),
-    );
+    let mut p = Paragraph::new(vec![
+        "This is a text in".fg(Fg::Yellow),
+        "paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan),
+        "and it adds".to_span(),
+        "separator".modifier(vec![Modifier::Italic]),
+        "between each span".to_span(),
+    ]);
 
     let block = Block::new();
 
