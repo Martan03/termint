@@ -135,7 +135,7 @@ impl Span {
             }
 
             coords.y += 1;
-            if coords.y >= pos.y + size.y || print_str.len() > size.x {
+            if coords.y >= pos.y + size.y || word.len() > size.x {
                 self.render_ellipsis(&coords, size);
                 break;
             }
