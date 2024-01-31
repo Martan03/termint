@@ -1,8 +1,14 @@
 # Termint changelog
 
-## v0.2.0 (not released)
+## v0.2.1
+### Features:
+- Paragraph supports Grad widget as well
+- Created useful macros
+
+## v0.2.0
 ### Features:
 - Grad widget (text with gradient background)
+- Paragraph widget (text build from Spans)
 - Add new Layout constrains (Min, Fill)
 
 ### Fixes:
