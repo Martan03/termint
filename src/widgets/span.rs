@@ -69,11 +69,6 @@ impl Span {
         format!("{}{}\x1b[0m", self.get_mods(), self.text)
     }
 
-    /// Gets [`Span`] text
-    pub fn get_text(&self) -> &str {
-        &self.text
-    }
-
     /// Sets foreground of [`Span`] to given color
     pub fn fg(mut self, fg: Fg) -> Self {
         self.fg = fg;
@@ -151,16 +146,8 @@ impl Text for Span {
         }
     }
 
-    fn height_offset(
-        &self,
-        _size: &Coords,
-        _offset: usize,
-    ) -> (usize, Coords) {
-        todo!()
-    }
-
-    fn width_offset(&self, _size: &Coords, _offset: usize) -> (usize, Coords) {
-        todo!()
+    fn get_text(&self) -> &str {
+        &self.text
     }
 
     fn get_mods(&self) -> String {
