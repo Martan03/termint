@@ -85,7 +85,10 @@ impl Paragraph {
     }
 
     /// Adds child to [`Paragraph`]
-    pub fn add(&mut self, child: impl Text + 'static) {
+    pub fn add<T>(&mut self, child: T)
+    where
+        T: Text + 'static,
+    {
         self.children.push(Box::new(child));
     }
 }
@@ -103,8 +106,6 @@ impl Widget for Paragraph {
                 child.render_offset(&text_pos, &text_size, offset, &self.wrap);
             text_pos.y = end.y;
             offset = end.x + self.separator.len() - 1;
-
-            //print!("{}{} {}", Cursor::Pos(30, text_size.y), end.x, end.y);
 
             if pos.y + size.y <= end.y {
                 break;

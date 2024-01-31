@@ -145,7 +145,7 @@ fn test_paragraph() {
     main.add_child(block, Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));
-    println!("\x1b[6B");
+    println!("\x1b[7B");
 }
 
 #[allow(unused)]
