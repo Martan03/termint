@@ -39,10 +39,10 @@ use super::{
 ///
 /// // Adds two Block widgets as children for demonstration
 /// let mut block1 = Block::new().title("Sub block".to_span());
-/// main.add_child(Box::new(block1), Constrain::Percent(50));
+/// main.add_child(block1, Constrain::Percent(50));
 ///
 /// let mut block2 = Block::new().title("Another".to_span());
-/// main.add_child(Box::new(block2), Constrain::Percent(50));
+/// main.add_child(block2, Constrain::Percent(50));
 ///
 /// // Renders block on coordinates 1, 1, with width 30 and height 8
 /// main.render(&Coords::new(1, 1), &Coords::new(30, 8));
@@ -105,7 +105,10 @@ impl Block {
     }
 
     /// Adds child to the [`Block`]'s [`Layout`]
-    pub fn add_child(&mut self, child: Box<dyn Widget>, constrain: Constrain) {
+    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    where
+        T: Widget + 'static,
+    {
         self.layout.add_child(child, constrain);
     }
 }

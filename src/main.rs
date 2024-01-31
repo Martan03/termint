@@ -31,7 +31,7 @@ fn test_block() {
     let mut block1 = Block::new();
     let grad =
         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
-    block1.add_child(Box::new(grad), Constrain::Percent(100));
+    block1.add_child(grad, Constrain::Percent(100));
     let block2 = Block::new().title("Test".to_span());
     let block3 = Block::new().grad_title(Grad::new(
         "Test",
@@ -39,9 +39,9 @@ fn test_block() {
         (20, 160, 255),
     ));
 
-    block.add_child(Box::new(block2), Constrain::Fill);
-    block.add_child(Box::new(block1), Constrain::Min(0));
-    block.add_child(Box::new(block3), Constrain::Fill);
+    block.add_child(block2, Constrain::Fill);
+    block.add_child(block1, Constrain::Min(0));
+    block.add_child(block3, Constrain::Fill);
 
     block.render(&Coords::new(1, 1), &Coords::new(30, 9));
 
@@ -59,15 +59,15 @@ fn test_layout() {
 
     let mut block1 = Block::new().title("Sub block".to_span());
     let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
-    block1.add_child(Box::new(span1), Constrain::Percent(100));
-    main.add_child(Box::new(block1), Constrain::Percent(50));
+    block1.add_child(span1, Constrain::Percent(100));
+    main.add_child(block1, Constrain::Percent(50));
 
     let mut block2 = Block::new().title("Another".to_span());
     let span2 =
         "This is really cool, right? This is the best place for testing"
             .fg(Fg::Blue);
-    block2.add_child(Box::new(span2), Constrain::Percent(100));
-    main.add_child(Box::new(block2), Constrain::Percent(50));
+    block2.add_child(span2, Constrain::Percent(100));
+    main.add_child(block2, Constrain::Percent(50));
 
     main.render(&Coords::new(1, 1), &Coords::new(30, 8));
 
@@ -98,12 +98,12 @@ fn cool_example() {
         .title("Features:".to_span())
         .borders(Border::TOP)
         .border_color(Fg::Gray);
-    main.add_child(Box::new(block), Constrain::Min(0));
+    main.add_child(block, Constrain::Min(0));
 
     let span = "Re-coloring text".fg(Fg::Red).modifier(mods!(Italic));
-    main.add_child(Box::new(span), Constrain::Min(0));
+    main.add_child(span, Constrain::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
-    main.add_child(Box::new(grad), Constrain::Min(0));
+    main.add_child(grad, Constrain::Min(0));
 
     let mut fill = Block::new()
         .title("Layout features".modifier(mods!(Underline)))
@@ -112,15 +112,15 @@ fn cool_example() {
         .direction(Direction::Horizontal);
 
     let long = "This text fits well".to_span();
-    fill.add_child(Box::new(long), Constrain::Min(0));
+    fill.add_child(long, Constrain::Min(0));
     let sep = Block::new().borders(Border::LEFT).border_color(Fg::Gray);
-    fill.add_child(Box::new(sep), Constrain::Length(1));
+    fill.add_child(sep, Constrain::Length(1));
     let fill_text =
         "This text will fill the rest and have ellipsis when overflows"
             .to_span();
-    fill.add_child(Box::new(fill_text), Constrain::Fill);
+    fill.add_child(fill_text, Constrain::Fill);
 
-    main.add_child(Box::new(fill), Constrain::Fill);
+    main.add_child(fill, Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(40, 9));
     println!("\x1b[1B");
@@ -144,8 +144,8 @@ fn test_paragraph() {
 
     let block = Block::new();
 
-    main.add_child(Box::new(p), Constrain::Fill);
-    main.add_child(Box::new(block), Constrain::Fill);
+    main.add_child(p, Constrain::Fill);
+    main.add_child(block, Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));
     println!("\x1b[6B");
@@ -163,16 +163,16 @@ fn readme_example() {
     // Creates block1 and adds span as its child
     let mut block1 = Block::new().title("Sub block".to_span());
     let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
-    block1.add_child(Box::new(span1), Constrain::Percent(100));
+    block1.add_child(span1, Constrain::Percent(100));
     // Adds block1 as child of main block
-    main.add_child(Box::new(block1), Constrain::Min(0));
+    main.add_child(block1, Constrain::Min(0));
 
     // Create block2 and adds span as its child
     let mut block2 = Block::new().title("Another".to_span());
     let span2 = "This is really cool, right?".fg(Fg::Blue);
-    block2.add_child(Box::new(span2), Constrain::Percent(100));
+    block2.add_child(span2, Constrain::Percent(100));
     // Adds block2 as child of main block
-    main.add_child(Box::new(block2), Constrain::Fill);
+    main.add_child(block2, Constrain::Fill);
 
     // Renders the main block which renders all the children
     main.render(&Coords::new(1, 1), &Coords::new(30, 8));

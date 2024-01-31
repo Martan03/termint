@@ -22,8 +22,8 @@ use super::widget::Widget;
 /// let block2 = Block::new().title("Block 2".to_span());
 ///
 /// let mut layout = Layout::horizontal();
-/// layout.add_child(Box::new(block1), Constrain::Percent(50));
-/// layout.add_child(Box::new(block2), Constrain::Percent(50));
+/// layout.add_child(block1, Constrain::Percent(50));
+/// layout.add_child(block2, Constrain::Percent(50));
 ///
 /// // Renders layout on coordinates 1, 1 with width 20 and height 5
 /// layout.render(&Coords::new(1, 1), &Coords::new(20, 5));
@@ -70,8 +70,11 @@ impl Layout {
     }
 
     /// Adds child with its [`Constrain`] to [`Layout`]
-    pub fn add_child(&mut self, child: Box<dyn Widget>, constrain: Constrain) {
-        self.children.push(child);
+    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    where
+        T: Widget + 'static,
+    {
+        self.children.push(Box::new(child));
         self.constrain.push(constrain);
     }
 }
