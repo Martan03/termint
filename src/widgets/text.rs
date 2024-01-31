@@ -13,6 +13,9 @@ pub trait Text {
         wrap: &Wrap,
     ) -> Coords;
 
+    /// Gets [`Text`] widget as string
+    fn get(&self) -> String;
+
     /// Gets text of the [`Text`]
     fn get_text(&self) -> &str;
 

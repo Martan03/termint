@@ -14,8 +14,8 @@ mod tests {
     #[test]
     fn paragraph_new() {
         let p = Paragraph::new(vec![
-            "Test".fg(Fg::Blue),
-            "nice".modifier(vec![Modifier::Italic]),
+            Box::new("Test".fg(Fg::Blue)),
+            Box::new("nice".modifier(vec![Modifier::Italic])),
         ]);
         assert_eq!(
             p.get(),
@@ -25,7 +25,7 @@ mod tests {
         let mut p = Paragraph::new(vec![]);
         assert_eq!(p.get(), "");
 
-        p.add("Test".fg(Fg::Black).bg(Bg::White));
+        p.add(Box::new("Test".fg(Fg::Black).bg(Bg::White)));
         assert_eq!(p.get(), "\x1b[30m\x1b[107mTest\x1b[0m");
     }
 }

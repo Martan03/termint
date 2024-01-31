@@ -56,22 +56,6 @@ impl Grad {
         }
     }
 
-    /// Gets [`Grad`] as string
-    pub fn get(&self) -> String {
-        let step = self.get_step(self.text.len() as i16 - 1);
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-
-        let mut res = self.get_mods();
-        for c in self.text.chars() {
-            res += &format!("{}{c}", Fg::RGB(r, g, b));
-            (r, g, b) = self.add_step((r, g, b), step);
-        }
-        res += "\x1b[0m";
-
-        return res;
-    }
-
     /// Sets gradient direction of [`Grad`]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
@@ -145,6 +129,21 @@ impl Text for Grad {
             Wrap::Letter => self.render_letter_wrap(pos, size, offset),
             Wrap::Word => self.render_word_wrap(pos, size, offset),
         }
+    }
+
+    fn get(&self) -> String {
+        let step = self.get_step(self.text.len() as i16 - 1);
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+
+        let mut res = self.get_mods();
+        for c in self.text.chars() {
+            res += &format!("{}{c}", Fg::RGB(r, g, b));
+            (r, g, b) = self.add_step((r, g, b), step);
+        }
+        res += "\x1b[0m";
+
+        return res;
     }
 
     fn get_text(&self) -> &str {

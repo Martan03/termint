@@ -64,11 +64,6 @@ impl Span {
         }
     }
 
-    /// Gets [`Span`] as string
-    pub fn get(&self) -> String {
-        format!("{}{}\x1b[0m", self.get_mods(), self.text)
-    }
-
     /// Sets foreground of [`Span`] to given color
     pub fn fg(mut self, fg: Fg) -> Self {
         self.fg = fg;
@@ -144,6 +139,10 @@ impl Text for Span {
             Wrap::Letter => self.render_letter_wrap(pos, size, offset),
             Wrap::Word => self.render_word_wrap(pos, size, offset),
         }
+    }
+
+    fn get(&self) -> String {
+        format!("{}{}\x1b[0m", self.get_mods(), self.text)
     }
 
     fn get_text(&self) -> &str {

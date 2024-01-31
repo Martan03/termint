@@ -5,7 +5,7 @@ mod tests {
     use termint::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
         mods,
-        widgets::grad::Grad,
+        widgets::{grad::Grad, text::Text},
     };
 
     /// Tests creating new grad

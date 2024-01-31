@@ -8,7 +8,7 @@ mod tests {
     use termint::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
         mods,
-        widgets::span::{Span, StrSpanExtension},
+        widgets::{span::{Span, StrSpanExtension}, text::Text},
     };
 
     /// Tests creating new span

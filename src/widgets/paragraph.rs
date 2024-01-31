@@ -4,7 +4,7 @@ use crate::{
     enums::wrap::Wrap, geometry::coords::Coords, widgets::text::Text,
 };
 
-use super::{span::Span, widget::Widget};
+use super::widget::Widget;
 
 /// [`Paragraph`] allow to use multiple [`Span`] in one Widget,
 /// separating them with set separator. Spans are placed after each
@@ -36,14 +36,14 @@ use super::{span::Span, widget::Widget};
 /// p.render(&Coords::new(1, 1), &Coords::new(20, 10));
 /// ```
 pub struct Paragraph {
-    children: Vec<Span>,
+    children: Vec<Box<dyn Text>>,
     separator: String,
     wrap: Wrap,
 }
 
 impl Paragraph {
     /// Creates new [`Paragraph`]
-    pub fn new(children: Vec<Span>) -> Self {
+    pub fn new(children: Vec<Box<dyn Text>>) -> Self {
         Self {
             children: children,
             ..Default::default()
@@ -74,18 +74,9 @@ impl Paragraph {
         self
     }
 
-    /// Adds [`Span`] to [`Paragraph`]
-    pub fn add(&mut self, span: Span) {
-        self.children.push(span);
-    }
-
-    /// Gets length of the [`Paragraph`]
-    pub fn len(&self) -> usize {
-        let mut len = 0;
-        for child in self.children.iter() {
-            len += child.width(&Coords::new(0, 1));
-        }
-        len + (self.children.len() - 1) * self.separator.len()
+    /// Adds child to [`Paragraph`]
+    pub fn add(&mut self, child: Box<dyn Text>) {
+        self.children.push(child);
     }
 }
 
