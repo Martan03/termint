@@ -10,5 +10,7 @@ pub mod layout;
 pub mod paragraph;
 /// Contains Span widget
 pub mod span;
+/// Defines Text trait
+pub mod text;
 /// Defines Widget trait
 pub mod widget;
