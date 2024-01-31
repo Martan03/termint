@@ -86,11 +86,3 @@ impl BorderType {
         }
     }
 }
-
-/// Macro to combine [`Border`] sides
-#[macro_export]
-macro_rules! borders {
-    ($($border:ident),*) => {
-        ($(Border::$border |)* 0)
-    };
-}

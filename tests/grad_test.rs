@@ -4,7 +4,7 @@ extern crate termint;
 mod tests {
     use termint::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
-        modifiers,
+        mods,
         widgets::grad::Grad,
     };
 
@@ -31,7 +31,7 @@ mod tests {
     #[test]
     fn grad_with_modifiers() {
         let grad = Grad::new("Gradient", (0, 220, 255), (175, 80, 255))
-            .modifier(modifiers!(Bold, Underline))
+            .modifier(mods!(Bold, Underline))
             .bg(Bg::White);
         let assert_val = format!(
             "{}{}{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",

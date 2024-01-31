@@ -1,8 +1,7 @@
 use termint::{
-    create_help,
     enums::{bg::Bg, fg::Fg, modifier::Modifier},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
-    modifiers,
+    help, mods,
     widgets::{
         block::Block,
         border::{Border, BorderType},
@@ -20,13 +19,15 @@ fn main() {
     // test_paragraph();
     readme_example();
 
-    create_help!(
-        "Test" => {"This is description"},
-        "Another test" => {
-            "Another description",
-            "This can contain multiple literals"
-        },
-        "Another test" => {"Another description"}
+    help!(
+        "Usage":
+        "-t" ["value"] => "Tests program with [value]"
+        "-d" => {
+            "Creates documentation",
+            "When used with -t, also tests the documentation",
+        }
+        "Special case":
+        "-ntd" => "Creates documentation and runs test without testing docs"
     );
 }
 
@@ -110,13 +111,13 @@ fn cool_example() {
         .border_color(Fg::Gray);
     main.add_child(Box::new(block), Constrain::Min(0));
 
-    let span = "Re-coloring text".fg(Fg::Red).modifier(modifiers!(Italic));
+    let span = "Re-coloring text".fg(Fg::Red).modifier(mods!(Italic));
     main.add_child(Box::new(span), Constrain::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
     main.add_child(Box::new(grad), Constrain::Min(0));
 
     let mut fill = Block::new()
-        .title("Layout features".modifier(modifiers!(Underline)))
+        .title("Layout features".modifier(mods!(Underline)))
         .border_type(BorderType::Rounded)
         .border_color(Fg::Gray)
         .direction(Direction::Horizontal);

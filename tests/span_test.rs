@@ -7,7 +7,7 @@ extern crate termint;
 mod tests {
     use termint::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
-        modifiers,
+        mods,
         widgets::span::{Span, StrSpanExtension},
     };
 
@@ -98,7 +98,7 @@ mod tests {
 
         // Using modifiers macro
         let span =
-            "Span modifier".modifier(modifiers!(Bold, Blink, Italic, Inverse));
+            "Span modifier".modifier(mods!(Bold, Blink, Italic, Inverse));
         assert_eq!(
             span.get(),
             "\x1b[39m\x1b[49m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"

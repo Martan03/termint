@@ -4,9 +4,9 @@ use std::fmt;
 ///
 /// You can use macro to get vector with Modifers:
 /// ```rust
-/// # use termint::{enums::modifier::Modifier, modifiers};
+/// # use termint::{enums::modifier::Modifier, mods};
 /// // Gets vector with Bold and Italic modifier
-/// let modifiers = modifiers!(Bold, Italic);
+/// let modifiers = mods!(Bold, Italic);
 /// ```
 #[derive(Debug, PartialEq)]
 pub enum Modifier {
@@ -49,12 +49,4 @@ impl fmt::Display for Modifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_ansi())
     }
-}
-
-/// Creates vector with given [`Modifier`]
-#[macro_export]
-macro_rules! modifiers {
-    ($($mod:ident),*) => {
-        vec![$(Modifier::$mod, )*]
-    };
 }

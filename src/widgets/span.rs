@@ -14,7 +14,7 @@ use super::widget::Widget;
 /// # use termint::{
 /// #     enums::{bg::Bg, fg::Fg, modifier::Modifier},
 /// #     geometry::coords::Coords,
-/// #     modifiers,
+/// #     mods,
 /// #     widgets::{
 /// #         span::{Span, StrSpanExtension},
 /// #         widget::Widget,
@@ -31,7 +31,7 @@ use super::widget::Widget;
 /// let span = "Cyan bold and italic on yellow"
 ///     .fg(Fg::Cyan)
 ///     .bg(Bg::Yellow)
-///     .modifier(modifiers!(Bold, Italic));
+///     .modifier(mods!(Bold, Italic));
 ///
 /// // Span can be printed like this
 /// println!("{span}");
