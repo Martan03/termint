@@ -141,7 +141,10 @@ impl Text for Grad {
         offset: usize,
         wrap: &Wrap,
     ) -> Coords {
-        todo!()
+        match wrap {
+            Wrap::Letter => self.render_letter_wrap(pos, size, offset),
+            Wrap::Word => self.render_word_wrap(pos, size, offset),
+        }
     }
 
     fn get_text(&self) -> &str {
@@ -342,29 +345,41 @@ impl Grad {
         let step = self.get_step(width as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        for _ in 0..offset {
+            (r, g, b) = self.add_step((r, g, b), step);
+        }
 
-        let chars = size.x * size.y;
-        let ellipsis_len = self.ellipsis.len();
+        let mut coords = Coords::new(pos.x + offset, pos.y);
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
-        for (i, c) in self.text.chars().enumerate() {
-            if i + ellipsis_len >= chars {
+        for c in self.text.chars() {
+            if coords.x >= size.x {
+                coords.x = 0;
+                coords.y += 1;
+                print!("{}", Cursor::Pos(pos.x, coords.y));
+                (r, g, b) =
+                    (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+
+                if c == ' ' {
+                    continue;
+                }
+            }
+            if coords.y + 1 == size.y + pos.y
+                && coords.x + self.ellipsis.len() >= size.x
+            {
                 for c in self.ellipsis.chars() {
                     print!("{}{c}", Fg::RGB(r, g, b));
                     (r, g, b) = self.add_step((r, g, b), step);
                 }
+                coords.x += self.ellipsis.len();
                 break;
             }
 
-            if i % size.x == 0 {
-                print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
-                (r, g, b) =
-                    (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-            }
-
             print!("{}{c}", Fg::RGB(r, g, b));
+            coords.x += 1;
             (r, g, b) = self.add_step((r, g, b), step);
         }
-        Coords::new(0, 0)
+        Coords::new(coords.x + 1, coords.y)
     }
 
     /// Renders [`Grad`] with letter wrapping and vertical gradient
@@ -379,22 +394,33 @@ impl Grad {
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
-        let chars = size.x * size.y;
+        let mut coords = Coords::new(pos.x + offset, pos.y);
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
-        for (i, c) in self.text.chars().enumerate() {
-            if i + self.ellipsis.len() >= chars {
+        for c in self.text.chars() {
+            if coords.x >= size.x {
+                coords.x = 0;
+                coords.y += 1;
+                print!("{}", Cursor::Pos(pos.x, coords.y));
+                (r, g, b) = self.add_step((r, g, b), step);
+
+                if c == ' ' {
+                    continue;
+                }
+            }
+            if coords.y + 1 == size.y + pos.y
+                && coords.x + self.ellipsis.len() >= size.x
+            {
                 print!("{}", self.ellipsis);
+                coords.x += self.ellipsis.len();
                 break;
             }
 
-            if i % size.x == 0 {
-                print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
-                (r, g, b) = self.add_step((r, g, b), step);
-            }
-
             print!("{}{c}", Fg::RGB(r, g, b));
+            coords.x += 1;
+            (r, g, b) = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
         }
-        Coords::new(1, 1)
+        Coords::new(coords.x + 1, coords.y)
     }
 
     /// Gets step per character based on start and end foreground color
