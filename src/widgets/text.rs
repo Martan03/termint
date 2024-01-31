@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::{enums::wrap::Wrap, geometry::coords::Coords};
 
 /// Trait for text widgets to implement
@@ -21,4 +23,10 @@ pub trait Text {
 
     /// Gets [`Text`] ansi codes (fg, bg, mods) in String
     fn get_mods(&self) -> String;
+}
+
+impl fmt::Debug for dyn Text {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Converted text")
+    }
 }

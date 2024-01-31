@@ -33,19 +33,16 @@ fn test_block() {
         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
     block1.add_child(grad, Constrain::Percent(100));
     let block2 = Block::new().title("Test".to_span());
-    let block3 = Block::new().grad_title(Grad::new(
-        "Test",
-        (100, 200, 100),
-        (20, 160, 255),
-    ));
+    let block3 =
+        Block::new().title(Grad::new("Test", (100, 200, 100), (20, 160, 255)));
 
-    block.add_child(block2, Constrain::Fill);
+    block.add_child(block2, Constrain::Min(0));
     block.add_child(block1, Constrain::Min(0));
     block.add_child(block3, Constrain::Fill);
 
     block.render(&Coords::new(1, 1), &Coords::new(30, 9));
 
-    println!("\x1b[6B");
+    println!("\x1b[7B");
 }
 
 #[allow(unused)]

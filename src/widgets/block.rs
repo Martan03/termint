@@ -2,15 +2,15 @@ use std::{cmp::max, iter::repeat};
 
 use crate::{
     borders,
-    enums::{cursor::Cursor, fg::Fg},
+    enums::{cursor::Cursor, fg::Fg, wrap::Wrap},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     widgets::span::Span,
 };
 
 use super::{
     border::{Border, BorderType},
-    grad::Grad,
     layout::Layout,
+    text::Text,
     widget::Widget,
 };
 
@@ -49,7 +49,7 @@ use super::{
 /// ```
 #[derive(Debug)]
 pub struct Block {
-    title: Box<dyn Widget>,
+    title: Box<dyn Text>,
     borders: u8,
     border_type: BorderType,
     border_color: Fg,
@@ -68,14 +68,11 @@ impl Block {
         }
     }
 
-    /// Sets [`Span`] as a title of [`Block`]
-    pub fn title(mut self, title: Span) -> Self {
-        self.title = Box::new(title);
-        self
-    }
-
-    /// Sets [`Grad`] as a title of [`Block`]
-    pub fn grad_title(mut self, title: Grad) -> Self {
+    /// Sets [`Text`] as a title of [`Block`]
+    pub fn title<T>(mut self, title: T) -> Self
+    where
+        T: Text + 'static,
+    {
         self.title = Box::new(title);
         self
     }
@@ -160,10 +157,14 @@ impl Widget for Block {
             );
         }
 
-        self.title.render(
+        print!("{}", self.title.get_mods());
+        self.title.render_offset(
             &Coords::new(pos.x + 1, pos.y),
             &Coords::new(size.x.saturating_sub(2), 1),
+            0,
+            &Wrap::Word,
         );
+        print!("\x1b[0m");
 
         self.layout.render(
             &Coords::new(pos.x + 1, pos.y + 1),
@@ -196,10 +197,7 @@ impl Widget for Block {
         };
         let size =
             Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
-        max(
-            self.layout.width(&size),
-            self.title.width(&Coords::new(0, 1)),
-        ) + width
+        max(self.layout.width(&size), self.title.get_text().len()) + width
     }
 }
 

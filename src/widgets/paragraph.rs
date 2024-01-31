@@ -44,6 +44,7 @@ use super::widget::Widget;
 /// // Or you can render it on given position and with given size
 /// p.render(&Coords::new(1, 1), &Coords::new(20, 10));
 /// ```
+#[derive(Debug)]
 pub struct Paragraph {
     children: Vec<Box<dyn Text>>,
     separator: String,
