@@ -5,7 +5,7 @@ use crate::{
     geometry::coords::Coords,
 };
 
-use super::widget::Widget;
+use super::{text::Text, widget::Widget};
 
 /// [`Span`] makes easier text modifications such as foreground, background,...
 ///
@@ -66,7 +66,7 @@ impl Span {
 
     /// Gets [`Span`] as string
     pub fn get(&self) -> String {
-        format!("{}{}\x1b[0m", self.get_ansi(), self.text)
+        format!("{}{}\x1b[0m", self.get_mods(), self.text)
     }
 
     /// Gets [`Span`] text
@@ -108,26 +108,15 @@ impl Span {
     pub fn len(&self) -> usize {
         self.text.len()
     }
-
-    /// Gets ANSI codes to set fg, bg and other [`Span`] properties
-    pub fn get_ansi(&self) -> String {
-        let m = self
-            .modifier
-            .iter()
-            .map(|m| m.to_ansi())
-            .collect::<Vec<&str>>()
-            .join("");
-        format!("{}{}{}", self.fg, self.bg, m)
-    }
 }
 
 impl Widget for Span {
     fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_ansi());
+        print!("{}", self.get_mods());
 
         match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size),
-            Wrap::Word => self.render_word_wrap(pos, size),
+            Wrap::Letter => _ = self.render_letter_wrap(pos, size, 0),
+            Wrap::Word => _ = self.render_word_wrap(pos, size, 0),
         }
 
         println!("\x1b[0m");
@@ -148,6 +137,43 @@ impl Widget for Span {
     }
 }
 
+impl Text for Span {
+    fn render_offset(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+        wrap: &Wrap,
+    ) -> Coords {
+        match wrap {
+            Wrap::Letter => self.render_letter_wrap(pos, size, offset),
+            Wrap::Word => self.render_word_wrap(pos, size, offset),
+        }
+    }
+
+    fn height_offset(
+        &self,
+        _size: &Coords,
+        _offset: usize,
+    ) -> (usize, Coords) {
+        todo!()
+    }
+
+    fn width_offset(&self, _size: &Coords, _offset: usize) -> (usize, Coords) {
+        todo!()
+    }
+
+    fn get_mods(&self) -> String {
+        let m = self
+            .modifier
+            .iter()
+            .map(|m| m.to_ansi())
+            .collect::<Vec<&str>>()
+            .join("");
+        format!("{}{}{}", self.fg, self.bg, m)
+    }
+}
+
 impl fmt::Display for Span {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
@@ -155,10 +181,16 @@ impl fmt::Display for Span {
 }
 
 impl Span {
-    /// Renders [`Span`] with word wrapping
-    fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
-        let mut coords = Coords::new(0, pos.y);
-        print!("{}", Cursor::Pos(pos.x, pos.y));
+    /// Renders [`Span`] with word wrapping with given offset
+    /// Returns [`Coords`] where rendered text ends
+    fn render_word_wrap(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
+        let mut coords = Coords::new(offset, pos.y);
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
@@ -183,24 +215,43 @@ impl Span {
             print!("{print_str}");
             coords.x += print_str.len();
         }
+        Coords::new(coords.x, coords.y)
     }
 
-    /// Renders [`Span`] with letter wrapping
-    fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
-        let chars = size.x * size.y;
+    /// Renders [`Span`] with letter wrapping with given offset
+    /// Returns [`Coords`] where rendered text ended
+    fn render_letter_wrap(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
+        let mut coords = Coords::new(offset, pos.y);
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
-        for (i, c) in self.text.chars().enumerate() {
-            if i + self.ellipsis.len() >= chars {
+        for c in self.text.chars() {
+            if coords.x >= size.x {
+                coords.x = 0;
+                coords.y += 1;
+                print!("{}", Cursor::Pos(pos.x, coords.y));
+
+                if c == ' ' {
+                    continue;
+                }
+            }
+
+            if coords.y + 1 == size.y + pos.y
+                && coords.x + self.ellipsis.len() >= size.x
+            {
                 print!("{}", self.ellipsis);
+                coords.x += self.ellipsis.len();
                 break;
             }
 
-            if i % size.x == 0 {
-                print!("{}", Cursor::Pos(pos.x, pos.y + i / size.x));
-            }
-
             print!("{c}");
+            coords.x += 1;
         }
+        Coords::new(coords.x + 1, coords.y)
     }
 
     /// Renders ellipsis when rendering [`Span`] with word wrap

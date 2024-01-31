@@ -1,7 +1,7 @@
 use termint::{
     enums::{bg::Bg, fg::Fg, modifier::Modifier},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
-    help, mods,
+    mods,
     widgets::{
         block::Block,
         border::{Border, BorderType},
@@ -16,19 +16,8 @@ fn main() {
     // test_block();
     // test_layout();
     // cool_example();
-    // test_paragraph();
-    readme_example();
-
-    help!(
-        "Usage":
-        "-t" ["value"] => "Tests program with [value]"
-        "-d" => {
-            "Creates documentation",
-            "When used with -t, also tests the documentation",
-        }
-        "Special case":
-        "-ntd" => "Creates documentation and runs test without testing docs"
-    );
+    test_paragraph();
+    // readme_example();
 }
 
 #[allow(unused)]
@@ -155,7 +144,7 @@ fn test_paragraph() {
 
     let block = Block::new();
 
-    main.add_child(Box::new(p), Constrain::Min(0));
+    main.add_child(Box::new(p), Constrain::Fill);
     main.add_child(Box::new(block), Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));

@@ -1,8 +1,7 @@
 use core::fmt;
 
 use crate::{
-    enums::{cursor::Cursor, wrap::Wrap},
-    geometry::coords::Coords,
+    enums::wrap::Wrap, geometry::coords::Coords, widgets::text::Text,
 };
 
 use super::{span::Span, widget::Widget};
@@ -69,6 +68,12 @@ impl Paragraph {
         self
     }
 
+    /// Sets [`Paragraph`] wrapping to given option
+    pub fn wrap(mut self, wrap: Wrap) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
     /// Adds [`Span`] to [`Paragraph`]
     pub fn add(&mut self, span: Span) {
         self.children.push(span);
@@ -86,11 +91,31 @@ impl Paragraph {
 
 impl Widget for Paragraph {
     fn render(&self, pos: &Coords, size: &Coords) {
-        match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size),
-            Wrap::Word => self.render_word_wrap(pos, size),
+        let mut text_pos = Coords::new(pos.x, pos.y);
+        let mut text_size = Coords::new(size.x, size.y);
+        let mut offset = 0;
+
+        for child in self.children.iter() {
+            print!("{}", child.get_mods());
+
+            let end =
+                child.render_offset(&text_pos, &text_size, offset, &self.wrap);
+            text_pos.y = end.y;
+            offset = end.x + self.separator.len() - 1;
+
+            //print!("{}{} {}", Cursor::Pos(30, text_size.y), end.x, end.y);
+
+            if pos.y + size.y <= end.y {
+                break;
+            }
+            text_size.y = pos.y + size.y - end.y;
+
+            print!("\x1b[0m");
+            if offset < size.x {
+                print!("{}", self.separator);
+            }
         }
-        println!("\x1b[0m");
+        println!()
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -126,73 +151,6 @@ impl Default for Paragraph {
 }
 
 impl Paragraph {
-    /// Renders [`Paragraph`] with word wrap
-    fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
-        let mut coords = Coords::new(0, pos.y);
-        print!("{}", Cursor::Pos(pos.x, pos.y));
-
-        for child in self.children.iter() {
-            print!("{}", child.get_ansi());
-
-            let words: Vec<&str> =
-                child.get_text().split_whitespace().collect();
-            for word in words {
-                let mut print_str = if coords.x == 0 {
-                    format!("{word}")
-                } else {
-                    format!(" {word}")
-                };
-
-                if coords.x + print_str.len() > size.x {
-                    coords.y += 1;
-                    if coords.y >= pos.y + size.y || word.len() > size.x {
-                        break;
-                    }
-
-                    coords.x = 0;
-                    print_str = word.to_string();
-                    print!("{}", Cursor::Pos(pos.x, coords.y));
-                }
-
-                print!("{print_str}");
-                coords.x += print_str.len();
-            }
-            print!("\x1b[0m");
-        }
-    }
-
-    /// Renders [`Paragraph`] with letter wrap
-    fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
-        let chars = size.x * size.y;
-
-        let mut x = 0;
-        let mut y = 0;
-        print!("{}", Cursor::Pos(pos.x, pos.y));
-        for child in self.children.iter() {
-            print!("{}", child.get_ansi());
-            for c in child.get_text().chars() {
-                if x + y * size.x >= chars {
-                    break;
-                }
-
-                if x >= size.x {
-                    y += 1;
-                    x = 0;
-                    print!("{}", Cursor::Pos(pos.x, pos.y + y));
-                }
-
-                print!("{c}");
-                x += 1;
-            }
-
-            if x + self.separator.len() <= size.x {
-                print!("{}", self.separator);
-                x += self.separator.len();
-            }
-            print!("\x1b[0m");
-        }
-    }
-
     /// Gets [`Paragraph`] height when using word wrap
     fn height_word_wrap(&self, size: &Coords) -> usize {
         let mut coords = Coords::new(0, 0);
