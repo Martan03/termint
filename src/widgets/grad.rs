@@ -9,7 +9,7 @@ use crate::{
     geometry::{coords::Coords, direction::Direction},
 };
 
-use super::widget::Widget;
+use super::{text::Text, widget::Widget};
 
 /// Text with gradient foreground
 ///
@@ -62,7 +62,7 @@ impl Grad {
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
-        let mut res = self.get_ansi();
+        let mut res = self.get_mods();
         for c in self.text.chars() {
             res += &format!("{}{c}", Fg::RGB(r, g, b));
             (r, g, b) = self.add_step((r, g, b), step);
@@ -101,17 +101,6 @@ impl Grad {
         self.ellipsis = ellipsis.to_string();
         self
     }
-
-    /// Gets ANSI codes to set bg and modifiers properties
-    pub fn get_ansi(&self) -> String {
-        let m = self
-            .modifier
-            .iter()
-            .map(|m| m.to_ansi())
-            .collect::<Vec<&str>>()
-            .join("");
-        format!("{}{}", self.bg, m)
-    }
 }
 
 impl Widget for Grad {
@@ -119,11 +108,11 @@ impl Widget for Grad {
         if size.x == 0 || size.y == 0 {
             return;
         }
-        print!("{}", self.get_ansi());
+        print!("{}", self.get_mods());
 
         match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size),
-            Wrap::Word => self.render_word_wrap(pos, size),
+            Wrap::Letter => _ = self.render_letter_wrap(pos, size, 0),
+            Wrap::Word => _ = self.render_word_wrap(pos, size, 0),
         }
 
         println!("\x1b[0m");
@@ -144,6 +133,32 @@ impl Widget for Grad {
     }
 }
 
+impl Text for Grad {
+    fn render_offset(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+        wrap: &Wrap,
+    ) -> Coords {
+        todo!()
+    }
+
+    fn get_text(&self) -> &str {
+        &self.text
+    }
+
+    fn get_mods(&self) -> String {
+        let m = self
+            .modifier
+            .iter()
+            .map(|m| m.to_ansi())
+            .collect::<Vec<&str>>()
+            .join("");
+        format!("{}{}", self.bg, m)
+    }
+}
+
 impl fmt::Display for Grad {
     /// Automatically converts [`Grad`] to String when printing
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -153,22 +168,39 @@ impl fmt::Display for Grad {
 
 impl Grad {
     /// Renders [`Grad`] with word wrapping
-    fn render_word_wrap(&self, pos: &Coords, size: &Coords) {
+    fn render_word_wrap(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
         match self.direction {
-            Direction::Vertical => self.render_word_wrap_ver(pos, size),
-            Direction::Horizontal => self.render_word_wrap_hor(pos, size),
+            Direction::Vertical => {
+                self.render_word_wrap_ver(pos, size, offset)
+            }
+            Direction::Horizontal => {
+                self.render_word_wrap_hor(pos, size, offset)
+            }
         }
     }
 
     /// Renders [`Grad`] with word wrapping and horizontal gradient
-    fn render_word_wrap_hor(&self, pos: &Coords, size: &Coords) {
+    fn render_word_wrap_hor(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
         let width = min(size.x, self.text.len());
         let step = self.get_step(width as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        for _ in 0..offset {
+            (r, g, b) = self.add_step((r, g, b), step);
+        }
 
-        let mut coords = Coords::new(0, pos.y);
-        print!("{}", Cursor::Pos(pos.x, pos.y));
+        let mut coords = Coords::new(offset, pos.y);
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
@@ -198,6 +230,7 @@ impl Grad {
             }
             coords.x += print_str.len();
         }
+        Coords::new(coords.x, coords.y)
     }
 
     /// Renders [`Grad`] ellipsis when horizontal direction and word wrap
@@ -227,13 +260,18 @@ impl Grad {
     }
 
     /// Renders [`Grad`] with word wrapping and vertical gradient
-    fn render_word_wrap_ver(&self, pos: &Coords, size: &Coords) {
+    fn render_word_wrap_ver(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
         let height = min(self.height_word_wrap(size) - 1, size.y);
         let step = self.get_step(height as i16);
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
-        let mut coords = Coords::new(0, pos.y);
+        let mut coords = Coords::new(offset, pos.y);
         print!("{}{}", Cursor::Pos(pos.x, pos.y), Fg::RGB(r, g, b));
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
@@ -260,6 +298,7 @@ impl Grad {
             print!("{}", print_str);
             coords.x += print_str.len();
         }
+        Coords::new(1, 1)
     }
 
     /// Renders [`Grad`] ellipsis when word wrap and vertical direction
@@ -276,15 +315,29 @@ impl Grad {
     }
 
     /// Renders [`Grad`] with letter wrapping
-    fn render_letter_wrap(&self, pos: &Coords, size: &Coords) {
+    fn render_letter_wrap(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
         match self.direction {
-            Direction::Vertical => self.render_letter_wrap_ver(pos, size),
-            Direction::Horizontal => self.render_letter_wrap_hor(pos, size),
+            Direction::Vertical => {
+                self.render_letter_wrap_ver(pos, size, offset)
+            }
+            Direction::Horizontal => {
+                self.render_letter_wrap_hor(pos, size, offset)
+            }
         }
     }
 
     /// Renders [`Grad`] with letter wrapping and horizontal gradient
-    fn render_letter_wrap_hor(&self, pos: &Coords, size: &Coords) {
+    fn render_letter_wrap_hor(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
         let width = min(size.x, self.text.len());
         let step = self.get_step(width as i16);
         let (mut r, mut g, mut b) =
@@ -311,10 +364,16 @@ impl Grad {
             print!("{}{c}", Fg::RGB(r, g, b));
             (r, g, b) = self.add_step((r, g, b), step);
         }
+        Coords::new(0, 0)
     }
 
     /// Renders [`Grad`] with letter wrapping and vertical gradient
-    fn render_letter_wrap_ver(&self, pos: &Coords, size: &Coords) {
+    fn render_letter_wrap_ver(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
         let height = min(self.size_letter_wrap(size.x) - 1, size.y);
         let step = self.get_step(height as i16);
         let (mut r, mut g, mut b) =
@@ -335,6 +394,7 @@ impl Grad {
 
             print!("{}{c}", Fg::RGB(r, g, b));
         }
+        Coords::new(1, 1)
     }
 
     /// Gets step per character based on start and end foreground color
