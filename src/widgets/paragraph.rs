@@ -36,7 +36,7 @@ use super::widget::Widget;
 ///     "separator".modifier(vec![Modifier::Italic]),
 /// );
 /// // You can also add child later
-/// p.add(Box::new("between each span".to_span()));
+/// p.add("between each span".to_span());
 ///
 /// // Paragraph can be printed like this
 /// println!("{p}");
@@ -84,8 +84,8 @@ impl Paragraph {
     }
 
     /// Adds child to [`Paragraph`]
-    pub fn add(&mut self, child: Box<dyn Text>) {
-        self.children.push(child);
+    pub fn add(&mut self, child: impl Text + 'static) {
+        self.children.push(Box::new(child));
     }
 }
 

@@ -25,7 +25,7 @@ mod tests {
         let mut p = Paragraph::new(vec![]);
         assert_eq!(p.get(), "");
 
-        p.add(Box::new("Test".fg(Fg::Black).bg(Bg::White)));
+        p.add("Test".fg(Fg::Black).bg(Bg::White));
         assert_eq!(p.get(), "\x1b[30m\x1b[107mTest\x1b[0m");
     }
 }
