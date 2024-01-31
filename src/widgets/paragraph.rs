@@ -13,6 +13,7 @@ use super::widget::Widget;
 /// ## Example usage:
 /// ```
 /// # use termint::{
+/// #     paragraph,
 /// #     enums::{fg::Fg, modifier::Modifier},
 /// #     geometry::coords::Coords,
 /// #     widgets::{
@@ -21,13 +22,21 @@ use super::widget::Widget;
 /// # };
 /// // Creates new Paragraph filled with spans
 /// let mut p = Paragraph::new(vec![
+///     Box::new("This is a text in".fg(Fg::Yellow)),
+///     Box::new("paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan)),
+///     Box::new("and it adds".to_span()),
+///     Box::new("separator".modifier(vec![Modifier::Italic])),
+/// ]);
+///
+/// // Creates new Paragraph filled with spans using macro
+/// let mut p = paragraph!(
 ///     "This is a text in".fg(Fg::Yellow),
 ///     "paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan),
 ///     "and it adds".to_span(),
 ///     "separator".modifier(vec![Modifier::Italic]),
-/// ]);
+/// );
 /// // You can also add child later
-/// p.add("between each span".to_span());
+/// p.add(Box::new("between each span".to_span()));
 ///
 /// // Paragraph can be printed like this
 /// println!("{p}");

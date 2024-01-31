@@ -112,18 +112,24 @@ macro_rules! mods {
 /// # use termint::{
 /// #     enums::fg::Fg,
 /// #     paragraph,
-/// #     widgets::{paragraph::Paragraph, span::StrSpanExtension},
+/// #     widgets::{paragraph::Paragraph, span::StrSpanExtension, grad::Grad},
 /// # };
 /// // Without macro:
-/// let p = Paragraph::new(vec!["Macro".to_span(), "test".fg(Fg::Red)]);
+/// let p = Paragraph::new(vec![
+///     Box::new("Macro".to_span()),
+///     Box::new("test".fg(Fg::Red))
+/// ]);
 /// // With macro:
-/// let p = paragraph!("Macro".to_span(), "test".fg(Fg::Red));
+/// let p = paragraph!(
+///     Grad::new("Macro", (0, 120, 255), (120, 255, 0)),
+///     "test".fg(Fg::Red)
+/// );
 /// ```
 #[macro_export]
 macro_rules! paragraph {
-    ($($span:expr),* $(,)?) => {
+    ($($text:expr),* $(,)?) => {
         Paragraph::new(vec![
-            $($span),*
+            $(Box::new($text)),*
         ])
     };
 }
