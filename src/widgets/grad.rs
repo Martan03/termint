@@ -492,9 +492,3 @@ impl From<Grad> for Box<dyn Text> {
         Box::new(value)
     }
 }
-
-impl From<Box<Grad>> for Box<dyn Text> {
-    fn from(value: Box<Grad>) -> Self {
-        Box::new(*value)
-    }
-}

@@ -60,6 +60,11 @@ impl Paragraph {
         }
     }
 
+    /// Creates empty [`Paragraph`]
+    pub fn empty() -> Self {
+        Default::default()
+    }
+
     /// Gets [`Paragraph`] as string
     pub fn get(&self) -> String {
         let mut res = "".to_string();
