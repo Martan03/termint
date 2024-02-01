@@ -3,7 +3,10 @@ use std::{cmp::max, iter::repeat};
 use crate::{
     borders,
     enums::{cursor::Cursor, fg::Fg, wrap::Wrap},
-    geometry::{constrain::Constrain, coords::Coords, direction::Direction},
+    geometry::{
+        constrain::Constrain, coords::Coords, direction::Direction,
+        padding::Padding,
+    },
     widgets::span::Span,
 };
 
@@ -59,13 +62,7 @@ pub struct Block {
 impl Block {
     /// Creates new [`Block`] with no title and all borders
     pub fn new() -> Self {
-        Self {
-            title: Box::new(Span::new("")),
-            borders: Border::ALL,
-            border_type: BorderType::Normal,
-            border_color: Fg::Default,
-            layout: Layout::vertical(),
-        }
+        Default::default()
     }
 
     /// Sets [`Text`] as a title of [`Block`]
@@ -98,6 +95,12 @@ impl Block {
     /// Sets [`Direction`] of the [`Block`]'s [`Layout`]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.layout = self.layout.direction(direction);
+        self
+    }
+
+    /// Sets [`Padding`] of the [`Block`]'s [`Layout`]
+    pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
+        self.layout = self.layout.padding(padding);
         self
     }
 
@@ -195,6 +198,18 @@ impl Widget for Block {
         let size =
             Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
         max(self.layout.width(&size), self.title.get_text().len()) + width
+    }
+}
+
+impl Default for Block {
+    fn default() -> Self {
+        Self {
+            title: Box::new(Span::new("")),
+            borders: Border::ALL,
+            border_type: BorderType::Normal,
+            border_color: Fg::Default,
+            layout: Default::default(),
+        }
     }
 }
 

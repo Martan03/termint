@@ -15,9 +15,9 @@ use termint::{
 
 fn main() {
     // test_block();
-    // test_layout();
+    test_layout();
     // cool_example();
-    test_paragraph();
+    // test_paragraph();
     // readme_example();
 }
 
@@ -53,7 +53,8 @@ fn test_layout() {
         .title("Termite".fg(Fg::Red))
         .direction(Direction::Horizontal)
         .border_type(BorderType::Double)
-        .border_color(Fg::LightGray);
+        .border_color(Fg::LightGray)
+        .padding((0, 1));
 
     let mut block1 = Block::new().title("Sub block".to_span());
     let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);

@@ -2,6 +2,7 @@ use std::cmp::max;
 
 use crate::geometry::{
     constrain::Constrain, coords::Coords, direction::Direction,
+    padding::Padding,
 };
 
 use super::widget::Widget;
@@ -33,6 +34,7 @@ pub struct Layout {
     direction: Direction,
     constrain: Vec<Constrain>,
     children: Vec<Box<dyn Widget>>,
+    padding: Padding,
 }
 
 impl Layout {
@@ -40,32 +42,32 @@ impl Layout {
     pub fn new(direction: Direction) -> Self {
         Self {
             direction: direction,
-            constrain: Vec::new(),
-            children: Vec::new(),
+            ..Default::default()
         }
     }
 
     /// Creates [`Layout`] with vertical [`Direction`]
     pub fn vertical() -> Self {
-        Self {
-            direction: Direction::Vertical,
-            constrain: Vec::new(),
-            children: Vec::new(),
-        }
+        Default::default()
     }
 
     /// Creates [`Layout`] with horizontal [`Direction`]
     pub fn horizontal() -> Self {
         Self {
             direction: Direction::Horizontal,
-            constrain: Vec::new(),
-            children: Vec::new(),
+            ..Default::default()
         }
     }
 
     /// Sets [`Direction`] of the [`Layout`]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
+        self
+    }
+
+    /// Sets [`Padding`] of the [`Layout`]
+    pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
+        self.padding = padding.into();
         self
     }
 
@@ -82,13 +84,20 @@ impl Layout {
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
     fn render(&self, pos: &Coords, size: &Coords) {
+        let pos =
+            Coords::new(pos.x + self.padding.left, pos.y + self.padding.top);
+        let size = Coords::new(
+            size.x.saturating_sub(self.padding.get_horizontal()),
+            size.y.saturating_sub(self.padding.get_vertical()),
+        );
+
         if size.x == 0 || size.y == 0 {
             return;
         }
 
         match self.direction {
-            Direction::Vertical => self.render_vertical(pos, size),
-            Direction::Horizontal => self.render_horizontal(pos, size),
+            Direction::Vertical => self.render_vertical(&pos, &size),
+            Direction::Horizontal => self.render_horizontal(&pos, &size),
         }
     }
 
@@ -106,6 +115,17 @@ impl Widget for Layout {
             width += child.width(size);
         }
         width
+    }
+}
+
+impl Default for Layout {
+    fn default() -> Self {
+        Self {
+            direction: Direction::Vertical,
+            constrain: Vec::new(),
+            children: Vec::new(),
+            padding: Default::default(),
+        }
     }
 }
 
