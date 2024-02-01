@@ -14,15 +14,15 @@ mod tests {
     #[test]
     fn paragraph_new() {
         let p = Paragraph::new(vec![
-            "Test".fg(Fg::Blue),
-            "nice".modifier(vec![Modifier::Italic]),
+            Box::new("Test".fg(Fg::Blue)),
+            Box::new("nice".modifier(vec![Modifier::Italic])),
         ]);
         assert_eq!(
             p.get(),
             "\x1b[94m\x1b[49mTest\x1b[0m \x1b[39m\x1b[49m\x1b[3mnice\x1b[0m"
         );
 
-        let mut p = Paragraph::default();
+        let mut p = Paragraph::new(vec![]);
         assert_eq!(p.get(), "");
 
         p.add("Test".fg(Fg::Black).bg(Bg::White));
