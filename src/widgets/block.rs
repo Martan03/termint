@@ -117,25 +117,22 @@ impl Widget for Block {
         let ver = self.border_type.get(Border::LEFT);
         if (self.borders & Border::LEFT) != 0 {
             for y in 0..size.y {
-                println!("{}{ver}", Cursor::Pos(pos.x, pos.y + y));
+                print!("{}{ver}", Cursor::Pos(pos.x, pos.y + y));
             }
         }
         if (self.borders & Border::RIGHT) != 0 {
             for y in 0..size.y {
-                println!(
-                    "{}{ver}",
-                    Cursor::Pos(pos.x + size.x - 1, pos.y + y)
-                );
+                print!("{}{ver}", Cursor::Pos(pos.x + size.x - 1, pos.y + y));
             }
         }
 
         let hor = self.border_type.get(Border::TOP);
         let hor_border: String = repeat(hor).take(size.x).collect();
         if (self.borders & Border::TOP) != 0 {
-            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
+            print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
         }
         if (self.borders & Border::BOTTOM) != 0 {
-            println!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y - 1));
+            print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y - 1));
         }
 
         if size.x != 1 && size.y != 1 {
@@ -206,7 +203,7 @@ impl Block {
     fn render_corner(&self, x: usize, y: usize, border: u8) {
         let c = self.border_type.get(border);
         if (self.borders & border) == border {
-            println!("{}{c}", Cursor::Pos(x, y));
+            print!("{}{c}", Cursor::Pos(x, y));
         }
     }
 }

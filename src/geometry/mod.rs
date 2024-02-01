@@ -4,3 +4,5 @@ pub mod constrain;
 pub mod coords;
 /// Defines Direction enum for layout flex direction
 pub mod direction;
+/// Defines padding struct
+pub mod padding;

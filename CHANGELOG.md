@@ -1,10 +1,11 @@
 # Termint changelog
 
-## v0.2.1
+## v0.3.0
 ### Features:
 - Paragraph supports Grad widget as well
 - Created useful macros
 - Automatic conversion when adding child to Box value
+- Add Term for full screen rendering
 
 ## v0.2.0
 ### Features:

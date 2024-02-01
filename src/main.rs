@@ -148,7 +148,8 @@ fn test_paragraph() {
 
     // main.render(&Coords::new(1, 1), &Coords::new(20, 9));
 
-    Term::render(main);
+    let term = Term::new().padding((1, 2, 3, 4));
+    term.render(main);
 
     println!("\x1b[7B");
 }
