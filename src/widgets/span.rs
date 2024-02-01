@@ -336,3 +336,9 @@ impl From<Span> for Box<dyn Text> {
         Box::new(value)
     }
 }
+
+impl From<Box<Span>> for Box<dyn Text> {
+    fn from(value: Box<Span>) -> Self {
+        Box::new(*value)
+    }
+}

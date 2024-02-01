@@ -132,11 +132,11 @@ fn test_paragraph() {
         .direction(Direction::Horizontal);
 
     let mut p = Paragraph::new(vec![
-        Box::new("This is a text in".fg(Fg::Yellow)),
-        Box::new("paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan)),
-        Box::new("and it adds".to_span()),
-        Box::new("separator".modifier(vec![Modifier::Italic])),
-        Box::new("between each span".to_span()),
+        "This is a text in".fg(Fg::Yellow),
+        "paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan),
+        "and it adds".to_span(),
+        "separator".modifier(vec![Modifier::Italic]),
+        "between each span".to_span(),
     ]);
 
     let block = Block::new();

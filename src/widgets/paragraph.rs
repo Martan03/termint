@@ -53,9 +53,12 @@ pub struct Paragraph {
 
 impl Paragraph {
     /// Creates new [`Paragraph`]
-    pub fn new(children: Vec<Box<dyn Text>>) -> Self {
+    pub fn new<T>(children: Vec<T>) -> Self
+    where
+        T: Into<Box<dyn Text>>,
+    {
         Self {
-            children: children,
+            children: children.into_iter().map(Into::into).collect(),
             ..Default::default()
         }
     }
