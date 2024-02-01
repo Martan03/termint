@@ -15,9 +15,9 @@ use termint::{
 
 fn main() {
     // test_block();
-    test_layout();
+    // test_layout();
     // cool_example();
-    // test_paragraph();
+    test_paragraph();
     // readme_example();
 }
 
@@ -130,7 +130,7 @@ fn test_paragraph() {
     println!("\x1b[2J");
 
     let mut main = Block::new()
-        .title("Paragraph".to_span())
+        .title("Paragraph")
         .direction(Direction::Horizontal);
 
     let mut p = Paragraph::new(vec![
