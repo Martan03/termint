@@ -87,9 +87,9 @@ impl Paragraph {
     /// Adds child to [`Paragraph`]
     pub fn add<T>(&mut self, child: T)
     where
-        T: Text + 'static,
+        T: Into<Box<dyn Text>>,
     {
-        self.children.push(Box::new(child));
+        self.children.push(child.into());
     }
 }
 
@@ -195,5 +195,12 @@ impl Paragraph {
             len += child.get_text().len();
         }
         (len as f32 / size as f32).ceil() as usize
+    }
+}
+
+// From implementations
+impl From<Paragraph> for Box<dyn Widget> {
+    fn from(value: Paragraph) -> Self {
+        Box::new(value)
     }
 }

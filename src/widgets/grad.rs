@@ -479,3 +479,16 @@ impl Grad {
         (self.text.len() as f32 / size as f32).ceil() as usize
     }
 }
+
+// From implementations
+impl From<Grad> for Box<dyn Widget> {
+    fn from(value: Grad) -> Self {
+        Box::new(value)
+    }
+}
+
+impl From<Grad> for Box<dyn Text> {
+    fn from(value: Grad) -> Self {
+        Box::new(value)
+    }
+}

@@ -72,9 +72,9 @@ impl Layout {
     /// Adds child with its [`Constrain`] to [`Layout`]
     pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
     where
-        T: Widget + 'static,
+        T: Into<Box<dyn Widget>>,
     {
-        self.children.push(Box::new(child));
+        self.children.push(child.into());
         self.constrain.push(constrain);
     }
 }
@@ -226,5 +226,12 @@ impl Layout {
         }
 
         (sizes, total, fill)
+    }
+}
+
+// From implementations
+impl From<Layout> for Box<dyn Widget> {
+    fn from(value: Layout) -> Self {
+        Box::new(value)
     }
 }

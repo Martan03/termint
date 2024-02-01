@@ -323,3 +323,16 @@ impl StrSpanExtension for &str {
         Span::new(self)
     }
 }
+
+// From implementations
+impl From<Span> for Box<dyn Widget> {
+    fn from(value: Span) -> Self {
+        Box::new(value)
+    }
+}
+
+impl From<Span> for Box<dyn Text> {
+    fn from(value: Span) -> Self {
+        Box::new(value)
+    }
+}

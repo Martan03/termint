@@ -71,9 +71,9 @@ impl Block {
     /// Sets [`Text`] as a title of [`Block`]
     pub fn title<T>(mut self, title: T) -> Self
     where
-        T: Text + 'static,
+        T: Into<Box<dyn Text>>,
     {
-        self.title = Box::new(title);
+        self.title = title.into();
         self
     }
 
@@ -104,7 +104,7 @@ impl Block {
     /// Adds child to the [`Block`]'s [`Layout`]
     pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
     where
-        T: Widget + 'static,
+        T: Into<Box<dyn Widget>>,
     {
         self.layout.add_child(child, constrain);
     }
@@ -208,5 +208,12 @@ impl Block {
         if (self.borders & border) == border {
             println!("{}{c}", Cursor::Pos(x, y));
         }
+    }
+}
+
+// From implementations
+impl From<Block> for Box<dyn Widget> {
+    fn from(value: Block) -> Self {
+        Box::new(value)
     }
 }
