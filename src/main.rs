@@ -2,6 +2,7 @@ use termint::{
     enums::{bg::Bg, fg::Fg, modifier::Modifier},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     mods,
+    term::Term,
     widgets::{
         block::Block,
         border::{Border, BorderType},
@@ -145,7 +146,10 @@ fn test_paragraph() {
     main.add_child(p, Constrain::Fill);
     main.add_child(block, Constrain::Fill);
 
-    main.render(&Coords::new(1, 1), &Coords::new(20, 9));
+    // main.render(&Coords::new(1, 1), &Coords::new(20, 9));
+
+    Term::render(main);
+
     println!("\x1b[7B");
 }
 

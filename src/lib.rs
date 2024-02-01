@@ -94,5 +94,7 @@ pub mod enums;
 pub mod geometry;
 /// Contains useful macros
 pub mod macros;
+/// Contains Term struct
+pub mod term;
 /// Contains widgets (Layout, Block, Span)
 pub mod widgets;

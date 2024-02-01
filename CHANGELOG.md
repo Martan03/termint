@@ -4,6 +4,7 @@
 ### Features:
 - Paragraph supports Grad widget as well
 - Created useful macros
+- Automatic conversion when adding child to Box value
 
 ## v0.2.0
 ### Features:
