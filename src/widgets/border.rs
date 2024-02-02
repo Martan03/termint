@@ -1,3 +1,5 @@
+use crate::borders;
+
 /// Border sides definition
 ///
 /// Combining sides:
@@ -62,6 +64,11 @@ impl BorderType {
             _ if border == (Border::TOP | Border::RIGHT) => '┐',
             _ if border == (Border::BOTTOM | Border::LEFT) => '└',
             _ if border == (Border::BOTTOM | Border::RIGHT) => '┘',
+            _ if border == borders!(LEFT, TOP, BOTTOM) => '├',
+            _ if border == borders!(RIGHT, TOP, BOTTOM) => '┤',
+            _ if border == borders!(TOP, LEFT, RIGHT) => '┬',
+            _ if border == borders!(BOTTOM, LEFT, RIGHT) => '┴',
+            _ if border == borders!(TOP, BOTTOM, LEFT, RIGHT) => '┼',
             _ => ' ',
         }
     }
@@ -75,6 +82,11 @@ impl BorderType {
             _ if border == (Border::TOP | Border::RIGHT) => '╮',
             _ if border == (Border::BOTTOM | Border::LEFT) => '╰',
             _ if border == (Border::BOTTOM | Border::RIGHT) => '╯',
+            _ if border == borders!(LEFT, TOP, BOTTOM) => '├',
+            _ if border == borders!(RIGHT, TOP, BOTTOM) => '┤',
+            _ if border == borders!(TOP, LEFT, RIGHT) => '┬',
+            _ if border == borders!(BOTTOM, LEFT, RIGHT) => '┴',
+            _ if border == borders!(TOP, BOTTOM, LEFT, RIGHT) => '┼',
             _ => ' ',
         }
     }
@@ -88,6 +100,11 @@ impl BorderType {
             _ if border == (Border::TOP | Border::RIGHT) => '┓',
             _ if border == (Border::BOTTOM | Border::LEFT) => '┗',
             _ if border == (Border::BOTTOM | Border::RIGHT) => '┛',
+            _ if border == borders!(LEFT, TOP, BOTTOM) => '┣',
+            _ if border == borders!(RIGHT, TOP, BOTTOM) => '┫',
+            _ if border == borders!(TOP, LEFT, RIGHT) => '┳',
+            _ if border == borders!(BOTTOM, LEFT, RIGHT) => '┻',
+            _ if border == borders!(TOP, BOTTOM, LEFT, RIGHT) => '╋',
             _ => ' ',
         }
     }
@@ -101,6 +118,11 @@ impl BorderType {
             _ if border == (Border::TOP | Border::RIGHT) => '╗',
             _ if border == (Border::BOTTOM | Border::LEFT) => '╚',
             _ if border == (Border::BOTTOM | Border::RIGHT) => '╝',
+            _ if border == borders!(LEFT, TOP, BOTTOM) => '╠',
+            _ if border == borders!(RIGHT, TOP, BOTTOM) => '╣',
+            _ if border == borders!(TOP, LEFT, RIGHT) => '╦',
+            _ if border == borders!(BOTTOM, LEFT, RIGHT) => '╩',
+            _ if border == borders!(TOP, BOTTOM, LEFT, RIGHT) => '╬',
             _ => ' ',
         }
     }
@@ -108,12 +130,17 @@ impl BorderType {
     /// Gets given border character of Dash [`BorderType`]
     fn get_dash(&self, border: u8) -> char {
         match border {
-            Border::TOP | Border::BOTTOM => '┄',
-            Border::LEFT | Border::RIGHT => '┆',
+            Border::TOP | Border::BOTTOM => '╌',
+            Border::LEFT | Border::RIGHT => '╎',
             _ if border == (Border::TOP | Border::LEFT) => '┌',
             _ if border == (Border::TOP | Border::RIGHT) => '┐',
             _ if border == (Border::BOTTOM | Border::LEFT) => '└',
             _ if border == (Border::BOTTOM | Border::RIGHT) => '┘',
+            _ if border == borders!(LEFT, TOP, BOTTOM) => '├',
+            _ if border == borders!(RIGHT, TOP, BOTTOM) => '┤',
+            _ if border == borders!(TOP, LEFT, RIGHT) => '┬',
+            _ if border == borders!(BOTTOM, LEFT, RIGHT) => '┴',
+            _ if border == borders!(TOP, BOTTOM, LEFT, RIGHT) => '┼',
             _ => ' ',
         }
     }
