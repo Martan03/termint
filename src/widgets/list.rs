@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use crate::{enums::fg::Fg, geometry::coords::Coords};
 
 use super::{span::StrSpanExtension, widget::Widget};
@@ -51,7 +53,7 @@ impl List {
 impl Widget for List {
     fn render(&self, pos: &Coords, size: &Coords) {
         let mut text_pos = Coords::new(pos.x, pos.y);
-        let mut text_size = Coords::new(size.x, size.y);
+        let mut text_size = Coords::new(size.x - 1, size.y);
 
         for i in self.offset..self.items.len() {
             let mut fg = self.fg;
@@ -68,10 +70,20 @@ impl Widget for List {
             }
             text_size.y = pos.y + size.y - text_pos.y;
         }
+        self.render_scrollbar(
+            &Coords::new((pos.x + size.x).saturating_sub(1), pos.y),
+            size,
+        );
     }
 
-    fn height(&self, _size: &Coords) -> usize {
-        todo!()
+    /// Gets height of the [`List`] with all items
+    fn height(&self, size: &Coords) -> usize {
+        let mut height = 0;
+        for i in 0..self.items.len() {
+            let span = self.items[i].to_span();
+            height += span.height(size);
+        }
+        height
     }
 
     fn width(&self, _size: &Coords) -> usize {
@@ -87,6 +99,30 @@ impl Default for List {
             offset: 0,
             fg: Fg::Default,
             sel_fg: Fg::Cyan,
+        }
+    }
+}
+
+// whole / x = part
+// x = whole / part
+impl List {
+    /// Renders [`List`] scrollbar
+    fn render_scrollbar(&self, pos: &Coords, size: &Coords) {
+        let rat = self.items.len() as f32 / size.y as f32;
+        let thumb_size = min((size.y as f32 / rat) as usize, size.y);
+        let thumb_offset = (self.offset as f32 / rat) as usize;
+
+        let mut bar_pos = Coords::new(pos.x, pos.y);
+        for _ in 0..size.y {
+            let span = "│".to_span();
+            span.render(&bar_pos, size);
+            bar_pos.y += 1;
+        }
+        bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
+        for _ in 0..thumb_size {
+            let span = "┃".to_span();
+            span.render(&bar_pos, size);
+            bar_pos.y += 1;
         }
     }
 }
