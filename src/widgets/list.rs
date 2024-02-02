@@ -11,6 +11,8 @@ pub struct List {
     offset: usize,
     fg: Fg,
     sel_fg: Fg,
+    scrollbar_fg: Fg,
+    thumb_fg: Fg,
 }
 
 impl List {
@@ -46,6 +48,18 @@ impl List {
     /// Sets [`List`] selected item foreground color
     pub fn sel_fg(mut self, sel_color: Fg) -> Self {
         self.sel_fg = sel_color;
+        self
+    }
+
+    /// Sets [`List`] scrollbar color
+    pub fn scrollbar_fg(mut self, fg: Fg) -> Self {
+        self.scrollbar_fg = fg;
+        self
+    }
+
+    /// Sets [`List`] scrollbar thumb color
+    pub fn thumb_fg(mut self, fg: Fg) -> Self {
+        self.thumb_fg = fg;
         self
     }
 }
@@ -99,6 +113,8 @@ impl Default for List {
             offset: 0,
             fg: Fg::Default,
             sel_fg: Fg::Cyan,
+            scrollbar_fg: Fg::Default,
+            thumb_fg: Fg::Default,
         }
     }
 }
@@ -113,15 +129,16 @@ impl List {
         let thumb_offset = (self.offset as f32 / rat) as usize;
 
         let mut bar_pos = Coords::new(pos.x, pos.y);
+        let bar = "│".fg(self.scrollbar_fg);
         for _ in 0..size.y {
-            let span = "│".to_span();
-            span.render(&bar_pos, size);
+            bar.render(&bar_pos, size);
             bar_pos.y += 1;
         }
+
         bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
+        let thumb = "┃".fg(self.thumb_fg);
         for _ in 0..thumb_size {
-            let span = "┃".to_span();
-            span.render(&bar_pos, size);
+            thumb.render(&bar_pos, size);
             bar_pos.y += 1;
         }
     }
