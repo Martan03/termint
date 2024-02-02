@@ -7,6 +7,7 @@ use termint::{
         block::Block,
         border::{Border, BorderType},
         grad::Grad,
+        list::List,
         paragraph::Paragraph,
         span::StrSpanExtension,
         widget::Widget,
@@ -17,8 +18,9 @@ fn main() {
     // test_block();
     // test_layout();
     // cool_example();
-    test_paragraph();
+    // test_paragraph();
     // readme_example();
+    test_list();
 }
 
 #[allow(unused)]
@@ -180,5 +182,14 @@ fn readme_example() {
 
     // Renders the main block which renders all the children
     main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+    println!("\x1b[3B");
+}
+
+#[allow(unused)]
+fn test_list() {
+    println!("\x1b[2J");
+
+    let list = List::new(vec!["Test", "Another test", "Another item"]);
+    list.render(&Coords::new(1, 1), &Coords::new(30, 9));
     println!("\x1b[3B");
 }

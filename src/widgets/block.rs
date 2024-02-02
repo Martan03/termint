@@ -2,7 +2,7 @@ use std::{cmp::max, iter::repeat};
 
 use crate::{
     borders,
-    enums::{cursor::Cursor, fg::Fg, wrap::Wrap},
+    enums::{cursor::Cursor, fg::Fg},
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
         padding::Padding,
@@ -162,7 +162,7 @@ impl Widget for Block {
             &Coords::new(pos.x + 1, pos.y),
             &Coords::new(size.x.saturating_sub(2), 1),
             0,
-            &Wrap::Word,
+            None,
         );
         print!("\x1b[0m");
 

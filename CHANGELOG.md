@@ -3,7 +3,7 @@
 ## v0.3.0
 ### Features:
 - Add Term for full screen rendering
-- Add padding support to Layout and Block widgets
+- Add padding to Block, Layout and Term
 - Automatic conversion when adding child to Box value
 - Created useful macros
 - Paragraph supports Grad widget as well

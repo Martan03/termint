@@ -12,7 +12,7 @@ pub trait Text {
         pos: &Coords,
         size: &Coords,
         offset: usize,
-        wrap: &Wrap,
+        wrap: Option<&Wrap>,
     ) -> Coords;
 
     /// Gets [`Text`] widget as string

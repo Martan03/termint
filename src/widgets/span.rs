@@ -133,8 +133,14 @@ impl Text for Span {
         pos: &Coords,
         size: &Coords,
         offset: usize,
-        wrap: &Wrap,
+        wrap: Option<&Wrap>,
     ) -> Coords {
+        let wrap = if let Some(wrap) = wrap {
+            wrap
+        } else {
+            &self.wrap
+        };
+
         match wrap {
             Wrap::Letter => self.render_letter_wrap(pos, size, offset),
             Wrap::Word => self.render_word_wrap(pos, size, offset),

@@ -6,6 +6,8 @@ pub mod border;
 pub mod grad;
 /// Contains Layout widget
 pub mod layout;
+/// Contains List widget
+pub mod list;
 /// Constains Paragraph widget
 pub mod paragraph;
 /// Contains Span widget

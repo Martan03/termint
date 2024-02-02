@@ -107,8 +107,12 @@ impl Widget for Paragraph {
         for child in self.children.iter() {
             print!("{}", child.get_mods());
 
-            let end =
-                child.render_offset(&text_pos, &text_size, offset, &self.wrap);
+            let end = child.render_offset(
+                &text_pos,
+                &text_size,
+                offset,
+                Some(&self.wrap),
+            );
             text_pos.y = end.y;
             offset = end.x + self.separator.len() - 1;
 
