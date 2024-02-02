@@ -203,7 +203,7 @@ fn test_list() {
     .offset(2)
     .current(Some(5))
     .sel_fg(Fg::Yellow);
-    let mut block = Block::new();
+    let mut block = Block::new().border_type(BorderType::Dash);
     block.add_child(list, Constrain::Fill);
     block.render(&Coords::new(1, 1), &Coords::new(30, 8));
     println!("\x1b[1B");

@@ -33,8 +33,12 @@ pub enum BorderType {
     Normal,
     /// Line with rounded corners
     Rounded,
+    /// Simple thick line
+    Thick,
     /// Double line
     Double,
+    /// Dashed line
+    Dash,
 }
 
 impl BorderType {
@@ -43,7 +47,9 @@ impl BorderType {
         match self {
             BorderType::Normal => self.get_normal(border),
             BorderType::Rounded => self.get_rounded(border),
+            BorderType::Thick => self.get_thick(border),
             BorderType::Double => self.get_double(border),
+            BorderType::Dash => self.get_dash(border),
         }
     }
 
@@ -73,6 +79,19 @@ impl BorderType {
         }
     }
 
+    /// Gets given border character of Thick [`BorderType`]
+    fn get_thick(&self, border: u8) -> char {
+        match border {
+            Border::TOP | Border::BOTTOM => '━',
+            Border::LEFT | Border::RIGHT => '┃',
+            _ if border == (Border::TOP | Border::LEFT) => '┏',
+            _ if border == (Border::TOP | Border::RIGHT) => '┓',
+            _ if border == (Border::BOTTOM | Border::LEFT) => '┗',
+            _ if border == (Border::BOTTOM | Border::RIGHT) => '┛',
+            _ => ' ',
+        }
+    }
+
     /// Gets given border character of Double [`BorderType`]
     fn get_double(&self, border: u8) -> char {
         match border {
@@ -82,6 +101,19 @@ impl BorderType {
             _ if border == (Border::TOP | Border::RIGHT) => '╗',
             _ if border == (Border::BOTTOM | Border::LEFT) => '╚',
             _ if border == (Border::BOTTOM | Border::RIGHT) => '╝',
+            _ => ' ',
+        }
+    }
+
+    /// Gets given border character of Dash [`BorderType`]
+    fn get_dash(&self, border: u8) -> char {
+        match border {
+            Border::TOP | Border::BOTTOM => '┄',
+            Border::LEFT | Border::RIGHT => '┆',
+            _ if border == (Border::TOP | Border::LEFT) => '┌',
+            _ if border == (Border::TOP | Border::RIGHT) => '┐',
+            _ if border == (Border::BOTTOM | Border::LEFT) => '└',
+            _ if border == (Border::BOTTOM | Border::RIGHT) => '┘',
             _ => ' ',
         }
     }
