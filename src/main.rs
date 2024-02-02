@@ -189,7 +189,22 @@ fn readme_example() {
 fn test_list() {
     println!("\x1b[2J");
 
-    let list = List::new(vec!["Test", "Another test", "Another item"]);
-    list.render(&Coords::new(1, 1), &Coords::new(30, 9));
-    println!("\x1b[3B");
+    let list = List::new(vec![
+        "Test",
+        "Another test",
+        "Another item",
+        "Item1",
+        "Item2",
+        "Item3",
+        "Item4",
+        "Item5",
+        "Item6",
+    ])
+    .offset(2)
+    .current(Some(5))
+    .sel_fg(Fg::Yellow);
+    let mut block = Block::new();
+    block.add_child(list, Constrain::Fill);
+    block.render(&Coords::new(1, 1), &Coords::new(30, 8));
+    println!("\x1b[1B");
 }

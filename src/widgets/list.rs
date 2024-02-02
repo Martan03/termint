@@ -35,7 +35,13 @@ impl List {
         self
     }
 
-    /// Sets [`List`] selected item color
+    /// Sets foreground of [`List`] item
+    pub fn fg(mut self, fg: Fg) -> Self {
+        self.fg = fg;
+        self
+    }
+
+    /// Sets [`List`] selected item foreground color
     pub fn sel_fg(mut self, sel_color: Fg) -> Self {
         self.sel_fg = sel_color;
         self
@@ -47,13 +53,13 @@ impl Widget for List {
         let mut text_pos = Coords::new(pos.x, pos.y);
         let mut text_size = Coords::new(size.x, size.y);
 
-        for (i, item) in self.items.iter().enumerate() {
+        for i in self.offset..self.items.len() {
             let mut fg = self.fg;
             if Some(i) == self.current {
                 fg = self.sel_fg;
             }
 
-            let span = item.fg(fg);
+            let span = self.items[i].fg(fg);
             span.render(&text_pos, &text_size);
             text_pos.y += span.height(&text_size);
 
@@ -82,5 +88,12 @@ impl Default for List {
             fg: Fg::Default,
             sel_fg: Fg::Cyan,
         }
+    }
+}
+
+// From implementations
+impl From<List> for Box<dyn Widget> {
+    fn from(value: List) -> Self {
+        Box::new(value)
     }
 }
