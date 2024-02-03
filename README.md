@@ -1,8 +1,8 @@
 # termint
 
 [![Crates.io Version](https://img.shields.io/crates/v/termint?logo=rust)](https://crates.io/crates/termint)
-![docs.rs](https://img.shields.io/docsrs/termint?logo=rust)
-![Crates.io Total Downloads](https://img.shields.io/crates/d/termint)
+[![docs.rs](https://img.shields.io/docsrs/termint?logo=rust)](https://docs.rs/termint/latest/termint/)
+[![Crates.io Total Downloads](https://img.shields.io/crates/d/termint)](https://crates.io/crates/termint)
 
 Rust library for colored printing and Terminal User Interfaces
 
