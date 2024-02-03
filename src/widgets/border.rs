@@ -35,7 +35,9 @@ pub enum BorderType {
     Normal,
     /// Line with rounded corners
     Rounded,
-    /// Simple thick line
+    /// Thicker simple line
+    Thicker,
+    /// Thick simple line
     Thick,
     /// Double line
     Double,
@@ -49,6 +51,7 @@ impl BorderType {
         match self {
             BorderType::Normal => self.get_normal(border),
             BorderType::Rounded => self.get_rounded(border),
+            BorderType::Thicker => self.get_thicker(border),
             BorderType::Thick => self.get_thick(border),
             BorderType::Double => self.get_double(border),
             BorderType::Dash => self.get_dash(border),
@@ -92,7 +95,7 @@ impl BorderType {
     }
 
     /// Gets given border character of Thick [`BorderType`]
-    fn get_thick(&self, border: u8) -> char {
+    fn get_thicker(&self, border: u8) -> char {
         match border {
             Border::TOP | Border::BOTTOM => '━',
             Border::LEFT | Border::RIGHT => '┃',
@@ -105,6 +108,21 @@ impl BorderType {
             _ if border == borders!(TOP, LEFT, RIGHT) => '┳',
             _ if border == borders!(BOTTOM, LEFT, RIGHT) => '┻',
             _ if border == borders!(TOP, BOTTOM, LEFT, RIGHT) => '╋',
+            _ => ' ',
+        }
+    }
+
+    /// Gets given border character of Dash [`BorderType`]
+    fn get_thick(&self, border: u8) -> char {
+        match border {
+            Border::TOP => '▀',
+            Border::BOTTOM => '▄',
+            Border::LEFT => '▌',
+            Border::RIGHT => '▐',
+            _ if border == (Border::TOP | Border::LEFT) => '▛',
+            _ if border == (Border::TOP | Border::RIGHT) => '▜',
+            _ if border == (Border::BOTTOM | Border::LEFT) => '▙',
+            _ if border == (Border::BOTTOM | Border::RIGHT) => '▟',
             _ => ' ',
         }
     }

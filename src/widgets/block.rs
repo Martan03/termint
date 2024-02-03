@@ -123,6 +123,7 @@ impl Widget for Block {
                 print!("{}{ver}", Cursor::Pos(pos.x, pos.y + y));
             }
         }
+        let ver = self.border_type.get(Border::RIGHT);
         if (self.borders & Border::RIGHT) != 0 {
             for y in 0..size.y {
                 print!("{}{ver}", Cursor::Pos(pos.x + size.x - 1, pos.y + y));
@@ -134,6 +135,8 @@ impl Widget for Block {
         if (self.borders & Border::TOP) != 0 {
             print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
         }
+        let hor = self.border_type.get(Border::BOTTOM);
+        let hor_border: String = repeat(hor).take(size.x).collect();
         if (self.borders & Border::BOTTOM) != 0 {
             print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y - 1));
         }
