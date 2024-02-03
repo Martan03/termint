@@ -200,8 +200,7 @@ fn test_list() {
         "Item5",
         "Item6",
     ])
-    .offset(2)
-    .current(Some(5))
+    .current_scroll(Some(5))
     .sel_fg(Fg::Yellow);
     let mut block = Block::new().border_type(BorderType::Dash);
     block.add_child(list, Constrain::Fill);

@@ -33,6 +33,13 @@ impl List {
         self
     }
 
+    /// Sets current item in [`List`] and scrolls to it
+    pub fn current_scroll(mut self, current: Option<usize>) -> Self {
+        self.current = current;
+        self.offset = current.unwrap_or(0);
+        self
+    }
+
     /// Sets offset of [`List`]
     pub fn offset(mut self, offset: usize) -> Self {
         self.offset = offset;
@@ -126,7 +133,8 @@ impl List {
     fn render_scrollbar(&self, pos: &Coords, size: &Coords) {
         let rat = self.items.len() as f32 / size.y as f32;
         let thumb_size = min((size.y as f32 / rat) as usize, size.y);
-        let thumb_offset = (self.offset as f32 / rat) as usize;
+        let thumb_offset =
+            min((self.offset as f32 / rat) as usize, size.y - thumb_size);
 
         let mut bar_pos = Coords::new(pos.x, pos.y);
         let bar = "│".fg(self.scrollbar_fg);
