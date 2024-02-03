@@ -4,6 +4,20 @@ use crate::{enums::fg::Fg, geometry::coords::Coords};
 
 use super::{span::StrSpanExtension, widget::Widget};
 
+/// List widget with scrollbar
+///
+/// ## Example usage:
+/// ```
+/// # use termint::{
+/// #     enums::fg::Fg, widgets::list::List,
+/// #     geometry::coords::Coords, widgets::widget::Widget
+/// # };
+/// let list =
+///     List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
+///         .current(Some(1))
+///         .sel_fg(Fg::Yellow);
+/// list.render(&Coords::new(1, 1), &Coords::new(20, 5));
+/// ```
 #[derive(Debug)]
 pub struct List {
     items: Vec<&'static str>,
