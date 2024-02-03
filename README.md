@@ -1,6 +1,6 @@
 # termint
 
-![Crates.io Version](https://img.shields.io/crates/v/termint?logo=rust)
+[![Crates.io Version](https://img.shields.io/crates/v/termint?logo=rust)](https://crates.io/crates/termint)
 ![docs.rs](https://img.shields.io/docsrs/termint?logo=rust)
 ![Crates.io Total Downloads](https://img.shields.io/crates/d/termint)
 
