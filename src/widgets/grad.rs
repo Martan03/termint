@@ -149,7 +149,7 @@ impl Text for Grad {
         }
         res += "\x1b[0m";
 
-        return res;
+        res
     }
 
     fn get_text(&self) -> &str {
@@ -213,7 +213,7 @@ impl Grad {
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
             let mut print_str = if coords.x == 0 {
-                format!("{word}")
+                word.to_string()
             } else {
                 format!(" {word}")
             };
@@ -285,7 +285,7 @@ impl Grad {
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
             let mut print_str = if coords.x == 0 {
-                format!("{word}")
+                word.to_string()
             } else {
                 format!(" {word}")
             };

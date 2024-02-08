@@ -55,7 +55,7 @@ impl Paragraph {
     /// Creates new [`Paragraph`]
     pub fn new(children: Vec<Box<dyn Text>>) -> Self {
         Self {
-            children: children,
+            children,
             ..Default::default()
         }
     }

@@ -41,7 +41,7 @@ impl Layout {
     /// Creates new [`Layout`] that flexes in given [`Direction`]
     pub fn new(direction: Direction) -> Self {
         Self {
-            direction: direction,
+            direction,
             ..Default::default()
         }
     }
@@ -137,7 +137,7 @@ impl Layout {
 
         let mut coords = Coords::new(pos.x, pos.y);
 
-        for i in 0..self.children.len() {
+        for (i, item) in sizes.iter().enumerate().take(self.children.len()) {
             if coords.y - pos.y >= size.y {
                 break;
             }
@@ -146,7 +146,7 @@ impl Layout {
                 Constrain::Fill => {
                     Coords::new(size.x, (size.y.saturating_sub(total)) / fill)
                 }
-                _ => Coords::new(size.x, sizes[i]),
+                _ => Coords::new(size.x, *item),
             };
             if child_size.y + coords.y - pos.y > size.y {
                 child_size.y = size.y.saturating_sub(coords.y);
@@ -164,7 +164,7 @@ impl Layout {
 
         let mut coords = Coords::new(pos.x, pos.y);
 
-        for i in 0..self.children.len() {
+        for (i, s) in sizes.iter().enumerate().take(self.children.len()) {
             if coords.x - pos.x >= size.x {
                 break;
             }
@@ -173,7 +173,7 @@ impl Layout {
                 Constrain::Fill => {
                     Coords::new((size.x.saturating_sub(total)) / fill, size.y)
                 }
-                _ => Coords::new(sizes[i], size.y),
+                _ => Coords::new(*s, size.y),
             };
             if child_size.x + coords.x - pos.x > size.x {
                 child_size.x = size.x.saturating_sub(coords.x);
@@ -188,15 +188,14 @@ impl Layout {
     /// Gets given child size in vertical layout
     fn child_size_ver(
         &self,
-        child: &Box<dyn Widget>,
+        child: &dyn Widget,
         constrain: &Constrain,
         size: &Coords,
     ) -> usize {
         match constrain {
             Constrain::Length(len) => *len,
             Constrain::Percent(p) => {
-                let percent = (*p as f32 / 100.0 * size.y as f32) as usize;
-                percent
+                (*p as f32 / 100.0 * size.y as f32) as usize
             }
             Constrain::Min(val) => max(child.height(size), *val),
             Constrain::Fill => 0,
@@ -206,15 +205,14 @@ impl Layout {
     /// Gets given child size in horizontal layout
     fn child_size_hor(
         &self,
-        child: &Box<dyn Widget>,
+        child: &dyn Widget,
         constrain: &Constrain,
         size: &Coords,
     ) -> usize {
         match constrain {
             Constrain::Length(len) => *len,
             Constrain::Percent(p) => {
-                let percent = (*p as f32 / 100.0 * size.x as f32) as usize;
-                percent
+                (*p as f32 / 100.0 * size.x as f32) as usize
             }
             Constrain::Min(val) => max(child.width(size), *val),
             Constrain::Fill => 0,
@@ -228,7 +226,7 @@ impl Layout {
         child_size: F,
     ) -> (Vec<usize>, usize, usize)
     where
-        F: Fn(&Box<dyn Widget>, &Constrain, &Coords) -> usize,
+        F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
     {
         let mut sizes: Vec<usize> = Vec::new();
         let mut total = 0;
@@ -238,7 +236,7 @@ impl Layout {
                 fill += 1;
             }
             sizes.push(child_size(
-                &self.children[i],
+                &*self.children[i],
                 &self.constrain[i],
                 size,
             ));

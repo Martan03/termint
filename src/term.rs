@@ -22,7 +22,7 @@ use crate::{
 /// // Term with padding 0 on top, 1 on right, 2 on bottom, 3 on left
 /// term = term.padding((0, 1, 2, 3));
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Term {
     padding: Padding,
 }
@@ -61,13 +61,5 @@ impl Term {
     /// Gets size of the terminal
     pub fn get_size() -> Option<(usize, usize)> {
         term_size::dimensions()
-    }
-}
-
-impl Default for Term {
-    fn default() -> Self {
-        Self {
-            padding: Default::default(),
-        }
     }
 }

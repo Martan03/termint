@@ -98,6 +98,11 @@ impl Span {
     pub fn len(&self) -> usize {
         self.text.len()
     }
+
+    /// Checks if [`Span`] is empty
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Widget for Span {
@@ -187,7 +192,7 @@ impl Span {
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
             let mut print_str = if coords.x == 0 {
-                format!("{word}")
+                word.to_string()
             } else {
                 format!(" {word}")
             };
