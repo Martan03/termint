@@ -231,10 +231,6 @@ impl Span {
                 coords.x = 0;
                 coords.y += 1;
                 print!("{}", Cursor::Pos(pos.x, coords.y));
-
-                if c == ' ' {
-                    continue;
-                }
             }
 
             if coords.y + 1 == size.y + pos.y
