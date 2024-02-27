@@ -1,5 +1,10 @@
 # Termint changelog
 
+## v0.3.1
+### Fixes:
+- Grad widget with vertical gradient and letter wrap
+- Make Span with Letter Wrap render all spaces
+
 ## v0.3.0
 ### Features:
 - Add padding to Block, Layout and Term

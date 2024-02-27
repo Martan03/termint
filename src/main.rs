@@ -1,5 +1,5 @@
 use termint::{
-    enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
+    enums::{bg::Bg, fg::Fg, modifier::Modifier},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     mods,
     term::Term,
@@ -15,18 +15,12 @@ use termint::{
 };
 
 fn main() {
-    let grad =
-        Grad::new("testing of quite long text", (0, 255, 120), (120, 0, 255))
-            .direction(Direction::Vertical)
-            .wrap(Wrap::Letter);
-    println!("\x1b[2J");
-    grad.render(&Coords::new(1, 1), &Coords::new(5, 8))
     // test_block();
     // test_layout();
     // cool_example();
     // test_paragraph();
     // readme_example();
-    //test_list();
+    test_list();
 }
 
 #[allow(unused)]
