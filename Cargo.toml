@@ -1,6 +1,6 @@
 [package]
 name = "termint"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Martin Slezák (github.com/Martan03)"]
 description = "Library for colored printing and Terminal User Interfaces"
 keywords = ["tui", "terminal", "termint"]
