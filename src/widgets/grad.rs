@@ -423,7 +423,6 @@ impl Grad {
 
             print!("{}{c}", Fg::RGB(r, g, b));
             coords.x += 1;
-            (r, g, b) = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
         }
         Coords::new(coords.x + 1, coords.y)
     }
