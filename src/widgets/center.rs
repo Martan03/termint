@@ -19,11 +19,11 @@ impl Center {
         ver.add_child(child.into(), height);
         ver.add_child(Spacer::new(), ver_spacer);
 
-        let mut layout = Layout::vertical();
-        let ver_spacer = Center::spacer_size(&width);
-        layout.add_child(Spacer::new(), ver_spacer.clone());
+        let mut layout = Layout::horizontal();
+        let hor_spacer = Center::spacer_size(&width);
+        layout.add_child(Spacer::new(), hor_spacer.clone());
         layout.add_child(ver, width);
-        layout.add_child(Spacer::new(), ver_spacer);
+        layout.add_child(Spacer::new(), hor_spacer.clone());
 
         Self { layout }
     }

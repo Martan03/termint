@@ -204,6 +204,7 @@ fn test_center() {
     println!("\x1b[2J");
 
     let item = Block::new();
+    // let layout = Center::horizontal(item);
     let layout = Center::new(item, Constrain::Length(10), Constrain::Min(0));
     let mut block = Block::new();
     block.add_child(layout, Constrain::Fill);
