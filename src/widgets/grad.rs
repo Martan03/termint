@@ -364,10 +364,6 @@ impl Grad {
                 print!("{}", Cursor::Pos(pos.x, coords.y));
                 (r, g, b) =
                     (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-
-                if c == ' ' {
-                    continue;
-                }
             }
             if coords.y + 1 == size.y + pos.y
                 && coords.x + self.ellipsis.len() >= size.x
@@ -408,10 +404,6 @@ impl Grad {
                 coords.y += 1;
                 print!("{}", Cursor::Pos(pos.x, coords.y));
                 (r, g, b) = self.add_step((r, g, b), step);
-
-                if c == ' ' {
-                    continue;
-                }
             }
             if coords.y + 1 == size.y + pos.y
                 && coords.x + self.ellipsis.len() >= size.x

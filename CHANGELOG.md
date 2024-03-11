@@ -1,5 +1,9 @@
 # Termint changelog
 
+## v0.3.2
+### Fixes:
+- Make Grad with Letter Wrap render all spaces
+
 ## v0.3.1
 ### Fixes:
 - Grad widget with vertical gradient and letter wrap

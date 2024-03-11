@@ -2,6 +2,8 @@
 pub mod block;
 /// Defines Border sides and BorderType
 pub mod border;
+/// Defines Center widget for centering widgets
+pub mod center;
 /// Contains Grad widget
 pub mod grad;
 /// Contains Layout widget
@@ -10,6 +12,8 @@ pub mod layout;
 pub mod list;
 /// Constains Paragraph widget
 pub mod paragraph;
+/// None widget for better layouting
+pub mod spacer;
 /// Contains Span widget
 pub mod span;
 /// Defines Text trait
