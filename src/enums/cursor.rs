@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Cursor ANSI Codes
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Cursor {
     /// Moves cursor to home position (0, 0)
     Home,

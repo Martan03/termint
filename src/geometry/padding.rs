@@ -1,5 +1,5 @@
 /// Struct containing Padding on all four sides
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Padding {
     pub top: usize,
     pub right: usize,

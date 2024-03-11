@@ -1,5 +1,5 @@
 /// [`Constrain`] enum contains some constrains for when adjusting layout
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Constrain {
     /// Actual size
     Length(usize),

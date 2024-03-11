@@ -1,24 +1,31 @@
-use crate::geometry::coords::Coords;
+use crate::geometry::{constrain::Constrain, coords::Coords};
 
-use super::widget::Widget;
+use super::{layout::Layout, spacer::Spacer, widget::Widget};
 
 pub struct Center {
-    child: Box<dyn Widget>,
-    vertical: bool,
-    horizontal: bool,
+    layout: Layout,
 }
 
 impl Center {
     /// Creates new [`Center`] with centering in both directions
-    pub fn new<T>(child: T) -> Self
+    /// Currently work in progress
+    pub fn new<T>(child: T, width: Constrain, height: Constrain) -> Self
     where
         T: Into<Box<dyn Widget>>,
     {
-        Self {
-            child: child.into(),
-            vertical: true,
-            horizontal: true,
-        }
+        let mut ver = Layout::vertical();
+        let ver_spacer = Center::spacer_size(&height);
+        ver.add_child(Spacer::new(), ver_spacer.clone());
+        ver.add_child(child.into(), height);
+        ver.add_child(Spacer::new(), ver_spacer);
+
+        let mut layout = Layout::vertical();
+        let ver_spacer = Center::spacer_size(&width);
+        layout.add_child(Spacer::new(), ver_spacer.clone());
+        layout.add_child(ver, width);
+        layout.add_child(Spacer::new(), ver_spacer);
+
+        Self { layout }
     }
 
     /// Creates new [`Center`] with horizontal centering
@@ -26,11 +33,12 @@ impl Center {
     where
         T: Into<Box<dyn Widget>>,
     {
-        Self {
-            child: child.into(),
-            vertical: false,
-            horizontal: true,
-        }
+        let mut layout = Layout::horizontal();
+        layout.add_child(Spacer::new(), Constrain::Fill);
+        layout.add_child(child.into(), Constrain::Min(0));
+        layout.add_child(Spacer::new(), Constrain::Fill);
+
+        Self { layout }
     }
 
     /// Creates new [`Center`] with vertical centering
@@ -38,24 +46,40 @@ impl Center {
     where
         T: Into<Box<dyn Widget>>,
     {
-        Self {
-            child: child.into(),
-            vertical: true,
-            horizontal: false,
-        }
+        let mut layout = Layout::vertical();
+        layout.add_child(Spacer::new(), Constrain::Fill);
+        layout.add_child(child.into(), Constrain::Min(0));
+        layout.add_child(Spacer::new(), Constrain::Fill);
+
+        Self { layout }
     }
 }
 
 impl Widget for Center {
     fn render(&self, pos: &Coords, size: &Coords) {
-        todo!()
+        self.layout.render(pos, size);
     }
 
     fn height(&self, size: &Coords) -> usize {
-        todo!()
+        self.layout.height(size)
     }
 
     fn width(&self, size: &Coords) -> usize {
-        todo!()
+        self.layout.width(size)
+    }
+}
+
+impl Center {
+    fn spacer_size(size: &Constrain) -> Constrain {
+        match size {
+            Constrain::Fill => Constrain::Length(0),
+            _ => Constrain::Fill,
+        }
+    }
+}
+
+impl From<Center> for Box<dyn Widget> {
+    fn from(value: Center) -> Self {
+        Box::new(value)
     }
 }

@@ -6,6 +6,7 @@ use termint::{
     widgets::{
         block::Block,
         border::{Border, BorderType},
+        center::Center,
         grad::Grad,
         list::List,
         paragraph::Paragraph,
@@ -20,7 +21,8 @@ fn main() {
     // cool_example();
     // test_paragraph();
     // readme_example();
-    test_list();
+    // test_list();
+    test_center();
 }
 
 #[allow(unused)]
@@ -195,4 +197,16 @@ fn test_list() {
             .sel_fg(Fg::Yellow);
     list.render(&Coords::new(1, 1), &Coords::new(20, 5));
     println!("\x1b[3B");
+}
+
+#[allow(unused)]
+fn test_center() {
+    println!("\x1b[2J");
+
+    let item = Block::new();
+    let layout = Center::new(item, Constrain::Length(10), Constrain::Min(0));
+    let mut block = Block::new();
+    block.add_child(layout, Constrain::Fill);
+    block.render(&Coords::new(1, 1), &Coords::new(20, 6));
+    println!("\x1b[5B");
 }

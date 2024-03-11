@@ -1,5 +1,5 @@
 /// RGB struct containing 3 items (r, g, b)
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct RGB {
     /// Red value
     pub r: u8,
