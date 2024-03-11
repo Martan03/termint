@@ -1,6 +1,9 @@
 # Termint changelog
 
-## v0.3.2
+## v0.4.0
+### Features:
+- Add Center and Spacer widget
+
 ### Fixes:
 - Make Grad with Letter Wrap render all spaces
 

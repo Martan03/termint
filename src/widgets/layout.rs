@@ -132,25 +132,25 @@ impl Default for Layout {
 impl Layout {
     /// Renders [`Layout`] in vertical [`Direction`]
     fn render_vertical(&self, pos: &Coords, size: &Coords) {
-        let (sizes, total, fill) = self
+        let (sizes, total, fills) = self
             .get_sizes(size, |child, c, s| self.child_size_ver(child, c, s));
 
         let mut coords = Coords::new(pos.x, pos.y);
+        let fill = size.y.saturating_sub(total) / fills;
 
-        for (i, item) in sizes.iter().enumerate().take(self.children.len()) {
+        for (i, item) in sizes.iter().enumerate() {
             if coords.y - pos.y >= size.y {
                 break;
             }
 
             let mut child_size = match self.constrain[i] {
-                Constrain::Fill => {
-                    Coords::new(size.x, (size.y.saturating_sub(total)) / fill)
-                }
+                Constrain::Fill => Coords::new(size.x, fill),
                 _ => Coords::new(size.x, *item),
             };
             if child_size.y + coords.y - pos.y > size.y {
                 child_size.y = size.y.saturating_sub(coords.y);
             }
+
             self.children[i].render(&coords, &child_size);
 
             coords.y += child_size.y;
@@ -159,10 +159,11 @@ impl Layout {
 
     /// Renders [`Layout`] in horizontal [`Direction`]
     fn render_horizontal(&self, pos: &Coords, size: &Coords) {
-        let (sizes, total, fill) = self
+        let (sizes, total, fills) = self
             .get_sizes(size, |child, c, s| self.child_size_hor(child, c, s));
 
         let mut coords = Coords::new(pos.x, pos.y);
+        let fill = size.x.saturating_sub(total) / fills;
 
         for (i, s) in sizes.iter().enumerate().take(self.children.len()) {
             if coords.x - pos.x >= size.x {
@@ -170,9 +171,7 @@ impl Layout {
             }
 
             let mut child_size = match self.constrain[i] {
-                Constrain::Fill => {
-                    Coords::new((size.x.saturating_sub(total)) / fill, size.y)
-                }
+                Constrain::Fill => Coords::new(fill, size.y),
                 _ => Coords::new(*s, size.y),
             };
             if child_size.x + coords.x - pos.x > size.x {
