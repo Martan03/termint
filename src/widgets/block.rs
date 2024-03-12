@@ -104,6 +104,12 @@ impl Block {
         self
     }
 
+    /// Makes [`Block`] center its content
+    pub fn center(mut self) -> Self {
+        self.layout = self.layout.center();
+        self
+    }
+
     /// Adds child to the [`Block`]'s [`Layout`]
     pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
     where

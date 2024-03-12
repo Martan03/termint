@@ -8,7 +8,6 @@ use termint::{
         border::{Border, BorderType},
         center::Center,
         grad::Grad,
-        layout::Layout,
         list::List,
         paragraph::Paragraph,
         span::StrSpanExtension,
@@ -218,13 +217,11 @@ fn test_center() {
 fn test_layout_centering() {
     println!("\x1b[2J");
 
-    let mut block = Block::new().direction(Direction::Horizontal);
-    let mut layout = Layout::horizontal().center();
+    let mut block = Block::new().direction(Direction::Horizontal).center();
     let centered1 = Block::new();
     let centered2 = Block::new();
-    layout.add_child(centered1, Constrain::Length(4));
-    layout.add_child(centered2, Constrain::Length(2));
-    block.add_child(layout, Constrain::Fill);
+    block.add_child(centered1, Constrain::Length(4));
+    block.add_child(centered2, Constrain::Length(2));
 
     block.render(&Coords::new(1, 1), &Coords::new(20, 6));
 
