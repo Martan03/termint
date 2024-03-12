@@ -6,9 +6,9 @@ use crate::{
 
 use super::widget::Widget;
 
-/// [`Paragraph`] allow to use multiple [`Span`] in one Widget,
-/// separating them with set separator. Spans are placed after each
-/// other, which you can't really achieve with Layout
+/// [`Paragraph`] allow to use multiple widgets implementing [`Text`] trait
+/// in one Widget, separating them with set separator. Spans are placed after
+/// each other, which you can't really achieve with Layout
 ///
 /// ## Example usage:
 /// ```

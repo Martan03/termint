@@ -7,7 +7,15 @@ use crate::{
 
 use super::{text::Text, widget::Widget};
 
-/// [`Span`] makes easier text modifications such as foreground, background,...
+/// Widget for styling text
+///
+/// Available styles:
+/// - foreground: can be set using [`Fg`]
+/// - background: can be set using [`Bg`]
+/// - modifications: can be set using [`Modifier`] (Bold, italic,...)
+/// - wrap: how text should be wrapped, can be set using [`Wrap`]
+/// - ellipsis: indication of overflown text, can be set to any string
+///     (default: '...')
 ///
 /// ## Example usage:
 /// ```rust
