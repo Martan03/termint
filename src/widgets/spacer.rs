@@ -4,6 +4,8 @@ use super::widget::Widget;
 
 /// Spacer widget for better layouting
 ///
+/// Can be used to add spaces to the layout, for example, between two widget.
+///
 /// ## Example usage:
 /// ```
 /// # use termint::{
@@ -14,6 +16,7 @@ use super::widget::Widget;
 /// layout.add_child("Example of Spacer".to_span(), Constrain::Min(0));
 ///
 /// // Spacer creates one height space between spans
+/// // Spacer size is set using [`Constrain`] when adding it to [`Layout`]
 /// layout.add_child(Spacer::new(), Constrain::Length(1));
 ///
 /// layout.add_child("One space above".to_span(), Constrain::Min(0));

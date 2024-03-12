@@ -17,7 +17,7 @@ use super::{
     widget::Widget,
 };
 
-/// Layout widget with addition of border and title
+/// [`Layout`] widget with addition of optional border, title and styles
 ///
 /// ## Example usage:
 /// ```rust
