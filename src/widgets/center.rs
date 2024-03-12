@@ -15,15 +15,15 @@ impl Center {
     {
         let mut ver = Layout::vertical();
         let ver_spacer = Center::spacer_size(&height);
-        ver.add_child(Spacer::new(), ver_spacer.clone());
+        ver.add_child(Spacer::new(), ver_spacer);
         ver.add_child(child.into(), height);
         ver.add_child(Spacer::new(), ver_spacer);
 
         let mut layout = Layout::horizontal();
         let hor_spacer = Center::spacer_size(&width);
-        layout.add_child(Spacer::new(), hor_spacer.clone());
+        layout.add_child(Spacer::new(), hor_spacer);
         layout.add_child(ver, width);
-        layout.add_child(Spacer::new(), hor_spacer.clone());
+        layout.add_child(Spacer::new(), hor_spacer);
 
         Self { layout }
     }

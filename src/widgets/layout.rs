@@ -136,7 +136,7 @@ impl Layout {
             .get_sizes(size, |child, c, s| self.child_size_ver(child, c, s));
 
         let mut coords = Coords::new(pos.x, pos.y);
-        let fill = size.y.saturating_sub(total) / fills;
+        let fill = size.y.saturating_sub(total).saturating_sub(fills);
 
         for (i, item) in sizes.iter().enumerate() {
             if coords.y - pos.y >= size.y {
@@ -163,7 +163,7 @@ impl Layout {
             .get_sizes(size, |child, c, s| self.child_size_hor(child, c, s));
 
         let mut coords = Coords::new(pos.x, pos.y);
-        let fill = size.x.saturating_sub(total) / fills;
+        let fill = size.x.saturating_sub(total).saturating_sub(fills);
 
         for (i, s) in sizes.iter().enumerate().take(self.children.len()) {
             if coords.x - pos.x >= size.x {

@@ -2,11 +2,23 @@ use crate::geometry::coords::Coords;
 
 use super::widget::Widget;
 
-/// None widget for better layouting
+/// Spacer widget for better layouting
 ///
 /// ## Example usage:
-/// TODO
-#[derive(Debug)]
+/// ```
+/// # use termint::{
+/// #     geometry::constrain::Constrain,
+/// #     widgets::{layout::Layout, spacer::Spacer, span::StrSpanExtension},
+/// # };
+/// let mut layout = Layout::vertical();
+/// layout.add_child("Example of Spacer".to_span(), Constrain::Min(0));
+///
+/// // Spacer creates one height space between spans
+/// layout.add_child(Spacer::new(), Constrain::Length(1));
+///
+/// layout.add_child("One space above".to_span(), Constrain::Min(0));
+/// ```
+#[derive(Debug, Default)]
 pub struct Spacer {}
 
 impl Spacer {
@@ -25,12 +37,6 @@ impl Widget for Spacer {
 
     fn width(&self, _size: &Coords) -> usize {
         0
-    }
-}
-
-impl Default for Spacer {
-    fn default() -> Self {
-        Self {}
     }
 }
 
