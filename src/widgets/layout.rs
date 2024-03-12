@@ -35,6 +35,7 @@ pub struct Layout {
     constrain: Vec<Constrain>,
     children: Vec<Box<dyn Widget>>,
     padding: Padding,
+    center: bool,
 }
 
 impl Layout {
@@ -68,6 +69,12 @@ impl Layout {
     /// Sets [`Padding`] of the [`Layout`]
     pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
         self.padding = padding.into();
+        self
+    }
+
+    /// Makes [`Layout`] center its content
+    pub fn center(mut self) -> Self {
+        self.center = true;
         self
     }
 
@@ -125,6 +132,7 @@ impl Default for Layout {
             constrain: Vec::new(),
             children: Vec::new(),
             padding: Default::default(),
+            center: false,
         }
     }
 }
@@ -134,9 +142,22 @@ impl Layout {
     fn render_vertical(&self, pos: &Coords, size: &Coords) {
         let (sizes, total, fills) = self
             .get_sizes(size, |child, c, s| self.child_size_ver(child, c, s));
+        let fill =
+            size.y.saturating_sub(total).checked_div(fills).unwrap_or(0);
+
+        let mut coords = *pos;
+        let mut pos = *pos;
+        let mut size = *size;
+        if fills == 0 && self.center {
+            let space_size = size.y.saturating_sub(total);
+            let move_size = space_size.saturating_div(2);
+
+            size.y -= space_size;
+            pos.y += move_size;
+            coords.y += move_size;
+        }
 
         let mut coords = Coords::new(pos.x, pos.y);
-        let fill = size.y.saturating_sub(total).saturating_sub(fills);
 
         for (i, item) in sizes.iter().enumerate() {
             if coords.y - pos.y >= size.y {
@@ -161,11 +182,22 @@ impl Layout {
     fn render_horizontal(&self, pos: &Coords, size: &Coords) {
         let (sizes, total, fills) = self
             .get_sizes(size, |child, c, s| self.child_size_hor(child, c, s));
+        let fill =
+            size.x.saturating_sub(total).checked_div(fills).unwrap_or(0);
 
-        let mut coords = Coords::new(pos.x, pos.y);
-        let fill = size.x.saturating_sub(total).saturating_sub(fills);
+        let mut coords = *pos;
+        let mut pos = *pos;
+        let mut size = *size;
+        if fills == 0 && self.center {
+            let space_size = size.x.saturating_sub(total);
+            let move_size = space_size.saturating_div(2);
 
-        for (i, s) in sizes.iter().enumerate().take(self.children.len()) {
+            size.x -= space_size;
+            pos.x += move_size;
+            coords.x += move_size;
+        }
+
+        for (i, s) in sizes.iter().enumerate() {
             if coords.x - pos.x >= size.x {
                 break;
             }
