@@ -16,8 +16,6 @@
 pub mod block;
 /// Defines Border sides and BorderType
 pub mod border;
-/// Defines Center widget for centering widgets
-pub mod center;
 /// Contains Grad widget
 pub mod grad;
 /// Contains Layout widget
@@ -37,8 +35,6 @@ pub mod widget;
 
 #[allow(unused)]
 use block::Block;
-#[allow(unused)]
-use center::Center;
 #[allow(unused)]
 use grad::Grad;
 #[allow(unused)]

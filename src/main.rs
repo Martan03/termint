@@ -1,4 +1,5 @@
 use termint::{
+    borders,
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     mods,
@@ -6,7 +7,6 @@ use termint::{
     widgets::{
         block::Block,
         border::{Border, BorderType},
-        center::Center,
         grad::Grad,
         list::List,
         paragraph::Paragraph,
@@ -17,22 +17,19 @@ use termint::{
 
 fn main() {
     println!("\x1b[2J");
-    let span = Grad::new("This is a test", (0, 150, 255), (150, 255, 150))
-        .wrap(Wrap::Letter);
-    let mut block = Block::new().direction(Direction::Horizontal).center();
-    block.add_child(span, Constrain::Min(0));
-
-    let mut main = Block::new().direction(Direction::Vertical).center();
-    main.add_child(block, Constrain::Length(4));
-    main.render(&Coords::new(1, 1), &Coords::new(20, 8));
-    println!("\x1b[3B");
+    let mut main = Block::new();
+    let mut block = Block::new().borders(borders!(LEFT, RIGHT));
+    let blockage = Block::new();
+    block.add_child(blockage, Constrain::Fill);
+    main.add_child(block, Constrain::Fill);
+    main.render(&Coords::new(1, 1), &Coords::new(20, 6));
+    println!("\x1b[4B");
     // test_block();
     // test_layout();
     // cool_example();
     // test_paragraph();
     // readme_example();
     // test_list();
-    // test_center();
     // test_layout_centering();
 }
 
@@ -211,29 +208,15 @@ fn test_list() {
 }
 
 #[allow(unused)]
-fn test_center() {
-    println!("\x1b[2J");
-
-    let item = Block::new();
-    // let layout = Center::horizontal(item);
-    let layout = Center::new(item, Constrain::Length(10), Constrain::Min(0));
-    let mut block = Block::new();
-    block.add_child(layout, Constrain::Fill);
-    block.render(&Coords::new(1, 1), &Coords::new(20, 6));
-    println!("\x1b[5B");
-}
-
-#[allow(unused)]
 fn test_layout_centering() {
     println!("\x1b[2J");
-
+    let span = Grad::new("This is a test", (0, 150, 255), (150, 255, 150))
+        .wrap(Wrap::Letter);
     let mut block = Block::new().direction(Direction::Horizontal).center();
-    let centered1 = Block::new();
-    let centered2 = Block::new();
-    block.add_child(centered1, Constrain::Length(4));
-    block.add_child(centered2, Constrain::Length(2));
+    block.add_child(span, Constrain::Min(0));
 
-    block.render(&Coords::new(1, 1), &Coords::new(20, 10));
-
-    println!("\x1b[8B");
+    let mut main = Block::new().direction(Direction::Vertical).center();
+    main.add_child(block, Constrain::Length(4));
+    main.render(&Coords::new(1, 1), &Coords::new(20, 8));
+    println!("\x1b[3B");
 }

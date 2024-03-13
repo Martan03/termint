@@ -1,4 +1,7 @@
-use std::{cmp::max, iter::repeat};
+use std::{
+    cmp::{max, min},
+    iter::repeat,
+};
 
 use crate::{
     borders,
@@ -122,49 +125,7 @@ impl Block {
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
     fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.border_color);
-        let ver = self.border_type.get(Border::LEFT);
-        if (self.borders & Border::LEFT) != 0 {
-            for y in 0..size.y {
-                print!("{}{ver}", Cursor::Pos(pos.x, pos.y + y));
-            }
-        }
-        let ver = self.border_type.get(Border::RIGHT);
-        if (self.borders & Border::RIGHT) != 0 {
-            for y in 0..size.y {
-                print!("{}{ver}", Cursor::Pos(pos.x + size.x - 1, pos.y + y));
-            }
-        }
-
-        let hor = self.border_type.get(Border::TOP);
-        let hor_border: String = repeat(hor).take(size.x).collect();
-        if (self.borders & Border::TOP) != 0 {
-            print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
-        }
-        let hor = self.border_type.get(Border::BOTTOM);
-        let hor_border: String = repeat(hor).take(size.x).collect();
-        if (self.borders & Border::BOTTOM) != 0 {
-            print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y + size.y - 1));
-        }
-
-        if size.x != 1 && size.y != 1 {
-            self.render_corner(pos.x, pos.y, Border::TOP | Border::LEFT);
-            self.render_corner(
-                pos.x + size.x - 1,
-                pos.y,
-                Border::TOP | Border::RIGHT,
-            );
-            self.render_corner(
-                pos.x,
-                pos.y + size.y - 1,
-                Border::BOTTOM | Border::LEFT,
-            );
-            self.render_corner(
-                pos.x + size.x - 1,
-                pos.y + size.y - 1,
-                Border::BOTTOM | Border::RIGHT,
-            );
-        }
+        self.render_border(pos, size);
 
         print!("{}", self.title.get_mods());
         self.title.render_offset(
@@ -175,37 +136,34 @@ impl Widget for Block {
         );
         print!("\x1b[0m");
 
+        let (width, height) = self.border_size();
+        let top = ((self.borders & Border::TOP) != 0
+            || !self.title.get_text().is_empty()) as usize;
+        let left = ((self.borders & Border::LEFT) != 0) as usize;
         self.layout.render(
-            &Coords::new(pos.x + 1, pos.y + 1),
-            &Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2)),
+            &Coords::new(pos.x + left, pos.y + top),
+            &Coords::new(
+                size.x.saturating_sub(width),
+                size.y.saturating_sub(height),
+            ),
         );
     }
 
     fn height(&self, size: &Coords) -> usize {
-        let top_bottom = borders!(TOP, BOTTOM);
-        let height = if (self.borders & top_bottom) == top_bottom {
-            2
-        } else if (self.borders & top_bottom) != 0 {
-            1
-        } else {
-            0
-        };
-        let size =
-            Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
+        let (width, height) = self.border_size();
+        let size = Coords::new(
+            size.x.saturating_sub(width),
+            size.y.saturating_sub(height),
+        );
         height + self.layout.height(&size)
     }
 
     fn width(&self, size: &Coords) -> usize {
-        let right_left = borders!(RIGHT, LEFT);
-        let width = if (self.borders & right_left) == right_left {
-            2
-        } else if (self.borders & right_left) != 0 {
-            1
-        } else {
-            0
-        };
-        let size =
-            Coords::new(size.x.saturating_sub(2), size.y.saturating_sub(2));
+        let (width, height) = self.border_size();
+        let size = Coords::new(
+            size.x.saturating_sub(width),
+            size.y.saturating_sub(height),
+        );
         max(self.layout.width(&size), self.title.get_text().len()) + width
     }
 }
@@ -223,11 +181,73 @@ impl Default for Block {
 }
 
 impl Block {
+    /// Renders [`Block`] border
+    fn render_border(&self, pos: &Coords, size: &Coords) {
+        let right_top = Coords::new(pos.x + size.x - 1, pos.y);
+        let left_bottom = Coords::new(pos.x, size.y + pos.y - 1);
+
+        print!("{}", self.border_color);
+        self.render_ver_border(size.y, pos, Border::LEFT);
+        self.render_ver_border(size.y, &right_top, Border::RIGHT);
+        self.render_hor_border(size.x, pos, Border::TOP);
+        self.render_hor_border(size.x, &left_bottom, Border::BOTTOM);
+
+        if size.x > 1 && size.y > 1 {
+            self.render_corner(pos, borders!(TOP, LEFT));
+            self.render_corner(&right_top, borders!(TOP, RIGHT));
+            self.render_corner(&left_bottom, borders!(BOTTOM, LEFT));
+            self.render_corner(
+                &Coords::new(right_top.x, left_bottom.y),
+                borders!(BOTTOM, RIGHT),
+            );
+        }
+    }
+
+    /// Render horizontal border
+    fn render_hor_border(&self, width: usize, pos: &Coords, border: u8) {
+        if (self.borders & border) != 0 {
+            let hor = self.border_type.get(border);
+            let hor_border: String = repeat(hor).take(width).collect();
+            print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
+        }
+    }
+
+    /// Render vertical border
+    fn render_ver_border(&self, height: usize, pos: &Coords, border: u8) {
+        if (self.borders & border) != 0 {
+            let ver = self.border_type.get(border);
+            for y in 0..height {
+                print!("{}{ver}", Cursor::Pos(pos.x, pos.y + y));
+            }
+        }
+    }
+
     /// Renders corner of [`Block`] border if needed based on `border` value
-    fn render_corner(&self, x: usize, y: usize, border: u8) {
+    fn render_corner(&self, pos: &Coords, border: u8) {
         let c = self.border_type.get(border);
         if (self.borders & border) == border {
-            print!("{}{c}", Cursor::Pos(x, y));
+            print!("{}{c}", Cursor::Pos(pos.x, pos.y));
+        }
+    }
+
+    /// Gets border size
+    fn border_size(&self) -> (usize, usize) {
+        let title = (!self.title.get_text().is_empty()) as usize;
+        (
+            self._border_size(borders!(LEFT, RIGHT)),
+            min(self._border_size(borders!(TOP, BOTTOM)) + title, 2),
+        )
+    }
+
+    /// Gets border size in given border positions
+    fn _border_size(&self, border: u8) -> usize {
+        let val = self.borders & border;
+        if val == border {
+            2
+        } else if val != 0 {
+            1
+        } else {
+            0
         }
     }
 }
