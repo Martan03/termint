@@ -1,5 +1,5 @@
 use termint::{
-    enums::{bg::Bg, fg::Fg, modifier::Modifier},
+    enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     mods,
     term::Term,
@@ -10,12 +10,25 @@ use termint::{
         grad::Grad,
         list::List,
         paragraph::Paragraph,
+        spacer::Spacer,
         span::StrSpanExtension,
         widget::Widget,
     },
 };
 
 fn main() {
+    // Needs fixing!
+    println!("\x1b[2J");
+    let span = "This is a test".to_span().wrap(Wrap::Letter);
+    let mut block = Block::new().direction(Direction::Horizontal);
+    block.add_child(Spacer::new(), Constrain::Fill);
+    block.add_child(span, Constrain::Min(0));
+    block.add_child(Spacer::new(), Constrain::Fill);
+
+    let mut main = Block::new().direction(Direction::Vertical).center();
+    main.add_child(block, Constrain::Length(4));
+    main.render(&Coords::new(1, 1), &Coords::new(20, 8));
+    println!("\x1b[3B");
     // test_block();
     // test_layout();
     // cool_example();
@@ -23,7 +36,7 @@ fn main() {
     // readme_example();
     // test_list();
     // test_center();
-    test_layout_centering();
+    // test_layout_centering();
 }
 
 #[allow(unused)]
