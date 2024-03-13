@@ -17,6 +17,14 @@ impl Coords {
     pub fn transpone(&mut self) {
         (self.x, self.y) = (self.y, self.x);
     }
+
+    /// Transpones [`Coords`] and returns new [`Coords`]
+    pub fn inverse(&self) -> Self {
+        Self {
+            x: self.y,
+            y: self.x,
+        }
+    }
 }
 
 impl Add for Coords {

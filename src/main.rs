@@ -223,7 +223,7 @@ fn test_layout_centering() {
     block.add_child(centered1, Constrain::Length(4));
     block.add_child(centered2, Constrain::Length(2));
 
-    block.render(&Coords::new(1, 1), &Coords::new(20, 6));
+    block.render(&Coords::new(1, 1), &Coords::new(20, 10));
 
-    println!("\x1b[5B");
+    println!("\x1b[8B");
 }

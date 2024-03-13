@@ -91,9 +91,9 @@ impl Layout {
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
     fn render(&self, pos: &Coords, size: &Coords) {
-        let pos =
+        let mut pos =
             Coords::new(pos.x + self.padding.left, pos.y + self.padding.top);
-        let size = Coords::new(
+        let mut size = Coords::new(
             size.x.saturating_sub(self.padding.get_horizontal()),
             size.y.saturating_sub(self.padding.get_vertical()),
         );
@@ -103,8 +103,18 @@ impl Widget for Layout {
         }
 
         match self.direction {
-            Direction::Vertical => self.render_vertical(&pos, &size),
-            Direction::Horizontal => self.render_horizontal(&pos, &size),
+            Direction::Vertical => {
+                pos.transpone();
+                size.transpone();
+                self._render(&mut pos, &mut size, |child, size| {
+                    child.height(size)
+                })
+            }
+            Direction::Horizontal => {
+                self._render(&mut pos, &mut size, |child, size| {
+                    child.width(size)
+                })
+            }
         }
     }
 
@@ -138,65 +148,13 @@ impl Default for Layout {
 }
 
 impl Layout {
-    /// Renders [`Layout`] in vertical [`Direction`]
-    fn render_vertical(&self, pos: &Coords, size: &Coords) {
-        let (sizes, total, fills) = self
-            .get_sizes(size, |child, c, s| self.child_size_ver(child, c, s));
-        let fill =
-            size.y.saturating_sub(total).checked_div(fills).unwrap_or(0);
-
-        let mut coords = *pos;
-        let mut pos = *pos;
-        let mut size = *size;
-        if fills == 0 && self.center {
-            let space_size = size.y.saturating_sub(total);
-            let move_size = space_size.saturating_div(2);
-
-            size.y -= space_size;
-            pos.y += move_size;
-            coords.y += move_size;
-        }
+    fn _render<F>(&self, pos: &mut Coords, size: &mut Coords, chsize: F)
+    where
+        F: Fn(&dyn Widget, &Coords) -> usize,
+    {
+        let (sizes, fill) = self.get_sizes(size, pos, chsize);
 
         let mut coords = Coords::new(pos.x, pos.y);
-
-        for (i, item) in sizes.iter().enumerate() {
-            if coords.y - pos.y >= size.y {
-                break;
-            }
-
-            let mut child_size = match self.constrain[i] {
-                Constrain::Fill => Coords::new(size.x, fill),
-                _ => Coords::new(size.x, *item),
-            };
-            if child_size.y + coords.y - pos.y > size.y {
-                child_size.y = size.y.saturating_sub(coords.y);
-            }
-
-            self.children[i].render(&coords, &child_size);
-
-            coords.y += child_size.y;
-        }
-    }
-
-    /// Renders [`Layout`] in horizontal [`Direction`]
-    fn render_horizontal(&self, pos: &Coords, size: &Coords) {
-        let (sizes, total, fills) = self
-            .get_sizes(size, |child, c, s| self.child_size_hor(child, c, s));
-        let fill =
-            size.x.saturating_sub(total).checked_div(fills).unwrap_or(0);
-
-        let mut coords = *pos;
-        let mut pos = *pos;
-        let mut size = *size;
-        if fills == 0 && self.center {
-            let space_size = size.x.saturating_sub(total);
-            let move_size = space_size.saturating_div(2);
-
-            size.x -= space_size;
-            pos.x += move_size;
-            coords.x += move_size;
-        }
-
         for (i, s) in sizes.iter().enumerate() {
             if coords.x - pos.x >= size.x {
                 break;
@@ -210,42 +168,32 @@ impl Layout {
                 child_size.x = size.x.saturating_sub(coords.x);
             }
 
-            self.children[i].render(&coords, &child_size);
-
+            let mut c = coords.clone();
             coords.x += child_size.x;
-        }
-    }
-
-    /// Gets given child size in vertical layout
-    fn child_size_ver(
-        &self,
-        child: &dyn Widget,
-        constrain: &Constrain,
-        size: &Coords,
-    ) -> usize {
-        match constrain {
-            Constrain::Length(len) => *len,
-            Constrain::Percent(p) => {
-                (*p as f32 / 100.0 * size.y as f32) as usize
+            if self.direction == Direction::Vertical {
+                child_size.transpone();
+                c.transpone();
             }
-            Constrain::Min(val) => max(child.height(size), *val),
-            Constrain::Fill => 0,
+            self.children[i].render(&c, &child_size);
         }
     }
 
-    /// Gets given child size in horizontal layout
-    fn child_size_hor(
+    fn child_size<F>(
         &self,
         child: &dyn Widget,
+        chsize: F,
         constrain: &Constrain,
         size: &Coords,
-    ) -> usize {
+    ) -> usize
+    where
+        F: Fn(&dyn Widget, &Coords) -> usize,
+    {
         match constrain {
             Constrain::Length(len) => *len,
             Constrain::Percent(p) => {
                 (*p as f32 / 100.0 * size.x as f32) as usize
             }
-            Constrain::Min(val) => max(child.width(size), *val),
+            Constrain::Min(val) => max(chsize(child, size), *val),
             Constrain::Fill => 0,
         }
     }
@@ -253,11 +201,12 @@ impl Layout {
     /// Gets children sizes
     fn get_sizes<F>(
         &self,
-        size: &Coords,
+        size: &mut Coords,
+        pos: &mut Coords,
         child_size: F,
-    ) -> (Vec<usize>, usize, usize)
+    ) -> (Vec<usize>, usize)
     where
-        F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
+        F: Fn(&dyn Widget, &Coords) -> usize,
     {
         let mut sizes: Vec<usize> = Vec::new();
         let mut total = 0;
@@ -266,15 +215,26 @@ impl Layout {
             if self.constrain[i] == Constrain::Fill {
                 fill += 1;
             }
-            sizes.push(child_size(
+            sizes.push(self.child_size(
                 &*self.children[i],
+                &child_size,
                 &self.constrain[i],
                 size,
             ));
             total += sizes[i];
         }
 
-        (sizes, total, fill)
+        let fills =
+            size.x.saturating_sub(total).checked_div(fill).unwrap_or(0);
+        if fills == 0 && self.center {
+            let space_size = size.x.saturating_sub(total);
+            let move_size = space_size / 2;
+
+            size.x -= space_size;
+            pos.x += move_size;
+        }
+
+        (sizes, fills)
     }
 }
 
