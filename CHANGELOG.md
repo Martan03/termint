@@ -7,6 +7,8 @@
 
 ### Fixes:
 - Make Grad with Letter Wrap render all spaces
+- Fix Grad and Span showing ellipsis when not necessary
+- Fix Grad rendering (was shifted down)
 
 ## v0.3.1
 ### Fixes:
