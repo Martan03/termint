@@ -354,9 +354,10 @@ impl Grad {
             (r, g, b) = self.add_step((r, g, b), step);
         }
 
-        let mut coords = Coords::new(pos.x + offset, pos.y);
+        let mut coords = Coords::new(offset, pos.y);
         print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
+        let fits = self.text.len() <= size.x * size.y;
         for c in self.text.chars() {
             if coords.x >= size.x {
                 coords.x = 0;
@@ -365,7 +366,8 @@ impl Grad {
                 (r, g, b) =
                     (self.fg_start.r, self.fg_start.g, self.fg_start.b);
             }
-            if coords.y + 1 == size.y + pos.y
+            if !fits
+                && coords.y + 1 == size.y + pos.y
                 && coords.x + self.ellipsis.len() >= size.x
             {
                 for c in self.ellipsis.chars() {

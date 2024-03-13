@@ -72,7 +72,7 @@ impl Layout {
         self
     }
 
-    /// Makes [`Layout`] center its content
+    /// Makes [`Layout`] center its content in its direction
     pub fn center(mut self) -> Self {
         self.center = true;
         self
@@ -154,7 +154,7 @@ impl Layout {
     {
         let (sizes, fill) = self.get_sizes(size, pos, chsize);
 
-        let mut coords = Coords::new(pos.x, pos.y);
+        let mut coords = *pos;
         for (i, s) in sizes.iter().enumerate() {
             if coords.x - pos.x >= size.x {
                 break;
@@ -168,7 +168,7 @@ impl Layout {
                 child_size.x = size.x.saturating_sub(coords.x);
             }
 
-            let mut c = coords.clone();
+            let mut c = coords;
             coords.x += child_size.x;
             if self.direction == Direction::Vertical {
                 child_size.transpone();
