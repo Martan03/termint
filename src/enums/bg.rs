@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Enum for background colors
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum Bg {
     Black,
     DarkRed,
@@ -20,6 +20,7 @@ pub enum Bg {
     Cyan,
     White,
     RGB(usize, usize, usize),
+    #[default]
     Default,
 }
 

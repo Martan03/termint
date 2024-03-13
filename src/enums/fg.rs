@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Enum for foreground colors
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum Fg {
     Black,
     DarkRed,
@@ -20,6 +20,7 @@ pub enum Fg {
     Cyan,
     White,
     RGB(u8, u8, u8),
+    #[default]
     Default,
 }
 

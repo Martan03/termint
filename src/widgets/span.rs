@@ -64,11 +64,7 @@ impl Span {
     pub fn new<T: Into<String>>(text: T) -> Self {
         Self {
             text: text.into(),
-            fg: Fg::Default,
-            bg: Bg::Default,
-            modifier: Vec::new(),
-            wrap: Wrap::Word,
-            ellipsis: "...".to_string(),
+            ..Default::default()
         }
     }
 
@@ -100,16 +96,6 @@ impl Span {
     pub fn ellipsis(mut self, ellipsis: &str) -> Self {
         self.ellipsis = ellipsis.to_string();
         self
-    }
-
-    /// Gets [`Span`] length
-    pub fn len(&self) -> usize {
-        self.text.len()
-    }
-
-    /// Checks if [`Span`] is empty
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
     }
 }
 
@@ -176,6 +162,19 @@ impl Text for Span {
             .collect::<Vec<&str>>()
             .join("");
         format!("{}{}{}", self.fg, self.bg, m)
+    }
+}
+
+impl Default for Span {
+    fn default() -> Self {
+        Self {
+            text: Default::default(),
+            fg: Default::default(),
+            bg: Default::default(),
+            modifier: Default::default(),
+            wrap: Wrap::Word,
+            ellipsis: "...".to_string(),
+        }
     }
 }
 
