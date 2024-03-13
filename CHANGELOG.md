@@ -9,6 +9,7 @@
 - Make Grad with Letter Wrap render all spaces
 - Fix Grad and Span showing ellipsis when not necessary
 - Fix Grad rendering (was shifted down)
+- Fix Block border taking space even when not used
 
 ## v0.3.1
 ### Fixes:
