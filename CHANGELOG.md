@@ -2,7 +2,8 @@
 
 ## v0.4.0
 ### Features:
-- Add Center and Spacer widget
+- Add Spacer widget for better layouting
+- Add centering to the Layout widget
 
 ### Fixes:
 - Make Grad with Letter Wrap render all spaces
