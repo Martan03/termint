@@ -10,20 +10,16 @@ use termint::{
         grad::Grad,
         list::List,
         paragraph::Paragraph,
-        spacer::Spacer,
         span::StrSpanExtension,
         widget::Widget,
     },
 };
 
 fn main() {
-    // Needs fixing!
     println!("\x1b[2J");
     let span = "This is a test".to_span().wrap(Wrap::Letter);
-    let mut block = Block::new().direction(Direction::Horizontal);
-    block.add_child(Spacer::new(), Constrain::Fill);
+    let mut block = Block::new().direction(Direction::Horizontal).center();
     block.add_child(span, Constrain::Min(0));
-    block.add_child(Spacer::new(), Constrain::Fill);
 
     let mut main = Block::new().direction(Direction::Vertical).center();
     main.add_child(block, Constrain::Length(4));

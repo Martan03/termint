@@ -234,14 +234,16 @@ impl Span {
         let mut coords = Coords::new(offset, pos.y);
         print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
-        for c in self.text.chars() {
+        for (i, c) in self.text.chars().enumerate() {
             if coords.x >= size.x {
                 coords.x = 0;
                 coords.y += 1;
                 print!("{}", Cursor::Pos(pos.x, coords.y));
             }
 
+            // TODO think about this condition (too complicated)
             if coords.y + 1 == size.y + pos.y
+                && coords.x + self.text.len() - i > size.x
                 && coords.x + self.ellipsis.len() >= size.x
             {
                 print!("{}", self.ellipsis);
