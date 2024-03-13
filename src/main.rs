@@ -17,7 +17,8 @@ use termint::{
 
 fn main() {
     println!("\x1b[2J");
-    let span = "This is a test".to_span().wrap(Wrap::Letter);
+    let span = Grad::new("This is a test", (0, 150, 255), (150, 255, 150))
+        .wrap(Wrap::Word);
     let mut block = Block::new().direction(Direction::Horizontal).center();
     block.add_child(span, Constrain::Min(0));
 
