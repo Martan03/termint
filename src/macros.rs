@@ -11,7 +11,7 @@
 #[macro_export]
 macro_rules! borders {
     ($($border:ident),*) => {
-        ($(Border::$border |)* 0)
+        $(Border::$border |)* 0
     };
 }
 
