@@ -126,7 +126,7 @@ fn cool_example() {
     main.add_child(fill, Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(40, 9));
-    println!("\x1b[1B");
+    println!("\x1b[5B");
 }
 
 #[allow(unused)]

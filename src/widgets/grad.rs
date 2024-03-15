@@ -31,7 +31,7 @@ pub struct Grad {
     fg_start: RGB,
     fg_end: RGB,
     direction: Direction,
-    bg: Bg,
+    bg: Option<Bg>,
     modifier: Vec<Modifier>,
     wrap: Wrap,
     ellipsis: String,
@@ -49,7 +49,7 @@ impl Grad {
             fg_start: start.into(),
             fg_end: end.into(),
             direction: Direction::Horizontal,
-            bg: Bg::Default,
+            bg: None,
             modifier: Vec::new(),
             wrap: Wrap::Word,
             ellipsis: "...".to_string(),
@@ -63,8 +63,11 @@ impl Grad {
     }
 
     /// Sets background of [`Grad`] to given color
-    pub fn bg(mut self, bg: Bg) -> Self {
-        self.bg = bg;
+    pub fn bg<T>(mut self, bg: T) -> Self
+    where
+        T: Into<Option<Bg>>,
+    {
+        self.bg = bg.into();
         self
     }
 
@@ -163,7 +166,11 @@ impl Text for Grad {
             .map(|m| m.to_ansi())
             .collect::<Vec<&str>>()
             .join("");
-        format!("{}{}", self.bg, m)
+        format!(
+            "{}{}",
+            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_string()),
+            m
+        )
     }
 }
 
