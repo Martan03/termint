@@ -1,10 +1,12 @@
-use std::cmp::min;
+use std::cmp::{max, min};
 
 use crate::{enums::fg::Fg, geometry::coords::Coords};
 
 use super::{span::StrSpanExtension, widget::Widget};
 
 /// List widget with scrollbar
+///
+/// List makes sure current item is always visible
 ///
 /// ## Example usage:
 /// ```
@@ -20,7 +22,7 @@ use super::{span::StrSpanExtension, widget::Widget};
 /// ```
 #[derive(Debug)]
 pub struct List {
-    items: Vec<&'static str>,
+    items: Vec<String>,
     current: Option<usize>,
     offset: usize,
     fg: Fg,
@@ -31,7 +33,12 @@ pub struct List {
 
 impl List {
     /// Creates new [`List`] with given items
-    pub fn new(items: Vec<&'static str>) -> Self {
+    pub fn new<T>(items: Vec<T>) -> Self
+    where
+        T: AsRef<str>,
+    {
+        let items: Vec<String> =
+            items.iter().map(|i| i.as_ref().to_string()).collect();
         let current = if items.is_empty() { None } else { Some(0) };
 
         Self {
@@ -44,19 +51,6 @@ impl List {
     /// Sets current item in [`List`]
     pub fn current(mut self, current: Option<usize>) -> Self {
         self.current = current;
-        self
-    }
-
-    /// Sets current item in [`List`] and scrolls to it
-    pub fn current_scroll(mut self, current: Option<usize>) -> Self {
-        self.current = current;
-        self.offset = current.unwrap_or(0);
-        self
-    }
-
-    /// Sets offset of [`List`]
-    pub fn offset(mut self, offset: usize) -> Self {
-        self.offset = offset;
         self
     }
 
@@ -111,7 +105,6 @@ impl Widget for List {
         );
     }
 
-    /// Gets height of the [`List`] with all items
     fn height(&self, size: &Coords) -> usize {
         let mut height = 0;
         for i in 0..self.items.len() {
@@ -121,8 +114,13 @@ impl Widget for List {
         height
     }
 
-    fn width(&self, _size: &Coords) -> usize {
-        todo!()
+    fn width(&self, size: &Coords) -> usize {
+        let mut width = 0;
+        for item in self.items.iter() {
+            let span = item.to_span();
+            width = max(span.width(size), width);
+        }
+        width + 1
     }
 }
 
@@ -140,8 +138,6 @@ impl Default for List {
     }
 }
 
-// whole / x = part
-// x = whole / part
 impl List {
     /// Renders [`List`] scrollbar
     fn render_scrollbar(&self, pos: &Coords, size: &Coords) {

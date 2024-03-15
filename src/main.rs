@@ -1,5 +1,4 @@
 use termint::{
-    borders,
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     mods,
@@ -16,20 +15,12 @@ use termint::{
 };
 
 fn main() {
-    println!("\x1b[2J");
-    let mut main = Block::new();
-    let mut block = Block::new().borders(borders!(LEFT, RIGHT));
-    let blockage = Block::new();
-    block.add_child(blockage, Constrain::Fill);
-    main.add_child(block, Constrain::Fill);
-    main.render(&Coords::new(1, 1), &Coords::new(20, 6));
-    println!("\x1b[4B");
     // test_block();
     // test_layout();
     // cool_example();
     // test_paragraph();
     // readme_example();
-    // test_list();
+    test_list();
     // test_layout_centering();
 }
 
@@ -199,12 +190,14 @@ fn readme_example() {
 fn test_list() {
     println!("\x1b[2J");
 
+    let mut block = Block::new();
     let list =
         List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
             .current(Some(1))
             .sel_fg(Fg::Yellow);
-    list.render(&Coords::new(1, 1), &Coords::new(20, 5));
-    println!("\x1b[3B");
+    block.add_child(list, Constrain::Fill);
+    block.render(&Coords::new(1, 1), &Coords::new(20, 6));
+    println!("\x1b[2B");
 }
 
 #[allow(unused)]
