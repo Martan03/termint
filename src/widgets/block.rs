@@ -1,7 +1,4 @@
-use std::{
-    cmp::{max, min},
-    iter::repeat,
-};
+use std::{cmp::max, iter::repeat};
 
 use crate::{
     borders,
@@ -232,17 +229,29 @@ impl Block {
 
     /// Gets border size
     fn border_size(&self) -> (usize, usize) {
-        let title = (!self.title.get_text().is_empty()) as usize;
-        (
-            self._border_size(borders!(LEFT, RIGHT)),
-            min(self._border_size(borders!(TOP, BOTTOM)) + title, 2),
-        )
+        (self.hor_border_size(), self.ver_border_size())
     }
 
-    /// Gets border size in given border positions
-    fn _border_size(&self, border: u8) -> usize {
+    /// Gets horizontal border size
+    fn hor_border_size(&self) -> usize {
+        let border = borders!(LEFT, RIGHT);
         let val = self.borders & border;
         if val == border {
+            2
+        } else if val != 0 {
+            1
+        } else {
+            0
+        }
+    }
+
+    /// Gets vertical border size and acounting title as well
+    fn ver_border_size(&self) -> usize {
+        let border = borders!(TOP, BOTTOM);
+        let val = self.borders & border;
+        if val == border
+            || (val == Border::BOTTOM && !self.title.get_text().is_empty())
+        {
             2
         } else if val != 0 {
             1

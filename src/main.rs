@@ -17,10 +17,11 @@ use termint::{
 fn main() {
     // test_block();
     // test_layout();
-    // cool_example();
+    // test_grad();
+    cool_example();
     // test_paragraph();
     // readme_example();
-    test_list();
+    // test_list();
     // test_layout_centering();
 }
 
