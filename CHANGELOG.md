@@ -2,14 +2,15 @@
 
 ## v0.4.0
 ### Features:
-- Add Spacer widget for better layouting
 - Add centering to the Layout widget
+- Add option to automatically scroll to item in List widget
+- Add Spacer widget for better layouting
 
 ### Fixes:
-- Make Grad with Letter Wrap render all spaces
-- Fix Grad and Span showing ellipsis when not necessary
-- Fix Grad rendering (was shifted down)
 - Fix Block border taking space even when not used
+- Fix Grad and Span showing ellipsis when not necessary
+- Fix Grad letter wrap rendering (was shifted down)
+- Make Grad with Letter Wrap render all spaces
 
 ## v0.3.1
 ### Fixes:

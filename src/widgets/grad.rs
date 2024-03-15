@@ -397,7 +397,7 @@ impl Grad {
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
 
-        let mut coords = Coords::new(pos.x + offset, pos.y);
+        let mut coords = Coords::new(offset, pos.y);
         print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
         for c in self.text.chars() {
