@@ -6,8 +6,6 @@ use super::{span::StrSpanExtension, widget::Widget};
 
 /// List widget with scrollbar
 ///
-/// List makes sure current item is always visible
-///
 /// ## Example usage:
 /// ```
 /// # use termint::{
@@ -24,6 +22,7 @@ use super::{span::StrSpanExtension, widget::Widget};
 pub struct List {
     items: Vec<String>,
     current: Option<usize>,
+    prev_offset: Option<usize>,
     offset: usize,
     fg: Fg,
     sel_fg: Fg,
@@ -51,6 +50,18 @@ impl List {
     /// Sets current item in [`List`]
     pub fn current(mut self, current: Option<usize>) -> Self {
         self.current = current;
+        self
+    }
+
+    /// Sets scroll offset of the [`List`]
+    pub fn offset(mut self, offset: usize) -> Self {
+        self.offset = offset;
+        self
+    }
+
+    /// Scrolls [`List`] from given item so current item is visible
+    pub fn to_current(mut self, from: usize) -> Self {
+        self.prev_offset = Some(from);
         self
     }
 
@@ -83,8 +94,9 @@ impl Widget for List {
     fn render(&self, pos: &Coords, size: &Coords) {
         let mut text_pos = Coords::new(pos.x, pos.y);
         let mut text_size = Coords::new(size.x - 1, size.y);
+        let offset = self.get_offset(size);
 
-        for i in self.offset..self.items.len() {
+        for i in offset..self.items.len() {
             let mut fg = self.fg;
             if Some(i) == self.current {
                 fg = self.sel_fg;
@@ -102,6 +114,7 @@ impl Widget for List {
         self.render_scrollbar(
             &Coords::new((pos.x + size.x).saturating_sub(1), pos.y),
             size,
+            offset,
         );
     }
 
@@ -129,6 +142,7 @@ impl Default for List {
         Self {
             items: Vec::new(),
             current: None,
+            prev_offset: None,
             offset: 0,
             fg: Fg::Default,
             sel_fg: Fg::Cyan,
@@ -140,11 +154,11 @@ impl Default for List {
 
 impl List {
     /// Renders [`List`] scrollbar
-    fn render_scrollbar(&self, pos: &Coords, size: &Coords) {
+    fn render_scrollbar(&self, pos: &Coords, size: &Coords, offset: usize) {
         let rat = self.items.len() as f32 / size.y as f32;
         let thumb_size = min((size.y as f32 / rat) as usize, size.y);
         let thumb_offset =
-            min((self.offset as f32 / rat) as usize, size.y - thumb_size);
+            min((offset as f32 / rat) as usize, size.y - thumb_size);
 
         let mut bar_pos = Coords::new(pos.x, pos.y);
         let bar = "│".fg(self.scrollbar_fg);
@@ -159,6 +173,41 @@ impl List {
             thumb.render(&bar_pos, size);
             bar_pos.y += 1;
         }
+    }
+
+    fn get_offset(&self, size: &Coords) -> usize {
+        let Some(current) = self.current else {
+            return self.offset;
+        };
+        let Some(prev_offset) = self.prev_offset else {
+            return self.offset;
+        };
+
+        if prev_offset > current {
+            return current;
+        }
+
+        let mut offset = prev_offset;
+        while !self.is_visible(current, offset, size) {
+            offset += 1;
+        }
+        offset
+    }
+
+    /// Checks if item is visible with given offset
+    fn is_visible(&self, item: usize, offset: usize, size: &Coords) -> bool {
+        let mut height = 0;
+        for i in offset..self.items.len() {
+            height += self.items[i].to_span().height(size);
+            if height > size.y {
+                return false;
+            }
+
+            if i == item {
+                return true;
+            }
+        }
+        false
     }
 }
 

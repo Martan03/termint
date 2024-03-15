@@ -193,7 +193,8 @@ fn test_list() {
     let mut block = Block::new();
     let list =
         List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
-            .current(Some(1))
+            .current(Some(4))
+            .offset(20)
             .sel_fg(Fg::Yellow);
     block.add_child(list, Constrain::Fill);
     block.render(&Coords::new(1, 1), &Coords::new(20, 6));
