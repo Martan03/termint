@@ -1,6 +1,9 @@
 use crate::{
     enums::{bg::Bg, cursor::Cursor, rgb::RGB},
-    geometry::{coords::Coords, direction::Direction, padding::Padding},
+    geometry::{
+        constrain::Constrain, coords::Coords, direction::Direction,
+        padding::Padding,
+    },
 };
 
 use super::{layout::Layout, widget::Widget};
@@ -49,20 +52,36 @@ impl BgGrad {
         self.layout = self.layout.center();
         self
     }
+
+    /// Adds child to the [`BgGrad`]'s [`Layout`]
+    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    where
+        T: Into<Box<dyn Widget>>,
+    {
+        self.layout.add_child(child, constrain);
+    }
 }
 
 impl Widget for BgGrad {
     fn render(&self, pos: &Coords, size: &Coords) {
-        self.hor_render(pos, size);
+        if size.x == 0 || size.y == 0 {
+            return;
+        }
+
+        match self.direction {
+            Direction::Vertical => self.ver_render(pos, size),
+            Direction::Horizontal => self.hor_render(pos, size),
+        }
         println!("{}\x1b[0m", Cursor::Pos(pos.x, pos.y));
+        self.layout.render(pos, size);
     }
 
     fn height(&self, size: &Coords) -> usize {
-        todo!()
+        self.layout.height(size)
     }
 
     fn width(&self, size: &Coords) -> usize {
-        todo!()
+        self.layout.width(size)
     }
 }
 
@@ -81,6 +100,19 @@ impl BgGrad {
 
         for y in 0..size.y {
             print!("{}{}", Cursor::Pos(pos.x, pos.y + y), line);
+        }
+    }
+
+    /// Renders vertical background gradient
+    fn ver_render(&self, pos: &Coords, size: &Coords) {
+        let step = self.get_step(size.y as i16);
+        let (mut r, mut g, mut b) =
+            (self.bg_start.r, self.bg_start.g, self.bg_start.b);
+
+        for y in 0..size.y {
+            let line = format!("{} ", Bg::RGB(r, g, b)).repeat(size.x);
+            print!("{}{line}", Cursor::Pos(pos.x, pos.y + y));
+            (r, g, b) = self.add_step((r, g, b), step);
         }
     }
 

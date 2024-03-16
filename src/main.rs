@@ -8,6 +8,7 @@ use termint::{
         block::Block,
         border::{Border, BorderType},
         grad::Grad,
+        layout::Layout,
         list::List,
         paragraph::Paragraph,
         span::StrSpanExtension,
@@ -17,9 +18,14 @@ use termint::{
 
 fn main() {
     println!("\x1b[2J");
-    let grad = BgGrad::new((0, 150, 255), (150, 255, 0));
+    let mut grad = BgGrad::new((0, 150, 255), (150, 255, 0))
+        .center()
+        .bg_dir(Direction::Vertical);
+    let mut layout = Layout::horizontal().center();
+    layout.add_child(Block::new(), Constrain::Length(6));
+    grad.add_child(layout, Constrain::Length(3));
     grad.render(&Coords::new(1, 1), &Coords::new(20, 9));
-    println!("\x1b[7B");
+    println!("\x1b[5B");
     // test_block();
     // test_layout();
     // test_grad();
