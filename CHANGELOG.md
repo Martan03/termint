@@ -2,6 +2,7 @@
 
 ## v0.4.0
 ### Features:
+- Add BgGrad widget that renders background gradient
 - Add centering to the Layout widget
 - Add option to automatically scroll to item in List widget
 - Add Spacer widget for better layouting

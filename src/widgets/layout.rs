@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::cmp::{max, min};
 
 use crate::geometry::{
     constrain::Constrain, coords::Coords, direction::Direction,
@@ -165,7 +165,7 @@ impl Layout {
                 _ => Coords::new(*s, size.y),
             };
             if child_size.x + coords.x - pos.x > size.x {
-                child_size.x = size.x.saturating_sub(coords.x);
+                child_size.x = size.x.saturating_sub(coords.x - pos.x);
             }
 
             let mut c = coords;
@@ -191,6 +191,8 @@ impl Layout {
                 (*p as f32 / 100.0 * size.y as f32) as usize
             }
             Constrain::Min(val) => max(child.height(&size), *val),
+            Constrain::Max(val) => min(child.height(&size), *val),
+            Constrain::MinMax(l, h) => min(max(child.height(&size), *l), *h),
             Constrain::Fill => 0,
         }
     }
@@ -206,7 +208,9 @@ impl Layout {
             Constrain::Percent(p) => {
                 (*p as f32 / 100.0 * size.x as f32) as usize
             }
-            Constrain::Min(val) => max(child.width(size), *val),
+            Constrain::Min(val) => max(child.width(&size), *val),
+            Constrain::Max(val) => min(child.width(&size), *val),
+            Constrain::MinMax(l, h) => min(max(child.width(&size), *l), *h),
             Constrain::Fill => 0,
         }
     }
