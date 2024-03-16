@@ -115,7 +115,7 @@ impl Widget for Span {
 
         match self.wrap {
             Wrap::Letter => _ = self.render_letter_wrap(pos, size, 0),
-            Wrap::Word => _ = self.render_word_wrap(pos, size, 0),
+            Wrap::Word => _ = self.render_word(pos, size, 0),
         }
 
         println!("\x1b[0m");
@@ -152,7 +152,7 @@ impl Text for Span {
 
         match wrap {
             Wrap::Letter => self.render_letter_wrap(pos, size, offset),
-            Wrap::Word => self.render_word_wrap(pos, size, offset),
+            Wrap::Word => self.render_word(pos, size, offset),
         }
     }
 
@@ -201,6 +201,8 @@ impl fmt::Display for Span {
 }
 
 impl Span {
+    /// Renders [`Span`] with word wrapping with given offset
+    /// Returns [`Coords`] where rendered text ends
     fn render_word(
         &self,
         pos: &Coords,
@@ -208,21 +210,34 @@ impl Span {
         offset: usize,
     ) -> Coords {
         let mut res: Vec<&str> = vec![];
-        let mut len = 0_usize;
-        for (y, word) in self.text.split_whitespace().enumerate() {
-            if len + word.len() + !res.is_empty() as usize > size.x {
-                print!("{}{}", Cursor::Pos(pos.x, pos.y + y), res.join(" "));
+        let mut coords = Coords::new(offset, pos.y);
+
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
+        for word in self.text.split_whitespace() {
+            if coords.x + word.len() + !res.is_empty() as usize > size.x {
+                if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
+                    print!("{}", res.join(" "));
+                    self.render_ellipsis(&coords, size);
+                    return coords;
+                }
+
+                (coords.x, coords.y) = (0, coords.y + 1);
+                print!("{}{}", res.join(" "), Cursor::Pos(pos.x, coords.y));
+                res = vec![];
             }
-            len += word.len() + !res.is_empty() as usize;
-            res = vec![word];
+            coords.x += word.len() + !res.is_empty() as usize;
+            res.push(word);
         }
 
-        Coords::new(0, 0)
+        if !res.is_empty() {
+            print!("{}", res.join(" "));
+        }
+        coords
     }
 
     /// Renders [`Span`] with word wrapping with given offset
     /// Returns [`Coords`] where rendered text ends
-    fn render_word_wrap(
+    fn _render_word_wrap(
         &self,
         pos: &Coords,
         size: &Coords,

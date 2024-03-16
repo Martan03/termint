@@ -2,7 +2,6 @@ use termint::{
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     mods,
-    term::Term,
     widgets::{
         bg_grad::BgGrad,
         block::Block,
@@ -21,11 +20,11 @@ fn main() {
     // test_layout();
     // test_grad();
     // cool_example();
-    // test_paragraph();
+    test_paragraph();
     // readme_example();
     // test_list();
     // test_layout_centering();
-    test_bg_grad();
+    // test_bg_grad();
 }
 
 #[allow(unused)]
@@ -153,10 +152,7 @@ fn test_paragraph() {
     main.add_child(p, Constrain::Fill);
     main.add_child(block, Constrain::Fill);
 
-    // main.render(&Coords::new(1, 1), &Coords::new(20, 9));
-
-    let term = Term::new().padding((1, 2, 3, 4));
-    term.render(main);
+    main.render(&Coords::new(1, 1), &Coords::new(20, 9));
 
     println!("\x1b[7B");
 }
