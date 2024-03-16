@@ -6,6 +6,8 @@ use super::{span::StrSpanExtension, widget::Widget};
 
 /// List widget with scrollbar
 ///
+/// Scrollbar is visible only when it's necessary
+///
 /// ## Example usage:
 /// ```
 /// # use termint::{
@@ -93,8 +95,18 @@ impl List {
 impl Widget for List {
     fn render(&self, pos: &Coords, size: &Coords) {
         let mut text_pos = Coords::new(pos.x, pos.y);
-        let mut text_size = Coords::new(size.x - 1, size.y);
+        let mut text_size = Coords::new(size.x, size.y);
         let offset = self.get_offset(size);
+
+        let fits = self.fits(size);
+        if !fits {
+            text_size.x -= 1;
+            self.render_scrollbar(
+                &Coords::new((pos.x + size.x).saturating_sub(1), pos.y),
+                size,
+                offset,
+            );
+        }
 
         for i in offset..self.items.len() {
             let mut fg = self.fg;
@@ -111,11 +123,6 @@ impl Widget for List {
             }
             text_size.y = pos.y + size.y - text_pos.y;
         }
-        self.render_scrollbar(
-            &Coords::new((pos.x + size.x).saturating_sub(1), pos.y),
-            size,
-            offset,
-        );
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -208,6 +215,11 @@ impl List {
             }
         }
         false
+    }
+
+    /// Checks if list fits to the visible area
+    fn fits(&self, size: &Coords) -> bool {
+        self.is_visible(self.items.len() - 1, 0, size)
     }
 }
 

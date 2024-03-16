@@ -24,7 +24,7 @@ impl RGB {
         }
     }
 
-    /// Create new [`RGB`] from HSL
+    /// Create new [`RGB`] from HSL (expects correct values)
     pub fn from_hsl(h: f64, s: f64, l: f64) -> Self {
         let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
         let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
@@ -75,7 +75,7 @@ impl From<u32> for RGB {
 }
 
 impl From<(f64, f64, f64)> for RGB {
-    /// Converts tuple with HSL components to RGB
+    /// Converts tuple with HSL components to RGB (expects correct values)
     fn from(value: (f64, f64, f64)) -> Self {
         Self::from_hsl(value.0, value.1, value.2)
     }
