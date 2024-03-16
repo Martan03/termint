@@ -12,6 +12,8 @@
 //! - [`Spacer`]: widget for creating spaces between widgets (better layouting)
 //! - [`Span`]: widget for styling text
 
+/// Background gradient widget, which works as Layout as well
+pub mod bg_grad;
 /// Layout with addition of border and title
 pub mod block;
 /// Defines Border sides and BorderType

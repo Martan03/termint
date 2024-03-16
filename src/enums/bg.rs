@@ -19,7 +19,7 @@ pub enum Bg {
     Magenta,
     Cyan,
     White,
-    RGB(usize, usize, usize),
+    RGB(u8, u8, u8),
     #[default]
     Default,
 }

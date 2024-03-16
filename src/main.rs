@@ -4,6 +4,7 @@ use termint::{
     mods,
     term::Term,
     widgets::{
+        bg_grad::BgGrad,
         block::Block,
         border::{Border, BorderType},
         grad::Grad,
@@ -15,8 +16,12 @@ use termint::{
 };
 
 fn main() {
+    println!("\x1b[2J");
+    let grad = BgGrad::new((0, 150, 255), (150, 255, 0));
+    grad.render(&Coords::new(1, 1), &Coords::new(20, 9));
+    println!("\x1b[7B");
     // test_block();
-    test_layout();
+    // test_layout();
     // test_grad();
     // cool_example();
     // test_paragraph();
