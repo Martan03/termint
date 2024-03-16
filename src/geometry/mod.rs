@@ -6,3 +6,5 @@ pub mod coords;
 pub mod direction;
 /// Defines padding struct
 pub mod padding;
+/// Defines TextAlign struct for setting text alignment
+pub mod text_align;

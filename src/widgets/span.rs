@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{
     enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, wrap::Wrap},
-    geometry::coords::Coords,
+    geometry::{coords::Coords, text_align::TextAlign},
 };
 
 use super::{text::Text, widget::Widget};
@@ -55,6 +55,7 @@ pub struct Span {
     fg: Fg,
     bg: Option<Bg>,
     modifier: Vec<Modifier>,
+    align: TextAlign,
     wrap: Wrap,
     ellipsis: String,
 }
@@ -86,6 +87,12 @@ impl Span {
     /// Sets modifiers of [`Span`] to given modifiers
     pub fn modifier(mut self, mods: Vec<Modifier>) -> Self {
         self.modifier = mods;
+        self
+    }
+
+    /// Sets [`Span`] text alignment
+    pub fn align(mut self, align: TextAlign) -> Self {
+        self.align = align;
         self
     }
 
@@ -180,6 +187,7 @@ impl Default for Span {
             fg: Default::default(),
             bg: Default::default(),
             modifier: Default::default(),
+            align: Default::default(),
             wrap: Wrap::Word,
             ellipsis: "...".to_string(),
         }
@@ -193,6 +201,25 @@ impl fmt::Display for Span {
 }
 
 impl Span {
+    fn render_word(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) -> Coords {
+        let mut res: Vec<&str> = vec![];
+        let mut len = 0_usize;
+        for (y, word) in self.text.split_whitespace().enumerate() {
+            if len + word.len() + !res.is_empty() as usize > size.x {
+                print!("{}{}", Cursor::Pos(pos.x, pos.y + y), res.join(" "));
+            }
+            len += word.len() + !res.is_empty() as usize;
+            res = vec![word];
+        }
+
+        Coords::new(0, 0)
+    }
+
     /// Renders [`Span`] with word wrapping with given offset
     /// Returns [`Coords`] where rendered text ends
     fn render_word_wrap(
