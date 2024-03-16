@@ -16,9 +16,9 @@ use termint::{
 
 fn main() {
     // test_block();
-    // test_layout();
+    test_layout();
     // test_grad();
-    cool_example();
+    // cool_example();
     // test_paragraph();
     // readme_example();
     // test_list();
@@ -98,7 +98,7 @@ fn cool_example() {
         .border_color(Fg::Gray);
 
     let block = Block::new()
-        .title("Features:".to_span())
+        .title("Features:")
         .borders(Border::TOP)
         .border_color(Fg::Gray);
     main.add_child(block, Constrain::Min(0));
@@ -114,19 +114,18 @@ fn cool_example() {
         .border_color(Fg::Gray)
         .direction(Direction::Horizontal);
 
-    let long = "This text fits well".to_span();
-    fill.add_child(long, Constrain::Min(0));
+    fill.add_child("This text fits well", Constrain::Min(0));
     let sep = Block::new().borders(Border::LEFT).border_color(Fg::Gray);
     fill.add_child(sep, Constrain::Length(1));
-    let fill_text =
-        "This text will fill the rest and have ellipsis when overflows"
-            .to_span();
-    fill.add_child(fill_text, Constrain::Fill);
+    fill.add_child(
+        "This text will fill the rest and have ellipsis when overflows",
+        Constrain::Fill,
+    );
 
     main.add_child(fill, Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(40, 9));
-    println!("\x1b[5B");
+    println!("\x1b[1B");
 }
 
 #[allow(unused)]

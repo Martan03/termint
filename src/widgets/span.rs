@@ -53,7 +53,7 @@ use super::{text::Text, widget::Widget};
 pub struct Span {
     text: String,
     fg: Fg,
-    bg: Bg,
+    bg: Option<Bg>,
     modifier: Vec<Modifier>,
     wrap: Wrap,
     ellipsis: String,
@@ -75,8 +75,11 @@ impl Span {
     }
 
     /// Sets background of [`Span`] to given color
-    pub fn bg(mut self, bg: Bg) -> Self {
-        self.bg = bg;
+    pub fn bg<T>(mut self, bg: T) -> Self
+    where
+        T: Into<Option<Bg>>,
+    {
+        self.bg = bg.into();
         self
     }
 
@@ -161,7 +164,12 @@ impl Text for Span {
             .map(|m| m.to_ansi())
             .collect::<Vec<&str>>()
             .join("");
-        format!("{}{}{}", self.fg, self.bg, m)
+        format!(
+            "{}{}{}",
+            self.fg,
+            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_string()),
+            m
+        )
     }
 }
 
@@ -344,6 +352,15 @@ impl StrSpanExtension for &str {
 impl From<Span> for Box<dyn Widget> {
     fn from(value: Span) -> Self {
         Box::new(value)
+    }
+}
+
+impl<T> From<T> for Box<dyn Widget>
+where
+    T: AsRef<str>,
+{
+    fn from(value: T) -> Self {
+        Box::new(Span::new(value.as_ref().to_string()))
     }
 }
 
