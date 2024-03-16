@@ -4,6 +4,7 @@
 ### Features:
 - Add BgGrad widget that renders background gradient
 - Add centering to the Layout widget
+- Add hex and HSL color code support
 - Add Min and MinMax Constrain
 - Add option to automatically scroll to item in List widget
 - Add Spacer widget for better layouting

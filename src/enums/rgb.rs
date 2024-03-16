@@ -10,25 +10,45 @@ pub struct RGB {
 }
 
 impl RGB {
-    /// Creates new RGB with given values
+    /// Creates new [`RGB`] with given values
     pub fn new(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b }
     }
 
-    /// Converts hex (in format #rrggbb) to RGB
-    /// If error occures, returns None, else return Some and RGB struct
-    pub fn from_hex(hex: &str) -> Option<Self> {
-        if hex.len() == 7 {
-            if let (Ok(r), Ok(g), Ok(b)) = (
-                u8::from_str_radix(&hex[1..3], 16),
-                u8::from_str_radix(&hex[3..5], 16),
-                u8::from_str_radix(&hex[5..7], 16),
-            ) {
-                return Some(Self { r, g, b });
-            }
-            return None;
+    /// Creates new [`RGB`] from hex value
+    pub fn from_hex(hex: u32) -> Self {
+        Self {
+            r: ((hex >> 16) & 0xFF) as u8,
+            g: ((hex >> 8) & 0xFF) as u8,
+            b: (hex & 0xFF) as u8,
         }
-        None
+    }
+
+    /// Create new [`RGB`] from HSL
+    pub fn from_hsl(h: f64, s: f64, l: f64) -> Self {
+        let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
+        let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
+        let m = l - c / 2.0;
+
+        let (r, g, b) = if h >= 0.0 && h < 60.0 {
+            (c, x, 0.0)
+        } else if h >= 60.0 && h < 120.0 {
+            (x, c, 0.0)
+        } else if h >= 120.0 && h < 180.0 {
+            (0.0, c, x)
+        } else if h >= 180.0 && h < 240.0 {
+            (0.0, x, c)
+        } else if h >= 240.0 && h < 300.0 {
+            (x, 0.0, c)
+        } else {
+            (c, 0.0, x)
+        };
+
+        Self {
+            r: ((r + m) * 255.0).round() as u8,
+            g: ((g + m) * 255.0).round() as u8,
+            b: ((b + m) * 255.0).round() as u8,
+        }
     }
 
     /// Divides [`RGB`] by given number
@@ -44,5 +64,19 @@ impl From<(u8, u8, u8)> for RGB {
     fn from(value: (u8, u8, u8)) -> Self {
         let (r, g, b) = value;
         Self { r, g, b }
+    }
+}
+
+impl From<u32> for RGB {
+    /// Convert hex number to RGB
+    fn from(value: u32) -> Self {
+        Self::from_hex(value)
+    }
+}
+
+impl From<(f64, f64, f64)> for RGB {
+    /// Converts tuple with HSL components to RGB
+    fn from(value: (f64, f64, f64)) -> Self {
+        Self::from_hsl(value.0, value.1, value.2)
     }
 }

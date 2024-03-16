@@ -39,11 +39,12 @@ pub struct Grad {
 
 impl Grad {
     /// Creates new [`Grad`] with given text
-    pub fn new<T: Into<String>, R: Into<RGB>>(
-        text: T,
-        start: R,
-        end: R,
-    ) -> Self {
+    pub fn new<T, R, S>(text: T, start: R, end: S) -> Self
+    where
+        T: Into<String>,
+        R: Into<RGB>,
+        S: Into<RGB>,
+    {
         Self {
             text: text.into(),
             fg_start: start.into(),

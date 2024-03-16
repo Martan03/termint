@@ -34,7 +34,11 @@ pub struct BgGrad {
 
 impl BgGrad {
     /// Creates new [`BgGrad`] with given gradient colors
-    pub fn new<T: Into<RGB>>(start: T, end: T) -> Self {
+    pub fn new<T, R>(start: T, end: R) -> Self
+    where
+        T: Into<RGB>,
+        R: Into<RGB>,
+    {
         Self {
             bg_start: start.into(),
             bg_end: end.into(),

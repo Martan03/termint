@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::enums::rgb::RGB;
+
 /// Enum for foreground colors
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum Fg {
@@ -20,6 +22,8 @@ pub enum Fg {
     Cyan,
     White,
     RGB(u8, u8, u8),
+    HSL(f64, f64, f64),
+    Hex(u32),
     #[default]
     Default,
 }
@@ -45,6 +49,14 @@ impl Fg {
             Fg::Cyan => "\x1b[96m".to_string(),
             Fg::White => "\x1b[97m".to_string(),
             Fg::RGB(r, g, b) => format!("\x1b[38;2;{};{};{}m", r, g, b),
+            Fg::HSL(h, s, l) => {
+                let rgb = RGB::from_hsl(*h, *s, *l);
+                format!("\x1b[38;2;{};{};{}m", rgb.r, rgb.g, rgb.b)
+            }
+            Fg::Hex(val) => {
+                let rgb = RGB::from_hex(*val);
+                format!("\x1b[38;2;{};{};{}m", rgb.r, rgb.g, rgb.b)
+            }
             Fg::Default => "\x1b[39m".to_string(),
         }
     }

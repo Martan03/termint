@@ -17,16 +17,6 @@ use termint::{
 };
 
 fn main() {
-    println!("\x1b[2J");
-
-    let mut layout = Block::new();
-    layout.add_child("Test", Constrain::Min(1));
-    layout.add_child("Testing of this really cool feature", Constrain::Max(3));
-    layout.add_child("Please just work", Constrain::MinMax(1, 3));
-    layout.render(&Coords::new(1, 1), &Coords::new(10, 8));
-
-    println!("\x1b[1B");
-
     // test_block();
     // test_layout();
     // test_grad();
@@ -35,6 +25,7 @@ fn main() {
     // readme_example();
     // test_list();
     // test_layout_centering();
+    test_bg_grad();
 }
 
 #[allow(unused)]
@@ -230,9 +221,7 @@ fn test_layout_centering() {
 #[allow(unused)]
 fn test_bg_grad() {
     println!("\x1b[2J");
-    let mut grad = BgGrad::new((0, 150, 255), (150, 255, 0))
-        .center()
-        .bg_dir(Direction::Vertical);
+    let mut grad = BgGrad::new(0x0096ff, (84.71, 1.0, 0.5)).center();
     let mut layout = Layout::horizontal().center();
     layout.add_child(Block::new(), Constrain::Length(6));
     grad.add_child(layout, Constrain::Length(3));
