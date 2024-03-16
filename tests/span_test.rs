@@ -8,7 +8,10 @@ mod tests {
     use termint::{
         enums::{bg::Bg, fg::Fg, modifier::Modifier},
         mods,
-        widgets::{span::{Span, StrSpanExtension}, text::Text},
+        widgets::{
+            span::{Span, StrSpanExtension},
+            text::Text,
+        },
     };
 
     /// Tests creating new span
@@ -16,11 +19,11 @@ mod tests {
     fn span_new() {
         // Creates span using new
         let span = Span::new("New span");
-        assert_eq!(span.get(), "\x1b[39m\x1b[49mNew span\x1b[0m");
+        assert_eq!(span.get(), "\x1b[39mNew span\x1b[0m");
 
         // Creates span from &str
         let span = "New span".to_span();
-        assert_eq!(span.get(), "\x1b[39m\x1b[49mNew span\x1b[0m");
+        assert_eq!(span.get(), "\x1b[39mNew span\x1b[0m");
     }
 
     /// Tests creating span with fg
@@ -28,21 +31,21 @@ mod tests {
     fn span_set_fg() {
         // Creates span using new
         let span = Span::new("Span fg").fg(Fg::Red);
-        assert_eq!(span.get(), "\x1b[91m\x1b[49mSpan fg\x1b[0m");
+        assert_eq!(span.get(), "\x1b[91mSpan fg\x1b[0m");
 
         // Creates span from &str
         let mut span = "Span fg".fg(Fg::Red);
-        assert_eq!(span.get(), "\x1b[91m\x1b[49mSpan fg\x1b[0m");
+        assert_eq!(span.get(), "\x1b[91mSpan fg\x1b[0m");
 
         // Tests modifying fg
         span = span.fg(Fg::Gray);
-        assert_eq!(span.get(), "\x1b[90m\x1b[49mSpan fg\x1b[0m");
+        assert_eq!(span.get(), "\x1b[90mSpan fg\x1b[0m");
 
         // Tests fg with RGB value
         span = span.fg(Fg::RGB(50, 100, 150));
         assert_eq!(
             span.get(),
-            format!("\x1b[38;2;{};{};{}m\x1b[49mSpan fg\x1b[0m", 50, 100, 150)
+            format!("\x1b[38;2;{};{};{}mSpan fg\x1b[0m", 50, 100, 150)
         );
     }
 
@@ -81,7 +84,7 @@ mod tests {
         ]);
         assert_eq!(
             span.get(),
-            "\x1b[39m\x1b[49m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
+            "\x1b[39m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
         );
 
         // Creates span from &str
@@ -93,7 +96,7 @@ mod tests {
         ]);
         assert_eq!(
             span.get(),
-            "\x1b[39m\x1b[49m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
+            "\x1b[39m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
         );
 
         // Using modifiers macro
@@ -101,7 +104,7 @@ mod tests {
             "Span modifier".modifier(mods!(Bold, Blink, Italic, Inverse));
         assert_eq!(
             span.get(),
-            "\x1b[39m\x1b[49m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
+            "\x1b[39m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
         );
     }
 

@@ -13,8 +13,7 @@ mod tests {
     fn grad_new() {
         let grad = Grad::new("Gradient", (0, 220, 255), (175, 80, 255));
         let assert_val = format!(
-            "{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
-            Bg::Default,
+            "{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
             Fg::RGB(0, 220, 255),
             Fg::RGB(25, 200, 255),
             Fg::RGB(50, 180, 255),

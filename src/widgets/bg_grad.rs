@@ -10,6 +10,20 @@ use super::{layout::Layout, widget::Widget};
 
 /// [`BgGrad`] widget renders Gradient background and works as [`Layout`]
 /// as well
+///
+/// Note that the background behind the layout will be overriden
+///
+/// ## Example usage:
+/// ```rust
+/// # use termint::{
+/// #     geometry::coords::Coords,
+/// #     widgets::{bg_grad::BgGrad, widget::Widget},
+/// # };
+/// // Creates new background gradient with horizontal direction
+/// let grad = BgGrad::new((0, 150, 255), (150, 255, 0));
+/// // Renders background gradient
+/// grad.render(&Coords::new(1, 1), &Coords::new(20, 9));
+/// ```
 #[derive(Debug)]
 pub struct BgGrad {
     bg_start: RGB,
