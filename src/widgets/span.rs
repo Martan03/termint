@@ -77,10 +77,7 @@ impl Span {
     }
 
     /// Sets background of [`Span`] to given color
-    pub fn bg<T>(mut self, bg: T) -> Self
-    where
-        T: Into<Option<Bg>>,
-    {
+    pub fn bg<T: Into<Option<Bg>>>(mut self, bg: T) -> Self {
         self.bg = bg.into();
         self
     }
@@ -104,8 +101,8 @@ impl Span {
     }
 
     /// Sets [`Span`] ellipsis to given string
-    pub fn ellipsis(mut self, ellipsis: &str) -> Self {
-        self.ellipsis = ellipsis.to_string();
+    pub fn ellipsis<T: Into<String>>(mut self, ellipsis: T) -> Self {
+        self.ellipsis = ellipsis.into();
         self
     }
 }
@@ -115,7 +112,7 @@ impl Widget for Span {
         print!("{}", self.get_mods());
 
         match self.wrap {
-            Wrap::Letter => _ = self.render_letter_wrap(pos, size, 0),
+            Wrap::Letter => _ = self.render_letter(pos, size, 0),
             Wrap::Word => _ = self.render_word(pos, size, 0),
         }
 
@@ -145,14 +142,9 @@ impl Text for Span {
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> Coords {
-        let wrap = if let Some(wrap) = wrap {
-            wrap
-        } else {
-            &self.wrap
-        };
-
+        let wrap = wrap.unwrap_or(&self.wrap);
         match wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size, offset),
+            Wrap::Letter => self.render_letter(pos, size, offset),
             Wrap::Word => self.render_word(pos, size, offset),
         }
     }
@@ -239,7 +231,7 @@ impl Span {
 
     /// Renders [`Span`] with letter wrapping with given offset
     /// Returns [`Coords`] where rendered text ended
-    fn render_letter_wrap(
+    fn render_letter(
         &self,
         pos: &Coords,
         size: &Coords,
@@ -249,26 +241,18 @@ impl Span {
         print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
         let fits = self.text.len() <= size.x * size.y;
-        for c in self.text.chars() {
-            if coords.x >= size.x {
-                coords.x = 0;
-                coords.y += 1;
-                print!("{}", Cursor::Pos(pos.x, coords.y));
+        for chunk in self.text.chars().collect::<Vec<char>>().chunks(size.x) {
+            let chunk_str: String = chunk.iter().collect();
+            print!("{chunk_str}");
+            if !fits && coords.y + 1 == size.y + pos.y {
+                self.render_ellipsis(&coords, size);
+                return coords;
             }
 
-            if !fits
-                && coords.y + 1 == size.y + pos.y
-                && coords.x + self.ellipsis.len() >= size.x
-            {
-                print!("{}", self.ellipsis);
-                coords.x += self.ellipsis.len();
-                break;
-            }
-
-            print!("{c}");
-            coords.x += 1;
+            (coords.x, coords.y) = (chunk_str.len(), coords.y + 1);
+            print!("{}", Cursor::Pos(pos.x, coords.y));
         }
-        Coords::new(coords.x + 1, coords.y)
+        coords
     }
 
     /// Renders ellipsis when rendering [`Span`] with word wrap

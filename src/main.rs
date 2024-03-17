@@ -1,9 +1,6 @@
 use termint::{
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
-    geometry::{
-        constrain::Constrain, coords::Coords, direction::Direction,
-        text_align::TextAlign,
-    },
+    geometry::{constrain::Constrain, coords::Coords, direction::Direction},
     mods,
     widgets::{
         bg_grad::BgGrad,
@@ -20,12 +17,12 @@ use termint::{
 
 fn main() {
     println!("\x1b[2J");
-    let mut block = Block::new().padding((0, 2));
+    let mut block = Block::new();
     block.add_child(
-        "This is a test of new span rendering".align(TextAlign::Center),
+        "This is a test of new span rendering".wrap(Wrap::Letter),
         Constrain::Fill,
     );
-    block.render(&Coords::new(1, 1), &Coords::new(15, 6));
+    block.render(&Coords::new(1, 1), &Coords::new(10, 6));
     println!("\x1b[1B");
     // test_block();
     // test_layout();
