@@ -16,14 +16,6 @@ use termint::{
 };
 
 fn main() {
-    println!("\x1b[2J");
-    let mut block = Block::new();
-    block.add_child(
-        "This is a test of new span rendering".wrap(Wrap::Letter),
-        Constrain::Fill,
-    );
-    block.render(&Coords::new(1, 1), &Coords::new(10, 6));
-    println!("\x1b[1B");
     // test_block();
     // test_layout();
     // test_grad();
@@ -32,7 +24,7 @@ fn main() {
     // readme_example();
     // test_list();
     // test_layout_centering();
-    // test_bg_grad();
+    test_bg_grad();
 }
 
 #[allow(unused)]

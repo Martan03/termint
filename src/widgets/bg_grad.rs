@@ -156,3 +156,10 @@ impl BgGrad {
         )
     }
 }
+
+// From implementations
+impl From<BgGrad> for Box<dyn Widget> {
+    fn from(value: BgGrad) -> Self {
+        Box::new(value)
+    }
+}

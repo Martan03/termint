@@ -243,13 +243,14 @@ impl Span {
         let fits = self.text.len() <= size.x * size.y;
         for chunk in self.text.chars().collect::<Vec<char>>().chunks(size.x) {
             let chunk_str: String = chunk.iter().collect();
+            coords.x = chunk_str.len();
             print!("{chunk_str}");
             if !fits && coords.y + 1 == size.y + pos.y {
                 self.render_ellipsis(&coords, size);
                 return coords;
             }
 
-            (coords.x, coords.y) = (chunk_str.len(), coords.y + 1);
+            coords.y = coords.y + 1;
             print!("{}", Cursor::Pos(pos.x, coords.y));
         }
         coords
