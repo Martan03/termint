@@ -13,6 +13,7 @@ use super::{text::Text, widget::Widget};
 /// - foreground: can be set using [`Fg`]
 /// - background: can be set using [`Bg`]
 /// - modifications: can be set using [`Modifier`] (Bold, italic,...)
+/// - align: can be set using [`TextAlign`]
 /// - wrap: how text should be wrapped, can be set using [`Wrap`]
 /// - ellipsis: indication of overflown text, can be set to any string
 ///     (default: '...')
@@ -216,13 +217,14 @@ impl Span {
         for word in self.text.split_whitespace() {
             if coords.x + word.len() + !res.is_empty() as usize > size.x {
                 if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
-                    print!("{}", res.join(" "));
+                    self.render_line(size, res.join(" "));
                     self.render_ellipsis(&coords, size);
                     return coords;
                 }
 
                 (coords.x, coords.y) = (0, coords.y + 1);
-                print!("{}{}", res.join(" "), Cursor::Pos(pos.x, coords.y));
+                self.render_line(size, res.join(" "));
+                print!("{}", Cursor::Pos(pos.x, coords.y));
                 res = vec![];
             }
             coords.x += word.len() + !res.is_empty() as usize;
@@ -230,46 +232,9 @@ impl Span {
         }
 
         if !res.is_empty() {
-            print!("{}", res.join(" "));
+            self.render_line(size, res.join(" "));
         }
         coords
-    }
-
-    /// Renders [`Span`] with word wrapping with given offset
-    /// Returns [`Coords`] where rendered text ends
-    fn _render_word_wrap(
-        &self,
-        pos: &Coords,
-        size: &Coords,
-        offset: usize,
-    ) -> Coords {
-        let mut coords = Coords::new(offset, pos.y);
-        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
-
-        let words: Vec<&str> = self.text.split_whitespace().collect();
-        for word in words {
-            let mut print_str = if coords.x == 0 {
-                word.to_string()
-            } else {
-                format!(" {word}")
-            };
-
-            if coords.x + print_str.len() > size.x {
-                coords.y += 1;
-                if coords.y >= pos.y + size.y || word.len() > size.x {
-                    self.render_ellipsis(&coords, size);
-                    break;
-                }
-
-                coords.x = 0;
-                print_str = word.to_string();
-                print!("{}", Cursor::Pos(pos.x, coords.y));
-            }
-
-            print!("{print_str}");
-            coords.x += print_str.len();
-        }
-        Coords::new(coords.x, coords.y)
     }
 
     /// Renders [`Span`] with letter wrapping with given offset
@@ -319,6 +284,26 @@ impl Span {
         print!("{}", self.ellipsis);
     }
 
+    /// Renders one line of text and aligns it based on set alignment
+    fn render_line(&self, size: &Coords, line: String) {
+        match self.align {
+            TextAlign::Left => (),
+            TextAlign::Center => {
+                let offset = size.x.saturating_sub(line.len()) >> 1;
+                if offset > 0 {
+                    print!("{}", Cursor::Right(offset))
+                }
+            }
+            TextAlign::Right => {
+                let offset = size.x.saturating_sub(line.len());
+                if offset > 0 {
+                    print!("{}", Cursor::Right(offset));
+                }
+            }
+        }
+        print!("{}", line);
+    }
+
     /// Gets height of the [`Span`] when using word wrap
     fn height_word_wrap(&self, size: &Coords) -> usize {
         let mut coords = Coords::new(0, 0);
@@ -357,16 +342,25 @@ impl Span {
     }
 }
 
-/// Enables creating [`Span`] by calling one of the functions on &str
+/// Enables creating [`Span`] by calling one of the functions on string
 pub trait StrSpanExtension {
-    /// Creates [`Span`] from &str and sets its fg to given color
+    /// Creates [`Span`] from string and sets its fg to given color
     fn fg(self, fg: Fg) -> Span;
 
-    /// Creates [`Span`] from &str and sets its bg to given color
+    /// Creates [`Span`] from string and sets its bg to given color
     fn bg(self, bg: Bg) -> Span;
 
-    /// Creates [`Span`] from &str and sets its modifier to given values
+    /// Creates [`Span`] from string and sets its modifier to given values
     fn modifier(self, mods: Vec<Modifier>) -> Span;
+
+    /// Creates [`Span`] from string and sets its alignment to given value
+    fn align(self, align: TextAlign) -> Span;
+
+    /// Creates [`Span`] from string and sets its wrapping to given value
+    fn wrap(self, wrap: Wrap) -> Span;
+
+    /// Creates [`Span`] from string and sets its ellipsis to given value
+    fn ellipsis<T: AsRef<str>>(self, ellipsis: T) -> Span;
 
     /// Converts &str to [`Span`]
     fn to_span(self) -> Span;
@@ -383,6 +377,18 @@ impl StrSpanExtension for &str {
 
     fn modifier(self, mods: Vec<Modifier>) -> Span {
         Span::new(self).modifier(mods)
+    }
+
+    fn align(self, align: TextAlign) -> Span {
+        Span::new(self).align(align)
+    }
+
+    fn wrap(self, wrap: Wrap) -> Span {
+        Span::new(self).wrap(wrap)
+    }
+
+    fn ellipsis<T: AsRef<str>>(self, ellipsis: T) -> Span {
+        Span::new(self).ellipsis(ellipsis.as_ref())
     }
 
     fn to_span(self) -> Span {

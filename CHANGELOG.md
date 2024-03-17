@@ -8,6 +8,7 @@
 - Add Min and MinMax Constrain
 - Add option to automatically scroll to item in List widget
 - Add Spacer widget for better layouting
+- Add text alignment to Span widget
 - List doesn't show scrollbar when not necessary
 
 ### Fixes:
