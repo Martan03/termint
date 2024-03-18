@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{cmp::max, fmt};
 
 use crate::{
     enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, wrap::Wrap},
@@ -112,8 +112,20 @@ impl Widget for Span {
         print!("{}", self.get_mods());
 
         match self.wrap {
-            Wrap::Letter => _ = self.render_letter(pos, size, 0),
-            Wrap::Word => _ = self.render_word(pos, size, 0),
+            Wrap::Letter => {
+                let rl =
+                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
+                        self.render_letter(text, pos, size, off)
+                    };
+                _ = self.render_lines(pos, size, 0, rl);
+            }
+            Wrap::Word => {
+                let rl =
+                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
+                        self.render_word(text, pos, size, off)
+                    };
+                _ = self.render_lines(pos, size, 0, rl);
+            }
         }
 
         println!("\x1b[0m");
@@ -144,8 +156,20 @@ impl Text for Span {
     ) -> Coords {
         let wrap = wrap.unwrap_or(&self.wrap);
         match wrap {
-            Wrap::Letter => self.render_letter(pos, size, offset),
-            Wrap::Word => self.render_word(pos, size, offset),
+            Wrap::Letter => {
+                let rl =
+                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
+                        self.render_letter(text, pos, size, off)
+                    };
+                self.render_lines(pos, size, offset, rl)
+            }
+            Wrap::Word => {
+                let rl =
+                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
+                        self.render_word(text, pos, size, off)
+                    };
+                self.render_lines(pos, size, offset, rl)
+            }
         }
     }
 
@@ -194,10 +218,40 @@ impl fmt::Display for Span {
 }
 
 impl Span {
+    /// Renders each line of the [`Span`]
+    fn render_lines<F>(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+        text_render: F,
+    ) -> Coords
+    where
+        F: Fn(&str, &Coords, &Coords, usize) -> Coords,
+    {
+        let mut fin_coords = Coords::new(0, pos.y);
+        let mut coords = Coords::new(pos.x, pos.y);
+        let mut lsize = *size;
+
+        let mut offset = offset;
+        for line in self.text.lines() {
+            if lsize.y == 0 {
+                break;
+            }
+
+            fin_coords = text_render(line, &coords, &lsize, offset);
+            (coords.x, coords.y) = (pos.x, fin_coords.y + 1);
+            lsize.y = size.y.saturating_sub(coords.y - pos.y);
+            offset = 0;
+        }
+        fin_coords
+    }
+
     /// Renders [`Span`] with word wrapping with given offset
     /// Returns [`Coords`] where rendered text ends
     fn render_word(
         &self,
+        text: &str,
         pos: &Coords,
         size: &Coords,
         offset: usize,
@@ -206,7 +260,7 @@ impl Span {
         let mut coords = Coords::new(offset, pos.y);
 
         print!("{}", Cursor::Pos(pos.x + offset, pos.y));
-        for word in self.text.split_whitespace() {
+        for word in text.split_whitespace() {
             if coords.x + word.len() + !res.is_empty() as usize > size.x {
                 if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
                     self.render_line(size, res.join(" "));
@@ -233,6 +287,7 @@ impl Span {
     /// Returns [`Coords`] where rendered text ended
     fn render_letter(
         &self,
+        text: &str,
         pos: &Coords,
         size: &Coords,
         offset: usize,
@@ -240,8 +295,8 @@ impl Span {
         let mut coords = Coords::new(offset, pos.y);
         print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
-        let fits = self.text.len() <= size.x * size.y;
-        for chunk in self.text.chars().collect::<Vec<char>>().chunks(size.x) {
+        let fits = text.len() <= size.x * size.y;
+        for chunk in text.chars().collect::<Vec<char>>().chunks(size.x) {
             let chunk_str: String = chunk.iter().collect();
             coords.x = chunk_str.len();
             print!("{chunk_str}");
@@ -253,7 +308,7 @@ impl Span {
             coords.y = coords.y + 1;
             print!("{}", Cursor::Pos(pos.x, coords.y));
         }
-        coords
+        Coords::new(coords.x, max(coords.y - 1, pos.y))
     }
 
     /// Renders ellipsis when rendering [`Span`] with word wrap

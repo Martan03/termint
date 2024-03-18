@@ -20,11 +20,11 @@ fn main() {
     // test_layout();
     // test_grad();
     // cool_example();
-    // test_paragraph();
+    test_paragraph();
     // readme_example();
     // test_list();
     // test_layout_centering();
-    test_bg_grad();
+    // test_bg_grad();
 }
 
 #[allow(unused)]
@@ -154,7 +154,7 @@ fn test_paragraph() {
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));
 
-    println!("\x1b[7B");
+    println!("\x1b[1B");
 }
 
 #[allow(unused)]

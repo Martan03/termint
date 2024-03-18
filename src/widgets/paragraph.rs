@@ -114,7 +114,7 @@ impl Widget for Paragraph {
                 Some(&self.wrap),
             );
             text_pos.y = end.y;
-            offset = end.x + self.separator.len() - 1;
+            offset = end.x + self.separator.len();
 
             if pos.y + size.y <= end.y {
                 break;

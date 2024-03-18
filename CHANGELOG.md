@@ -15,6 +15,7 @@
 - Fix Block border taking space even when not used
 - Fix Grad and Span showing ellipsis when not necessary
 - Fix Grad letter wrap rendering (was shifted down)
+- Fix Span rendering when using newline characters
 - Make Grad with Letter Wrap render all spaces
 
 ## v0.3.1
