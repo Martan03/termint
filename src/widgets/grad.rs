@@ -295,11 +295,14 @@ impl Grad {
             if coords.x + word.len() + !res.is_empty() as usize > size.x {
                 if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
                     let mut line = res.join(" ");
-                    if coords.x + self.ellipsis.len() >= size.x {
-                        line =
-                            line[..size.x - self.ellipsis.len()].to_string();
+                    let sum = coords.x + self.ellipsis.len();
+                    if sum >= size.x {
+                        let offset = size.x.saturating_sub(sum);
+                        line = line[..offset].to_string();
                     }
+
                     line.push_str(&self.ellipsis);
+                    coords.x = line.len();
                     render_line(size, line, (r, g, b), step_x);
                     return coords;
                 }
@@ -346,11 +349,14 @@ impl Grad {
             let mut chunk_str: String = chunk.iter().collect();
             coords.x = chunk_str.len();
             if !fits && coords.y + 1 == size.y + pos.y {
-                if coords.x >= size.x {
-                    chunk_str =
-                        chunk_str[..size.x - self.ellipsis.len()].to_string();
+                let sum = coords.x + self.ellipsis.len();
+                if sum >= size.x {
+                    let offset = size.x.saturating_sub(sum);
+                    chunk_str = chunk_str[..offset].to_string();
                 }
+
                 chunk_str.push_str(&self.ellipsis);
+                coords.x = chunk_str.len();
                 render_line(size, chunk_str, (r, g, b), step_x);
                 return coords;
             }

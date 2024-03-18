@@ -263,8 +263,16 @@ impl Span {
         for word in text.split_whitespace() {
             if coords.x + word.len() + !res.is_empty() as usize > size.x {
                 if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
-                    self.render_line(size, res.join(" "));
-                    self.render_ellipsis(&coords, size);
+                    let mut line = res.join(" ");
+                    let sum = coords.x + self.ellipsis.len();
+                    if sum >= size.x {
+                        let offset = size.x.saturating_sub(sum);
+                        line = line[..offset].to_string();
+                    }
+
+                    line.push_str(&self.ellipsis);
+                    coords.x = line.len();
+                    self.render_line(size, line);
                     return coords;
                 }
 
@@ -297,31 +305,25 @@ impl Span {
 
         let fits = text.len() <= size.x * size.y;
         for chunk in text.chars().collect::<Vec<char>>().chunks(size.x) {
-            let chunk_str: String = chunk.iter().collect();
+            let mut chunk_str: String = chunk.iter().collect();
             coords.x = chunk_str.len();
-            print!("{chunk_str}");
             if !fits && coords.y + 1 == size.y + pos.y {
-                self.render_ellipsis(&coords, size);
+                let sum = coords.x + self.ellipsis.len();
+                if sum >= size.x {
+                    let offset = size.x.saturating_sub(sum);
+                    chunk_str = chunk_str[..offset].to_string();
+                }
+
+                chunk_str.push_str(&self.ellipsis);
+                coords.x = chunk_str.len();
+                print!("{chunk_str}");
                 return coords;
             }
 
             coords.y += 1;
-            print!("{}", Cursor::Pos(pos.x, coords.y));
+            print!("{chunk_str}{}", Cursor::Pos(pos.x, coords.y));
         }
         Coords::new(coords.x, max(coords.y - 1, pos.y))
-    }
-
-    /// Renders ellipsis when rendering [`Span`] with word wrap
-    fn render_ellipsis(&self, coords: &Coords, size: &Coords) {
-        let sum = coords.x + self.ellipsis.len();
-        if sum > size.x {
-            if size.x < self.ellipsis.len() {
-                return;
-            }
-
-            print!("{}", Cursor::Left(sum - size.x));
-        }
-        print!("{}", self.ellipsis);
     }
 
     /// Renders one line of text and aligns it based on set alignment
