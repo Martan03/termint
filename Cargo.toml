@@ -1,9 +1,12 @@
 [package]
 name = "termint"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Martin Slezák (github.com/Martan03)"]
 description = "Library for colored printing and Terminal User Interfaces"
-keywords = ["tui", "terminal", "termint"]
+keywords = [
+    "tui", "terminal", "termint", "rust", "rust-printing",
+    "printing", "color-printing", "ansi-codes"
+]
 repository = "https://github.com/Martan03/termint"
 documentation = "https://docs.rs/termint/latest/termint/"
 readme = "README.md"
