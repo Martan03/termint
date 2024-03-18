@@ -6,7 +6,7 @@ use crate::{
         bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, rgb::RGB,
         wrap::Wrap,
     },
-    geometry::{coords::Coords, direction::Direction},
+    geometry::{coords::Coords, direction::Direction, text_align::TextAlign},
 };
 
 use super::{text::Text, widget::Widget};
@@ -33,6 +33,7 @@ pub struct Grad {
     direction: Direction,
     bg: Option<Bg>,
     modifier: Vec<Modifier>,
+    align: TextAlign,
     wrap: Wrap,
     ellipsis: String,
 }
@@ -52,6 +53,7 @@ impl Grad {
             direction: Direction::Horizontal,
             bg: None,
             modifier: Vec::new(),
+            align: Default::default(),
             wrap: Wrap::Word,
             ellipsis: "...".to_string(),
         }
@@ -75,6 +77,12 @@ impl Grad {
     /// Sets modifiers of [`Grad`] to given modifiers
     pub fn modifier(mut self, modifier: Vec<Modifier>) -> Self {
         self.modifier = modifier;
+        self
+    }
+
+    /// Sets text alignment of the [`Grad`]
+    pub fn align(mut self, align: TextAlign) -> Self {
+        self.align = align;
         self
     }
 
@@ -183,6 +191,34 @@ impl fmt::Display for Grad {
 }
 
 impl Grad {
+    fn render_lines<F>(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+        text_render: F,
+    ) -> Coords
+    where
+        F: Fn(&str, &Coords, &Coords, usize) -> Coords,
+    {
+        let mut fin_coords = Coords::new(0, pos.y);
+        let mut coords = Coords::new(pos.x, pos.y);
+        let mut lsize = *size;
+
+        let mut offset = offset;
+        for line in self.text.lines() {
+            if lsize.y == 0 {
+                break;
+            }
+
+            fin_coords = text_render(line, &coords, &lsize, offset);
+            (coords.x, coords.y) = (pos.x, fin_coords.y + 1);
+            lsize.y = size.y.saturating_sub(coords.y - pos.y);
+            offset = 0;
+        }
+        fin_coords
+    }
+
     /// Renders [`Grad`] with word wrapping
     fn render_word_wrap(
         &self,
@@ -357,25 +393,54 @@ impl Grad {
 
     fn render_line_ver(
         &self,
-        _size: &Coords,
+        size: &Coords,
         line: String,
         rgb: (u8, u8, u8),
         _step: (i16, i16, i16),
     ) {
+        _ = self.set_alignment(size, line.len());
         print!("{}{line}", Fg::RGB(rgb.0, rgb.1, rgb.2));
     }
 
     fn render_line_hor(
         &self,
-        _size: &Coords,
+        size: &Coords,
         line: String,
         (r, g, b): (u8, u8, u8),
         step: (i16, i16, i16),
     ) {
+        let offset = self.set_alignment(size, line.len());
+
         let (mut r, mut g, mut b) = (r, g, b);
+        if self.text.len() > size.x {
+            for _ in 0..offset {
+                (r, g, b) = self.add_step((r, g, b), step);
+            }
+        };
         for c in line.chars() {
             print!("{}{c}", Fg::RGB(r, g, b));
             (r, g, b) = self.add_step((r, g, b), step);
+        }
+    }
+
+    /// Sets text alignment and returns its offset
+    fn set_alignment(&self, size: &Coords, len: usize) -> usize {
+        match self.align {
+            TextAlign::Left => 0,
+            TextAlign::Center => {
+                let offset = size.x.saturating_sub(len) >> 1;
+                if offset > 0 {
+                    print!("{}", Cursor::Right(offset))
+                }
+                offset
+            }
+            TextAlign::Right => {
+                let offset = size.x.saturating_sub(len);
+                if offset > 0 {
+                    print!("{}", Cursor::Right(offset));
+                }
+                offset
+            }
         }
     }
 
