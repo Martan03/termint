@@ -192,142 +192,34 @@ impl Grad {
     ) -> Coords {
         match self.direction {
             Direction::Vertical => {
-                self.render_word_wrap_ver(pos, size, offset)
+                let height = min(self.height_word_wrap(size) - 1, size.y);
+                let step = self.get_step(height as i16);
+                self.render_word(
+                    pos,
+                    size,
+                    (0, 0, 0),
+                    step,
+                    |size, line, rgb, step| {
+                        self.render_line_ver(size, line, rgb, step)
+                    },
+                    offset,
+                )
             }
             Direction::Horizontal => {
-                self.render_word_wrap_hor(pos, size, offset)
+                let width = min(size.x, self.text.len());
+                let step = self.get_step(width as i16);
+                self.render_word(
+                    pos,
+                    size,
+                    step,
+                    (0, 0, 0),
+                    |size, line, rgb, step| {
+                        self.render_line_hor(size, line, rgb, step)
+                    },
+                    offset,
+                )
             }
         }
-    }
-
-    /// Renders [`Grad`] with word wrapping and horizontal gradient
-    fn render_word_wrap_hor(
-        &self,
-        pos: &Coords,
-        size: &Coords,
-        offset: usize,
-    ) -> Coords {
-        let width = min(size.x, self.text.len());
-        let step = self.get_step(width as i16);
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        for _ in 0..offset {
-            (r, g, b) = self.add_step((r, g, b), step);
-        }
-
-        let mut coords = Coords::new(offset, pos.y);
-        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
-
-        let words: Vec<&str> = self.text.split_whitespace().collect();
-        for word in words {
-            let mut print_str = if coords.x == 0 {
-                word.to_string()
-            } else {
-                format!(" {word}")
-            };
-
-            if coords.x + print_str.len() > size.x {
-                coords.y += 1;
-                if coords.y >= pos.y + size.y || word.len() > size.x {
-                    self.render_ellipsis_hor(&coords, size, (r, g, b), step);
-                    break;
-                }
-
-                coords.x = 0;
-                print_str = word.to_string();
-                print!("{}", Cursor::Pos(pos.x, coords.y));
-                (r, g, b) =
-                    (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-            }
-
-            for c in print_str.chars() {
-                print!("{}{c}", Fg::RGB(r, g, b));
-                (r, g, b) = self.add_step((r, g, b), step);
-            }
-            coords.x += print_str.len();
-        }
-        Coords::new(coords.x, coords.y)
-    }
-
-    /// Renders [`Grad`] ellipsis when horizontal direction and word wrap
-    fn render_ellipsis_hor(
-        &self,
-        coords: &Coords,
-        size: &Coords,
-        rgb: (u8, u8, u8),
-        step: (i16, i16, i16),
-    ) {
-        let (mut r, mut g, mut b) = (rgb.0, rgb.1, rgb.2);
-        let sum = coords.x + self.ellipsis.len();
-        if sum > size.x {
-            if size.x < self.ellipsis.len() {
-                return;
-            }
-            print!("{}", Cursor::Left(sum - size.x));
-            for _ in 0..(sum - size.x) {
-                (r, g, b) =
-                    self.add_step((r, g, b), (-step.0, -step.1, -step.2));
-            }
-        }
-        for c in self.ellipsis.chars() {
-            print!("{}{c}", Fg::RGB(r, g, b));
-            (r, g, b) = self.add_step((r, g, b), step);
-        }
-    }
-
-    /// Renders [`Grad`] with word wrapping and vertical gradient
-    fn render_word_wrap_ver(
-        &self,
-        pos: &Coords,
-        size: &Coords,
-        offset: usize,
-    ) -> Coords {
-        let height = min(self.height_word_wrap(size) - 1, size.y);
-        let step = self.get_step(height as i16);
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-
-        let mut coords = Coords::new(offset, pos.y);
-        print!("{}{}", Cursor::Pos(pos.x, pos.y), Fg::RGB(r, g, b));
-
-        let words: Vec<&str> = self.text.split_whitespace().collect();
-        for word in words {
-            let mut print_str = if coords.x == 0 {
-                word.to_string()
-            } else {
-                format!(" {word}")
-            };
-
-            if coords.x + print_str.len() > size.x {
-                coords.y += 1;
-                if coords.y >= pos.y + size.y || word.len() > size.x {
-                    self.render_ellipsis_ver(&coords, size);
-                    break;
-                }
-
-                coords.x = 0;
-                print_str = word.to_string();
-                (r, g, b) = self.add_step((r, g, b), step);
-                print!("{}{}", Cursor::Pos(pos.x, coords.y), Fg::RGB(r, g, b));
-            }
-
-            print!("{}", print_str);
-            coords.x += print_str.len();
-        }
-        Coords::new(1, 1)
-    }
-
-    /// Renders [`Grad`] ellipsis when word wrap and vertical direction
-    fn render_ellipsis_ver(&self, coords: &Coords, size: &Coords) {
-        let sum = coords.x + self.ellipsis.len();
-        if sum > size.x {
-            if size.x < self.ellipsis.len() {
-                return;
-            }
-
-            print!("{}", Cursor::Left(sum - size.x));
-        }
-        print!("{}", self.ellipsis);
     }
 
     /// Renders [`Grad`] with letter wrapping
@@ -369,86 +261,55 @@ impl Grad {
         }
     }
 
-    /// Renders [`Grad`] with letter wrapping and horizontal gradient
-    fn render_letter_wrap_hor(
+    fn render_word<F>(
         &self,
         pos: &Coords,
         size: &Coords,
+        step_x: (i16, i16, i16),
+        step_y: (i16, i16, i16),
+        render_line: F,
         offset: usize,
-    ) -> Coords {
-        let width = min(size.x, self.text.len());
-        let step = self.get_step(width as i16);
+    ) -> Coords
+    where
+        F: Fn(&Coords, String, (u8, u8, u8), (i16, i16, i16)),
+    {
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
         for _ in 0..offset {
-            (r, g, b) = self.add_step((r, g, b), step);
+            (r, g, b) = self.add_step((r, g, b), step_x);
         }
 
+        let mut res: Vec<&str> = vec![];
         let mut coords = Coords::new(offset, pos.y);
-        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
-        let fits = self.text.len() <= size.x * size.y;
-        for c in self.text.chars() {
-            if coords.x >= size.x {
-                coords.x = 0;
-                coords.y += 1;
-                print!("{}", Cursor::Pos(pos.x, coords.y));
-                (r, g, b) =
-                    (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-            }
-            if !fits
-                && coords.y + 1 == size.y + pos.y
-                && coords.x + self.ellipsis.len() >= size.x
-            {
-                for c in self.ellipsis.chars() {
-                    print!("{}{c}", Fg::RGB(r, g, b));
-                    (r, g, b) = self.add_step((r, g, b), step);
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
+        for word in self.text.split_whitespace() {
+            if coords.x + word.len() + !res.is_empty() as usize > size.x {
+                if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
+                    let mut line = res.join(" ");
+                    if coords.x + self.ellipsis.len() >= size.x {
+                        line =
+                            line[..size.x - self.ellipsis.len()].to_string();
+                    }
+                    line.push_str(&self.ellipsis);
+                    render_line(size, line, (r, g, b), step_x);
+                    return coords;
                 }
-                coords.x += self.ellipsis.len();
-                break;
-            }
 
-            print!("{}{c}", Fg::RGB(r, g, b));
-            coords.x += 1;
-            (r, g, b) = self.add_step((r, g, b), step);
-        }
-        Coords::new(coords.x + 1, coords.y)
-    }
-
-    /// Renders [`Grad`] with letter wrapping and vertical gradient
-    fn render_letter_wrap_ver(
-        &self,
-        pos: &Coords,
-        size: &Coords,
-        offset: usize,
-    ) -> Coords {
-        let height = min(self.size_letter_wrap(size.x) - 1, size.y);
-        let step = self.get_step(height as i16);
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-
-        let mut coords = Coords::new(offset, pos.y);
-        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
-
-        for c in self.text.chars() {
-            if coords.x >= size.x {
-                coords.x = 0;
-                coords.y += 1;
+                (coords.x, coords.y) = (0, coords.y + 1);
+                render_line(size, res.join(" "), (r, g, b), step_x);
                 print!("{}", Cursor::Pos(pos.x, coords.y));
-                (r, g, b) = self.add_step((r, g, b), step);
+                (r, g, b) = self.add_step((r, g, b), step_y);
+                res = vec![];
             }
-            if coords.y + 1 == size.y + pos.y
-                && coords.x + self.ellipsis.len() >= size.x
-            {
-                print!("{}", self.ellipsis);
-                coords.x += self.ellipsis.len();
-                break;
-            }
-
-            print!("{}{c}", Fg::RGB(r, g, b));
-            coords.x += 1;
+            coords.x += word.len() + !res.is_empty() as usize;
+            res.push(word);
         }
-        Coords::new(coords.x + 1, coords.y)
+
+        if !res.is_empty() {
+            render_line(size, res.join(" "), (r, g, b), step_x);
+        }
+        coords
     }
 
     fn render_letter<F>(
@@ -465,21 +326,30 @@ impl Grad {
     {
         let (mut r, mut g, mut b) =
             (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        for _ in 0..offset {
+            (r, g, b) = self.add_step((r, g, b), step_x);
+        }
+
         let mut coords = Coords::new(offset, pos.y);
         print!("{}", Cursor::Pos(pos.x + offset, pos.y));
 
         let fits = self.text.len() <= size.x * size.y;
         for chunk in self.text.chars().collect::<Vec<char>>().chunks(size.x) {
-            let chunk_str: String = chunk.iter().collect();
+            let mut chunk_str: String = chunk.iter().collect();
             coords.x = chunk_str.len();
-            render_line(size, chunk_str, (r, g, b), step_x);
             if !fits && coords.y + 1 == size.y + pos.y {
-                // self.render_ellipsis(&coords, size);
+                if coords.x >= size.x {
+                    chunk_str =
+                        chunk_str[..size.x - self.ellipsis.len()].to_string();
+                }
+                chunk_str.push_str(&self.ellipsis);
+                render_line(size, chunk_str, (r, g, b), step_x);
                 return coords;
             }
 
-            coords.y += 1;
+            render_line(size, chunk_str, (r, g, b), step_x);
             (r, g, b) = self.add_step((r, g, b), step_y);
+            coords.y += 1;
             print!("{}", Cursor::Pos(pos.x, coords.y));
         }
         Coords::new(coords.x, max(coords.y - 1, pos.y))

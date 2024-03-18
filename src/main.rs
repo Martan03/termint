@@ -16,19 +16,11 @@ use termint::{
 };
 
 fn main() {
-    println!("\x1b[2J");
-    let grad = Grad::new(
-        "This is a test of new grad rendering",
-        (0, 150, 255),
-        (150, 255, 0),
-    )
-    .wrap(Wrap::Letter);
-    grad.render(&Coords::new(1, 1), &Coords::new(10, 8));
     // test_block();
     // test_layout();
     // test_grad();
     // cool_example();
-    // test_paragraph();
+    test_paragraph();
     // readme_example();
     // test_list();
     // test_layout_centering();
