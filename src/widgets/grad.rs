@@ -191,34 +191,6 @@ impl fmt::Display for Grad {
 }
 
 impl Grad {
-    fn render_lines<F>(
-        &self,
-        pos: &Coords,
-        size: &Coords,
-        offset: usize,
-        text_render: F,
-    ) -> Coords
-    where
-        F: Fn(&str, &Coords, &Coords, usize) -> Coords,
-    {
-        let mut fin_coords = Coords::new(0, pos.y);
-        let mut coords = Coords::new(pos.x, pos.y);
-        let mut lsize = *size;
-
-        let mut offset = offset;
-        for line in self.text.lines() {
-            if lsize.y == 0 {
-                break;
-            }
-
-            fin_coords = text_render(line, &coords, &lsize, offset);
-            (coords.x, coords.y) = (pos.x, fin_coords.y + 1);
-            lsize.y = size.y.saturating_sub(coords.y - pos.y);
-            offset = 0;
-        }
-        fin_coords
-    }
-
     /// Renders [`Grad`] with word wrapping
     fn render_word_wrap(
         &self,
