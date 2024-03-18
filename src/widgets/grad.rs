@@ -1,5 +1,5 @@
 use core::fmt;
-use std::cmp::min;
+use std::cmp::{max, min};
 
 use crate::{
     enums::{
@@ -339,10 +339,32 @@ impl Grad {
     ) -> Coords {
         match self.direction {
             Direction::Vertical => {
-                self.render_letter_wrap_ver(pos, size, offset)
+                let height = min(self.size_letter_wrap(size.x) - 1, size.y);
+                let step = self.get_step(height as i16);
+                self.render_letter(
+                    pos,
+                    size,
+                    (0, 0, 0),
+                    step,
+                    |size, line, rgb, step| {
+                        self.render_line_ver(size, line, rgb, step)
+                    },
+                    offset,
+                )
             }
             Direction::Horizontal => {
-                self.render_letter_wrap_hor(pos, size, offset)
+                let width = min(size.x, self.text.len());
+                let step = self.get_step(width as i16);
+                self.render_letter(
+                    pos,
+                    size,
+                    step,
+                    (0, 0, 0),
+                    |size, line, rgb, step| {
+                        self.render_line_hor(size, line, rgb, step)
+                    },
+                    offset,
+                )
             }
         }
     }
@@ -427,6 +449,64 @@ impl Grad {
             coords.x += 1;
         }
         Coords::new(coords.x + 1, coords.y)
+    }
+
+    fn render_letter<F>(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        step_x: (i16, i16, i16),
+        step_y: (i16, i16, i16),
+        render_line: F,
+        offset: usize,
+    ) -> Coords
+    where
+        F: Fn(&Coords, String, (u8, u8, u8), (i16, i16, i16)),
+    {
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        let mut coords = Coords::new(offset, pos.y);
+        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
+
+        let fits = self.text.len() <= size.x * size.y;
+        for chunk in self.text.chars().collect::<Vec<char>>().chunks(size.x) {
+            let chunk_str: String = chunk.iter().collect();
+            coords.x = chunk_str.len();
+            render_line(size, chunk_str, (r, g, b), step_x);
+            if !fits && coords.y + 1 == size.y + pos.y {
+                // self.render_ellipsis(&coords, size);
+                return coords;
+            }
+
+            coords.y += 1;
+            (r, g, b) = self.add_step((r, g, b), step_y);
+            print!("{}", Cursor::Pos(pos.x, coords.y));
+        }
+        Coords::new(coords.x, max(coords.y - 1, pos.y))
+    }
+
+    fn render_line_ver(
+        &self,
+        _size: &Coords,
+        line: String,
+        rgb: (u8, u8, u8),
+        _step: (i16, i16, i16),
+    ) {
+        print!("{}{line}", Fg::RGB(rgb.0, rgb.1, rgb.2));
+    }
+
+    fn render_line_hor(
+        &self,
+        _size: &Coords,
+        line: String,
+        (r, g, b): (u8, u8, u8),
+        step: (i16, i16, i16),
+    ) {
+        let (mut r, mut g, mut b) = (r, g, b);
+        for c in line.chars() {
+            print!("{}{c}", Fg::RGB(r, g, b));
+            (r, g, b) = self.add_step((r, g, b), step);
+        }
     }
 
     /// Gets step per character based on start and end foreground color

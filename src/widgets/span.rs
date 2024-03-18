@@ -305,7 +305,7 @@ impl Span {
                 return coords;
             }
 
-            coords.y = coords.y + 1;
+            coords.y += 1;
             print!("{}", Cursor::Pos(pos.x, coords.y));
         }
         Coords::new(coords.x, max(coords.y - 1, pos.y))

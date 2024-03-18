@@ -208,9 +208,9 @@ impl Layout {
             Constrain::Percent(p) => {
                 (*p as f32 / 100.0 * size.x as f32) as usize
             }
-            Constrain::Min(val) => max(child.width(&size), *val),
-            Constrain::Max(val) => min(child.width(&size), *val),
-            Constrain::MinMax(l, h) => min(max(child.width(&size), *l), *h),
+            Constrain::Min(val) => max(child.width(size), *val),
+            Constrain::Max(val) => min(child.width(size), *val),
+            Constrain::MinMax(l, h) => min(max(child.width(size), *l), *h),
             Constrain::Fill => 0,
         }
     }
