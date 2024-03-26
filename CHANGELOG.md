@@ -3,6 +3,7 @@
 ## v0.4.1
 ### Features:
 - Add option to get List offset
+- Add selected background and character to List
 
 ### Fixes:
 - Remove all `println` printing (could cause overflow)

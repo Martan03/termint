@@ -3,7 +3,10 @@ use std::{
     io::{stdout, Write},
 };
 
-use crate::{enums::fg::Fg, geometry::coords::Coords};
+use crate::{
+    enums::{bg::Bg, cursor::Cursor, fg::Fg},
+    geometry::coords::Coords,
+};
 
 use super::{span::StrSpanExtension, widget::Widget};
 
@@ -31,6 +34,8 @@ pub struct List {
     offset: usize,
     fg: Fg,
     sel_fg: Fg,
+    sel_bg: Option<Bg>,
+    sel_char: String,
     scrollbar_fg: Fg,
     thumb_fg: Fg,
 }
@@ -87,6 +92,18 @@ impl List {
         self
     }
 
+    /// Sets [`List`] selected item background color
+    pub fn sel_bg<T: Into<Option<Bg>>>(mut self, sel_color: T) -> Self {
+        self.sel_bg = sel_color.into();
+        self
+    }
+
+    /// Sets [`List`] selected item character
+    pub fn sel_char<T: AsRef<str>>(mut self, sel_char: T) -> Self {
+        self.sel_char = sel_char.as_ref().to_string();
+        self
+    }
+
     /// Sets [`List`] scrollbar color
     pub fn scrollbar_fg(mut self, fg: Fg) -> Self {
         self.scrollbar_fg = fg;
@@ -102,8 +119,8 @@ impl List {
 
 impl Widget for List {
     fn render(&self, pos: &Coords, size: &Coords) {
-        let mut text_pos = Coords::new(pos.x, pos.y);
-        let mut text_size = Coords::new(size.x, size.y);
+        let mut text_pos = Coords::new(pos.x + self.sel_char.len(), pos.y);
+        let mut text_size = Coords::new(size.x - self.sel_char.len(), size.y);
         let offset = self.get_render_offset(size);
 
         let fits = self.fits(size);
@@ -118,11 +135,14 @@ impl Widget for List {
 
         for i in offset..self.items.len() {
             let mut fg = self.fg;
+            let mut bg: Option<Bg> = None;
             if Some(i) == self.current {
+                print!("{}{}", Cursor::Pos(pos.x, text_pos.y), self.sel_char);
                 fg = self.sel_fg;
+                bg = self.sel_bg;
             }
 
-            let span = self.items[i].fg(fg);
+            let span = self.items[i].fg(fg).bg(bg);
             span.render(&text_pos, &text_size);
             text_pos.y += span.height(&text_size);
 
@@ -162,6 +182,8 @@ impl Default for List {
             offset: 0,
             fg: Fg::Default,
             sel_fg: Fg::Cyan,
+            sel_bg: None,
+            sel_char: String::new(),
             scrollbar_fg: Fg::Default,
             thumb_fg: Fg::Default,
         }

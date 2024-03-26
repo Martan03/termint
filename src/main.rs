@@ -20,9 +20,9 @@ fn main() {
     // test_layout();
     // test_grad();
     // cool_example();
-    test_paragraph();
+    // test_paragraph();
     // readme_example();
-    // test_list();
+    test_list();
     // test_layout_centering();
     // test_bg_grad();
 }
@@ -192,8 +192,10 @@ fn test_list() {
     let mut block = Block::new();
     let list =
         List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
-            .current(Some(4))
-            .sel_fg(Fg::Yellow);
+            .current(Some(2))
+            .sel_fg(Fg::Yellow)
+            .sel_bg(Bg::Blue)
+            .sel_char("-");
     block.add_child(list, Constrain::Fill);
     block.render(&Coords::new(1, 1), &Coords::new(20, 6));
     println!("\x1b[2B");
