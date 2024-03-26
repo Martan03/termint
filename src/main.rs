@@ -192,7 +192,7 @@ fn test_list() {
     let mut block = Block::new();
     let list =
         List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
-            .current(Some(2))
+            .selected(Some(2))
             .sel_fg(Fg::Yellow)
             .sel_bg(Bg::Blue)
             .sel_char("-");

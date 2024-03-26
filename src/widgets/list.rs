@@ -12,7 +12,14 @@ use super::{span::StrSpanExtension, widget::Widget};
 
 /// List widget with scrollbar
 ///
-/// Scrollbar is visible only when it's necessary
+/// ### Features:
+/// - Scrollbar (doesn't show when not necessary):
+///     - Scrollbar foreground
+///     - Scrollbar thumb color
+/// - Selected item:
+///     - Foreground
+///     - Background
+///     - Character in front
 ///
 /// ## Example usage:
 /// ```
@@ -20,10 +27,13 @@ use super::{span::StrSpanExtension, widget::Widget};
 /// #     enums::fg::Fg, widgets::list::List,
 /// #     geometry::coords::Coords, widgets::widget::Widget
 /// # };
+/// // Creates list, where selected item has yellow foreground and '*' in
+/// // front of it
 /// let list =
 ///     List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
 ///         .current(Some(1))
-///         .sel_fg(Fg::Yellow);
+///         .sel_fg(Fg::Yellow)
+///         .sel_char("*");
 /// list.render(&Coords::new(1, 1), &Coords::new(20, 5));
 /// ```
 #[derive(Debug)]
@@ -41,7 +51,8 @@ pub struct List {
 }
 
 impl List {
-    /// Creates new [`List`] with given items
+    /// Creates new [`List`] with given items.
+    /// Automatically sets current to the first item, when `items` aren't empty
     pub fn new<T>(items: Vec<T>) -> Self
     where
         T: AsRef<str>,
@@ -57,9 +68,18 @@ impl List {
         }
     }
 
-    /// Sets current item in [`List`]
-    pub fn current(mut self, current: Option<usize>) -> Self {
-        self.current = current;
+    /// Sets selected item in [`List`]
+    /// This method exists for compatibility purposes and is deprecated, use
+    /// `selected` method instead
+    #[deprecated]
+    pub fn current<T: Into<Option<usize>>>(mut self, current: T) -> Self {
+        self.current = current.into();
+        self
+    }
+
+    /// Sets selected item in [`List`]
+    pub fn selected<T: Into<Option<usize>>>(mut self, current: T) -> Self {
+        self.current = current.into();
         self
     }
 
@@ -74,7 +94,7 @@ impl List {
         self.offset
     }
 
-    /// Scrolls [`List`] from given item so current item is visible
+    /// Scrolls [`List`] from given offset so current item is visible
     pub fn to_current(mut self, from: usize) -> Self {
         self.prev_offset = Some(from);
         self
@@ -99,6 +119,8 @@ impl List {
     }
 
     /// Sets [`List`] selected item character
+    /// Character that will display in front of selected items.
+    /// Other items will be shifted to be aligned with selected item
     pub fn sel_char<T: AsRef<str>>(mut self, sel_char: T) -> Self {
         self.sel_char = sel_char.as_ref().to_string();
         self
