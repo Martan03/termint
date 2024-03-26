@@ -90,7 +90,7 @@ impl Widget for BgGrad {
             Direction::Vertical => self.ver_render(pos, size),
             Direction::Horizontal => self.hor_render(pos, size),
         }
-        println!("{}\x1b[0m", Cursor::Pos(pos.x, pos.y));
+        print!("\x1b[0m");
         self.layout.render(pos, size);
     }
 

@@ -1,5 +1,12 @@
 # Termint changelog
 
+## v0.4.1
+### Features:
+- Add option to get List offset
+
+### Fixes:
+- Remove all `println` printing (could cause overflow)
+
 ## v0.4.0
 ### Features:
 - Add BgGrad widget that renders background gradient

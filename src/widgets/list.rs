@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    io::{stdout, Write},
+};
 
 use crate::{enums::fg::Fg, geometry::coords::Coords};
 
@@ -61,6 +64,11 @@ impl List {
         self
     }
 
+    /// Gets current [`List`] offset
+    pub fn get_offset(&self) -> usize {
+        self.offset
+    }
+
     /// Scrolls [`List`] from given item so current item is visible
     pub fn to_current(mut self, from: usize) -> Self {
         self.prev_offset = Some(from);
@@ -96,7 +104,7 @@ impl Widget for List {
     fn render(&self, pos: &Coords, size: &Coords) {
         let mut text_pos = Coords::new(pos.x, pos.y);
         let mut text_size = Coords::new(size.x, size.y);
-        let offset = self.get_offset(size);
+        let offset = self.get_render_offset(size);
 
         let fits = self.fits(size);
         if !fits {
@@ -123,6 +131,7 @@ impl Widget for List {
             }
             text_size.y = pos.y + size.y - text_pos.y;
         }
+        _ = stdout().flush();
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -182,7 +191,7 @@ impl List {
         }
     }
 
-    fn get_offset(&self, size: &Coords) -> usize {
+    fn get_render_offset(&self, size: &Coords) -> usize {
         let Some(current) = self.current else {
             return self.offset;
         };

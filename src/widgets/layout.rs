@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    io::{stdout, Write},
+};
 
 use crate::geometry::{
     constrain::Constrain, coords::Coords, direction::Direction,
@@ -116,6 +119,7 @@ impl Widget for Layout {
                 })
             }
         }
+        _ = stdout().flush();
     }
 
     fn height(&self, size: &Coords) -> usize {

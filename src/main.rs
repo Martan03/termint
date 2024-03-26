@@ -154,7 +154,7 @@ fn test_paragraph() {
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));
 
-    println!("\x1b[1B");
+    //println!("\x1b[1B");
 }
 
 #[allow(unused)]

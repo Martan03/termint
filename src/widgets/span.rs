@@ -1,4 +1,4 @@
-use std::{cmp::max, fmt};
+use std::{cmp::max, fmt, io::{stdout, Write}};
 
 use crate::{
     enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, wrap::Wrap},
@@ -128,7 +128,8 @@ impl Widget for Span {
             }
         }
 
-        println!("\x1b[0m");
+        print!("\x1b[0m");
+        _ = stdout().flush();
     }
 
     fn height(&self, size: &Coords) -> usize {

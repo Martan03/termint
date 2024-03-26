@@ -1,5 +1,8 @@
 use core::fmt;
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    io::{stdout, Write},
+};
 
 use crate::{
     enums::{
@@ -111,7 +114,8 @@ impl Widget for Grad {
             Wrap::Word => _ = self.render_word_wrap(pos, size, 0),
         }
 
-        println!("\x1b[0m");
+        print!("\x1b[0m");
+        _ = stdout().flush();
     }
 
     fn height(&self, size: &Coords) -> usize {

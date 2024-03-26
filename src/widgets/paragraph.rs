@@ -1,4 +1,5 @@
 use core::fmt;
+use std::io::{stdout, Write};
 
 use crate::{
     enums::wrap::Wrap, geometry::coords::Coords, widgets::text::Text,
@@ -126,7 +127,7 @@ impl Widget for Paragraph {
                 print!("{}", self.separator);
             }
         }
-        println!()
+        _ = stdout().flush();
     }
 
     fn height(&self, size: &Coords) -> usize {
