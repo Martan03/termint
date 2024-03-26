@@ -1,21 +1,16 @@
 [package]
 name = "termint"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Martin Slezák (github.com/Martan03)"]
 description = "Library for colored printing and Terminal User Interfaces"
-keywords = [
-    "tui", "terminal", "termint", "ansi-codes", "color-printing",
-]
+keywords = ["tui", "terminal", "termint", "ansi-codes", "color-printing"]
 repository = "https://github.com/Martan03/termint"
 documentation = "https://docs.rs/termint/latest/termint/"
 readme = "README.md"
 license-file = "LICENSE"
 edition = "2021"
 
-exclude = [
-    "src/main.rs",
-    ".github"
-]
+exclude = ["src/main.rs", ".github"]
 
 [dependencies]
 term_size = "0.3.2"
