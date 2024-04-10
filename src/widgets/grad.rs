@@ -312,8 +312,8 @@ impl Grad {
                     let mut line_str = line.join(" ");
                     let sum = coords.x + self.ellipsis.len();
                     if sum >= size.x {
-                        let offset = size.x.saturating_sub(sum);
-                        line_str = line_str[..offset].to_string();
+                        let end = size.x.saturating_sub(self.ellipsis.len());
+                        line_str = line_str[..end].to_string();
                     }
 
                     line_str.push_str(&self.ellipsis);
@@ -366,8 +366,8 @@ impl Grad {
             if !fits && coords.y + 1 == size.y + pos.y {
                 let sum = coords.x + self.ellipsis.len();
                 if sum >= size.x {
-                    let offset = size.x.saturating_sub(sum);
-                    chunk_str = chunk_str[..offset].to_string();
+                    let end = size.x.saturating_sub(self.ellipsis.len());
+                    chunk_str = chunk_str[..end].to_string();
                 }
 
                 chunk_str.push_str(&self.ellipsis);
