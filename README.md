@@ -6,7 +6,16 @@
 
 Rust library for colored printing and Terminal User Interfaces
 
-## Installation:
+## Table of Contents
+- [Installation](#installation)
+- [Examples](#examples)
+    - [Printing colored text](#printing-colored-text)
+    - [More complex layout](#more-complex-layout)
+- [Usage](#usage)
+- [Technologies](#technologies)
+- [Links](#links)
+
+## Installation
 
 This library is available on [crates.io](https://crates.io/crates/termint).
 You can add it to your projects using cargo:
@@ -14,11 +23,14 @@ You can add it to your projects using cargo:
 cargo add termint
 ```
 
-## Basic example:
+## Examples
+
+### Printing colored text
 
 Printing colored text is really easy, you can do it like this:
 
 ```rust
+// Using Span widget
 println!("{}", "Cyan text".fg(Fg::Cyan));
 println!("{}", "Cyan text on white background".fg(Fg::Cyan).bg(Bg::White));
 println!("{}", "Bold red text".fg(Fg::Red).modifier(vec![Modifier::Bold]));
@@ -29,7 +41,7 @@ println!("{}", "Text with RGB value".fg(Fg::RGB(0, 249, 210)));
 You can see all the colors and modifiers in the
 [documentation](https://docs.rs/termint/latest/termint/).
 
-## Advanced example:
+### More complex layout
 
 You can also create TUIs using this library. This example shows how you can
 use Block widget and add children to it and creating Layout:
@@ -37,19 +49,19 @@ use Block widget and add children to it and creating Layout:
 ```rust
 // Creates main block and sets its properties
 let mut main = Block::new()
-    .title("Termint".to_span())
+    .title("Termint")
     .direction(Direction::Horizontal)
     .border_type(BorderType::Double);
 
 // Creates block1 and adds span as its child
-let mut block1 = Block::new().title("Sub block".to_span());
+let mut block1 = Block::new().title("Sub block");
 let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
 block1.add_child(span1, Constrain::Percent(100));
 // Adds block1 as child of main block
 main.add_child(block1, Constrain::Min(0));
 
 // Create block2 and adds span as its child
-let mut block2 = Block::new().title("Another".to_span());
+let mut block2 = Block::new().title("Another");
 let span2 = "This is really cool, right?".fg(Fg::Blue);
 block2.add_child(span2, Constrain::Percent(100));
 // Adds block2 as child of main block
@@ -60,7 +72,7 @@ main.render(&Coords::new(1, 1), &Coords::new(30, 8));
 ```
 ![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)
 
-## Usage:
+## Usage
 
 Code blocks above are just examples of the usage. To see more about functions,
 Widgets and more, please visit the

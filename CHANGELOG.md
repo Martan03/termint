@@ -1,5 +1,12 @@
 # Termint changelog
 
+## v0.4.2
+### Features:
+- Add option to get String representation of Widget and Text
+
+### Fixes:
+- Fix Span and Grad ellipsis (when ellipsis couldn't fit)
+
 ## v0.4.1
 ### Features:
 - Add option to get List offset
