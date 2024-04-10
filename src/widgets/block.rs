@@ -1,4 +1,8 @@
-use std::{cmp::max, iter::repeat};
+use std::{
+    cmp::max,
+    io::{stdout, Write},
+    iter::repeat,
+};
 
 use crate::{
     borders,
@@ -122,28 +126,35 @@ impl Block {
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
     fn render(&self, pos: &Coords, size: &Coords) {
-        self.render_border(pos, size);
+        print!("{}", self.get_string(pos, size));
+        _ = stdout().flush();
+    }
 
-        print!("{}", self.title.get_mods());
-        self.title.render_offset(
+    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
+        let mut res = self.get_border(pos, size);
+
+        res.push_str(&self.title.get_mods());
+        let (title_str, _) = self.title.get_offset(
             &Coords::new(pos.x + 1, pos.y),
             &Coords::new(size.x.saturating_sub(2), 1),
             0,
             None,
         );
-        print!("\x1b[0m");
+        res.push_str(&title_str);
+        res.push_str("\x1b[0m");
 
         let (width, height) = self.border_size();
         let top = ((self.borders & Border::TOP) != 0
             || !self.title.get_text().is_empty()) as usize;
         let left = ((self.borders & Border::LEFT) != 0) as usize;
-        self.layout.render(
+        res.push_str(&self.layout.get_string(
             &Coords::new(pos.x + left, pos.y + top),
             &Coords::new(
                 size.x.saturating_sub(width),
                 size.y.saturating_sub(height),
             ),
-        );
+        ));
+        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -179,51 +190,69 @@ impl Default for Block {
 
 impl Block {
     /// Renders [`Block`] border
-    fn render_border(&self, pos: &Coords, size: &Coords) {
+    fn get_border(&self, pos: &Coords, size: &Coords) -> String {
+        let mut border = String::new();
         let right_top = Coords::new(pos.x + size.x - 1, pos.y);
         let left_bottom = Coords::new(pos.x, size.y + pos.y - 1);
 
-        print!("{}", self.border_color);
-        self.render_ver_border(size.y, pos, Border::LEFT);
-        self.render_ver_border(size.y, &right_top, Border::RIGHT);
-        self.render_hor_border(size.x, pos, Border::TOP);
-        self.render_hor_border(size.x, &left_bottom, Border::BOTTOM);
+        border.push_str(&self.border_color.to_string());
+        self.ver_border(&mut border, size.y, pos, Border::LEFT);
+        self.ver_border(&mut border, size.y, &right_top, Border::RIGHT);
+        self.hor_border(&mut border, size.x, pos, Border::TOP);
+        self.hor_border(&mut border, size.x, &left_bottom, Border::BOTTOM);
 
         if size.x > 1 && size.y > 1 {
-            self.render_corner(pos, borders!(TOP, LEFT));
-            self.render_corner(&right_top, borders!(TOP, RIGHT));
-            self.render_corner(&left_bottom, borders!(BOTTOM, LEFT));
-            self.render_corner(
+            self.corner(&mut border, pos, borders!(TOP, LEFT));
+            self.corner(&mut border, &right_top, borders!(TOP, RIGHT));
+            self.corner(&mut border, &left_bottom, borders!(BOTTOM, LEFT));
+            self.corner(
+                &mut border,
                 &Coords::new(right_top.x, left_bottom.y),
                 borders!(BOTTOM, RIGHT),
             );
         }
+        border
     }
 
-    /// Render horizontal border
-    fn render_hor_border(&self, width: usize, pos: &Coords, border: u8) {
+    /// Adds horizontal border to the string
+    fn hor_border(
+        &self,
+        res: &mut String,
+        width: usize,
+        pos: &Coords,
+        border: u8,
+    ) {
         if (self.borders & border) != 0 {
             let hor = self.border_type.get(border);
             let hor_border: String = repeat(hor).take(width).collect();
-            print!("{}{hor_border}", Cursor::Pos(pos.x, pos.y));
+            res.push_str(&Cursor::Pos(pos.x, pos.y).to_string());
+            res.push_str(&hor_border);
         }
     }
 
-    /// Render vertical border
-    fn render_ver_border(&self, height: usize, pos: &Coords, border: u8) {
+    /// Adds vertical border to the string
+    fn ver_border(
+        &self,
+        res: &mut String,
+        height: usize,
+        pos: &Coords,
+        border: u8,
+    ) {
         if (self.borders & border) != 0 {
             let ver = self.border_type.get(border);
             for y in 0..height {
-                print!("{}{ver}", Cursor::Pos(pos.x, pos.y + y));
+                res.push_str(&Cursor::Pos(pos.x, pos.y + y).to_string());
+                res.push(ver);
             }
         }
     }
 
-    /// Renders corner of [`Block`] border if needed based on `border` value
-    fn render_corner(&self, pos: &Coords, border: u8) {
+    /// Adds corner of [`Block`] border to the string
+    fn corner(&self, res: &mut String, pos: &Coords, border: u8) {
         let c = self.border_type.get(border);
         if (self.borders & border) == border {
-            print!("{}{c}", Cursor::Pos(pos.x, pos.y));
+            res.push_str(&Cursor::Pos(pos.x, pos.y).to_string());
+            res.push(c);
         }
     }
 

@@ -94,6 +94,11 @@ impl Layout {
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
     fn render(&self, pos: &Coords, size: &Coords) {
+        print!("{}", self.get_string(pos, size));
+        _ = stdout().flush();
+    }
+
+    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
         let mut pos =
             Coords::new(pos.x + self.padding.left, pos.y + self.padding.top);
         let mut size = Coords::new(
@@ -102,10 +107,10 @@ impl Widget for Layout {
         );
 
         if size.x == 0 || size.y == 0 {
-            return;
+            return String::new();
         }
 
-        match self.direction {
+        let res = match self.direction {
             Direction::Vertical => {
                 pos.transpone();
                 size.transpone();
@@ -118,8 +123,8 @@ impl Widget for Layout {
                     self.hor_child_size(child, constrain, size)
                 })
             }
-        }
-        _ = stdout().flush();
+        };
+        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -152,10 +157,16 @@ impl Default for Layout {
 }
 
 impl Layout {
-    fn _render<F>(&self, pos: &mut Coords, size: &mut Coords, child_size: F)
+    fn _render<F>(
+        &self,
+        pos: &mut Coords,
+        size: &mut Coords,
+        child_size: F,
+    ) -> String
     where
         F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
     {
+        let mut res = String::new();
         let (sizes, fill) = self.get_sizes(size, pos, child_size);
 
         let mut coords = *pos;
@@ -178,8 +189,9 @@ impl Layout {
                 child_size.transpone();
                 c.transpone();
             }
-            self.children[i].render(&c, &child_size);
+            res.push_str(&self.children[i].get_string(&c, &child_size));
         }
+        res
     }
 
     fn ver_child_size(

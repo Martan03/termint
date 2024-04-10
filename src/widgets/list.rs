@@ -141,6 +141,12 @@ impl List {
 
 impl Widget for List {
     fn render(&self, pos: &Coords, size: &Coords) {
+        print!("{}", self.get_string(pos, size));
+        _ = stdout().flush();
+    }
+
+    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
+        let mut res = String::new();
         let mut text_pos = Coords::new(pos.x + self.sel_char.len(), pos.y);
         let mut text_size = Coords::new(size.x - self.sel_char.len(), size.y);
         let offset = self.get_render_offset(size);
@@ -148,7 +154,8 @@ impl Widget for List {
         let fits = self.fits(size);
         if !fits {
             text_size.x -= 1;
-            self.render_scrollbar(
+            self.get_scrollbar(
+                &mut res,
                 &Coords::new((pos.x + size.x).saturating_sub(1), pos.y),
                 size,
                 offset,
@@ -159,13 +166,14 @@ impl Widget for List {
             let mut fg = self.fg;
             let mut bg: Option<Bg> = None;
             if Some(i) == self.current {
-                print!("{}{}", Cursor::Pos(pos.x, text_pos.y), self.sel_char);
+                res.push_str(&Cursor::Pos(pos.x, text_pos.y).to_string());
+                res.push_str(&self.sel_char);
                 fg = self.sel_fg;
                 bg = self.sel_bg;
             }
 
             let span = self.items[i].fg(fg).bg(bg);
-            span.render(&text_pos, &text_size);
+            res.push_str(&span.get_string(&text_pos, &text_size));
             text_pos.y += span.height(&text_size);
 
             if pos.y + size.y <= text_pos.y {
@@ -173,7 +181,7 @@ impl Widget for List {
             }
             text_size.y = pos.y + size.y - text_pos.y;
         }
-        _ = stdout().flush();
+        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -214,7 +222,13 @@ impl Default for List {
 
 impl List {
     /// Renders [`List`] scrollbar
-    fn render_scrollbar(&self, pos: &Coords, size: &Coords, offset: usize) {
+    fn get_scrollbar(
+        &self,
+        res: &mut String,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+    ) {
         let rat = self.items.len() as f32 / size.y as f32;
         let thumb_size = min((size.y as f32 / rat) as usize, size.y);
         let thumb_offset =
@@ -223,14 +237,14 @@ impl List {
         let mut bar_pos = Coords::new(pos.x, pos.y);
         let bar = "│".fg(self.scrollbar_fg);
         for _ in 0..size.y {
-            bar.render(&bar_pos, size);
+            res.push_str(&bar.get_string(&bar_pos, size));
             bar_pos.y += 1;
         }
 
         bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
         let thumb = "┃".fg(self.thumb_fg);
         for _ in 0..thumb_size {
-            thumb.render(&bar_pos, size);
+            res.push_str(&thumb.get_string(&bar_pos, size));
             bar_pos.y += 1;
         }
     }

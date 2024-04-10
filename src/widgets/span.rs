@@ -1,4 +1,8 @@
-use std::{cmp::max, fmt, io::{stdout, Write}};
+use std::{
+    cmp::max,
+    fmt,
+    io::{stdout, Write},
+};
 
 use crate::{
     enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, wrap::Wrap},
@@ -109,27 +113,13 @@ impl Span {
 
 impl Widget for Span {
     fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_mods());
-
-        match self.wrap {
-            Wrap::Letter => {
-                let rl =
-                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
-                        self.render_letter(text, pos, size, off)
-                    };
-                _ = self.render_lines(pos, size, 0, rl);
-            }
-            Wrap::Word => {
-                let rl =
-                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
-                        self.render_word(text, pos, size, off)
-                    };
-                _ = self.render_lines(pos, size, 0, rl);
-            }
-        }
-
-        print!("\x1b[0m");
+        print!("{}", self.get_string(pos, size));
         _ = stdout().flush();
+    }
+
+    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
+        let (res, _) = self.get_offset(pos, size, 0, None);
+        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -155,23 +145,32 @@ impl Text for Span {
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> Coords {
+        let (res, coords) = self.get_offset(pos, size, offset, wrap);
+        print!("{res}");
+        coords
+    }
+
+    fn get_offset(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+        wrap: Option<&Wrap>,
+    ) -> (String, Coords) {
         let wrap = wrap.unwrap_or(&self.wrap);
-        match wrap {
+        let (res, coords) = match wrap {
             Wrap::Letter => {
-                let rl =
-                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
-                        self.render_letter(text, pos, size, off)
-                    };
-                self.render_lines(pos, size, offset, rl)
+                self.render_lines(pos, size, offset, |t, r, p, s, o| {
+                    self.render_letter(t, r, p, s, o)
+                })
             }
             Wrap::Word => {
-                let rl =
-                    |text: &str, pos: &Coords, size: &Coords, off: usize| {
-                        self.render_word(text, pos, size, off)
-                    };
-                self.render_lines(pos, size, offset, rl)
+                self.render_lines(pos, size, offset, |t, r, p, s, o| {
+                    self.render_word(t, r, p, s, o)
+                })
             }
-        }
+        };
+        (format!("{}{res}\x1b[0m", self.get_mods()), coords)
     }
 
     fn get(&self) -> String {
@@ -226,10 +225,11 @@ impl Span {
         size: &Coords,
         offset: usize,
         text_render: F,
-    ) -> Coords
+    ) -> (String, Coords)
     where
-        F: Fn(&str, &Coords, &Coords, usize) -> Coords,
+        F: Fn(&str, &mut String, &Coords, &Coords, usize) -> Coords,
     {
+        let mut res = String::new();
         let mut fin_coords = Coords::new(0, pos.y);
         let mut coords = Coords::new(pos.x, pos.y);
         let mut lsize = *size;
@@ -240,12 +240,12 @@ impl Span {
                 break;
             }
 
-            fin_coords = text_render(line, &coords, &lsize, offset);
+            fin_coords = text_render(line, &mut res, &coords, &lsize, offset);
             (coords.x, coords.y) = (pos.x, fin_coords.y + 1);
             lsize.y = size.y.saturating_sub(coords.y - pos.y);
             offset = 0;
         }
-        fin_coords
+        (res, fin_coords)
     }
 
     /// Renders [`Span`] with word wrapping with given offset
@@ -253,41 +253,42 @@ impl Span {
     fn render_word(
         &self,
         text: &str,
+        res: &mut String,
         pos: &Coords,
         size: &Coords,
         offset: usize,
     ) -> Coords {
-        let mut res: Vec<&str> = vec![];
+        res.push_str(&Cursor::Pos(pos.x + offset, pos.y).to_string());
+        let mut line: Vec<&str> = vec![];
         let mut coords = Coords::new(offset, pos.y);
 
-        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
         for word in text.split_whitespace() {
-            if coords.x + word.len() + !res.is_empty() as usize > size.x {
+            if coords.x + word.len() + !line.is_empty() as usize > size.x {
                 if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
-                    let mut line = res.join(" ");
+                    let mut line_str = line.join(" ");
                     let sum = coords.x + self.ellipsis.len();
                     if sum >= size.x {
                         let offset = size.x.saturating_sub(sum);
-                        line = line[..offset].to_string();
+                        line_str = line_str[..offset].to_string();
                     }
 
-                    line.push_str(&self.ellipsis);
+                    line_str.push_str(&self.ellipsis);
                     coords.x = line.len();
-                    self.render_line(size, line);
+                    self.render_line(res, size, line_str);
                     return coords;
                 }
 
                 (coords.x, coords.y) = (0, coords.y + 1);
-                self.render_line(size, res.join(" "));
-                print!("{}", Cursor::Pos(pos.x, coords.y));
-                res = vec![];
+                self.render_line(res, size, line.join(" "));
+                res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
+                line = vec![];
             }
-            coords.x += word.len() + !res.is_empty() as usize;
-            res.push(word);
+            coords.x += word.len() + !line.is_empty() as usize;
+            line.push(word);
         }
 
-        if !res.is_empty() {
-            self.render_line(size, res.join(" "));
+        if !line.is_empty() {
+            self.render_line(res, size, line.join(" "));
         }
         coords
     }
@@ -297,12 +298,13 @@ impl Span {
     fn render_letter(
         &self,
         text: &str,
+        res: &mut String,
         pos: &Coords,
         size: &Coords,
         offset: usize,
     ) -> Coords {
         let mut coords = Coords::new(offset, pos.y);
-        print!("{}", Cursor::Pos(pos.x + offset, pos.y));
+        res.push_str(&Cursor::Pos(pos.x + offset, pos.y).to_string());
 
         let fits = text.len() <= size.x * size.y;
         for chunk in text.chars().collect::<Vec<char>>().chunks(size.x) {
@@ -317,34 +319,35 @@ impl Span {
 
                 chunk_str.push_str(&self.ellipsis);
                 coords.x = chunk_str.len();
-                print!("{chunk_str}");
+                res.push_str(&chunk_str);
                 return coords;
             }
 
             coords.y += 1;
-            print!("{chunk_str}{}", Cursor::Pos(pos.x, coords.y));
+            res.push_str(&chunk_str);
+            res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
         }
         Coords::new(coords.x, max(coords.y - 1, pos.y))
     }
 
     /// Renders one line of text and aligns it based on set alignment
-    fn render_line(&self, size: &Coords, line: String) {
+    fn render_line(&self, res: &mut String, size: &Coords, line: String) {
         match self.align {
             TextAlign::Left => (),
             TextAlign::Center => {
                 let offset = size.x.saturating_sub(line.len()) >> 1;
                 if offset > 0 {
-                    print!("{}", Cursor::Right(offset))
+                    res.push_str(&Cursor::Right(offset).to_string());
                 }
             }
             TextAlign::Right => {
                 let offset = size.x.saturating_sub(line.len());
                 if offset > 0 {
-                    print!("{}", Cursor::Right(offset));
+                    res.push_str(&Cursor::Right(offset).to_string());
                 }
             }
         }
-        print!("{}", line);
+        res.push_str(&line);
     }
 
     /// Gets height of the [`Span`] when using word wrap

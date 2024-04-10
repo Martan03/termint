@@ -7,6 +7,9 @@ pub trait Widget {
     /// Renders [`Widget`] on given position with given size
     fn render(&self, pos: &Coords, size: &Coords);
 
+    /// Gets string representation of the [`Widget`]
+    fn get_string(&self, pos: &Coords, size: &Coords) -> String;
+
     /// Gets height of the [`Widget`]
     fn height(&self, size: &Coords) -> usize;
 

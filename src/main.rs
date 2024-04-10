@@ -17,12 +17,12 @@ use termint::{
 
 fn main() {
     // test_block();
-    // test_layout();
+    test_layout();
     // test_grad();
     // cool_example();
     // test_paragraph();
     // readme_example();
-    test_list();
+    // test_list();
     // test_layout_centering();
     // test_bg_grad();
 }
@@ -75,8 +75,7 @@ fn test_layout() {
     main.add_child(block2, Constrain::Percent(50));
 
     main.render(&Coords::new(1, 1), &Coords::new(30, 8));
-
-    println!("\x1b[1B");
+    println!("\x1b[2B");
 }
 
 #[allow(unused)]
@@ -127,13 +126,12 @@ fn cool_example() {
     main.add_child(fill, Constrain::Fill);
 
     main.render(&Coords::new(1, 1), &Coords::new(40, 9));
-    println!("\x1b[1B");
+    println!("\x1b[2B");
 }
 
 #[allow(unused)]
 fn test_paragraph() {
     println!("\x1b[2J");
-
     let mut main = Block::new()
         .title("Paragraph")
         .direction(Direction::Horizontal);
@@ -154,7 +152,7 @@ fn test_paragraph() {
 
     main.render(&Coords::new(1, 1), &Coords::new(20, 9));
 
-    //println!("\x1b[1B");
+    println!("\x1b[1B");
 }
 
 #[allow(unused)]
@@ -182,7 +180,7 @@ fn readme_example() {
 
     // Renders the main block which renders all the children
     main.render(&Coords::new(1, 1), &Coords::new(30, 8));
-    println!("\x1b[3B");
+    println!("\x1b[4B");
 }
 
 #[allow(unused)]

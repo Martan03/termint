@@ -18,6 +18,15 @@ pub trait Text {
     /// Gets [`Text`] widget as string
     fn get(&self) -> String;
 
+    /// Gets [`Text`] widget as string with all the positional things
+    fn get_offset(
+        &self,
+        pos: &Coords,
+        size: &Coords,
+        offset: usize,
+        wrap: Option<&Wrap>,
+    ) -> (String, Coords);
+
     /// Gets text of the [`Text`]
     fn get_text(&self) -> &str;
 

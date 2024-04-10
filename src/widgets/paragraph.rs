@@ -130,6 +130,38 @@ impl Widget for Paragraph {
         _ = stdout().flush();
     }
 
+    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
+        let mut res = String::new();
+        let mut text_pos = Coords::new(pos.x, pos.y);
+        let mut text_size = Coords::new(size.x, size.y);
+        let mut offset = 0;
+
+        for child in self.children.iter() {
+            res.push_str(&child.get_mods());
+
+            let (child_res, end) = child.get_offset(
+                &text_pos,
+                &text_size,
+                offset,
+                Some(&self.wrap),
+            );
+            res.push_str(&child_res);
+            text_pos.y = end.y;
+            offset = end.x + self.separator.len();
+
+            if pos.y + size.y <= end.y {
+                break;
+            }
+            text_size.y = pos.y + size.y - end.y;
+
+            res.push_str("\x1b[0m");
+            if offset < size.x {
+                res.push_str(&self.separator);
+            }
+        }
+        res
+    }
+
     fn height(&self, size: &Coords) -> usize {
         match self.wrap {
             Wrap::Letter => self.size_letter_wrap(size.x),

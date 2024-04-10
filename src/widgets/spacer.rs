@@ -34,6 +34,10 @@ impl Spacer {
 impl Widget for Spacer {
     fn render(&self, _pos: &Coords, _size: &Coords) {}
 
+    fn get_string(&self, _pos: &Coords, _size: &Coords) -> String {
+        String::new()
+    }
+
     fn height(&self, _size: &Coords) -> usize {
         0
     }
