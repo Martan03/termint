@@ -386,13 +386,16 @@ impl Grad {
 
     fn render_line_ver(
         &self,
-        _size: &Coords,
+        size: &Coords,
         line: String,
         res: &mut String,
         (r, g, b): (u8, u8, u8),
         _step: (i16, i16, i16),
     ) {
-        // _ = self.set_alignment(size, line.len());
+        let offset = self.set_alignment(size, line.len());
+        if offset > 0 {
+            res.push_str(&Cursor::Right(offset).to_string());
+        }
         res.push_str(&Fg::RGB(r, g, b).to_string());
         res.push_str(&line);
     }
@@ -406,6 +409,9 @@ impl Grad {
         step: (i16, i16, i16),
     ) {
         let offset = self.set_alignment(size, line.len());
+        if offset > 0 {
+            res.push_str(&Cursor::Right(offset).to_string());
+        }
 
         let (mut r, mut g, mut b) = (r, g, b);
         if self.text.len() > size.x {
@@ -424,20 +430,8 @@ impl Grad {
     fn set_alignment(&self, size: &Coords, len: usize) -> usize {
         match self.align {
             TextAlign::Left => 0,
-            TextAlign::Center => {
-                let offset = size.x.saturating_sub(len) >> 1;
-                if offset > 0 {
-                    print!("{}", Cursor::Right(offset))
-                }
-                offset
-            }
-            TextAlign::Right => {
-                let offset = size.x.saturating_sub(len);
-                if offset > 0 {
-                    print!("{}", Cursor::Right(offset));
-                }
-                offset
-            }
+            TextAlign::Center => size.x.saturating_sub(len) >> 1,
+            TextAlign::Right => size.x.saturating_sub(len),
         }
     }
 

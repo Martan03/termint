@@ -1,6 +1,9 @@
 use termint::{
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
-    geometry::{constrain::Constrain, coords::Coords, direction::Direction},
+    geometry::{
+        constrain::Constrain, coords::Coords, direction::Direction,
+        text_align::TextAlign,
+    },
     mods,
     widgets::{
         bg_grad::BgGrad,
@@ -16,9 +19,9 @@ use termint::{
 };
 
 fn main() {
-    test_block();
+    // test_block();
     // test_layout();
-    // test_grad();
+    test_grad();
     // cool_example();
     // test_paragraph();
     // readme_example();
@@ -84,7 +87,8 @@ fn test_grad() {
         "This is a test of long text, but it is not that long",
         (0, 220, 255),
         (200, 60, 255),
-    );
+    )
+    .align(TextAlign::Center);
     println!("\x1b[2J");
     grad.render(&Coords::new(1, 1), &Coords::new(10, 5));
 }
