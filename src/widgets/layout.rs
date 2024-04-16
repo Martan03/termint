@@ -128,19 +128,34 @@ impl Widget for Layout {
     }
 
     fn height(&self, size: &Coords) -> usize {
-        let mut height = 0;
-        for child in self.children.iter() {
-            height += child.height(size);
+        match self.direction {
+            Direction::Vertical => {
+                let mut size = Coords::new(
+                    size.x.saturating_sub(self.padding.get_horizontal()),
+                    size.y,
+                );
+                size.transpone();
+                self.get_size(&size, |child, constrain, size| {
+                    self.ver_child_size(child, constrain, size)
+                }) + self.padding.get_vertical()
+            }
+            Direction::Horizontal => size.y,
         }
-        height
     }
 
     fn width(&self, size: &Coords) -> usize {
-        let mut width = 0;
-        for child in self.children.iter() {
-            width += child.width(size);
+        match self.direction {
+            Direction::Vertical => size.x,
+            Direction::Horizontal => {
+                let size = Coords::new(
+                    size.x,
+                    size.y.saturating_sub(self.padding.get_vertical()),
+                );
+                self.get_size(&size, |child, constrain, size| {
+                    self.hor_child_size(child, constrain, size)
+                }) + self.padding.get_horizontal()
+            }
         }
-        width
     }
 }
 
@@ -157,6 +172,7 @@ impl Default for Layout {
 }
 
 impl Layout {
+    /// Renders layout
     fn _render<F>(
         &self,
         pos: &mut Coords,
@@ -194,6 +210,28 @@ impl Layout {
         res
     }
 
+    /// Gets total layout size
+    fn get_size<F>(&self, size: &Coords, child_size: F) -> usize
+    where
+        F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
+    {
+        let mut total = 0;
+        let mut fill = 0;
+        for i in 0..self.children.len() {
+            if self.constrain[i] == Constrain::Fill {
+                fill += 1;
+            }
+            total += child_size(&*self.children[i], &self.constrain[i], size);
+        }
+
+        if fill > 0 {
+            max(total, size.x)
+        } else {
+            total
+        }
+    }
+
+    /// Gets given child size based on its constraints (when vertical layout)
     fn ver_child_size(
         &self,
         child: &dyn Widget,
@@ -213,6 +251,7 @@ impl Layout {
         }
     }
 
+    /// Gets given child size based on its constraints (when horizontal layout)
     fn hor_child_size(
         &self,
         child: &dyn Widget,

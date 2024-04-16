@@ -24,6 +24,7 @@ use crate::{
 /// ```
 #[derive(Debug, Default)]
 pub struct Term {
+    small: Option<Box<dyn Widget>>,
     padding: Padding,
 }
 
@@ -39,23 +40,41 @@ impl Term {
         self
     }
 
-    /// Renders given widget on full screen with set padding
+    /// Sets small screen of the [`Term`], which is displayed if rendering
+    /// cannot fit
+    pub fn small_screen<T>(mut self, small_screen: T) -> Self
+    where
+        T: Into<Box<dyn Widget>>,
+    {
+        self.small = Some(small_screen.into());
+        self
+    }
+
+    /// Renders given widget on full screen with set padding. Displays small
+    /// screen when cannot fit (only when `small_screen` is set)
     pub fn render<T>(&self, widget: T) -> Result<(), &'static str>
     where
         T: Widget + 'static,
     {
-        if let Some((w, h)) = Term::get_size() {
-            widget.render(
-                &Coords::new(1 + self.padding.left, 1 + self.padding.top),
-                &Coords::new(
-                    w.saturating_sub(self.padding.get_horizontal()),
-                    h.saturating_sub(self.padding.get_vertical()),
-                ),
-            );
-            Ok(())
-        } else {
-            Err("Cannot determine terminal size")
-        }
+        let Some((w, h)) = Term::get_size() else {
+            return Err("Cannot determine terminal size");
+        };
+
+        let pos = Coords::new(1 + self.padding.left, 1 + self.padding.top);
+        let size = Coords::new(
+            w.saturating_sub(self.padding.get_horizontal()),
+            h.saturating_sub(self.padding.get_vertical()),
+        );
+
+        match &self.small {
+            Some(small)
+                if w < widget.width(&size) || h < widget.height(&size) =>
+            {
+                small.render(&pos, &size);
+            }
+            _ => widget.render(&pos, &size),
+        };
+        Ok(())
     }
 
     /// Gets size of the terminal

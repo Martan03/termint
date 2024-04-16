@@ -5,6 +5,7 @@ use termint::{
         text_align::TextAlign,
     },
     mods,
+    term::Term,
     widgets::{
         bg_grad::BgGrad,
         block::Block,
@@ -21,13 +22,14 @@ use termint::{
 fn main() {
     // test_block();
     // test_layout();
-    test_grad();
+    // test_grad();
     // cool_example();
     // test_paragraph();
     // readme_example();
     // test_list();
     // test_layout_centering();
     // test_bg_grad();
+    term_test();
 }
 
 #[allow(unused)]
@@ -226,4 +228,17 @@ fn test_bg_grad() {
     grad.add_child(layout, Constrain::Length(3));
     grad.render(&Coords::new(1, 1), &Coords::new(20, 9));
     println!("\x1b[5B");
+}
+
+#[allow(unused)]
+fn term_test() {
+    println!("\x1b[2J");
+    let small = "Too small";
+    let term = Term::new().small_screen(small);
+
+    let mut layout = Layout::vertical().padding(1);
+    let mut span = "This is test of small message rendering";
+    layout.add_child(span, Constrain::Length(10));
+
+    term.render(layout);
 }
