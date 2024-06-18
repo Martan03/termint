@@ -110,7 +110,7 @@ impl Widget for Layout {
             return String::new();
         }
 
-        let res = match self.direction {
+        match self.direction {
             Direction::Vertical => {
                 pos.transpone();
                 size.transpone();
@@ -123,8 +123,7 @@ impl Widget for Layout {
                     self.hor_child_size(child, constrain, size)
                 })
             }
-        };
-        res
+        }
     }
 
     fn height(&self, size: &Coords) -> usize {

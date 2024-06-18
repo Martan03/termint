@@ -88,6 +88,7 @@
 //! - **Documentation**: [docs.rs](https://docs.rs/termint/latest/termint/)
 //! - **Author website:** [martan03.github.io](https://martan03.github.io)
 
+pub mod buffer;
 /// Contains enums for foreground, background and more
 pub mod enums;
 /// Contains structs for geometry, such as Coords
