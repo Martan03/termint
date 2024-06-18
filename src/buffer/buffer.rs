@@ -73,6 +73,36 @@ impl Buffer {
         self.content[id].bg(bg);
     }
 
+    /// Gets position of the [`Buffer`]
+    pub fn pos(&self) -> Coords {
+        self.rect.pos()
+    }
+
+    /// Gets x coordinate of the [`Buffer`]
+    pub fn x(&self) -> usize {
+        self.rect.x()
+    }
+
+    /// Gets y coordinate of the [`Buffer`]
+    pub fn y(&self) -> usize {
+        self.rect.y()
+    }
+
+    /// Gets size of the [`Buffer`]
+    pub fn size(&self) -> Coords {
+        self.rect.size()
+    }
+
+    /// Gets width of the [`Buffer`]
+    pub fn width(&self) -> usize {
+        self.rect.width()
+    }
+
+    /// Gets height of the [`Buffer`]
+    pub fn height(&self) -> usize {
+        self.rect.height()
+    }
+
     /// Gets [`Cell`] index based on coordinates
     fn index_of(&self, pos: &Coords) -> usize {
         pos.x + pos.y * self.rect.width()

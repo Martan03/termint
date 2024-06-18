@@ -6,6 +6,7 @@ use std::{
 
 use crate::{
     borders,
+    buffer::buffer::Buffer,
     enums::{cursor::Cursor, fg::Fg},
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
@@ -125,8 +126,8 @@ impl Block {
 
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_string(pos, size));
+    fn render(&self, buffer: &mut Buffer) {
+        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
         _ = stdout().flush();
     }
 

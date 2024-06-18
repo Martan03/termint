@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::{
+    buffer::buffer::Buffer,
     enums::{
         bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, rgb::RGB,
         wrap::Wrap,
@@ -103,8 +104,8 @@ impl Grad {
 }
 
 impl Widget for Grad {
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_string(pos, size));
+    fn render(&self, buffer: &mut Buffer) {
+        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
         _ = stdout().flush();
     }
 

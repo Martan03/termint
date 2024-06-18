@@ -3,9 +3,12 @@ use std::{
     io::{stdout, Write},
 };
 
-use crate::geometry::{
-    constrain::Constrain, coords::Coords, direction::Direction,
-    padding::Padding,
+use crate::{
+    buffer::buffer::Buffer,
+    geometry::{
+        constrain::Constrain, coords::Coords, direction::Direction,
+        padding::Padding,
+    },
 };
 
 use super::widget::Widget;
@@ -93,8 +96,8 @@ impl Layout {
 
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_string(pos, size));
+    fn render(&self, buffer: &mut Buffer) {
+        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
         _ = stdout().flush();
     }
 

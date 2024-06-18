@@ -1,4 +1,4 @@
-use crate::geometry::coords::Coords;
+use crate::{buffer::buffer::Buffer, geometry::coords::Coords};
 
 use super::widget::Widget;
 
@@ -32,7 +32,7 @@ impl Spacer {
 }
 
 impl Widget for Spacer {
-    fn render(&self, _pos: &Coords, _size: &Coords) {}
+    fn render(&self, _buffer: &mut Buffer) {}
 
     fn get_string(&self, _pos: &Coords, _size: &Coords) -> String {
         String::new()

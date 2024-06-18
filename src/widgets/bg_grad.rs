@@ -1,6 +1,7 @@
 use std::io::{stdout, Write};
 
 use crate::{
+    buffer::buffer::Buffer,
     enums::{bg::Bg, cursor::Cursor, rgb::RGB},
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
@@ -83,8 +84,8 @@ impl BgGrad {
 }
 
 impl Widget for BgGrad {
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_string(pos, size));
+    fn render(&self, buffer: &mut Buffer) {
+        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
         _ = stdout().flush();
     }
 

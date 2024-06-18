@@ -2,7 +2,8 @@ use core::fmt;
 use std::io::{stdout, Write};
 
 use crate::{
-    enums::wrap::Wrap, geometry::coords::Coords, widgets::text::Text,
+    buffer::buffer::Buffer, enums::wrap::Wrap, geometry::coords::Coords,
+    widgets::text::Text,
 };
 
 use super::widget::Widget;
@@ -100,7 +101,10 @@ impl Paragraph {
 }
 
 impl Widget for Paragraph {
-    fn render(&self, pos: &Coords, size: &Coords) {
+    fn render(&self, buffer: &mut Buffer) {
+        let pos = buffer.pos();
+        let size = buffer.size();
+        
         let mut text_pos = Coords::new(pos.x, pos.y);
         let mut text_size = Coords::new(size.x, size.y);
         let mut offset = 0;

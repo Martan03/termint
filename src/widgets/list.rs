@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::{
+    buffer::buffer::Buffer,
     enums::{bg::Bg, cursor::Cursor, fg::Fg},
     geometry::coords::Coords,
 };
@@ -140,8 +141,8 @@ impl List {
 }
 
 impl Widget for List {
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_string(pos, size));
+    fn render(&self, buffer: &mut Buffer) {
+        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
         _ = stdout().flush();
     }
 

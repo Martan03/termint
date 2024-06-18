@@ -34,6 +34,11 @@ impl Rect {
         }
     }
 
+    /// Gets position of the [`Rect`]
+    pub fn pos(&self) -> Coords {
+        self.pos.clone()
+    }
+
     /// Gets x coordinate of the [`Rect`]
     pub fn x(&self) -> usize {
         self.pos.x
@@ -60,8 +65,13 @@ impl Rect {
     }
 
     /// Gets y coordinate of the most bottom cell of the [`Rect`]
-    pub fn down(&self) -> usize {
+    pub fn bottom(&self) -> usize {
         self.pos.y + self.size.y
+    }
+
+    /// Gets size of the [`Rect`]
+    pub fn size(&self) -> Coords {
+        self.size.clone()
     }
 
     /// Gets width of the [`Rect`]

@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::{
+    buffer::buffer::Buffer,
     enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::{coords::Coords, text_align::TextAlign},
 };
@@ -112,8 +113,8 @@ impl Span {
 }
 
 impl Widget for Span {
-    fn render(&self, pos: &Coords, size: &Coords) {
-        print!("{}", self.get_string(pos, size));
+    fn render(&self, buffer: &mut Buffer) {
+        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
         _ = stdout().flush();
     }
 

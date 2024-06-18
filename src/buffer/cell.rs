@@ -56,7 +56,7 @@ impl Display for Cell {
 impl Default for Cell {
     fn default() -> Self {
         Self {
-            fg: Default::default(),
+            fg: None,
             bg: None,
             val: ' ',
         }
