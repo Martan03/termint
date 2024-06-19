@@ -1,5 +1,6 @@
 use crate::{
-    geometry::{coords::Coords, padding::Padding},
+    buffer::buffer::Buffer,
+    geometry::{coords::Coords, padding::Padding, rect::Rect},
     widgets::widget::Widget,
 };
 
@@ -66,13 +67,14 @@ impl Term {
             h.saturating_sub(self.padding.get_vertical()),
         );
 
+        let mut buffer = Buffer::empty(Rect::from_coords(pos, size));
         match &self.small {
             Some(small)
                 if w < widget.width(&size) || h < widget.height(&size) =>
             {
-                small.render(&pos, &size);
+                small.render(&mut buffer);
             }
-            _ => widget.render(&pos, &size),
+            _ => widget.render(&mut buffer),
         };
         Ok(())
     }

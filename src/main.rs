@@ -1,8 +1,9 @@
 use termint::{
+    buffer::buffer::Buffer,
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
-        text_align::TextAlign,
+        rect::Rect, text_align::TextAlign,
     },
     mods,
     term::Term,
@@ -52,7 +53,11 @@ fn test_block() {
     block.add_child(block1, Constrain::Min(0));
     block.add_child(block3, Constrain::Fill);
 
-    block.render(&Coords::new(1, 1), &Coords::new(30, 9));
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(30, 9),
+    ));
+    block.render(&mut buffer);
 
     println!("\x1b[7B");
 }
@@ -79,7 +84,11 @@ fn test_layout() {
     block2.add_child(span2, Constrain::Percent(100));
     main.add_child(block2, Constrain::Percent(50));
 
-    main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(30, 8),
+    ));
+    main.render(&mut buffer);
     println!("\x1b[2B");
 }
 
@@ -92,7 +101,12 @@ fn test_grad() {
     )
     .align(TextAlign::Center);
     println!("\x1b[2J");
-    grad.render(&Coords::new(1, 1), &Coords::new(10, 5));
+
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(10, 5),
+    ));
+    grad.render(&mut buffer);
 }
 
 #[allow(unused)]
@@ -131,7 +145,11 @@ fn cool_example() {
 
     main.add_child(fill, Constrain::Fill);
 
-    main.render(&Coords::new(1, 1), &Coords::new(40, 9));
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(30, 9),
+    ));
+    main.render(&mut buffer);
     println!("\x1b[2B");
 }
 
@@ -156,7 +174,11 @@ fn test_paragraph() {
     main.add_child(p, Constrain::Fill);
     main.add_child(block, Constrain::Fill);
 
-    main.render(&Coords::new(1, 1), &Coords::new(20, 9));
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(30, 9),
+    ));
+    main.render(&mut buffer);
 
     println!("\x1b[1B");
 }
@@ -185,7 +207,11 @@ fn readme_example() {
     main.add_child(block2, Constrain::Fill);
 
     // Renders the main block which renders all the children
-    main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(30, 9),
+    ));
+    main.render(&mut buffer);
     println!("\x1b[4B");
 }
 
@@ -201,7 +227,11 @@ fn test_list() {
             .sel_bg(Bg::Blue)
             .sel_char("-");
     block.add_child(list, Constrain::Fill);
-    block.render(&Coords::new(1, 1), &Coords::new(20, 6));
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(20, 6),
+    ));
+    block.render(&mut buffer);
     println!("\x1b[2B");
 }
 
@@ -215,7 +245,11 @@ fn test_layout_centering() {
 
     let mut main = Block::new().direction(Direction::Vertical).center();
     main.add_child(block, Constrain::Length(4));
-    main.render(&Coords::new(1, 1), &Coords::new(20, 8));
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(20, 8),
+    ));
+    main.render(&mut buffer);
     println!("\x1b[3B");
 }
 
@@ -226,7 +260,12 @@ fn test_bg_grad() {
     let mut layout = Layout::horizontal().center();
     layout.add_child(Block::new(), Constrain::Length(6));
     grad.add_child(layout, Constrain::Length(3));
-    grad.render(&Coords::new(1, 1), &Coords::new(20, 9));
+
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(20, 9),
+    ));
+    grad.render(&mut buffer);
     println!("\x1b[5B");
 }
 

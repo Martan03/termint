@@ -1,7 +1,4 @@
-use std::{
-    cmp::{max, min},
-    io::{stdout, Write},
-};
+use std::cmp::{max, min};
 
 use crate::{
     buffer::buffer::Buffer,
@@ -97,8 +94,23 @@ impl Layout {
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
+        let mut pos = Coords::new(
+            buffer.x() + self.padding.left,
+            buffer.y() + self.padding.top,
+        );
+        let mut size = Coords::new(
+            buffer.width().saturating_sub(self.padding.get_horizontal()),
+            buffer.height().saturating_sub(self.padding.get_vertical()),
+        );
+
+        if size.x == 0 || size.y == 0 {
+            return;
+        }
+
+        match self.direction {
+            Direction::Vertical => todo!(),
+            Direction::Horizontal => todo!(),
+        }
     }
 
     fn get_string(&self, pos: &Coords, size: &Coords) -> String {
