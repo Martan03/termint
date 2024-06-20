@@ -1,8 +1,4 @@
-use std::{
-    cmp::max,
-    io::{stdout, Write},
-    iter::repeat,
-};
+use std::{cmp::max, iter::repeat};
 
 use crate::{
     borders,
@@ -10,7 +6,7 @@ use crate::{
     enums::{cursor::Cursor, fg::Fg},
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
-        padding::Padding,
+        padding::Padding, rect::Rect,
     },
     widgets::span::Span,
 };
@@ -127,20 +123,18 @@ impl Block {
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
+        self.render_border(buffer);
 
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        let mut res = self.get_border(pos, size);
-
+        let mut res = String::new();
         res.push_str(&self.title.get_mods());
-        let (title_str, _) = self.title.get_offset(
-            &Coords::new(pos.x + 1, pos.y),
-            &Coords::new(size.x.saturating_sub(2), 1),
-            0,
-            None,
-        );
+
+        let mut tbuffer = Buffer::empty(Rect::new(
+            buffer.x() + 1,
+            buffer.y(),
+            buffer.width().saturating_sub(2),
+            1,
+        ));
+        let (title_str, _) = self.title.get_offset(&mut tbuffer, 0, None);
         res.push_str(&title_str);
         res.push_str("\x1b[0m");
 
@@ -148,14 +142,15 @@ impl Widget for Block {
         let top = ((self.borders & Border::TOP) != 0
             || !self.title.get_text().is_empty()) as usize;
         let left = ((self.borders & Border::LEFT) != 0) as usize;
-        res.push_str(&self.layout.get_string(
-            &Coords::new(pos.x + left, pos.y + top),
-            &Coords::new(
-                size.x.saturating_sub(width),
-                size.y.saturating_sub(height),
-            ),
+
+        let mut cbuffer = Buffer::empty(Rect::new(
+            buffer.x() + left,
+            buffer.y() + top,
+            buffer.width().saturating_sub(width),
+            buffer.height().saturating_sub(height),
         ));
-        res
+        self.layout.render(&mut cbuffer);
+        buffer.union(cbuffer);
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -191,24 +186,34 @@ impl Default for Block {
 
 impl Block {
     /// Renders [`Block`] border
-    fn get_border(&self, pos: &Coords, size: &Coords) -> String {
+    fn render_border(&self, buffer: &mut Buffer) -> String {
         let mut border = String::new();
-        let right_top = Coords::new(pos.x + size.x - 1, pos.y);
-        let left_bottom = Coords::new(pos.x, size.y + pos.y - 1);
+        let rt = Coords::new(buffer.x() + buffer.width() - 1, buffer.y());
+        let lb = Coords::new(buffer.x(), buffer.height() + buffer.y() - 1);
 
         border.push_str(&self.border_color.to_string());
-        self.ver_border(&mut border, size.y, pos, Border::LEFT);
-        self.ver_border(&mut border, size.y, &right_top, Border::RIGHT);
-        self.hor_border(&mut border, size.x, pos, Border::TOP);
-        self.hor_border(&mut border, size.x, &left_bottom, Border::BOTTOM);
+        self.ver_border(
+            &mut border,
+            buffer.height(),
+            buffer.pos_ref(),
+            Border::LEFT,
+        );
+        self.ver_border(&mut border, buffer.height(), &rt, Border::RIGHT);
+        self.hor_border(
+            &mut border,
+            buffer.width(),
+            buffer.pos_ref(),
+            Border::TOP,
+        );
+        self.hor_border(&mut border, buffer.width(), &lb, Border::BOTTOM);
 
-        if size.x > 1 && size.y > 1 {
-            self.corner(&mut border, pos, borders!(TOP, LEFT));
-            self.corner(&mut border, &right_top, borders!(TOP, RIGHT));
-            self.corner(&mut border, &left_bottom, borders!(BOTTOM, LEFT));
+        if buffer.width() > 1 && buffer.height() > 1 {
+            self.corner(&mut border, buffer.pos_ref(), borders!(TOP, LEFT));
+            self.corner(&mut border, &rt, borders!(TOP, RIGHT));
+            self.corner(&mut border, &lb, borders!(BOTTOM, LEFT));
             self.corner(
                 &mut border,
-                &Coords::new(right_top.x, left_bottom.y),
+                &Coords::new(rt.x, lb.y),
                 borders!(BOTTOM, RIGHT),
             );
         }

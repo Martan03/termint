@@ -4,7 +4,7 @@ use crate::{
     buffer::buffer::Buffer,
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
-        padding::Padding,
+        padding::Padding, rect::Rect,
     },
 };
 
@@ -108,35 +108,27 @@ impl Widget for Layout {
         }
 
         match self.direction {
-            Direction::Vertical => todo!(),
-            Direction::Horizontal => todo!(),
-        }
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        let mut pos =
-            Coords::new(pos.x + self.padding.left, pos.y + self.padding.top);
-        let mut size = Coords::new(
-            size.x.saturating_sub(self.padding.get_horizontal()),
-            size.y.saturating_sub(self.padding.get_vertical()),
-        );
-
-        if size.x == 0 || size.y == 0 {
-            return String::new();
-        }
-
-        match self.direction {
             Direction::Vertical => {
                 pos.transpone();
                 size.transpone();
-                self._render(&mut pos, &mut size, |child, constrain, size| {
-                    self.ver_child_size(child, constrain, size)
-                })
+                self._render(
+                    buffer,
+                    &mut pos,
+                    &mut size,
+                    |child, constrain, size| {
+                        self.ver_child_size(child, constrain, size)
+                    },
+                );
             }
             Direction::Horizontal => {
-                self._render(&mut pos, &mut size, |child, constrain, size| {
-                    self.hor_child_size(child, constrain, size)
-                })
+                self._render(
+                    buffer,
+                    &mut pos,
+                    &mut size,
+                    |child, constrain, size| {
+                        self.hor_child_size(child, constrain, size)
+                    },
+                );
             }
         }
     }
@@ -189,14 +181,13 @@ impl Layout {
     /// Renders layout
     fn _render<F>(
         &self,
+        buffer: &mut Buffer,
         pos: &mut Coords,
         size: &mut Coords,
         child_size: F,
-    ) -> String
-    where
+    ) where
         F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
     {
-        let mut res = String::new();
         let (sizes, fill) = self.get_sizes(size, pos, child_size);
 
         let mut coords = *pos;
@@ -219,9 +210,11 @@ impl Layout {
                 child_size.transpone();
                 c.transpone();
             }
-            res.push_str(&self.children[i].get_string(&c, &child_size));
+
+            let mut cbuffer = Buffer::empty(Rect::from_coords(c, child_size));
+            self.children[i].render(&mut cbuffer);
+            buffer.union(cbuffer);
         }
-        res
     }
 
     /// Gets total layout size

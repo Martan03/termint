@@ -1,5 +1,3 @@
-use std::io::{stdout, Write};
-
 use crate::{
     buffer::buffer::Buffer,
     enums::{bg::Bg, cursor::Cursor, rgb::RGB},
@@ -85,22 +83,15 @@ impl BgGrad {
 
 impl Widget for BgGrad {
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        if size.x == 0 || size.y == 0 {
-            return String::new();
+        if buffer.width() == 0 || buffer.height() == 0 {
+            return;
         }
 
-        let mut res = match self.direction {
-            Direction::Vertical => self.ver_render(pos, size),
-            Direction::Horizontal => self.hor_render(pos, size),
+        self.layout.render(buffer);
+        match self.direction {
+            Direction::Vertical => self.ver_render(buffer),
+            Direction::Horizontal => self.hor_render(buffer),
         };
-        res.push_str("\x1b[0m");
-        res.push_str(&self.layout.get_string(pos, size));
-        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -114,39 +105,37 @@ impl Widget for BgGrad {
 
 impl BgGrad {
     /// Renders horizontal background gradient
-    fn hor_render(&self, pos: &Coords, size: &Coords) -> String {
-        let step = self.get_step(size.x as i16);
+    fn hor_render(&self, buffer: &mut Buffer) {
+        let step = self.get_step(buffer.width() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
         let mut line = String::new();
-        for _ in 0..size.x {
+        for _ in 0..buffer.width() {
             line.push_str(&format!("{} ", Bg::RGB(r, g, b)));
             (r, g, b) = self.add_step((r, g, b), step);
         }
 
         let mut res = String::new();
-        for y in 0..size.y {
-            res.push_str(&Cursor::Pos(pos.x, pos.y + y).to_string());
+        for y in 0..buffer.height() {
+            res.push_str(&Cursor::Pos(buffer.x(), buffer.y() + y).to_string());
             res.push_str(&line);
         }
-        res
     }
 
     /// Renders vertical background gradient
-    fn ver_render(&self, pos: &Coords, size: &Coords) -> String {
-        let step = self.get_step(size.y as i16);
+    fn ver_render(&self, buffer: &mut Buffer) {
+        let step = self.get_step(buffer.height() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
         let mut res = String::new();
-        for y in 0..size.y {
-            let line = format!("{} ", Bg::RGB(r, g, b)).repeat(size.x);
-            res.push_str(&Cursor::Pos(pos.x, pos.y + y).to_string());
+        for y in 0..buffer.height() {
+            let line = format!("{} ", Bg::RGB(r, g, b)).repeat(buffer.width());
+            res.push_str(&Cursor::Pos(buffer.x(), buffer.y() + y).to_string());
             res.push_str(&line);
             (r, g, b) = self.add_step((r, g, b), step);
         }
-        res
     }
 
     /// Gets step per character based on start and eng background color

@@ -31,6 +31,13 @@ impl Buffer {
         }
     }
 
+    /// Unites buffers
+    pub fn union(&mut self, buffer: Buffer) {
+        for (i, cell) in buffer.content().iter().enumerate() {
+            self.set(cell.clone(), buffer.coords_of(i));
+        }
+    }
+
     /// Sets cell to given value on given position relative to buffer
     pub fn set<T>(&mut self, cell: Cell, pos: T)
     where
@@ -78,6 +85,11 @@ impl Buffer {
         self.rect.pos()
     }
 
+    /// Gets position of the [`Buffer`] as reference
+    pub fn pos_ref(&self) -> &Coords {
+        self.rect.pos_ref()
+    }
+
     /// Gets x coordinate of the [`Buffer`]
     pub fn x(&self) -> usize {
         self.rect.x()
@@ -93,6 +105,11 @@ impl Buffer {
         self.rect.size()
     }
 
+    /// Gets size of the [`Buffer`] as reference
+    pub fn size_ref(&self) -> &Coords {
+        self.rect.size_ref()
+    }
+
     /// Gets width of the [`Buffer`]
     pub fn width(&self) -> usize {
         self.rect.width()
@@ -103,8 +120,19 @@ impl Buffer {
         self.rect.height()
     }
 
+    /// Gets [`Buffer`] content
+    pub fn content(&self) -> &[Cell] {
+        &self.content
+    }
+
     /// Gets [`Cell`] index based on coordinates
-    fn index_of(&self, pos: &Coords) -> usize {
-        pos.x + pos.y * self.rect.width()
+    pub fn index_of(&self, pos: &Coords) -> usize {
+        (pos.x - self.x()) + (pos.y - self.y()) * self.rect.width()
+    }
+
+    /// Gets coordinates of the [`Cell`] based on index
+    pub fn coords_of(&self, id: usize) -> Coords {
+        let (x, y) = (id % self.width(), id / self.width());
+        Coords::new(x + self.x(), y + self.y())
     }
 }

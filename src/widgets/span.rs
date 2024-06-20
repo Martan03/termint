@@ -1,8 +1,4 @@
-use std::{
-    cmp::max,
-    fmt,
-    io::{stdout, Write},
-};
+use std::{cmp::max, fmt};
 
 use crate::{
     buffer::buffer::Buffer,
@@ -114,13 +110,7 @@ impl Span {
 
 impl Widget for Span {
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        let (res, _) = self.get_offset(pos, size, 0, None);
-        res
+        let (_, _) = self.get_offset(buffer, 0, None);
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -141,32 +131,30 @@ impl Widget for Span {
 impl Text for Span {
     fn render_offset(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> Coords {
-        let (res, coords) = self.get_offset(pos, size, offset, wrap);
+        let (res, coords) = self.get_offset(buffer, offset, wrap);
         print!("{res}");
         coords
     }
 
     fn get_offset(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> (String, Coords) {
         let wrap = wrap.unwrap_or(&self.wrap);
         let (res, coords) = match wrap {
             Wrap::Letter => {
-                self.render_lines(pos, size, offset, |t, r, p, s, o| {
+                self.render_lines(buffer, offset, |t, r, p, s, o| {
                     self.render_letter(t, r, p, s, o)
                 })
             }
             Wrap::Word => {
-                self.render_lines(pos, size, offset, |t, r, p, s, o| {
+                self.render_lines(buffer, offset, |t, r, p, s, o| {
                     self.render_word(t, r, p, s, o)
                 })
             }
@@ -222,8 +210,7 @@ impl Span {
     /// Renders each line of the [`Span`]
     fn render_lines<F>(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
         text_render: F,
     ) -> (String, Coords)
@@ -231,9 +218,9 @@ impl Span {
         F: Fn(&str, &mut String, &Coords, &Coords, usize) -> Coords,
     {
         let mut res = String::new();
-        let mut fin_coords = Coords::new(0, pos.y);
-        let mut coords = Coords::new(pos.x, pos.y);
-        let mut lsize = *size;
+        let mut fin_coords = Coords::new(0, buffer.y());
+        let mut coords = Coords::new(buffer.x(), buffer.y());
+        let mut lsize = buffer.size();
 
         let mut offset = offset;
         for line in self.text.lines() {
@@ -242,8 +229,8 @@ impl Span {
             }
 
             fin_coords = text_render(line, &mut res, &coords, &lsize, offset);
-            (coords.x, coords.y) = (pos.x, fin_coords.y + 1);
-            lsize.y = size.y.saturating_sub(coords.y - pos.y);
+            (coords.x, coords.y) = (buffer.x(), fin_coords.y + 1);
+            lsize.y = buffer.height().saturating_sub(coords.y - buffer.y());
             offset = 0;
         }
         (res, fin_coords)

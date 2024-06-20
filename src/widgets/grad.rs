@@ -1,8 +1,5 @@
 use core::fmt;
-use std::{
-    cmp::{max, min},
-    io::{stdout, Write},
-};
+use std::cmp::{max, min};
 
 use crate::{
     buffer::buffer::Buffer,
@@ -105,21 +102,16 @@ impl Grad {
 
 impl Widget for Grad {
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        if size.x == 0 || size.y == 0 {
-            return String::new();
+        if buffer.width() == 0 || buffer.height() == 0 {
+            return;
         }
 
         let (res, _) = match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size, 0),
-            Wrap::Word => self.render_word_wrap(pos, size, 0),
+            Wrap::Letter => self.render_letter_wrap(buffer, 0),
+            Wrap::Word => self.render_word_wrap(buffer, 0),
         };
 
-        format!("{}{res}\x1b[0m", self.get_mods())
+        format!("{}{res}\x1b[0m", self.get_mods());
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -140,27 +132,25 @@ impl Widget for Grad {
 impl Text for Grad {
     fn render_offset(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> Coords {
-        let (res, coords) = self.get_offset(pos, size, offset, wrap);
+        let (res, coords) = self.get_offset(buffer, offset, wrap);
         print!("{res}");
         coords
     }
 
     fn get_offset(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> (String, Coords) {
         let wrap = wrap.unwrap_or(&self.wrap);
         let (res, coords) = match wrap {
-            Wrap::Letter => self.render_letter_wrap(pos, size, offset),
-            Wrap::Word => self.render_word_wrap(pos, size, offset),
+            Wrap::Letter => self.render_letter_wrap(buffer, offset),
+            Wrap::Word => self.render_word_wrap(buffer, offset),
         };
         (res, coords)
     }
@@ -210,17 +200,19 @@ impl Grad {
     /// Renders [`Grad`] with word wrapping
     fn render_word_wrap(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
     ) -> (String, Coords) {
         match self.direction {
             Direction::Vertical => {
-                let height = min(self.height_word_wrap(size) - 1, size.y);
+                let height = min(
+                    self.height_word_wrap(buffer.size_ref()) - 1,
+                    buffer.height(),
+                );
                 let step = self.get_step(height as i16);
                 self.render_word(
-                    pos,
-                    size,
+                    buffer.pos_ref(),
+                    buffer.size_ref(),
                     (0, 0, 0),
                     step,
                     |size, line, res, rgb, step| {
@@ -230,11 +222,11 @@ impl Grad {
                 )
             }
             Direction::Horizontal => {
-                let width = min(size.x, self.text.len());
+                let width = min(buffer.width(), self.text.len());
                 let step = self.get_step(width as i16);
                 self.render_word(
-                    pos,
-                    size,
+                    buffer.pos_ref(),
+                    buffer.size_ref(),
                     step,
                     (0, 0, 0),
                     |size, line, res, rgb, step| {
@@ -249,17 +241,19 @@ impl Grad {
     /// Renders [`Grad`] with letter wrapping
     fn render_letter_wrap(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
     ) -> (String, Coords) {
         match self.direction {
             Direction::Vertical => {
-                let height = min(self.size_letter_wrap(size.x) - 1, size.y);
+                let height = min(
+                    self.size_letter_wrap(buffer.width()) - 1,
+                    buffer.height(),
+                );
                 let step = self.get_step(height as i16);
                 self.render_letter(
-                    pos,
-                    size,
+                    buffer.pos_ref(),
+                    buffer.size_ref(),
                     (0, 0, 0),
                     step,
                     |size, line, res, rgb, step| {
@@ -269,11 +263,11 @@ impl Grad {
                 )
             }
             Direction::Horizontal => {
-                let width = min(size.x, self.text.len());
+                let width = min(buffer.width(), self.text.len());
                 let step = self.get_step(width as i16);
                 self.render_letter(
-                    pos,
-                    size,
+                    buffer.pos_ref(),
+                    buffer.size_ref(),
                     step,
                     (0, 0, 0),
                     |size, line, res, rgb, step| {

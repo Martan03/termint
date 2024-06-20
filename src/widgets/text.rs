@@ -1,6 +1,8 @@
 use core::fmt;
 
-use crate::{enums::wrap::Wrap, geometry::coords::Coords};
+use crate::{
+    buffer::buffer::Buffer, enums::wrap::Wrap, geometry::coords::Coords,
+};
 
 /// Trait for text widgets to implement
 /// Makes work with more [`Text`] widgets easier
@@ -9,8 +11,7 @@ pub trait Text {
     /// Returns coords where rendered text ends
     fn render_offset(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> Coords;
@@ -21,8 +22,7 @@ pub trait Text {
     /// Gets [`Text`] widget as string with all the positional things
     fn get_offset(
         &self,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
         wrap: Option<&Wrap>,
     ) -> (String, Coords);
