@@ -142,23 +142,23 @@ impl List {
 
 impl Widget for List {
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
         let mut res = String::new();
-        let mut text_pos = Coords::new(pos.x + self.sel_char.len(), pos.y);
-        let mut text_size = Coords::new(size.x - self.sel_char.len(), size.y);
-        let offset = self.get_render_offset(size);
+        let mut text_pos =
+            Coords::new(buffer.x() + self.sel_char.len(), buffer.y());
+        let mut text_size =
+            Coords::new(buffer.width() - self.sel_char.len(), buffer.height());
+        let offset = self.get_render_offset(buffer.size_ref());
 
-        let fits = self.fits(size);
+        let fits = self.fits(buffer.size_ref());
         if !fits {
             text_size.x -= 1;
             self.get_scrollbar(
                 &mut res,
-                &Coords::new((pos.x + size.x).saturating_sub(1), pos.y),
-                size,
+                &Coords::new(
+                    (buffer.x() + buffer.width()).saturating_sub(1),
+                    buffer.y(),
+                ),
+                buffer.size_ref(),
                 offset,
             );
         }
@@ -167,22 +167,21 @@ impl Widget for List {
             let mut fg = self.fg;
             let mut bg: Option<Bg> = None;
             if Some(i) == self.current {
-                res.push_str(&Cursor::Pos(pos.x, text_pos.y).to_string());
+                res.push_str(&Cursor::Pos(buffer.x(), text_pos.y).to_string());
                 res.push_str(&self.sel_char);
                 fg = self.sel_fg;
                 bg = self.sel_bg;
             }
 
             let span = self.items[i].fg(fg).bg(bg);
-            res.push_str(&span.get_string(&text_pos, &text_size));
+            // res.push_str(&span.get_string(&text_pos, &text_size));
             text_pos.y += span.height(&text_size);
 
-            if pos.y + size.y <= text_pos.y {
+            if buffer.y() + buffer.height() <= text_pos.y {
                 break;
             }
-            text_size.y = pos.y + size.y - text_pos.y;
+            text_size.y = buffer.y() + buffer.height() - text_pos.y;
         }
-        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -238,14 +237,16 @@ impl List {
         let mut bar_pos = Coords::new(pos.x, pos.y);
         let bar = "│".fg(self.scrollbar_fg);
         for _ in 0..size.y {
-            res.push_str(&bar.get_string(&bar_pos, size));
+            // TODO
+            // res.push_str(&bar.get_string(&bar_pos, size));
             bar_pos.y += 1;
         }
 
         bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
         let thumb = "┃".fg(self.thumb_fg);
         for _ in 0..thumb_size {
-            res.push_str(&thumb.get_string(&bar_pos, size));
+            // TODO
+            // res.push_str(&thumb.get_string(&bar_pos, size));
             bar_pos.y += 1;
         }
     }
