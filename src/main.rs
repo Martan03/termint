@@ -30,7 +30,13 @@ fn main() {
     // test_list();
     // test_layout_centering();
     // test_bg_grad();
-    term_test();
+    // term_test();
+    let span = "This is a test of the span rendering".align(TextAlign::Center);
+    let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
+    span.render(&mut buffer);
+
+    println!("\x1b[2J");
+    buffer.render();
 }
 
 #[allow(unused)]

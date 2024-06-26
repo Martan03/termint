@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{
     buffer::buffer::Buffer,
-    enums::{bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, wrap::Wrap},
+    enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
     geometry::{coords::Coords, text_align::TextAlign},
 };
 
@@ -250,37 +250,54 @@ impl Span {
         offset: usize,
     ) -> Coords {
         // res.push_str(&Cursor::Pos(pos.x + offset, pos.y).to_string());
-        let mut line: Vec<&str> = vec![];
         let mut coords = Coords::new(offset, buffer.y());
 
-        // for word in text.split_whitespace() {
-        //     if coords.x + word.len() + !line.is_empty() as usize > size.x {
-        //         if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
-        //             let mut line_str = line.join(" ");
-        //             let sum = coords.x + self.ellipsis.len();
-        //             if sum >= size.x {
-        //                 let end = size.x.saturating_sub(self.ellipsis.len());
-        //                 line_str = line_str[..end].to_string();
-        //             }
+        let mut line = Vec::<&str>::new();
+        for word in text.split_whitespace() {
+            if coords.x + word.len() + !line.is_empty() as usize
+                > buffer.width()
+            {
+                if coords.y + 1 >= buffer.y() + buffer.height()
+                    || word.len() > buffer.width()
+                {
+                    let mut line_str = line.join(" ");
+                    let sum = coords.x + self.ellipsis.len();
+                    if sum >= buffer.width() {
+                        let end =
+                            buffer.width().saturating_sub(self.ellipsis.len());
+                        line_str = line_str[..end].to_string();
+                    }
 
-        //             line_str.push_str(&self.ellipsis);
-        //             coords.x = line.len();
-        //             self.render_line(res, size, line_str);
-        //             return coords;
-        //         }
+                    line_str.push_str(&self.ellipsis);
+                    coords.x = line.len();
+                    self.render_line(
+                        buffer,
+                        line_str,
+                        &Coords::new(buffer.x(), coords.y),
+                    );
+                    return coords;
+                }
 
-        //         (coords.x, coords.y) = (0, coords.y + 1);
-        //         self.render_line(res, size, line.join(" "));
-        //         res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
-        //         line = vec![];
-        //     }
-        //     coords.x += word.len() + !line.is_empty() as usize;
-        //     line.push(word);
-        // }
+                self.render_line(
+                    buffer,
+                    line.join(" "),
+                    &Coords::new(buffer.x(), coords.y),
+                );
+                (coords.x, coords.y) = (0, coords.y + 1);
+                line.clear();
+            }
+            coords.x += word.len() + !line.is_empty() as usize;
+            line.push(word);
+        }
 
-        // if !line.is_empty() {
-        //     self.render_line(res, size, line.join(" "));
-        // }
+        if !line.is_empty() {
+            self.render_line(
+                buffer,
+                line.join(" "),
+                &Coords::new(buffer.x(), coords.y),
+            );
+        }
+
         coords
     }
 

@@ -1,5 +1,7 @@
+use std::io::{stdout, Write};
+
 use crate::{
-    enums::Color,
+    enums::{cursor::Cursor, Color},
     geometry::{coords::Coords, rect::Rect},
 };
 
@@ -29,6 +31,20 @@ impl Buffer {
             rect,
             content: vec![cell; area],
         }
+    }
+
+    /// Renders the [`Buffer`]
+    pub fn render(&self) {
+        let mut id = 0;
+        for y in 0..self.height() {
+            print!("{}", Cursor::Pos(self.x(), self.y() + y));
+            for _ in 0..self.width() {
+                print!("{}", self.content[id]);
+                id += 1;
+            }
+        }
+
+        _ = stdout().flush();
     }
 
     /// Unites buffers
