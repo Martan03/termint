@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn span_modifier() {
         // Creates span using new
-        let span = Span::new("Span modifier").modifier(vec![
+        let span = Span::new("Span modifier").modifiers(vec![
             Modifier::Bold,
             Modifier::Blink,
             Modifier::Italic,
@@ -88,7 +88,7 @@ mod tests {
         );
 
         // Creates span from &str
-        let span = "Span modifier".modifier(vec![
+        let span = "Span modifier".modifiers(vec![
             Modifier::Bold,
             Modifier::Blink,
             Modifier::Italic,
@@ -101,7 +101,7 @@ mod tests {
 
         // Using modifiers macro
         let span =
-            "Span modifier".modifier(mods!(Bold, Blink, Italic, Inverse));
+            "Span modifier".modifiers(mods!(Bold, Blink, Italic, Inverse));
         assert_eq!(
             span.get(),
             "\x1b[39m\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"

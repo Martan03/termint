@@ -124,13 +124,13 @@ fn cool_example() {
         .border_color(Fg::Gray);
     main.add_child(block, Constrain::Min(0));
 
-    let span = "Re-coloring text".fg(Fg::Red).modifier(mods!(Italic));
+    let span = "Re-coloring text".fg(Fg::Red).modifiers(mods!(Italic));
     main.add_child(span, Constrain::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
     main.add_child(grad, Constrain::Min(0));
 
     let mut fill = Block::new()
-        .title("Layout features".modifier(mods!(Underline)))
+        .title("Layout features".modifiers(mods!(Underline)))
         .border_type(BorderType::Rounded)
         .border_color(Fg::Gray)
         .direction(Direction::Horizontal);
@@ -163,9 +163,9 @@ fn test_paragraph() {
     let mut p = Paragraph::new(vec![
         Box::new(Grad::new("this", (0, 120, 255), (120, 255, 0))),
         Box::new("This is a text in".fg(Fg::Yellow)),
-        Box::new("paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan)),
+        Box::new("paragraph".modifiers(vec![Modifier::Bold]).fg(Fg::Cyan)),
         Box::new("and it adds".to_span()),
-        Box::new("separator".modifier(vec![Modifier::Italic])),
+        Box::new("separator".modifiers(vec![Modifier::Italic])),
         Box::new("between each span".to_span()),
     ]);
 

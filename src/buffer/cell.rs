@@ -1,12 +1,12 @@
 use std::fmt::Display;
 
-use crate::enums::{bg::Bg, fg::Fg};
+use crate::enums::Color;
 
 /// Represents rendering buffer cell
 #[derive(Debug, Clone)]
 pub struct Cell {
-    fg: Option<Fg>,
-    bg: Option<Bg>,
+    fg: Color,
+    bg: Color,
     val: char,
 }
 
@@ -20,19 +20,13 @@ impl Cell {
     }
 
     /// Sets [`Cell`] foreground color to given value
-    pub fn fg<T>(&mut self, fg: T)
-    where
-        T: Into<Option<Fg>>,
-    {
-        self.fg = fg.into();
+    pub fn fg(&mut self, fg: Color) {
+        self.fg = fg;
     }
 
     /// Sets [`Cell`] background color to given value
-    pub fn bg<T>(&mut self, bg: T)
-    where
-        T: Into<Option<Bg>>,
-    {
-        self.bg = bg.into();
+    pub fn bg(&mut self, bg: Color) {
+        self.bg = bg;
     }
 
     /// Sets value of the [`Cell`]
@@ -43,21 +37,15 @@ impl Cell {
 
 impl Display for Cell {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(fg) = self.fg {
-            write!(f, "{}", fg)?
-        }
-        if let Some(bg) = self.bg {
-            write!(f, "{}", bg)?;
-        }
-        write!(f, "{}", self.val)
+        write!(f, "{}{}{}", self.fg.to_fg(), self.bg.to_bg(), self.val)
     }
 }
 
 impl Default for Cell {
     fn default() -> Self {
         Self {
-            fg: None,
-            bg: None,
+            fg: Color::Reset,
+            bg: Color::Reset,
             val: ' ',
         }
     }

@@ -15,7 +15,7 @@ mod tests {
     fn paragraph_new() {
         let p = Paragraph::new(vec![
             Box::new("Test".fg(Fg::Blue)),
-            Box::new("nice".modifier(vec![Modifier::Italic])),
+            Box::new("nice".modifiers(vec![Modifier::Italic])),
         ]);
         assert_eq!(p.get(), "\x1b[94mTest\x1b[0m \x1b[39m\x1b[3mnice\x1b[0m");
 

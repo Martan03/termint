@@ -1,4 +1,4 @@
-use std::{cmp::max, fmt};
+use std::fmt;
 
 use crate::{
     buffer::buffer::Buffer,
@@ -64,9 +64,12 @@ pub struct Span {
 
 impl Span {
     /// Creates new [`Span`] with given text
-    pub fn new<T: Into<String>>(text: T) -> Self {
+    pub fn new<T>(text: T) -> Self
+    where
+        T: AsRef<str>,
+    {
         Self {
-            text: text.into(),
+            text: text.as_ref().to_string(),
             ..Default::default()
         }
     }
@@ -83,8 +86,14 @@ impl Span {
         self
     }
 
+    /// Adds [`Span`] modifier to current modifiers
+    pub fn modifier(mut self, modifier: Modifier) -> Self {
+        self.modifier.push(modifier);
+        self
+    }
+
     /// Sets modifiers of [`Span`] to given modifiers
-    pub fn modifier(mut self, mods: Vec<Modifier>) -> Self {
+    pub fn modifiers(mut self, mods: Vec<Modifier>) -> Self {
         self.modifier = mods;
         self
     }
@@ -148,16 +157,12 @@ impl Text for Span {
     ) -> (String, Coords) {
         let wrap = wrap.unwrap_or(&self.wrap);
         let (res, coords) = match wrap {
-            Wrap::Letter => {
-                self.render_lines(buffer, offset, |t, r, p, s, o| {
-                    self.render_letter(t, r, p, s, o)
-                })
-            }
-            Wrap::Word => {
-                self.render_lines(buffer, offset, |t, r, p, s, o| {
-                    self.render_word(t, r, p, s, o)
-                })
-            }
+            Wrap::Letter => self.render_lines(buffer, offset, |t, b, o| {
+                self.render_letter(t, b, o)
+            }),
+            Wrap::Word => self.render_lines(buffer, offset, |t, b, o| {
+                self.render_word(t, b, o)
+            }),
         };
         (format!("{}{res}\x1b[0m", self.get_mods()), coords)
     }
@@ -215,7 +220,7 @@ impl Span {
         text_render: F,
     ) -> (String, Coords)
     where
-        F: Fn(&str, &mut String, &Coords, &Coords, usize) -> Coords,
+        F: Fn(&str, &mut Buffer, usize) -> Coords,
     {
         let mut res = String::new();
         let mut fin_coords = Coords::new(0, buffer.y());
@@ -228,7 +233,7 @@ impl Span {
                 break;
             }
 
-            fin_coords = text_render(line, &mut res, &coords, &lsize, offset);
+            fin_coords = text_render(line, buffer, offset);
             (coords.x, coords.y) = (buffer.x(), fin_coords.y + 1);
             lsize.y = buffer.height().saturating_sub(coords.y - buffer.y());
             offset = 0;
@@ -241,43 +246,41 @@ impl Span {
     fn render_word(
         &self,
         text: &str,
-        res: &mut String,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
     ) -> Coords {
-        res.push_str(&Cursor::Pos(pos.x + offset, pos.y).to_string());
+        // res.push_str(&Cursor::Pos(pos.x + offset, pos.y).to_string());
         let mut line: Vec<&str> = vec![];
-        let mut coords = Coords::new(offset, pos.y);
+        let mut coords = Coords::new(offset, buffer.y());
 
-        for word in text.split_whitespace() {
-            if coords.x + word.len() + !line.is_empty() as usize > size.x {
-                if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
-                    let mut line_str = line.join(" ");
-                    let sum = coords.x + self.ellipsis.len();
-                    if sum >= size.x {
-                        let end = size.x.saturating_sub(self.ellipsis.len());
-                        line_str = line_str[..end].to_string();
-                    }
+        // for word in text.split_whitespace() {
+        //     if coords.x + word.len() + !line.is_empty() as usize > size.x {
+        //         if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
+        //             let mut line_str = line.join(" ");
+        //             let sum = coords.x + self.ellipsis.len();
+        //             if sum >= size.x {
+        //                 let end = size.x.saturating_sub(self.ellipsis.len());
+        //                 line_str = line_str[..end].to_string();
+        //             }
 
-                    line_str.push_str(&self.ellipsis);
-                    coords.x = line.len();
-                    self.render_line(res, size, line_str);
-                    return coords;
-                }
+        //             line_str.push_str(&self.ellipsis);
+        //             coords.x = line.len();
+        //             self.render_line(res, size, line_str);
+        //             return coords;
+        //         }
 
-                (coords.x, coords.y) = (0, coords.y + 1);
-                self.render_line(res, size, line.join(" "));
-                res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
-                line = vec![];
-            }
-            coords.x += word.len() + !line.is_empty() as usize;
-            line.push(word);
-        }
+        //         (coords.x, coords.y) = (0, coords.y + 1);
+        //         self.render_line(res, size, line.join(" "));
+        //         res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
+        //         line = vec![];
+        //     }
+        //     coords.x += word.len() + !line.is_empty() as usize;
+        //     line.push(word);
+        // }
 
-        if !line.is_empty() {
-            self.render_line(res, size, line.join(" "));
-        }
+        // if !line.is_empty() {
+        //     self.render_line(res, size, line.join(" "));
+        // }
         coords
     }
 
@@ -286,56 +289,37 @@ impl Span {
     fn render_letter(
         &self,
         text: &str,
-        res: &mut String,
-        pos: &Coords,
-        size: &Coords,
+        buffer: &mut Buffer,
         offset: usize,
     ) -> Coords {
-        let mut coords = Coords::new(offset, pos.y);
-        res.push_str(&Cursor::Pos(pos.x + offset, pos.y).to_string());
+        let stext: String = text.chars().take(buffer.area()).collect();
+        buffer.set_str(&stext, &Coords::new(buffer.x() + offset, buffer.y()));
 
-        let fits = text.len() <= size.x * size.y;
-        for chunk in text.chars().collect::<Vec<char>>().chunks(size.x) {
-            let mut chunk_str: String = chunk.iter().collect();
-            coords.x = chunk_str.len();
-            if !fits && coords.y + 1 == size.y + pos.y {
-                let sum = coords.x + self.ellipsis.len();
-                if sum >= size.x {
-                    let end = size.x.saturating_sub(self.ellipsis.len());
-                    chunk_str = chunk_str[..end].to_string();
-                }
-
-                chunk_str.push_str(&self.ellipsis);
-                coords.x = chunk_str.len();
-                res.push_str(&chunk_str);
-                return coords;
-            }
-
-            coords.y += 1;
-            res.push_str(&chunk_str);
-            res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
+        if stext.len() != text.len() && self.ellipsis.len() != 0 {
+            let coords = Coords::new(
+                (buffer.x() + buffer.width())
+                    .saturating_sub(self.ellipsis.len()),
+                (buffer.y() + buffer.height()).saturating_sub(1),
+            );
+            buffer.set_str(&self.ellipsis, &coords)
         }
-        Coords::new(coords.x, max(coords.y - 1, pos.y))
+
+        buffer.coords_of(stext.len() + offset)
     }
 
     /// Renders one line of text and aligns it based on set alignment
-    fn render_line(&self, res: &mut String, size: &Coords, line: String) {
+    fn render_line(&self, buffer: &mut Buffer, line: String, pos: &Coords) {
         match self.align {
-            TextAlign::Left => (),
+            TextAlign::Left => buffer.set_str(line, pos),
             TextAlign::Center => {
-                let offset = size.x.saturating_sub(line.len()) >> 1;
-                if offset > 0 {
-                    res.push_str(&Cursor::Right(offset).to_string());
-                }
+                let offset = buffer.width().saturating_sub(line.len()) >> 1;
+                buffer.set_str(line, &Coords::new(pos.x + offset, pos.y));
             }
             TextAlign::Right => {
-                let offset = size.x.saturating_sub(line.len());
-                if offset > 0 {
-                    res.push_str(&Cursor::Right(offset).to_string());
-                }
+                let offset = buffer.width().saturating_sub(line.len());
+                buffer.set_str(line, &Coords::new(pos.x + offset, pos.y));
             }
         }
-        res.push_str(&line);
     }
 
     /// Gets height of the [`Span`] when using word wrap
@@ -384,8 +368,11 @@ pub trait StrSpanExtension {
     /// Creates [`Span`] from string and sets its bg to given color
     fn bg(self, bg: Bg) -> Span;
 
+    /// Creates [`Span`] from string and sets its modifier to given value
+    fn modifier(self, modifier: Modifier) -> Span;
+
     /// Creates [`Span`] from string and sets its modifier to given values
-    fn modifier(self, mods: Vec<Modifier>) -> Span;
+    fn modifiers(self, mods: Vec<Modifier>) -> Span;
 
     /// Creates [`Span`] from string and sets its alignment to given value
     fn align(self, align: TextAlign) -> Span;
@@ -409,8 +396,12 @@ impl StrSpanExtension for &str {
         Span::new(self).bg(bg)
     }
 
-    fn modifier(self, mods: Vec<Modifier>) -> Span {
-        Span::new(self).modifier(mods)
+    fn modifier(self, modifier: Modifier) -> Span {
+        Span::new(self).modifier(modifier)
+    }
+
+    fn modifiers(self, mods: Vec<Modifier>) -> Span {
+        Span::new(self).modifiers(mods)
     }
 
     fn align(self, align: TextAlign) -> Span {
@@ -421,7 +412,10 @@ impl StrSpanExtension for &str {
         Span::new(self).wrap(wrap)
     }
 
-    fn ellipsis<T: AsRef<str>>(self, ellipsis: T) -> Span {
+    fn ellipsis<R>(self, ellipsis: R) -> Span
+    where
+        R: AsRef<str>,
+    {
         Span::new(self).ellipsis(ellipsis.as_ref())
     }
 

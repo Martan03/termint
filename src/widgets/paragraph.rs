@@ -102,69 +102,69 @@ impl Paragraph {
 
 impl Widget for Paragraph {
     fn render(&self, buffer: &mut Buffer) {
-        let pos = buffer.pos();
-        let size = buffer.size();
-        
-        let mut text_pos = Coords::new(pos.x, pos.y);
-        let mut text_size = Coords::new(size.x, size.y);
-        let mut offset = 0;
+        // let pos = buffer.pos();
+        // let size = buffer.size();
 
-        for child in self.children.iter() {
-            print!("{}", child.get_mods());
+        // let mut text_pos = Coords::new(pos.x, pos.y);
+        // let mut text_size = Coords::new(size.x, size.y);
+        // let mut offset = 0;
 
-            let end = child.render_offset(
-                &text_pos,
-                &text_size,
-                offset,
-                Some(&self.wrap),
-            );
-            text_pos.y = end.y;
-            offset = end.x + self.separator.len();
+        // for child in self.children.iter() {
+        //     print!("{}", child.get_mods());
 
-            if pos.y + size.y <= end.y {
-                break;
-            }
-            text_size.y = pos.y + size.y - end.y;
+        //     let end = child.render_offset(
+        //         &text_pos,
+        //         &text_size,
+        //         offset,
+        //         Some(&self.wrap),
+        //     );
+        //     text_pos.y = end.y;
+        //     offset = end.x + self.separator.len();
 
-            print!("\x1b[0m");
-            if offset < size.x {
-                print!("{}", self.separator);
-            }
-        }
-        _ = stdout().flush();
+        //     if pos.y + size.y <= end.y {
+        //         break;
+        //     }
+        //     text_size.y = pos.y + size.y - end.y;
+
+        //     print!("\x1b[0m");
+        //     if offset < size.x {
+        //         print!("{}", self.separator);
+        //     }
+        // }
+        // _ = stdout().flush();
     }
 
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        let mut res = String::new();
-        let mut text_pos = Coords::new(pos.x, pos.y);
-        let mut text_size = Coords::new(size.x, size.y);
-        let mut offset = 0;
+    // fn get_string(&self, pos: &Coords, size: &Coords) -> String {
+    //     let mut res = String::new();
+    //     let mut text_pos = Coords::new(pos.x, pos.y);
+    //     let mut text_size = Coords::new(size.x, size.y);
+    //     let mut offset = 0;
 
-        for child in self.children.iter() {
-            res.push_str(&child.get_mods());
+    //     for child in self.children.iter() {
+    //         res.push_str(&child.get_mods());
 
-            let (child_res, end) = child.get_offset(
-                &text_pos,
-                &text_size,
-                offset,
-                Some(&self.wrap),
-            );
-            res.push_str(&child_res);
-            text_pos.y = end.y;
-            offset = end.x + self.separator.len();
+    //         let (child_res, end) = child.get_offset(
+    //             &text_pos,
+    //             &text_size,
+    //             offset,
+    //             Some(&self.wrap),
+    //         );
+    //         res.push_str(&child_res);
+    //         text_pos.y = end.y;
+    //         offset = end.x + self.separator.len();
 
-            if pos.y + size.y <= end.y {
-                break;
-            }
-            text_size.y = pos.y + size.y - end.y;
+    //         if pos.y + size.y <= end.y {
+    //             break;
+    //         }
+    //         text_size.y = pos.y + size.y - end.y;
 
-            res.push_str("\x1b[0m");
-            if offset < size.x {
-                res.push_str(&self.separator);
-            }
-        }
-        res
-    }
+    //         res.push_str("\x1b[0m");
+    //         if offset < size.x {
+    //             res.push_str(&self.separator);
+    //         }
+    //     }
+    //     res
+    // }
 
     fn height(&self, size: &Coords) -> usize {
         match self.wrap {

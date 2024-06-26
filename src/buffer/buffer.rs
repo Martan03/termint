@@ -1,5 +1,5 @@
 use crate::{
-    enums::{bg::Bg, fg::Fg},
+    enums::Color,
     geometry::{coords::Coords, rect::Rect},
 };
 
@@ -34,49 +34,43 @@ impl Buffer {
     /// Unites buffers
     pub fn union(&mut self, buffer: Buffer) {
         for (i, cell) in buffer.content().iter().enumerate() {
-            self.set(cell.clone(), buffer.coords_of(i));
+            self.set(cell.clone(), &buffer.coords_of(i));
         }
     }
 
     /// Sets cell to given value on given position relative to buffer
-    pub fn set<T>(&mut self, cell: Cell, pos: T)
-    where
-        T: Into<Coords>,
-    {
-        let pos = pos.into();
-        let id = self.index_of(&pos);
+    pub fn set(&mut self, cell: Cell, pos: &Coords) {
+        let id = self.index_of(pos);
         self.content[id] = cell;
     }
 
-    /// Sets value of the cell on given position relative to buffer
-    pub fn set_val<T>(&mut self, val: char, pos: T)
+    /// Sets cell values to string starting at given coordinates
+    pub fn set_str<T>(&mut self, str: T, pos: &Coords)
     where
-        T: Into<Coords>,
+        T: AsRef<str>,
     {
-        let pos = pos.into();
-        let id = self.index_of(&pos);
+        let mut id = self.index_of(pos);
+        for c in str.as_ref().chars() {
+            self.content[id].val(c);
+            id += 1;
+        }
+    }
+
+    /// Sets value of the cell on given position relative to buffer
+    pub fn set_val(&mut self, val: char, pos: &Coords) {
+        let id = self.index_of(pos);
         self.content[id].val(val);
     }
 
     /// Sets foreground of the cell on given position relative to buffer
-    pub fn set_fg<T1, T2>(&mut self, fg: T1, pos: T2)
-    where
-        T1: Into<Option<Fg>>,
-        T2: Into<Coords>,
-    {
-        let pos = pos.into();
-        let id = self.index_of(&pos);
+    pub fn set_fg(&mut self, fg: Color, pos: &Coords) {
+        let id = self.index_of(pos);
         self.content[id].fg(fg);
     }
 
     /// Sets foreground of the cell on given position relative to buffer
-    pub fn set_bg<T1, T2>(&mut self, bg: T1, pos: T2)
-    where
-        T1: Into<Option<Bg>>,
-        T2: Into<Coords>,
-    {
-        let pos = pos.into();
-        let id = self.index_of(&pos);
+    pub fn set_bg(&mut self, bg: Color, pos: &Coords) {
+        let id = self.index_of(pos);
         self.content[id].bg(bg);
     }
 
@@ -118,6 +112,11 @@ impl Buffer {
     /// Gets height of the [`Buffer`]
     pub fn height(&self) -> usize {
         self.rect.height()
+    }
+
+    /// Gets area of the [`Buffer`]
+    pub fn area(&self) -> usize {
+        self.rect.area()
     }
 
     /// Gets [`Buffer`] content
