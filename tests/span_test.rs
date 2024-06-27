@@ -6,7 +6,7 @@ extern crate termint;
 #[cfg(test)]
 mod tests {
     use termint::{
-        enums::{bg::Bg, fg::Fg, modifier::Modifier},
+        enums::{modifier::Modifier, Color},
         mods,
         widgets::{
             span::{Span, StrSpanExtension},
@@ -30,19 +30,19 @@ mod tests {
     #[test]
     fn span_set_fg() {
         // Creates span using new
-        let span = Span::new("Span fg").fg(Fg::Red);
+        let span = Span::new("Span fg").fg(Color::Red);
         assert_eq!(span.get(), "\x1b[91mSpan fg\x1b[0m");
 
         // Creates span from &str
-        let mut span = "Span fg".fg(Fg::Red);
+        let mut span = "Span fg".fg(Color::Red);
         assert_eq!(span.get(), "\x1b[91mSpan fg\x1b[0m");
 
         // Tests modifying fg
-        span = span.fg(Fg::Gray);
+        span = span.fg(Color::Gray);
         assert_eq!(span.get(), "\x1b[90mSpan fg\x1b[0m");
 
         // Tests fg with RGB value
-        span = span.fg(Fg::RGB(50, 100, 150));
+        span = span.fg(Color::Rgb(50, 100, 150));
         assert_eq!(
             span.get(),
             format!("\x1b[38;2;{};{};{}mSpan fg\x1b[0m", 50, 100, 150)
@@ -53,19 +53,19 @@ mod tests {
     #[test]
     fn span_set_bg() {
         // Creates span using new
-        let span = Span::new("Span bg").bg(Bg::White);
+        let span = Span::new("Span bg").bg(Color::White);
         assert_eq!(span.get(), "\x1b[39m\x1b[107mSpan bg\x1b[0m");
 
         // Creates span from &str
-        let mut span = "Span bg".bg(Bg::White);
+        let mut span = "Span bg".bg(Color::White);
         assert_eq!(span.get(), "\x1b[39m\x1b[107mSpan bg\x1b[0m");
 
         // Tests modifying bg
-        span = span.bg(Bg::DarkBlue);
+        span = span.bg(Color::DarkBlue);
         assert_eq!(span.get(), "\x1b[39m\x1b[44mSpan bg\x1b[0m");
 
         // Tests fg with RGB value
-        span = span.bg(Bg::RGB(50, 100, 150));
+        span = span.bg(Color::Rgb(50, 100, 150));
         assert_eq!(
             span.get(),
             format!("\x1b[39m\x1b[48;2;{};{};{}mSpan bg\x1b[0m", 50, 100, 150)
@@ -113,8 +113,8 @@ mod tests {
     fn span_set_fg_bg() {
         // Creates span using new
         let span = Span::new("Span fg bg")
-            .fg(Fg::RGB(0, 150, 150))
-            .bg(Bg::RGB(255, 255, 0));
+            .fg(Color::Rgb(0, 150, 150))
+            .bg(Color::Rgb(255, 255, 0));
         assert_eq!(
             span.get(),
             "\x1b[38;2;0;150;150m\x1b[48;2;255;255;0mSpan fg bg\x1b[0m"
@@ -122,8 +122,8 @@ mod tests {
 
         // Creates span from &str
         let span = "Span fg bg"
-            .fg(Fg::RGB(0, 150, 150))
-            .bg(Bg::RGB(255, 255, 0));
+            .fg(Color::Rgb(0, 150, 150))
+            .bg(Color::Rgb(255, 255, 0));
         assert_eq!(
             span.get(),
             "\x1b[38;2;0;150;150m\x1b[48;2;255;255;0mSpan fg bg\x1b[0m"

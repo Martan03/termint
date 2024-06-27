@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{
     buffer::buffer::Buffer,
-    enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
+    enums::{modifier::Modifier, wrap::Wrap, Color},
     geometry::{coords::Coords, text_align::TextAlign},
 };
 
@@ -54,8 +54,8 @@ use super::{text::Text, widget::Widget};
 #[derive(Debug)]
 pub struct Span {
     text: String,
-    fg: Fg,
-    bg: Option<Bg>,
+    fg: Option<Color>,
+    bg: Option<Color>,
     modifier: Vec<Modifier>,
     align: TextAlign,
     wrap: Wrap,
@@ -75,13 +75,19 @@ impl Span {
     }
 
     /// Sets foreground of [`Span`] to given color
-    pub fn fg(mut self, fg: Fg) -> Self {
-        self.fg = fg;
+    pub fn fg<T>(mut self, fg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
+        self.fg = fg.into();
         self
     }
 
     /// Sets background of [`Span`] to given color
-    pub fn bg<T: Into<Option<Bg>>>(mut self, bg: T) -> Self {
+    pub fn bg<T>(mut self, bg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
         self.bg = bg.into();
         self
     }
@@ -184,8 +190,8 @@ impl Text for Span {
             .join("");
         format!(
             "{}{}{}",
-            self.fg,
-            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_string()),
+            self.fg.unwrap_or(Color::default()).to_fg(),
+            self.bg.unwrap_or(Color::default()).to_bg(),
             m
         )
     }
@@ -249,10 +255,9 @@ impl Span {
         buffer: &mut Buffer,
         offset: usize,
     ) -> Coords {
-        // res.push_str(&Cursor::Pos(pos.x + offset, pos.y).to_string());
+        let mut line = Vec::<&str>::new();
         let mut coords = Coords::new(offset, buffer.y());
 
-        let mut line = Vec::<&str>::new();
         for word in text.split_whitespace() {
             if coords.x + word.len() + !line.is_empty() as usize
                 > buffer.width()
@@ -380,10 +385,14 @@ impl Span {
 /// Enables creating [`Span`] by calling one of the functions on string
 pub trait StrSpanExtension {
     /// Creates [`Span`] from string and sets its fg to given color
-    fn fg(self, fg: Fg) -> Span;
+    fn fg<T>(self, fg: T) -> Span
+    where
+        T: Into<Option<Color>>;
 
     /// Creates [`Span`] from string and sets its bg to given color
-    fn bg(self, bg: Bg) -> Span;
+    fn bg<T>(self, bg: T) -> Span
+    where
+        T: Into<Option<Color>>;
 
     /// Creates [`Span`] from string and sets its modifier to given value
     fn modifier(self, modifier: Modifier) -> Span;
@@ -398,18 +407,26 @@ pub trait StrSpanExtension {
     fn wrap(self, wrap: Wrap) -> Span;
 
     /// Creates [`Span`] from string and sets its ellipsis to given value
-    fn ellipsis<T: AsRef<str>>(self, ellipsis: T) -> Span;
+    fn ellipsis<T>(self, ellipsis: T) -> Span
+    where
+        T: AsRef<str>;
 
     /// Converts &str to [`Span`]
     fn to_span(self) -> Span;
 }
 
 impl StrSpanExtension for &str {
-    fn fg(self, fg: Fg) -> Span {
+    fn fg<T>(self, fg: T) -> Span
+    where
+        T: Into<Option<Color>>,
+    {
         Span::new(self).fg(fg)
     }
 
-    fn bg(self, bg: Bg) -> Span {
+    fn bg<T>(self, bg: T) -> Span
+    where
+        T: Into<Option<Color>>,
+    {
         Span::new(self).bg(bg)
     }
 

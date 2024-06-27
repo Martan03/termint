@@ -173,9 +173,9 @@ impl Widget for List {
                 bg = self.sel_bg;
             }
 
-            let span = self.items[i].fg(fg).bg(bg);
+            // let span = self.items[i].fg(fg).bg(bg);
             // res.push_str(&span.get_string(&text_pos, &text_size));
-            text_pos.y += span.height(&text_size);
+            // text_pos.y += span.height(&text_size);
 
             if buffer.y() + buffer.height() <= text_pos.y {
                 break;
@@ -229,26 +229,26 @@ impl List {
         size: &Coords,
         offset: usize,
     ) {
-        let rat = self.items.len() as f32 / size.y as f32;
-        let thumb_size = min((size.y as f32 / rat) as usize, size.y);
-        let thumb_offset =
-            min((offset as f32 / rat) as usize, size.y - thumb_size);
+        // let rat = self.items.len() as f32 / size.y as f32;
+        // let thumb_size = min((size.y as f32 / rat) as usize, size.y);
+        // let thumb_offset =
+        //     min((offset as f32 / rat) as usize, size.y - thumb_size);
 
-        let mut bar_pos = Coords::new(pos.x, pos.y);
-        let bar = "│".fg(self.scrollbar_fg);
-        for _ in 0..size.y {
-            // TODO
-            // res.push_str(&bar.get_string(&bar_pos, size));
-            bar_pos.y += 1;
-        }
+        // let mut bar_pos = Coords::new(pos.x, pos.y);
+        // let bar = "│".fg(self.scrollbar_fg);
+        // for _ in 0..size.y {
+        //     // TODO
+        //     // res.push_str(&bar.get_string(&bar_pos, size));
+        //     bar_pos.y += 1;
+        // }
 
-        bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
-        let thumb = "┃".fg(self.thumb_fg);
-        for _ in 0..thumb_size {
-            // TODO
-            // res.push_str(&thumb.get_string(&bar_pos, size));
-            bar_pos.y += 1;
-        }
+        // bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
+        // let thumb = "┃".fg(self.thumb_fg);
+        // for _ in 0..thumb_size {
+        //     // TODO
+        //     // res.push_str(&thumb.get_string(&bar_pos, size));
+        //     bar_pos.y += 1;
+        // }
     }
 
     fn get_render_offset(&self, size: &Coords) -> usize {

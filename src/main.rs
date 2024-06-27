@@ -1,6 +1,6 @@
 use termint::{
     buffer::buffer::Buffer,
-    enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap},
+    enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap, Color},
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
         rect::Rect, text_align::TextAlign,
@@ -29,14 +29,14 @@ fn main() {
     // readme_example();
     // test_list();
     // test_layout_centering();
-    // test_bg_grad();
+    test_bg_grad();
     // term_test();
-    let span = "This is a test of the span rendering".align(TextAlign::Center);
-    let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
-    span.render(&mut buffer);
+    // let span = "This is a test of the span rendering".align(TextAlign::Center);
+    // let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
+    // span.render(&mut buffer);
 
-    println!("\x1b[2J");
-    buffer.render();
+    // println!("\x1b[2J");
+    // buffer.render();
 }
 
 #[allow(unused)]
@@ -72,21 +72,21 @@ fn test_block() {
 fn test_layout() {
     println!("\x1b[2J");
     let mut main = Block::new()
-        .title("Termite".fg(Fg::Red))
+        .title("Termite".fg(Color::Red))
         .direction(Direction::Horizontal)
         .border_type(BorderType::Double)
         .border_color(Fg::LightGray)
         .padding((0, 1));
 
     let mut block1 = Block::new().title("Sub block".to_span());
-    let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
+    let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
     block1.add_child(span1, Constrain::Percent(100));
     main.add_child(block1, Constrain::Percent(50));
 
     let mut block2 = Block::new().title("Another".to_span());
     let span2 =
         "This is really cool, right? This is the best place for testing"
-            .fg(Fg::Blue);
+            .fg(Color::Blue);
     block2.add_child(span2, Constrain::Percent(100));
     main.add_child(block2, Constrain::Percent(50));
 
@@ -120,7 +120,7 @@ fn cool_example() {
     println!("\x1b[2J");
 
     let mut main = Block::new()
-        .title("termint".fg(Fg::Cyan))
+        .title("termint".fg(Color::Cyan))
         .border_type(BorderType::Double)
         .border_color(Fg::Gray);
 
@@ -130,7 +130,7 @@ fn cool_example() {
         .border_color(Fg::Gray);
     main.add_child(block, Constrain::Min(0));
 
-    let span = "Re-coloring text".fg(Fg::Red).modifiers(mods!(Italic));
+    let span = "Re-coloring text".fg(Color::Red).modifiers(mods!(Italic));
     main.add_child(span, Constrain::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
     main.add_child(grad, Constrain::Min(0));
@@ -168,8 +168,8 @@ fn test_paragraph() {
 
     let mut p = Paragraph::new(vec![
         Box::new(Grad::new("this", (0, 120, 255), (120, 255, 0))),
-        Box::new("This is a text in".fg(Fg::Yellow)),
-        Box::new("paragraph".modifiers(vec![Modifier::Bold]).fg(Fg::Cyan)),
+        Box::new("This is a text in".fg(Color::Yellow)),
+        Box::new("paragraph".modifiers(vec![Modifier::Bold]).fg(Color::Cyan)),
         Box::new("and it adds".to_span()),
         Box::new("separator".modifiers(vec![Modifier::Italic])),
         Box::new("between each span".to_span()),
@@ -200,14 +200,14 @@ fn readme_example() {
 
     // Creates block1 and adds span as its child
     let mut block1 = Block::new().title("Sub block".to_span());
-    let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
+    let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
     block1.add_child(span1, Constrain::Percent(100));
     // Adds block1 as child of main block
     main.add_child(block1, Constrain::Min(0));
 
     // Create block2 and adds span as its child
     let mut block2 = Block::new().title("Another".to_span());
-    let span2 = "This is really cool, right?".fg(Fg::Blue);
+    let span2 = "This is really cool, right?".fg(Color::Blue);
     block2.add_child(span2, Constrain::Percent(100));
     // Adds block2 as child of main block
     main.add_child(block2, Constrain::Fill);
@@ -262,7 +262,7 @@ fn test_layout_centering() {
 #[allow(unused)]
 fn test_bg_grad() {
     println!("\x1b[2J");
-    let mut grad = BgGrad::new(0x0096ff, (84.71, 1.0, 0.5)).center();
+    let mut grad = BgGrad::horizontal(0x0096ff, (84.71, 1.0, 0.5)).center();
     let mut layout = Layout::horizontal().center();
     layout.add_child(Block::new(), Constrain::Length(6));
     grad.add_child(layout, Constrain::Length(3));
@@ -272,6 +272,7 @@ fn test_bg_grad() {
         Coords::new(20, 9),
     ));
     grad.render(&mut buffer);
+    buffer.render();
     println!("\x1b[5B");
 }
 

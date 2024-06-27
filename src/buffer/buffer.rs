@@ -44,6 +44,7 @@ impl Buffer {
             }
         }
 
+        print!("\x1b[0m");
         _ = stdout().flush();
     }
 

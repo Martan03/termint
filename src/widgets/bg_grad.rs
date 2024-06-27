@@ -1,6 +1,6 @@
 use crate::{
     buffer::buffer::Buffer,
-    enums::{bg::Bg, cursor::Cursor, rgb::RGB},
+    enums::{rgb::RGB, Color},
     geometry::{
         constrain::Constrain, coords::Coords, direction::Direction,
         padding::Padding,
@@ -35,10 +35,38 @@ pub struct BgGrad {
 
 impl BgGrad {
     /// Creates new [`BgGrad`] with given gradient colors
-    pub fn new<T, R>(start: T, end: R) -> Self
+    pub fn new<T1, T2>(direction: Direction, start: T1, end: T2) -> Self
     where
-        T: Into<RGB>,
-        R: Into<RGB>,
+        T1: Into<RGB>,
+        T2: Into<RGB>,
+    {
+        Self {
+            bg_start: start.into(),
+            bg_end: end.into(),
+            direction: direction,
+            layout: Default::default(),
+        }
+    }
+
+    /// Creates new vertical [`BgGrad`] with given gradient colors
+    pub fn vertical<T1, T2>(start: T1, end: T2) -> Self
+    where
+        T1: Into<RGB>,
+        T2: Into<RGB>,
+    {
+        Self {
+            bg_start: start.into(),
+            bg_end: end.into(),
+            direction: Direction::Vertical,
+            layout: Default::default(),
+        }
+    }
+
+    /// Creates new horizontal [`BgGrad`] with given gradient colors
+    pub fn horizontal<T1, T2>(start: T1, end: T2) -> Self
+    where
+        T1: Into<RGB>,
+        T2: Into<RGB>,
     {
         Self {
             bg_start: start.into(),
@@ -61,7 +89,10 @@ impl BgGrad {
     }
 
     /// Sets [`Padding`] of the [`Layout`]
-    pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
+    pub fn padding<T>(mut self, padding: T) -> Self
+    where
+        T: Into<Padding>,
+    {
         self.layout = self.layout.padding(padding);
         self
     }
@@ -87,11 +118,12 @@ impl Widget for BgGrad {
             return;
         }
 
-        self.layout.render(buffer);
         match self.direction {
-            Direction::Vertical => self.ver_render(buffer),
-            Direction::Horizontal => self.hor_render(buffer),
+            Direction::Vertical => self.render_ver(buffer),
+            Direction::Horizontal => self.render_hor(buffer),
         };
+
+        self.layout.render(buffer);
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -105,36 +137,34 @@ impl Widget for BgGrad {
 
 impl BgGrad {
     /// Renders horizontal background gradient
-    fn hor_render(&self, buffer: &mut Buffer) {
+    fn render_hor(&self, buffer: &mut Buffer) {
         let step = self.get_step(buffer.width() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
-        let mut line = String::new();
-        for _ in 0..buffer.width() {
-            line.push_str(&format!("{} ", Bg::RGB(r, g, b)));
+        for x in buffer.x()..buffer.width() + buffer.x() {
+            let bg = Color::Rgb(r, g, b);
             (r, g, b) = self.add_step((r, g, b), step);
-        }
 
-        let mut res = String::new();
-        for y in 0..buffer.height() {
-            res.push_str(&Cursor::Pos(buffer.x(), buffer.y() + y).to_string());
-            res.push_str(&line);
+            for y in buffer.y()..buffer.height() + buffer.y() {
+                buffer.set_bg(bg, &Coords::new(x, y));
+            }
         }
     }
 
     /// Renders vertical background gradient
-    fn ver_render(&self, buffer: &mut Buffer) {
+    fn render_ver(&self, buffer: &mut Buffer) {
         let step = self.get_step(buffer.height() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
-        let mut res = String::new();
-        for y in 0..buffer.height() {
-            let line = format!("{} ", Bg::RGB(r, g, b)).repeat(buffer.width());
-            res.push_str(&Cursor::Pos(buffer.x(), buffer.y() + y).to_string());
-            res.push_str(&line);
+        for y in buffer.y()..buffer.height() + buffer.y() {
+            let bg = Color::Rgb(r, g, b);
             (r, g, b) = self.add_step((r, g, b), step);
+
+            for x in buffer.x()..buffer.width() + buffer.x() {
+                buffer.set_bg(bg, &Coords::new(x, y));
+            }
         }
     }
 
