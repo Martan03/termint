@@ -2,10 +2,10 @@ use std::cmp::max;
 
 use crate::{
     borders,
-    buffer::{buffer::Buffer, cell::Cell},
+    buffer::buffer::Buffer,
     enums::Color,
     geometry::{
-        constrain::Constrain, coords::Coords, direction::Direction,
+        constraint::Constraint, coords::Coords, direction::Direction,
         padding::Padding, rect::Rect,
     },
     widgets::span::Span,
@@ -112,7 +112,7 @@ impl Block {
     }
 
     /// Adds child to the [`Block`]'s [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    pub fn add_child<T>(&mut self, child: T, constrain: Constraint)
     where
         T: Into<Box<dyn Widget>>,
     {
@@ -125,7 +125,7 @@ impl Widget for Block {
     fn render(&self, buffer: &mut Buffer) {
         self.render_border(buffer);
 
-        let mut tbuffer = Buffer::empty(Rect::new(
+        let mut tbuffer = buffer.get_subset(Rect::new(
             buffer.x() + 1,
             buffer.y(),
             buffer.width().saturating_sub(2),
@@ -139,7 +139,7 @@ impl Widget for Block {
             || !self.title.get_text().is_empty()) as usize;
         let left = ((self.borders & Border::LEFT) != 0) as usize;
 
-        let mut cbuffer = Buffer::empty(Rect::new(
+        let mut cbuffer = buffer.get_subset(Rect::new(
             buffer.x() + left,
             buffer.y() + top,
             buffer.width().saturating_sub(width),
@@ -209,11 +209,11 @@ impl Block {
     fn render_hor_border(&self, buffer: &mut Buffer, y: usize, border: u8) {
         if (self.borders & border) != 0 {
             let hor = self.border_type.get(border);
-            let mut cell = Cell::new(hor);
-            cell.fg(self.border_color);
 
             for x in buffer.x()..buffer.width() + buffer.x() {
-                buffer.set(cell, &Coords::new(x, y));
+                let coords = Coords::new(x, y);
+                buffer.set_val(hor, &coords);
+                buffer.set_fg(self.border_color, &coords);
             }
         }
     }
@@ -222,11 +222,11 @@ impl Block {
     fn render_ver_border(&self, buffer: &mut Buffer, x: usize, border: u8) {
         if (self.borders & border) != 0 {
             let ver = self.border_type.get(border);
-            let mut cell = Cell::new(ver);
-            cell.fg(self.border_color);
 
             for y in buffer.y()..buffer.height() + buffer.y() {
-                buffer.set(cell, &Coords::new(x, y));
+                let coords = Coords::new(x, y);
+                buffer.set_val(ver, &coords);
+                buffer.set_fg(self.border_color, &coords);
             }
         }
     }
@@ -235,10 +235,8 @@ impl Block {
     fn render_corner(&self, buffer: &mut Buffer, pos: &Coords, border: u8) {
         if (self.borders & border) == border {
             let c = self.border_type.get(border);
-            let mut cell = Cell::new(c);
-            cell.fg(self.border_color);
-
-            buffer.set(cell, pos);
+            buffer.set_val(c, pos);
+            buffer.set_fg(self.border_color, pos);
         }
     }
 

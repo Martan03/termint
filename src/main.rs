@@ -2,7 +2,7 @@ use termint::{
     buffer::buffer::Buffer,
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap, Color},
     geometry::{
-        constrain::Constrain, coords::Coords, direction::Direction,
+        constraint::Constraint, coords::Coords, direction::Direction,
         rect::Rect, text_align::TextAlign,
     },
     mods,
@@ -50,14 +50,14 @@ fn test_block() {
     let mut block1 = Block::new();
     let grad =
         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
-    block1.add_child(grad, Constrain::Percent(100));
+    block1.add_child(grad, Constraint::Percent(100));
     let block2 = Block::new().title("Test".to_span());
     let block3 =
         Block::new().title(Grad::new("Test", (100, 200, 100), (20, 160, 255)));
 
-    block.add_child(block2, Constrain::Min(0));
-    block.add_child(block1, Constrain::Min(0));
-    block.add_child(block3, Constrain::Fill);
+    block.add_child(block2, Constraint::Min(0));
+    block.add_child(block1, Constraint::Min(0));
+    block.add_child(block3, Constraint::Fill);
 
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
@@ -81,15 +81,15 @@ fn test_layout() {
 
     let mut block1 = Block::new().title("Sub block".to_span());
     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-    block1.add_child(span1, Constrain::Percent(100));
-    main.add_child(block1, Constrain::Percent(50));
+    block1.add_child(span1, Constraint::Percent(100));
+    main.add_child(block1, Constraint::Percent(50));
 
     let mut block2 = Block::new().title("Another".to_span());
     let span2 =
         "This is really cool, right? This is the best place for testing"
             .fg(Color::Blue);
-    block2.add_child(span2, Constrain::Percent(100));
-    main.add_child(block2, Constrain::Percent(50));
+    block2.add_child(span2, Constraint::Percent(100));
+    main.add_child(block2, Constraint::Percent(50));
 
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
@@ -129,12 +129,12 @@ fn cool_example() {
         .title("Features:")
         .borders(Border::TOP)
         .border_color(Color::Gray);
-    main.add_child(block, Constrain::Min(0));
+    main.add_child(block, Constraint::Min(0));
 
     let span = "Re-coloring text".fg(Color::Red).modifiers(mods!(Italic));
-    main.add_child(span, Constrain::Min(0));
+    main.add_child(span, Constraint::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
-    main.add_child(grad, Constrain::Min(0));
+    main.add_child(grad, Constraint::Min(0));
 
     let mut fill = Block::new()
         .title("Layout features".modifiers(mods!(Underline)))
@@ -142,15 +142,15 @@ fn cool_example() {
         .border_color(Color::Gray)
         .direction(Direction::Horizontal);
 
-    fill.add_child("This text fits well", Constrain::Min(0));
+    fill.add_child("This text fits well", Constraint::Min(0));
     let sep = Block::new().borders(Border::LEFT).border_color(Color::Gray);
-    fill.add_child(sep, Constrain::Length(1));
+    fill.add_child(sep, Constraint::Length(1));
     fill.add_child(
         "This text will fill the rest and have ellipsis when overflows",
-        Constrain::Fill,
+        Constraint::Fill,
     );
 
-    main.add_child(fill, Constrain::Fill);
+    main.add_child(fill, Constraint::Fill);
 
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
@@ -178,8 +178,8 @@ fn test_paragraph() {
 
     let block = Block::new();
 
-    main.add_child(p, Constrain::Fill);
-    main.add_child(block, Constrain::Fill);
+    main.add_child(p, Constraint::Fill);
+    main.add_child(block, Constraint::Fill);
 
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
@@ -202,16 +202,16 @@ fn readme_example() {
     // Creates block1 and adds span as its child
     let mut block1 = Block::new().title("Sub block".to_span());
     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-    block1.add_child(span1, Constrain::Percent(100));
+    block1.add_child(span1, Constraint::Percent(100));
     // Adds block1 as child of main block
-    main.add_child(block1, Constrain::Min(0));
+    main.add_child(block1, Constraint::Min(0));
 
     // Create block2 and adds span as its child
     let mut block2 = Block::new().title("Another".to_span());
     let span2 = "This is really cool, right?".fg(Color::Blue);
-    block2.add_child(span2, Constrain::Percent(100));
+    block2.add_child(span2, Constraint::Percent(100));
     // Adds block2 as child of main block
-    main.add_child(block2, Constrain::Fill);
+    main.add_child(block2, Constraint::Fill);
 
     // Renders the main block which renders all the children
     let mut buffer = Buffer::empty(Rect::from_coords(
@@ -233,7 +233,7 @@ fn test_list() {
             .sel_fg(Fg::Yellow)
             .sel_bg(Bg::Blue)
             .sel_char("-");
-    block.add_child(list, Constrain::Fill);
+    block.add_child(list, Constraint::Fill);
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
         Coords::new(20, 6),
@@ -248,10 +248,10 @@ fn test_layout_centering() {
     let span = Grad::new("This is a test", (0, 150, 255), (150, 255, 150))
         .wrap(Wrap::Letter);
     let mut block = Block::new().direction(Direction::Horizontal).center();
-    block.add_child(span, Constrain::Min(0));
+    block.add_child(span, Constraint::Min(0));
 
     let mut main = Block::new().direction(Direction::Vertical).center();
-    main.add_child(block, Constrain::Length(4));
+    main.add_child(block, Constraint::Length(4));
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
         Coords::new(20, 8),
@@ -265,8 +265,8 @@ fn test_bg_grad() {
     println!("\x1b[2J");
     let mut grad = BgGrad::horizontal(0x0096ff, (84.71, 1.0, 0.5)).center();
     let mut layout = Layout::horizontal().center();
-    layout.add_child(Block::new(), Constrain::Length(6));
-    grad.add_child(layout, Constrain::Length(3));
+    layout.add_child(Block::new(), Constraint::Length(6));
+    grad.add_child(layout, Constraint::Length(3));
 
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
@@ -285,7 +285,7 @@ fn term_test() {
 
     let mut layout = Layout::vertical().padding(1);
     let mut span = "This is test of small message rendering";
-    layout.add_child(span, Constrain::Length(10));
+    layout.add_child(span, Constraint::Length(10));
 
     term.render(layout);
 }

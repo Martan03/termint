@@ -48,10 +48,25 @@ impl Buffer {
         _ = stdout().flush();
     }
 
+    /// Gets subset of the [`Buffer`] based on given rectangle
+    pub fn get_subset(&self, rect: Rect) -> Buffer {
+        let mut buffer = Buffer::empty(rect);
+
+        for y in buffer.y()..buffer.height() + buffer.y() {
+            for x in buffer.x()..buffer.width() + buffer.x() {
+                buffer.set(
+                    self.content[self.index_of(&Coords::new(x, y))],
+                    &Coords::new(x, y),
+                );
+            }
+        }
+        buffer
+    }
+
     /// Unites buffers
     pub fn union(&mut self, buffer: Buffer) {
         for (i, cell) in buffer.content().iter().enumerate() {
-            self.set(cell.clone(), &buffer.coords_of(i));
+            self.set(*cell, &buffer.coords_of(i));
         }
     }
 

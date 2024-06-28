@@ -1,5 +1,5 @@
 /// Defines Constrain enum for specifying layout
-pub mod constrain;
+pub mod constraint;
 /// Defines Coords struct for easier work with coordintas
 pub mod coords;
 /// Defines Direction enum for layout flex direction

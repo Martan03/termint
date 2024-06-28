@@ -2,7 +2,7 @@ use crate::{
     buffer::buffer::Buffer,
     enums::{rgb::RGB, Color},
     geometry::{
-        constrain::Constrain, coords::Coords, direction::Direction,
+        constraint::Constraint, coords::Coords, direction::Direction,
         padding::Padding,
     },
 };
@@ -43,7 +43,7 @@ impl BgGrad {
         Self {
             bg_start: start.into(),
             bg_end: end.into(),
-            direction: direction,
+            direction,
             layout: Default::default(),
         }
     }
@@ -104,7 +104,7 @@ impl BgGrad {
     }
 
     /// Adds child to the [`BgGrad`]'s [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    pub fn add_child<T>(&mut self, child: T, constrain: Constraint)
     where
         T: Into<Box<dyn Widget>>,
     {

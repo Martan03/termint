@@ -2,8 +2,9 @@ use std::cmp::{max, min};
 
 use crate::{
     buffer::buffer::Buffer,
+    enums::Color,
     geometry::{
-        constrain::Constrain, coords::Coords, direction::Direction,
+        constraint::Constraint, coords::Coords, direction::Direction,
         padding::Padding, rect::Rect,
     },
 };
@@ -35,8 +36,9 @@ use super::widget::Widget;
 #[derive(Debug)]
 pub struct Layout {
     direction: Direction,
-    constrain: Vec<Constrain>,
+    constraint: Vec<Constraint>,
     children: Vec<Box<dyn Widget>>,
+    bg: Option<Color>,
     padding: Padding,
     center: bool,
 }
@@ -69,6 +71,15 @@ impl Layout {
         self
     }
 
+    /// Sets background color of the [`Layout`]
+    pub fn bg<T>(mut self, bg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
+        self.bg = bg.into();
+        self
+    }
+
     /// Sets [`Padding`] of the [`Layout`]
     pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
         self.padding = padding.into();
@@ -82,12 +93,12 @@ impl Layout {
     }
 
     /// Adds child with its [`Constrain`] to [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    pub fn add_child<T>(&mut self, child: T, constraint: Constraint)
     where
         T: Into<Box<dyn Widget>>,
     {
         self.children.push(child.into());
-        self.constrain.push(constrain);
+        self.constraint.push(constraint);
     }
 }
 
@@ -103,7 +114,7 @@ impl Widget for Layout {
             buffer.height().saturating_sub(self.padding.get_vertical()),
         );
 
-        if size.x == 0 || size.y == 0 {
+        if size.x == 0 || size.y == 0 || self.children.is_empty() {
             return;
         }
 
@@ -169,8 +180,9 @@ impl Default for Layout {
     fn default() -> Self {
         Self {
             direction: Direction::Vertical,
-            constrain: Vec::new(),
+            constraint: Vec::new(),
             children: Vec::new(),
+            bg: None,
             padding: Default::default(),
             center: false,
         }
@@ -186,8 +198,10 @@ impl Layout {
         size: &mut Coords,
         child_size: F,
     ) where
-        F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
+        F: Fn(&dyn Widget, &Constraint, &Coords) -> usize,
     {
+        self.render_bg(buffer);
+
         let (sizes, fill) = self.get_sizes(size, pos, child_size);
 
         let mut coords = *pos;
@@ -196,8 +210,8 @@ impl Layout {
                 break;
             }
 
-            let mut child_size = match self.constrain[i] {
-                Constrain::Fill => Coords::new(fill, size.y),
+            let mut child_size = match self.constraint[i] {
+                Constraint::Fill => Coords::new(fill, size.y),
                 _ => Coords::new(*s, size.y),
             };
             if child_size.x + coords.x - pos.x > size.x {
@@ -211,7 +225,8 @@ impl Layout {
                 c.transpone();
             }
 
-            let mut cbuffer = Buffer::empty(Rect::from_coords(c, child_size));
+            let mut cbuffer =
+                buffer.get_subset(Rect::from_coords(c, child_size));
             self.children[i].render(&mut cbuffer);
             buffer.union(cbuffer);
         }
@@ -220,15 +235,15 @@ impl Layout {
     /// Gets total layout size
     fn get_size<F>(&self, size: &Coords, child_size: F) -> usize
     where
-        F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
+        F: Fn(&dyn Widget, &Constraint, &Coords) -> usize,
     {
         let mut total = 0;
         let mut fill = 0;
         for i in 0..self.children.len() {
-            if self.constrain[i] == Constrain::Fill {
+            if self.constraint[i] == Constraint::Fill {
                 fill += 1;
             }
-            total += child_size(&*self.children[i], &self.constrain[i], size);
+            total += child_size(&*self.children[i], &self.constraint[i], size);
         }
 
         if fill > 0 {
@@ -242,19 +257,19 @@ impl Layout {
     fn ver_child_size(
         &self,
         child: &dyn Widget,
-        constrain: &Constrain,
+        constrain: &Constraint,
         size: &Coords,
     ) -> usize {
         let size = size.inverse();
         match constrain {
-            Constrain::Length(len) => *len,
-            Constrain::Percent(p) => {
+            Constraint::Length(len) => *len,
+            Constraint::Percent(p) => {
                 (*p as f32 / 100.0 * size.y as f32) as usize
             }
-            Constrain::Min(val) => max(child.height(&size), *val),
-            Constrain::Max(val) => min(child.height(&size), *val),
-            Constrain::MinMax(l, h) => min(max(child.height(&size), *l), *h),
-            Constrain::Fill => 0,
+            Constraint::Min(val) => max(child.height(&size), *val),
+            Constraint::Max(val) => min(child.height(&size), *val),
+            Constraint::MinMax(l, h) => min(max(child.height(&size), *l), *h),
+            Constraint::Fill => 0,
         }
     }
 
@@ -262,19 +277,20 @@ impl Layout {
     fn hor_child_size(
         &self,
         child: &dyn Widget,
-        constrain: &Constrain,
+        constrain: &Constraint,
         size: &Coords,
     ) -> usize {
-        match constrain {
-            Constrain::Length(len) => *len,
-            Constrain::Percent(p) => {
+        let test = match constrain {
+            Constraint::Length(len) => *len,
+            Constraint::Percent(p) => {
                 (*p as f32 / 100.0 * size.x as f32) as usize
             }
-            Constrain::Min(val) => max(child.width(size), *val),
-            Constrain::Max(val) => min(child.width(size), *val),
-            Constrain::MinMax(l, h) => min(max(child.width(size), *l), *h),
-            Constrain::Fill => 0,
-        }
+            Constraint::Min(val) => max(child.width(size), *val),
+            Constraint::Max(val) => min(child.width(size), *val),
+            Constraint::MinMax(l, h) => min(max(child.width(size), *l), *h),
+            Constraint::Fill => 0,
+        };
+        test
     }
 
     /// Gets children sizes
@@ -285,18 +301,18 @@ impl Layout {
         child_size: F,
     ) -> (Vec<usize>, usize)
     where
-        F: Fn(&dyn Widget, &Constrain, &Coords) -> usize,
+        F: Fn(&dyn Widget, &Constraint, &Coords) -> usize,
     {
         let mut sizes: Vec<usize> = Vec::new();
         let mut total = 0;
         let mut fill = 0;
         for i in 0..self.children.len() {
-            if self.constrain[i] == Constrain::Fill {
+            if self.constraint[i] == Constraint::Fill {
                 fill += 1;
             }
             sizes.push(child_size(
                 &*self.children[i],
-                &self.constrain[i],
+                &self.constraint[i],
                 size,
             ));
             total += sizes[i];
@@ -313,6 +329,19 @@ impl Layout {
         }
 
         (sizes, fills)
+    }
+
+    /// Renders [`Layout`] background color
+    fn render_bg(&self, buffer: &mut Buffer) {
+        let Some(bg) = self.bg else {
+            return;
+        };
+
+        for y in buffer.y()..buffer.y() + buffer.height() {
+            for x in buffer.x()..buffer.x() + buffer.width() {
+                buffer.set_bg(bg, &Coords::new(x, y));
+            }
+        }
     }
 }
 

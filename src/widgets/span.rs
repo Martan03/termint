@@ -190,8 +190,8 @@ impl Text for Span {
             .join("");
         format!(
             "{}{}{}",
-            self.fg.unwrap_or(Color::default()).to_fg(),
-            self.bg.unwrap_or(Color::default()).to_bg(),
+            self.fg.unwrap_or_default().to_fg(),
+            self.bg.unwrap_or_default().to_bg(),
             m
         )
     }
@@ -317,7 +317,7 @@ impl Span {
         let stext: String = text.chars().take(buffer.area()).collect();
         buffer.set_str(&stext, &Coords::new(buffer.x() + offset, buffer.y()));
 
-        if stext.len() != text.len() && self.ellipsis.len() != 0 {
+        if stext.len() != text.len() && !self.ellipsis.is_empty() {
             let coords = Coords::new(
                 (buffer.x() + buffer.width())
                     .saturating_sub(self.ellipsis.len()),
@@ -470,7 +470,7 @@ where
     T: AsRef<str>,
 {
     fn from(value: T) -> Self {
-        Box::new(Span::new(value.as_ref().to_string()))
+        Box::new(Span::new(value.as_ref()))
     }
 }
 

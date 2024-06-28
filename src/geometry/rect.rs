@@ -30,7 +30,7 @@ impl Rect {
 
     /// Gets position of the [`Rect`]
     pub fn pos(&self) -> Coords {
-        self.pos.clone()
+        self.pos
     }
 
     /// Gets position of the [`Rect`] as reference
@@ -70,7 +70,7 @@ impl Rect {
 
     /// Gets size of the [`Rect`]
     pub fn size(&self) -> Coords {
-        self.size.clone()
+        self.size
     }
 
     /// Gets size of the [`Rect`] as reference
