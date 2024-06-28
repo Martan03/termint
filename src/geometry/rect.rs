@@ -50,7 +50,7 @@ impl Rect {
 
     /// Gets x coordinate of the most right cell of the [`Rect`]
     pub fn right(&self) -> usize {
-        self.pos.x + self.size.x
+        (self.pos.x + self.size.x).saturating_sub(1)
     }
 
     /// Gets y coordinate of the [`Rect`]
@@ -65,7 +65,7 @@ impl Rect {
 
     /// Gets y coordinate of the most bottom cell of the [`Rect`]
     pub fn bottom(&self) -> usize {
-        self.pos.y + self.size.y
+        (self.pos.y + self.size.y).saturating_sub(1)
     }
 
     /// Gets size of the [`Rect`]

@@ -21,7 +21,7 @@ use termint::{
 };
 
 fn main() {
-    // test_block();
+    test_block();
     // test_layout();
     // test_grad();
     // cool_example();
@@ -29,7 +29,7 @@ fn main() {
     // readme_example();
     // test_list();
     // test_layout_centering();
-    test_bg_grad();
+    // test_bg_grad();
     // term_test();
     // let span = "This is a test of the span rendering".align(TextAlign::Center);
     // let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
@@ -64,6 +64,7 @@ fn test_block() {
         Coords::new(30, 9),
     ));
     block.render(&mut buffer);
+    buffer.render();
 
     println!("\x1b[7B");
 }
@@ -75,7 +76,7 @@ fn test_layout() {
         .title("Termite".fg(Color::Red))
         .direction(Direction::Horizontal)
         .border_type(BorderType::Double)
-        .border_color(Fg::LightGray)
+        .border_color(Color::LightGray)
         .padding((0, 1));
 
     let mut block1 = Block::new().title("Sub block".to_span());
@@ -122,12 +123,12 @@ fn cool_example() {
     let mut main = Block::new()
         .title("termint".fg(Color::Cyan))
         .border_type(BorderType::Double)
-        .border_color(Fg::Gray);
+        .border_color(Color::Gray);
 
     let block = Block::new()
         .title("Features:")
         .borders(Border::TOP)
-        .border_color(Fg::Gray);
+        .border_color(Color::Gray);
     main.add_child(block, Constrain::Min(0));
 
     let span = "Re-coloring text".fg(Color::Red).modifiers(mods!(Italic));
@@ -138,11 +139,11 @@ fn cool_example() {
     let mut fill = Block::new()
         .title("Layout features".modifiers(mods!(Underline)))
         .border_type(BorderType::Rounded)
-        .border_color(Fg::Gray)
+        .border_color(Color::Gray)
         .direction(Direction::Horizontal);
 
     fill.add_child("This text fits well", Constrain::Min(0));
-    let sep = Block::new().borders(Border::LEFT).border_color(Fg::Gray);
+    let sep = Block::new().borders(Border::LEFT).border_color(Color::Gray);
     fill.add_child(sep, Constrain::Length(1));
     fill.add_child(
         "This text will fill the rest and have ellipsis when overflows",

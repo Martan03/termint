@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::enums::Color;
 
 /// Represents rendering buffer cell
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Cell {
     fg: Color,
     bg: Color,

@@ -106,9 +106,29 @@ impl Buffer {
         self.rect.x()
     }
 
+    /// Gets x coordinate of the [`Buffer`]
+    pub fn left(&self) -> usize {
+        self.rect.left()
+    }
+
+    /// Gets x coordinate of the most right cell of the [`Buffer`]
+    pub fn right(&self) -> usize {
+        self.rect.right()
+    }
+
     /// Gets y coordinate of the [`Buffer`]
     pub fn y(&self) -> usize {
         self.rect.y()
+    }
+
+    /// Gets y coordinate of the [`Buffer`]
+    pub fn top(&self) -> usize {
+        self.rect.top()
+    }
+
+    /// Gets y coordinate of the most bottom cell of the [`Buffer`]
+    pub fn bottom(&self) -> usize {
+        self.rect.bottom()
     }
 
     /// Gets size of the [`Buffer`]
