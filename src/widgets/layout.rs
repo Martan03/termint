@@ -156,13 +156,13 @@ impl Widget for Layout {
                     self.ver_child_size(child, constrain, size)
                 }) + self.padding.get_vertical()
             }
-            Direction::Horizontal => size.y,
+            Direction::Horizontal => self.height_horizontal(size),
         }
     }
 
     fn width(&self, size: &Coords) -> usize {
         match self.direction {
-            Direction::Vertical => size.x,
+            Direction::Vertical => self.width_vertical(size),
             Direction::Horizontal => {
                 let size = Coords::new(
                     size.x,
@@ -203,6 +203,14 @@ impl Layout {
         self.render_bg(buffer);
 
         let (sizes, fill) = self.get_sizes(size, pos, child_size);
+        println!(
+            "sizes: {}",
+            sizes
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        );
 
         let mut coords = *pos;
         for (i, s) in sizes.iter().enumerate() {
@@ -224,6 +232,7 @@ impl Layout {
                 child_size.transpone();
                 c.transpone();
             }
+            println!("child size: [{} {}]", child_size.x, child_size.y);
 
             let mut cbuffer =
                 buffer.get_subset(Rect::from_coords(c, child_size));
@@ -342,6 +351,52 @@ impl Layout {
                 buffer.set_bg(bg, &Coords::new(x, y));
             }
         }
+    }
+
+    fn height_horizontal(&self, size: &Coords) -> usize {
+        let mut size = *size;
+        let (sizes, fill) = self.get_sizes(
+            &mut size,
+            &mut Coords::new(1, 1),
+            |child, constrain, size| {
+                self.hor_child_size(child, constrain, size)
+            },
+        );
+
+        let mut max = 2;
+        for (i, s) in sizes.iter().enumerate() {
+            max = std::cmp::max(
+                match self.constraint[i] {
+                    Constraint::Fill => fill,
+                    _ => *s,
+                },
+                max,
+            );
+        }
+        max
+    }
+
+    fn width_vertical(&self, size: &Coords) -> usize {
+        let mut size = *size;
+        let (sizes, fill) = self.get_sizes(
+            &mut size,
+            &mut Coords::new(1, 1),
+            |child, constrain, size| {
+                self.ver_child_size(child, constrain, size)
+            },
+        );
+
+        let mut max = 2;
+        for (i, s) in sizes.iter().enumerate() {
+            max = std::cmp::max(
+                match self.constraint[i] {
+                    Constraint::Fill => fill,
+                    _ => *s,
+                },
+                max,
+            );
+        }
+        max
     }
 }
 

@@ -41,7 +41,7 @@ fn main() {
 
 #[allow(unused)]
 fn test_block() {
-    println!("\x1b[2J");
+    // println!("\x1b[2J");
 
     let mut block = Block::new()
         .title("Not easy".to_span())
@@ -64,9 +64,9 @@ fn test_block() {
         Coords::new(30, 9),
     ));
     block.render(&mut buffer);
-    buffer.render();
+    // buffer.render();
 
-    println!("\x1b[7B");
+    // println!("\x1b[7B");
 }
 
 #[allow(unused)]
