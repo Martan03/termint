@@ -7,19 +7,19 @@ use super::widget::Widget;
 /// Can be used to add spaces to the layout, for example, between two widget.
 ///
 /// ## Example usage:
-/// ```
+/// ```rust
 /// # use termint::{
-/// #     geometry::constrain::Constrain,
+/// #     geometry::constraint::Constraint,
 /// #     widgets::{layout::Layout, spacer::Spacer, span::StrSpanExtension},
 /// # };
 /// let mut layout = Layout::vertical();
-/// layout.add_child("Example of Spacer".to_span(), Constrain::Min(0));
+/// layout.add_child("Example of Spacer", Constraint::Min(0));
 ///
 /// // Spacer creates one height space between spans
 /// // Spacer size is set using [`Constrain`] when adding it to [`Layout`]
-/// layout.add_child(Spacer::new(), Constrain::Length(1));
+/// layout.add_child(Spacer::new(), Constraint::Length(1));
 ///
-/// layout.add_child("One space above".to_span(), Constrain::Min(0));
+/// layout.add_child("One space above", Constraint::Min(0));
 /// ```
 #[derive(Debug, Default)]
 pub struct Spacer {}

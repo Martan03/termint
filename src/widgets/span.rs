@@ -22,8 +22,9 @@ use super::{text::Text, widget::Widget};
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     enums::{bg::Bg, fg::Fg, modifier::Modifier},
-/// #     geometry::coords::Coords,
+/// #     buffer::buffer::Buffer,
+/// #     enums::{Color, modifier::Modifier},
+/// #     geometry::{coords::Coords, rect::Rect},
 /// #     mods,
 /// #     widgets::{
 /// #         span::{Span, StrSpanExtension},
@@ -32,24 +33,26 @@ use super::{text::Text, widget::Widget};
 /// # };
 ///
 /// // Creating span using new with red foreground:
-/// let span = Span::new("Red text").fg(Fg::Red);
+/// let span = Span::new("Red text").fg(Color::Red);
 /// // Creating span using &str conversion with red text and white background
-/// let span = "Red text on white".fg(Fg::Red).bg(Bg::White);
+/// let span = "Red text on white".fg(Color::Red).bg(Color::White);
 ///
 /// // Cyan bold and italic text on yellow background
 /// // Using macro for getting modifiers
 /// let span = "Cyan bold and italic on yellow"
-///     .fg(Fg::Cyan)
-///     .bg(Bg::Yellow)
-///     .modifier(mods!(Bold, Italic));
+///     .fg(Color::Cyan)
+///     .bg(Color::Yellow)
+///     .modifiers(mods!(Bold, Italic));
 ///
 /// // Span can be printed like this
 /// println!("{span}");
 ///
-/// // Or rendered on given coordinates and given size
+/// // Or rendered using the buffer
 /// // Text will be wrapping based on set value in wrap (Wrap::Word is default)
 /// // Text will use ellipsis when can't fit ("..." is default)
-/// span.render(&Coords::new(1, 1), &Coords::new(10, 3));
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
+/// span.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct Span {
@@ -182,18 +185,19 @@ impl Text for Span {
     }
 
     fn get_mods(&self) -> String {
-        let m = self
+        let mut res = self
             .modifier
             .iter()
             .map(|m| m.to_ansi())
             .collect::<Vec<&str>>()
             .join("");
-        format!(
-            "{}{}{}",
-            self.fg.unwrap_or_default().to_fg(),
-            self.bg.unwrap_or_default().to_bg(),
-            m
-        )
+        if let Some(fg) = self.fg {
+            res.push_str(&fg.to_fg());
+        }
+        if let Some(bg) = self.bg {
+            res.push_str(&bg.to_bg());
+        }
+        res
     }
 }
 

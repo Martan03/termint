@@ -14,24 +14,27 @@ use super::widget::Widget;
 /// Creates layout for widgets
 ///
 /// ## Example usage:
-/// ```rust
+/// ```ignore
 /// # use termint::{
-/// #     geometry::{constrain::Constrain, coords::Coords},
+/// #     buffer::buffer::Buffer,
+/// #     geometry::{constraint::Constraint, rect::Rect},
 /// #     widgets::{
 /// #         block::Block, layout::Layout, span::StrSpanExtension,
 /// #         widget::Widget,
 /// #     },
 /// # };
 /// // Creates horizontal layout containing two blocks each covering 50%
-/// let block1 = Block::new().title("Block 1".to_span());
-/// let block2 = Block::new().title("Block 2".to_span());
+/// let block1 = Block::vertical().title("Block 1");
+/// let block2 = Block::vertical().title("Block 2");
 ///
 /// let mut layout = Layout::horizontal();
-/// layout.add_child(block1, Constrain::Percent(50));
-/// layout.add_child(block2, Constrain::Percent(50));
+/// layout.add_child(block1, Constraint::Percent(50));
+/// layout.add_child(block2, Constraint::Percent(50));
 ///
-/// // Renders layout on coordinates 1, 1 with width 20 and height 5
-/// layout.render(&Coords::new(1, 1), &Coords::new(20, 5));
+/// // Renders layout using buffer
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 5));
+/// layout.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct Layout {

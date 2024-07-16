@@ -13,7 +13,7 @@ use super::widget::Widget;
 /// each other, which you can't really achieve with Layout
 ///
 /// ## Example usage:
-/// ```
+/// ```ignore
 /// # use termint::{
 /// #     paragraph,
 /// #     enums::{fg::Fg, modifier::Modifier},

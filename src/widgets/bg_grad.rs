@@ -12,18 +12,32 @@ use super::{layout::Layout, widget::Widget};
 /// [`BgGrad`] widget renders Gradient background and works as [`Layout`]
 /// as well
 ///
-/// Note that the background behind the layout will be overriden
+/// ## Example usage with using [`Term`]:
+/// ```rust
+/// # use termint::{term::Term, widgets::bg_grad::BgGrad};
 ///
-/// ## Example usage:
+/// // Creates new background gradient with horizontal direction
+/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+///
+/// // Renders background gradient using Term struct
+/// let term = Term::new();
+/// _ = term.render(grad);
+/// ```
+///
+/// ## Example usage without using [`Term`]:
 /// ```rust
 /// # use termint::{
-/// #     geometry::coords::Coords,
+/// #     buffer::buffer::Buffer,
+/// #     geometry::rect::Rect,
 /// #     widgets::{bg_grad::BgGrad, widget::Widget},
 /// # };
 /// // Creates new background gradient with horizontal direction
-/// let grad = BgGrad::new((0, 150, 255), (150, 255, 0));
-/// // Renders background gradient
-/// grad.render(&Coords::new(1, 1), &Coords::new(20, 9));
+/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+///
+/// // Renders background gradient using [`Buffer`]
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
+/// grad.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct BgGrad {

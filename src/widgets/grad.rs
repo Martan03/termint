@@ -15,17 +15,23 @@ use super::{text::Text, widget::Widget};
 /// Text with gradient foreground
 ///
 /// ## Example usage:
-/// ```
+/// ```rust
 /// # use termint::{
-/// #     geometry::coords::Coords,
+/// #     buffer::buffer::Buffer,
+/// #     geometry::rect::Rect,
 /// #     widgets::{grad::Grad, widget::Widget},
 /// # };
+/// // Creates text gradient widget
 /// let grad = Grad::new(
 ///     "This text will have a gradient foreground and word wrap",
 ///     (0, 220, 255),
 ///     (200, 60, 255),
 /// );
-/// grad.render(&Coords::new(1, 1), &Coords::new(10, 5));
+///
+/// // Renders the text using buffer
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
+/// grad.render(&mut buffer);
+/// buffer.render();
 /// ```
 pub struct Grad {
     text: String,

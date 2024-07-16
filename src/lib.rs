@@ -15,13 +15,13 @@
 //!
 //! ```rust
 //! # use termint::{
-//! #     enums::{bg::Bg, fg::Fg, modifier::Modifier},
+//! #     enums::{modifier::Modifier, Color},
 //! #     widgets::span::StrSpanExtension,
 //! # };
-//! println!("{}", "Cyan text".fg(Fg::Cyan));
-//! println!("{}", "Cyan text on white background".fg(Fg::Cyan).bg(Bg::White));
-//! println!("{}", "Bold red text".fg(Fg::Red).modifier(vec![Modifier::Bold]));
-//! println!("{}", "Text with RGB value".fg(Fg::RGB(0, 249, 210)));
+//! println!("{}", "Cyan text".fg(Color::Cyan));
+//! println!("{}", "Cyan text on white".fg(Color::Cyan).bg(Color::White));
+//! println!("{}", "Bold red text".fg(Color::Red).modifier(Modifier::Bold));
+//! println!("{}", "Text with RGB value".fg(Color::Rgb(0, 249, 210)));
 //! ```
 //! ![image](https://github.com/Martan03/termint/assets/46300167/c906a565-69b5-4664-9db0-ad89ff457cbb)
 //!
@@ -35,37 +35,37 @@
 //!
 //! ```rust
 //! # use termint::{
-//! #     enums::{bg::Bg, fg::Fg},
-//! #     geometry::{
-//! #         constrain::Constrain, coords::Coords, direction::Direction,
-//! #     },
+//! #     buffer::buffer::Buffer,
+//! #     enums::Color,
+//! #     geometry::{constraint::Constraint, rect::Rect},
 //! #     widgets::{
 //! #         block::Block, border::BorderType, span::StrSpanExtension,
 //! #         widget::Widget,
 //! #     },
 //! # };
 //! // Creates main block and sets its properties
-//! let mut main = Block::new()
-//!     .title("Termint".to_span())
-//!     .direction(Direction::Horizontal)
+//! let mut main = Block::horizontal()
+//!     .title("Termint")
 //!     .border_type(BorderType::Double);
 //!
-//! /// Creates block1 and adds span as its child
-//! let mut block1 = Block::new().title("Sub block".to_span());
-//! let span1 = "I like it!".fg(Fg::Green).bg(Bg::Yellow);
-//! block1.add_child(span1, Constrain::Percent(100));
-//! /// Adds block1 as child of main block
-//! main.add_child(block1, Constrain::Min(0));
+//! // Creates block1 and adds span as its child
+//! let mut block1 = Block::vertical().title("Sub block");
+//! let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
+//! block1.add_child(span1, Constraint::Percent(100));
+//! // Adds block1 as child of main block
+//! main.add_child(block1, Constraint::Min(0));
 //!
-//! /// Create block2 and adds span as its child
-//! let mut block2 = Block::new().title("Another".to_span());
-//! let span2 = "This is really cool, right?".fg(Fg::Blue);
-//! block2.add_child(span2, Constrain::Percent(100));
-//! /// Adds block2 as child of main block
-//! main.add_child(block2, Constrain::Fill);
+//! // Create block2 and adds span as its child
+//! let mut block2 = Block::vertical().title("Another".to_span());
+//! let span2 = "This is really cool, right?".fg(Color::Blue);
+//! block2.add_child(span2, Constraint::Percent(100));
+//! // Adds block2 as child of main block
+//! main.add_child(block2, Constraint::Fill);
 //!
-//! /// Renders the main block which renders all the children
-//! main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+//! // Renders the main block which renders all the children
+//! let mut buffer = Buffer::empty(Rect::new(1, 1, 30, 8));
+//! main.render(&mut buffer);
+//! buffer.render();
 //! ```
 //! ![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)
 //!

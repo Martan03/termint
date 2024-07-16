@@ -23,10 +23,9 @@ use super::{
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     enums::fg::Fg,
-/// #        geometry::{
-/// #         constrain::Constrain, coords::Coords, direction::Direction,
-/// #     },
+/// #     buffer::buffer::Buffer,
+/// #     enums::Color,
+/// #     geometry::{constraint::Constraint, rect::Rect},
 /// #     widgets::{
 /// #         block::Block, border::BorderType, span::StrSpanExtension,
 /// #         widget::Widget,
@@ -35,21 +34,21 @@ use super::{
 /// // Creates block with title Termint in red
 /// // with double line border in lightgray
 /// // Block layout will be horizontal
-/// let mut main = Block::new()
-///     .title("Termint".fg(Fg::Red))
-///     .direction(Direction::Horizontal)
+/// let mut main = Block::horizontal()
+///     .title("Termint".fg(Color::Red))
 ///     .border_type(BorderType::Double)
-///     .border_color(Fg::LightGray);
+///     .border_color(Color::LightGray);
 ///
-/// // Adds two Block widgets as children for demonstration
-/// let mut block1 = Block::new().title("Sub block".to_span());
-/// main.add_child(block1, Constrain::Percent(50));
+/// // Adds two block widgets as children for demonstration
+/// let block1 = Block::vertical().title("Sub block");
+/// main.add_child(block1, Constraint::Percent(50));
+/// let block2 = Block::vertical().title("Another");
+/// main.add_child(block2, Constraint::Percent(50));
 ///
-/// let mut block2 = Block::new().title("Another".to_span());
-/// main.add_child(block2, Constrain::Percent(50));
-///
-/// // Renders block on coordinates 1, 1, with width 30 and height 8
-/// main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+/// // Renders main block using buffer
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 30, 8));
+/// main.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct Block {
@@ -64,6 +63,22 @@ impl Block {
     /// Creates new [`Block`] with no title and all borders
     pub fn new() -> Self {
         Default::default()
+    }
+
+    /// Creates new [`Block`] with horizontal layout
+    pub fn horizontal() -> Self {
+        Self {
+            layout: Layout::horizontal(),
+            ..Default::default()
+        }
+    }
+
+    /// Creates new [`Block`] with horizontal layout
+    pub fn vertical() -> Self {
+        Self {
+            layout: Layout::vertical(),
+            ..Default::default()
+        }
     }
 
     /// Sets [`Text`] as a title of [`Block`]

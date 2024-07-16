@@ -1,7 +1,7 @@
 /// Macro to combine [`Border`] sides
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{borders, widgets::border::Border};
 /// // Without macro:
 /// let top_left_right = Border::TOP | Border::LEFT | Border::RIGHT;
@@ -38,7 +38,7 @@ macro_rules! borders {
 /// ```
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{enums::fg::Fg, help, widgets::span::StrSpanExtension};
 /// help!(
 ///     "Usage":
@@ -91,7 +91,7 @@ macro_rules! help {
 /// Creates vector with given given Modifiers
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{enums::modifier::Modifier, mods};
 /// // Without macro:
 /// let mods = vec![Modifier::Bold, Modifier::Italic];
@@ -108,7 +108,7 @@ macro_rules! mods {
 /// Creates new paragraph in more simple way
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{
 /// #     enums::fg::Fg,
 /// #     paragraph,

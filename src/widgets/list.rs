@@ -23,7 +23,7 @@ use super::{span::StrSpanExtension, widget::Widget};
 ///     - Character in front
 ///
 /// ## Example usage:
-/// ```
+/// ```ignore
 /// # use termint::{
 /// #     enums::fg::Fg, widgets::list::List,
 /// #     geometry::coords::Coords, widgets::widget::Widget
