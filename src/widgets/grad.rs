@@ -140,27 +140,18 @@ impl Text for Grad {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
-        offset: usize,
-        wrap: Option<&Wrap>,
-    ) -> Coords {
-        let (res, coords) = self.get_offset(buffer, offset, wrap);
-        print!("{res}");
-        coords
-    }
-
-    fn get_offset(
-        &self,
-        _buffer: &mut Buffer,
         _offset: usize,
-        _wrap: Option<&Wrap>,
-    ) -> (String, Coords) {
-        // let wrap = wrap.unwrap_or(&self.wrap);
-        // let (res, coords) = match wrap {
-        //     Wrap::Letter => self.render_letter_wrap(buffer, offset),
-        //     Wrap::Word => self.render_word_wrap(buffer, offset),
-        // };
-        // (res, coords)
-        todo!()
+        _wrap: Option<Wrap>,
+    ) -> Coords {
+        if buffer.width() == 0 || buffer.height() == 0 {
+            return Coords::new(0, 0);
+        }
+
+        match self.wrap {
+            Wrap::Letter => self.render_letter(buffer, 0),
+            Wrap::Word => self.render_word(buffer, 0),
+        };
+        Coords::new(0, 0)
     }
 
     fn get(&self) -> String {

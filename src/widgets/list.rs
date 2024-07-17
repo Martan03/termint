@@ -1,11 +1,8 @@
-use std::{
-    cmp::{max, min},
-    io::{stdout, Write},
-};
+use std::cmp::max;
 
 use crate::{
     buffer::buffer::Buffer,
-    enums::{bg::Bg, cursor::Cursor, fg::Fg},
+    enums::{cursor::Cursor, Color},
     geometry::coords::Coords,
 };
 
@@ -43,12 +40,12 @@ pub struct List {
     current: Option<usize>,
     prev_offset: Option<usize>,
     offset: usize,
-    fg: Fg,
-    sel_fg: Fg,
-    sel_bg: Option<Bg>,
+    fg: Color,
+    sel_fg: Color,
+    sel_bg: Option<Color>,
     sel_char: String,
-    scrollbar_fg: Fg,
-    thumb_fg: Fg,
+    scrollbar_fg: Color,
+    thumb_fg: Color,
 }
 
 impl List {
@@ -102,19 +99,22 @@ impl List {
     }
 
     /// Sets foreground of [`List`] item
-    pub fn fg(mut self, fg: Fg) -> Self {
+    pub fn fg(mut self, fg: Color) -> Self {
         self.fg = fg;
         self
     }
 
     /// Sets [`List`] selected item foreground color
-    pub fn sel_fg(mut self, sel_color: Fg) -> Self {
+    pub fn sel_fg(mut self, sel_color: Color) -> Self {
         self.sel_fg = sel_color;
         self
     }
 
     /// Sets [`List`] selected item background color
-    pub fn sel_bg<T: Into<Option<Bg>>>(mut self, sel_color: T) -> Self {
+    pub fn sel_bg<T>(mut self, sel_color: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
         self.sel_bg = sel_color.into();
         self
     }
@@ -122,19 +122,22 @@ impl List {
     /// Sets [`List`] selected item character
     /// Character that will display in front of selected items.
     /// Other items will be shifted to be aligned with selected item
-    pub fn sel_char<T: AsRef<str>>(mut self, sel_char: T) -> Self {
+    pub fn sel_char<T>(mut self, sel_char: T) -> Self
+    where
+        T: AsRef<str>,
+    {
         self.sel_char = sel_char.as_ref().to_string();
         self
     }
 
     /// Sets [`List`] scrollbar color
-    pub fn scrollbar_fg(mut self, fg: Fg) -> Self {
+    pub fn scrollbar_fg(mut self, fg: Color) -> Self {
         self.scrollbar_fg = fg;
         self
     }
 
     /// Sets [`List`] scrollbar thumb color
-    pub fn thumb_fg(mut self, fg: Fg) -> Self {
+    pub fn thumb_fg(mut self, fg: Color) -> Self {
         self.thumb_fg = fg;
         self
     }
@@ -143,7 +146,7 @@ impl List {
 impl Widget for List {
     fn render(&self, buffer: &mut Buffer) {
         let mut res = String::new();
-        let mut text_pos =
+        let text_pos =
             Coords::new(buffer.x() + self.sel_char.len(), buffer.y());
         let mut text_size =
             Coords::new(buffer.width() - self.sel_char.len(), buffer.height());
@@ -164,13 +167,13 @@ impl Widget for List {
         }
 
         for i in offset..self.items.len() {
-            let mut fg = self.fg;
-            let mut bg: Option<Bg> = None;
+            // let mut fg = self.fg;
+            // let mut bg: Option<Color> = None;
             if Some(i) == self.current {
                 res.push_str(&Cursor::Pos(buffer.x(), text_pos.y).to_string());
                 res.push_str(&self.sel_char);
-                fg = self.sel_fg;
-                bg = self.sel_bg;
+                // fg = self.sel_fg;
+                // bg = self.sel_bg;
             }
 
             // let span = self.items[i].fg(fg).bg(bg);
@@ -210,12 +213,12 @@ impl Default for List {
             current: None,
             prev_offset: None,
             offset: 0,
-            fg: Fg::Default,
-            sel_fg: Fg::Cyan,
+            fg: Color::Default,
+            sel_fg: Color::Cyan,
             sel_bg: None,
             sel_char: String::new(),
-            scrollbar_fg: Fg::Default,
-            thumb_fg: Fg::Default,
+            scrollbar_fg: Color::Default,
+            thumb_fg: Color::Default,
         }
     }
 }
@@ -224,10 +227,10 @@ impl List {
     /// Renders [`List`] scrollbar
     fn get_scrollbar(
         &self,
-        res: &mut String,
-        pos: &Coords,
-        size: &Coords,
-        offset: usize,
+        _res: &mut str,
+        _pos: &Coords,
+        _size: &Coords,
+        _offset: usize,
     ) {
         // let rat = self.items.len() as f32 / size.y as f32;
         // let thumb_size = min((size.y as f32 / rat) as usize, size.y);

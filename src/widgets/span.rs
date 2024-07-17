@@ -128,7 +128,7 @@ impl Span {
 
 impl Widget for Span {
     fn render(&self, buffer: &mut Buffer) {
-        let (_, _) = self.get_offset(buffer, 0, None);
+        let _ = self.render_offset(buffer, 0, None);
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -151,29 +151,17 @@ impl Text for Span {
         &self,
         buffer: &mut Buffer,
         offset: usize,
-        wrap: Option<&Wrap>,
+        wrap: Option<Wrap>,
     ) -> Coords {
-        let (res, coords) = self.get_offset(buffer, offset, wrap);
-        print!("{res}");
-        coords
-    }
-
-    fn get_offset(
-        &self,
-        buffer: &mut Buffer,
-        offset: usize,
-        wrap: Option<&Wrap>,
-    ) -> (String, Coords) {
-        let wrap = wrap.unwrap_or(&self.wrap);
-        let (res, coords) = match wrap {
+        let wrap = wrap.unwrap_or(self.wrap);
+        match wrap {
             Wrap::Letter => self.render_lines(buffer, offset, |t, b, o| {
                 self.render_letter(t, b, o)
             }),
             Wrap::Word => self.render_lines(buffer, offset, |t, b, o| {
                 self.render_word(t, b, o)
             }),
-        };
-        (format!("{}{res}\x1b[0m", self.get_mods()), coords)
+        }
     }
 
     fn get(&self) -> String {
@@ -228,11 +216,10 @@ impl Span {
         buffer: &mut Buffer,
         offset: usize,
         text_render: F,
-    ) -> (String, Coords)
+    ) -> Coords
     where
         F: Fn(&str, &mut Buffer, usize) -> Coords,
     {
-        let mut res = String::new();
         let mut fin_coords = Coords::new(0, buffer.y());
         let mut coords = Coords::new(buffer.x(), buffer.y());
         let mut lsize = buffer.size();
@@ -248,7 +235,7 @@ impl Span {
             lsize.y = buffer.height().saturating_sub(coords.y - buffer.y());
             offset = 0;
         }
-        (res, fin_coords)
+        fin_coords
     }
 
     /// Renders [`Span`] with word wrapping with given offset

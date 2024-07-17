@@ -5,10 +5,10 @@ extern crate termint;
 
 #[cfg(test)]
 mod tests {
-    use termint::{
-        enums::{modifier::Modifier, Color},
-        widgets::{paragraph::Paragraph, span::StrSpanExtension},
-    };
+    // use termint::{
+    //     enums::{modifier::Modifier, Color},
+    //     widgets::{paragraph::Paragraph, span::StrSpanExtension},
+    // };
 
     /// Tests creating new paragraph
     #[test]

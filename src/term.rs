@@ -12,7 +12,7 @@ use crate::{
 /// #    term::Term, widgets::{block::Block, span::StrSpanExtension}
 /// # };
 ///
-/// let main = Block::new().title("Example".to_span());
+/// let main = Block::vertical().title("Example".to_span());
 /// // Creates new Term with padding 1 on every side
 /// let mut term = Term::new().padding(1);
 /// // Renders block over full screen

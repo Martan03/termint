@@ -36,8 +36,8 @@ use super::{layout::Layout, widget::Widget};
 /// // Creates new background gradient with horizontal direction
 /// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
-/// // Renders background gradient using [`Buffer`] (position and size given
-/// by the [`Rect`] supplied to the [`Buffer`])
+/// // Renders background gradient using [`Buffer`]
+/// // (position and size given by the Rect supplied to the Buffer)
 /// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
 /// grad.render(&mut buffer);
 /// buffer.render();

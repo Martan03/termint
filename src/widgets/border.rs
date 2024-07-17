@@ -15,7 +15,7 @@ use crate::borders;
 /// // Border containing top and left side
 /// let sides = borders!(TOP, LEFT);
 /// ```
-pub struct Border(u8);
+pub struct Border;
 
 #[allow(unused)]
 impl Border {

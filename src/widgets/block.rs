@@ -152,7 +152,7 @@ impl Widget for Block {
             buffer.width().saturating_sub(2),
             1,
         ));
-        _ = self.title.get_offset(&mut tbuffer, 0, None);
+        _ = self.title.render_offset(&mut tbuffer, 0, None);
         buffer.union(tbuffer);
 
         let (width, height) = self.border_size();

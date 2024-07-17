@@ -13,19 +13,11 @@ pub trait Text {
         &self,
         buffer: &mut Buffer,
         offset: usize,
-        wrap: Option<&Wrap>,
+        wrap: Option<Wrap>,
     ) -> Coords;
 
     /// Gets [`Text`] widget as string
     fn get(&self) -> String;
-
-    /// Gets [`Text`] widget as string with all the positional things
-    fn get_offset(
-        &self,
-        buffer: &mut Buffer,
-        offset: usize,
-        wrap: Option<&Wrap>,
-    ) -> (String, Coords);
 
     /// Gets text of the [`Text`]
     fn get_text(&self) -> &str;

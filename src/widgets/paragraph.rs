@@ -1,5 +1,4 @@
 use core::fmt;
-use std::io::{stdout, Write};
 
 use crate::{
     buffer::buffer::Buffer, enums::wrap::Wrap, geometry::coords::Coords,
@@ -101,7 +100,7 @@ impl Paragraph {
 }
 
 impl Widget for Paragraph {
-    fn render(&self, buffer: &mut Buffer) {
+    fn render(&self, _buffer: &mut Buffer) {
         // let pos = buffer.pos();
         // let size = buffer.size();
 

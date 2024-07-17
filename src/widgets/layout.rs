@@ -206,15 +206,6 @@ impl Layout {
         self.render_bg(buffer);
 
         let (sizes, fill) = self.get_sizes(size, pos, child_size);
-        println!(
-            "sizes: {}",
-            sizes
-                .iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<String>>()
-                .join(" ")
-        );
-
         let mut coords = *pos;
         for (i, s) in sizes.iter().enumerate() {
             if coords.x - pos.x >= size.x {
@@ -235,7 +226,6 @@ impl Layout {
                 child_size.transpone();
                 c.transpone();
             }
-            println!("child size: [{} {}]", child_size.x, child_size.y);
 
             let mut cbuffer =
                 buffer.get_subset(Rect::from_coords(c, child_size));

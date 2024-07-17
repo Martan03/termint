@@ -1,9 +1,9 @@
 use termint::{
     buffer::buffer::Buffer,
-    enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap, Color},
+    enums::{modifier::Modifier, wrap::Wrap, Color},
     geometry::{
-        constraint::Constraint, coords::Coords, direction::Direction,
-        rect::Rect, text_align::TextAlign,
+        constraint::Constraint, coords::Coords, rect::Rect,
+        text_align::TextAlign,
     },
     mods,
     term::Term,
@@ -21,9 +21,9 @@ use termint::{
 };
 
 fn main() {
-    // test_block();
+    test_block();
     // test_layout();
-    test_grad();
+    // test_grad();
     // cool_example();
     // test_paragraph();
     // readme_example();
@@ -65,7 +65,7 @@ fn test_block() {
         Coords::new(30, 9),
     ));
     block.render(&mut buffer);
-    // buffer.render();
+    buffer.render();
 
     // println!("\x1b[7B");
 }
@@ -230,8 +230,8 @@ fn test_list() {
     let list =
         List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
             .selected(Some(2))
-            .sel_fg(Fg::Yellow)
-            .sel_bg(Bg::Blue)
+            .sel_fg(Color::Yellow)
+            .sel_bg(Color::Blue)
             .sel_char("-");
     block.add_child(list, Constraint::Fill);
     let mut buffer = Buffer::empty(Rect::from_coords(
