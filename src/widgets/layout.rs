@@ -292,7 +292,7 @@ impl Layout {
         constrain: &Constraint,
         size: &Coords,
     ) -> usize {
-        let test = match constrain {
+        match constrain {
             Constraint::Length(len) => *len,
             Constraint::Percent(p) => {
                 (*p as f32 / 100.0 * size.x as f32) as usize
@@ -301,8 +301,7 @@ impl Layout {
             Constraint::Max(val) => min(child.width(size), *val),
             Constraint::MinMax(l, h) => min(max(child.width(size), *l), *h),
             Constraint::Fill => 0,
-        };
-        test
+        }
     }
 
     /// Gets children sizes

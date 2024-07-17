@@ -44,7 +44,7 @@ pub enum Color {
     Hex(u32),
     /// Resets the foreground and background color
     #[default]
-    Reset,
+    Default,
 }
 
 impl Color {
@@ -77,7 +77,7 @@ impl Color {
                 let rgb = RGB::from_hex(*val);
                 format!("\x1b[38;2;{};{};{}m", rgb.r, rgb.g, rgb.b)
             }
-            Color::Reset => "\x1b[0m".to_string(),
+            Color::Default => "\x1b[39m".to_string(),
         }
     }
 
@@ -110,9 +110,7 @@ impl Color {
                 let rgb = RGB::from_hex(*val);
                 format!("\x1b[48;2;{};{};{}m", rgb.r, rgb.g, rgb.b)
             }
-            Color::Reset => "\x1b[0m".to_string(),
+            Color::Default => "\x1b[49m".to_string(),
         }
     }
 }
-
-

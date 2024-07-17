@@ -9,19 +9,21 @@ use crate::{
 
 use super::{layout::Layout, widget::Widget};
 
-/// [`BgGrad`] widget renders Gradient background and works as [`Layout`]
+/// [`BgGrad`] widget renders Gradient Background and works as [`Layout`]
 /// as well
 ///
-/// ## Example usage with using [`Term`]:
+/// ## Example usage using [`Term`] (automatically renders on full screen):
 /// ```rust
 /// # use termint::{term::Term, widgets::bg_grad::BgGrad};
-///
+/// # fn example() -> Result<(), &'static str> {
 /// // Creates new background gradient with horizontal direction
 /// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
 /// // Renders background gradient using Term struct
 /// let term = Term::new();
-/// _ = term.render(grad);
+/// term.render(grad)?;
+/// # Ok(())
+/// # }
 /// ```
 ///
 /// ## Example usage without using [`Term`]:
@@ -34,7 +36,8 @@ use super::{layout::Layout, widget::Widget};
 /// // Creates new background gradient with horizontal direction
 /// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
-/// // Renders background gradient using [`Buffer`]
+/// // Renders background gradient using [`Buffer`] (position and size given
+/// by the [`Rect`] supplied to the [`Buffer`])
 /// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
 /// grad.render(&mut buffer);
 /// buffer.render();

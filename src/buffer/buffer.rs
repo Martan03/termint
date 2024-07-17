@@ -88,6 +88,34 @@ impl Buffer {
         }
     }
 
+    pub fn set_str_styled<T1, T2, T3>(
+        &mut self,
+        str: T1,
+        pos: &Coords,
+        fg: T2,
+        bg: T3,
+    ) where
+        T1: AsRef<str>,
+        T2: Into<Option<Color>>,
+        T3: Into<Option<Color>>,
+    {
+        let fg = fg.into();
+        let bg = bg.into();
+
+        let mut id = self.index_of(pos);
+        for c in str.as_ref().chars() {
+            self.content[id].val(c);
+
+            if let Some(fg) = fg {
+                self.content[id].fg(fg);
+            }
+            if let Some(bg) = bg {
+                self.content[id].bg(bg);
+            }
+            id += 1;
+        }
+    }
+
     /// Sets value of the cell on given position relative to buffer
     pub fn set_val(&mut self, val: char, pos: &Coords) {
         let id = self.index_of(pos);

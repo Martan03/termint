@@ -5,7 +5,7 @@ use crate::{
     buffer::buffer::Buffer,
     enums::{
         bg::Bg, cursor::Cursor, fg::Fg, modifier::Modifier, rgb::RGB,
-        wrap::Wrap,
+        wrap::Wrap, Color,
     },
     geometry::{coords::Coords, direction::Direction, text_align::TextAlign},
 };
@@ -38,7 +38,7 @@ pub struct Grad {
     fg_start: RGB,
     fg_end: RGB,
     direction: Direction,
-    bg: Option<Bg>,
+    bg: Option<Color>,
     modifier: Vec<Modifier>,
     align: TextAlign,
     wrap: Wrap,
@@ -46,7 +46,7 @@ pub struct Grad {
 }
 
 impl Grad {
-    /// Creates new [`Grad`] with given text
+    /// Creates new [`Grad`] with given text and given gradient
     pub fn new<T, R, S>(text: T, start: R, end: S) -> Self
     where
         T: Into<String>,
@@ -75,25 +75,31 @@ impl Grad {
     /// Sets background of [`Grad`] to given color
     pub fn bg<T>(mut self, bg: T) -> Self
     where
-        T: Into<Option<Bg>>,
+        T: Into<Option<Color>>,
     {
         self.bg = bg.into();
         self
     }
 
-    /// Sets modifiers of [`Grad`] to given modifiers
-    pub fn modifier(mut self, modifier: Vec<Modifier>) -> Self {
-        self.modifier = modifier;
+    /// Adds [`Grad`] modifier to current modifiers
+    pub fn modifier(mut self, modifier: Modifier) -> Self {
+        self.modifier.push(modifier);
         self
     }
 
-    /// Sets text alignment of the [`Grad`]
+    /// Sets modifiers of [`Grad`] to given modifiers
+    pub fn modifiers(mut self, mods: Vec<Modifier>) -> Self {
+        self.modifier = mods;
+        self
+    }
+
+    /// Sets [`Grad`] text alignment
     pub fn align(mut self, align: TextAlign) -> Self {
         self.align = align;
         self
     }
 
-    /// Sets wrap of [`Grad`] to given value
+    /// Sets [`Wrap`] of [`Grad`] to given value
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
         self
@@ -112,12 +118,10 @@ impl Widget for Grad {
             return;
         }
 
-        let (res, _) = match self.wrap {
-            Wrap::Letter => self.render_letter_wrap(buffer, 0),
-            Wrap::Word => self.render_word_wrap(buffer, 0),
+        match self.wrap {
+            Wrap::Letter => self.render_letter(buffer, 0),
+            Wrap::Word => self.render_word(buffer, 0),
         };
-
-        format!("{}{res}\x1b[0m", self.get_mods());
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -189,7 +193,7 @@ impl Text for Grad {
             .join("");
         format!(
             "{}{}",
-            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_string()),
+            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_bg()),
             m
         )
     }
@@ -209,39 +213,40 @@ impl Grad {
         buffer: &mut Buffer,
         offset: usize,
     ) -> (String, Coords) {
-        match self.direction {
-            Direction::Vertical => {
-                let height = min(
-                    self.height_word_wrap(buffer.size_ref()) - 1,
-                    buffer.height(),
-                );
-                let step = self.get_step(height as i16);
-                self.render_word(
-                    buffer.pos_ref(),
-                    buffer.size_ref(),
-                    (0, 0, 0),
-                    step,
-                    |size, line, res, rgb, step| {
-                        self.render_line_ver(size, line, res, rgb, step)
-                    },
-                    offset,
-                )
-            }
-            Direction::Horizontal => {
-                let width = min(buffer.width(), self.text.len());
-                let step = self.get_step(width as i16);
-                self.render_word(
-                    buffer.pos_ref(),
-                    buffer.size_ref(),
-                    step,
-                    (0, 0, 0),
-                    |size, line, res, rgb, step| {
-                        self.render_line_hor(size, line, res, rgb, step)
-                    },
-                    offset,
-                )
-            }
-        }
+        // match self.direction {
+        //     Direction::Vertical => {
+        //         let height = min(
+        //             self.height_word_wrap(buffer.size_ref()) - 1,
+        //             buffer.height(),
+        //         );
+        //         let step = self.get_step(height as i16);
+        //         self.render_word(
+        //             buffer.pos_ref(),
+        //             buffer.size_ref(),
+        //             (0, 0, 0),
+        //             step,
+        //             |size, line, res, rgb, step| {
+        //                 self.render_line_ver(size, line, res, rgb, step)
+        //             },
+        //             offset,
+        //         )
+        //     }
+        //     Direction::Horizontal => {
+        //         let width = min(buffer.width(), self.text.len());
+        //         let step = self.get_step(width as i16);
+        //         self.render_word(
+        //             buffer.pos_ref(),
+        //             buffer.size_ref(),
+        //             step,
+        //             (0, 0, 0),
+        //             |size, line, res, rgb, step| {
+        //                 self.render_line_hor(size, line, res, rgb, step)
+        //             },
+        //             offset,
+        //         )
+        //     }
+        // }
+        todo!()
     }
 
     /// Renders [`Grad`] with letter wrapping
@@ -250,189 +255,190 @@ impl Grad {
         buffer: &mut Buffer,
         offset: usize,
     ) -> (String, Coords) {
-        match self.direction {
-            Direction::Vertical => {
-                let height = min(
-                    self.size_letter_wrap(buffer.width()) - 1,
-                    buffer.height(),
-                );
-                let step = self.get_step(height as i16);
-                self.render_letter(
-                    buffer.pos_ref(),
-                    buffer.size_ref(),
-                    (0, 0, 0),
-                    step,
-                    |size, line, res, rgb, step| {
-                        self.render_line_ver(size, line, res, rgb, step)
-                    },
-                    offset,
-                )
-            }
-            Direction::Horizontal => {
-                let width = min(buffer.width(), self.text.len());
-                let step = self.get_step(width as i16);
-                self.render_letter(
-                    buffer.pos_ref(),
-                    buffer.size_ref(),
-                    step,
-                    (0, 0, 0),
-                    |size, line, res, rgb, step| {
-                        self.render_line_hor(size, line, res, rgb, step)
-                    },
-                    offset,
-                )
-            }
-        }
+        // match self.direction {
+        //     Direction::Vertical => {
+        //         let height = min(
+        //             self.size_letter_wrap(buffer.width()) - 1,
+        //             buffer.height(),
+        //         );
+        //         let step = self.get_step(height as i16);
+        //         self.render_letter(
+        //             buffer.pos_ref(),
+        //             buffer.size_ref(),
+        //             (0, 0, 0),
+        //             step,
+        //             |size, line, res, rgb, step| {
+        //                 self.render_line_ver(size, line, res, rgb, step)
+        //             },
+        //             offset,
+        //         )
+        //     }
+        //     Direction::Horizontal => {
+        //         let width = min(buffer.width(), self.text.len());
+        //         let step = self.get_step(width as i16);
+        //         self.render_letter(
+        //             buffer.pos_ref(),
+        //             buffer.size_ref(),
+        //             step,
+        //             (0, 0, 0),
+        //             |size, line, res, rgb, step| {
+        //                 self.render_line_hor(size, line, res, rgb, step)
+        //             },
+        //             offset,
+        //         )
+        //     }
+        // }
+        todo!()
     }
 
-    fn render_word<F>(
-        &self,
-        pos: &Coords,
-        size: &Coords,
-        step_x: (i16, i16, i16),
-        step_y: (i16, i16, i16),
-        render_line: F,
-        offset: usize,
-    ) -> (String, Coords)
-    where
-        F: Fn(&Coords, String, &mut String, (u8, u8, u8), (i16, i16, i16)),
-    {
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        for _ in 0..offset {
-            (r, g, b) = self.add_step((r, g, b), step_x);
-        }
+    // fn render_word<F>(
+    //     &self,
+    //     pos: &Coords,
+    //     size: &Coords,
+    //     step_x: (i16, i16, i16),
+    //     step_y: (i16, i16, i16),
+    //     render_line: F,
+    //     offset: usize,
+    // ) -> (String, Coords)
+    // where
+    //     F: Fn(&Coords, String, &mut String, (u8, u8, u8), (i16, i16, i16)),
+    // {
+    //     let (mut r, mut g, mut b) =
+    //         (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+    //     for _ in 0..offset {
+    //         (r, g, b) = self.add_step((r, g, b), step_x);
+    //     }
 
-        let mut res = Cursor::Pos(pos.x + offset, pos.y).to_string();
-        let mut line: Vec<&str> = vec![];
-        let mut coords = Coords::new(offset, pos.y);
+    //     let mut res = Cursor::Pos(pos.x + offset, pos.y).to_string();
+    //     let mut line: Vec<&str> = vec![];
+    //     let mut coords = Coords::new(offset, pos.y);
 
-        for word in self.text.split_whitespace() {
-            if coords.x + word.len() + !line.is_empty() as usize > size.x {
-                if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
-                    let mut line_str = line.join(" ");
-                    let sum = coords.x + self.ellipsis.len();
-                    if sum >= size.x {
-                        let end = size.x.saturating_sub(self.ellipsis.len());
-                        line_str = line_str[..end].to_string();
-                    }
+    //     for word in self.text.split_whitespace() {
+    //         if coords.x + word.len() + !line.is_empty() as usize > size.x {
+    //             if coords.y + 1 >= pos.y + size.y || word.len() > size.x {
+    //                 let mut line_str = line.join(" ");
+    //                 let sum = coords.x + self.ellipsis.len();
+    //                 if sum >= size.x {
+    //                     let end = size.x.saturating_sub(self.ellipsis.len());
+    //                     line_str = line_str[..end].to_string();
+    //                 }
 
-                    line_str.push_str(&self.ellipsis);
-                    coords.x = line.len();
-                    render_line(size, line_str, &mut res, (r, g, b), step_x);
-                    return (res, coords);
-                }
+    //                 line_str.push_str(&self.ellipsis);
+    //                 coords.x = line.len();
+    //                 render_line(size, line_str, &mut res, (r, g, b), step_x);
+    //                 return (res, coords);
+    //             }
 
-                (coords.x, coords.y) = (0, coords.y + 1);
-                render_line(size, line.join(" "), &mut res, (r, g, b), step_x);
-                res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
-                (r, g, b) = self.add_step((r, g, b), step_y);
-                line = vec![];
-            }
-            coords.x += word.len() + !line.is_empty() as usize;
-            line.push(word);
-        }
+    //             (coords.x, coords.y) = (0, coords.y + 1);
+    //             render_line(size, line.join(" "), &mut res, (r, g, b), step_x);
+    //             res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
+    //             (r, g, b) = self.add_step((r, g, b), step_y);
+    //             line = vec![];
+    //         }
+    //         coords.x += word.len() + !line.is_empty() as usize;
+    //         line.push(word);
+    //     }
 
-        if !line.is_empty() {
-            render_line(size, line.join(" "), &mut res, (r, g, b), step_x);
-        }
-        (res, coords)
-    }
+    //     if !line.is_empty() {
+    //         render_line(size, line.join(" "), &mut res, (r, g, b), step_x);
+    //     }
+    //     (res, coords)
+    // }
 
-    fn render_letter<F>(
-        &self,
-        pos: &Coords,
-        size: &Coords,
-        step_x: (i16, i16, i16),
-        step_y: (i16, i16, i16),
-        render_line: F,
-        offset: usize,
-    ) -> (String, Coords)
-    where
-        F: Fn(&Coords, String, &mut String, (u8, u8, u8), (i16, i16, i16)),
-    {
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        for _ in 0..offset {
-            (r, g, b) = self.add_step((r, g, b), step_x);
-        }
+    // fn render_letter<F>(
+    //     &self,
+    //     pos: &Coords,
+    //     size: &Coords,
+    //     step_x: (i16, i16, i16),
+    //     step_y: (i16, i16, i16),
+    //     render_line: F,
+    //     offset: usize,
+    // ) -> (String, Coords)
+    // where
+    //     F: Fn(&Coords, String, &mut String, (u8, u8, u8), (i16, i16, i16)),
+    // {
+    //     let (mut r, mut g, mut b) =
+    //         (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+    //     for _ in 0..offset {
+    //         (r, g, b) = self.add_step((r, g, b), step_x);
+    //     }
 
-        let mut coords = Coords::new(offset, pos.y);
-        let mut res = Cursor::Pos(pos.x + offset, pos.y).to_string();
+    //     let mut coords = Coords::new(offset, pos.y);
+    //     let mut res = Cursor::Pos(pos.x + offset, pos.y).to_string();
 
-        let fits = self.text.len() <= size.x * size.y;
-        for chunk in self.text.chars().collect::<Vec<char>>().chunks(size.x) {
-            let mut chunk_str: String = chunk.iter().collect();
-            coords.x = chunk_str.len();
-            if !fits && coords.y + 1 == size.y + pos.y {
-                let sum = coords.x + self.ellipsis.len();
-                if sum >= size.x {
-                    let end = size.x.saturating_sub(self.ellipsis.len());
-                    chunk_str = chunk_str[..end].to_string();
-                }
+    //     let fits = self.text.len() <= size.x * size.y;
+    //     for chunk in self.text.chars().collect::<Vec<char>>().chunks(size.x) {
+    //         let mut chunk_str: String = chunk.iter().collect();
+    //         coords.x = chunk_str.len();
+    //         if !fits && coords.y + 1 == size.y + pos.y {
+    //             let sum = coords.x + self.ellipsis.len();
+    //             if sum >= size.x {
+    //                 let end = size.x.saturating_sub(self.ellipsis.len());
+    //                 chunk_str = chunk_str[..end].to_string();
+    //             }
 
-                chunk_str.push_str(&self.ellipsis);
-                coords.x = chunk_str.len();
-                render_line(size, chunk_str, &mut res, (r, g, b), step_x);
-                return (res, coords);
-            }
+    //             chunk_str.push_str(&self.ellipsis);
+    //             coords.x = chunk_str.len();
+    //             render_line(size, chunk_str, &mut res, (r, g, b), step_x);
+    //             return (res, coords);
+    //         }
 
-            render_line(size, chunk_str, &mut res, (r, g, b), step_x);
-            (r, g, b) = self.add_step((r, g, b), step_y);
-            coords.y += 1;
-            res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
-        }
-        (res, Coords::new(coords.x, max(coords.y - 1, pos.y)))
-    }
+    //         render_line(size, chunk_str, &mut res, (r, g, b), step_x);
+    //         (r, g, b) = self.add_step((r, g, b), step_y);
+    //         coords.y += 1;
+    //         res.push_str(&Cursor::Pos(pos.x, coords.y).to_string());
+    //     }
+    //     (res, Coords::new(coords.x, max(coords.y - 1, pos.y)))
+    // }
 
-    fn render_line_ver(
-        &self,
-        size: &Coords,
-        line: String,
-        res: &mut String,
-        (r, g, b): (u8, u8, u8),
-        _step: (i16, i16, i16),
-    ) {
-        let offset = self.set_alignment(size, line.len());
-        if offset > 0 {
-            res.push_str(&Cursor::Right(offset).to_string());
-        }
-        res.push_str(&Fg::RGB(r, g, b).to_string());
-        res.push_str(&line);
-    }
+    // fn render_line_ver(
+    //     &self,
+    //     buffer: &mut Buffer,
+    //     line: String,
+    //     pos: &Coords,
+    //     (r, g, b): (u8, u8, u8),
+    //     _step: (i16, i16, i16),
+    // ) {
+    //     let offset = self.set_alignment(size, line.len());
+    //     if offset > 0 {
+    //         res.push_str(&Cursor::Right(offset).to_string());
+    //     }
+    //     res.push_str(&Fg::RGB(r, g, b).to_string());
+    //     res.push_str(&line);
+    // }
 
-    fn render_line_hor(
-        &self,
-        size: &Coords,
-        line: String,
-        res: &mut String,
-        (r, g, b): (u8, u8, u8),
-        step: (i16, i16, i16),
-    ) {
-        let offset = self.set_alignment(size, line.len());
-        if offset > 0 {
-            res.push_str(&Cursor::Right(offset).to_string());
-        }
+    // fn render_line_hor(
+    //     &self,
+    //     size: &Coords,
+    //     line: String,
+    //     res: &mut String,
+    //     (r, g, b): (u8, u8, u8),
+    //     step: (i16, i16, i16),
+    // ) {
+    //     let offset = self.set_alignment(size, line.len());
+    //     if offset > 0 {
+    //         res.push_str(&Cursor::Right(offset).to_string());
+    //     }
 
-        let (mut r, mut g, mut b) = (r, g, b);
-        if self.text.len() > size.x {
-            for _ in 0..offset {
-                (r, g, b) = self.add_step((r, g, b), step);
-            }
-        };
-        for c in line.chars() {
-            res.push_str(&Fg::RGB(r, g, b).to_string());
-            res.push(c);
-            (r, g, b) = self.add_step((r, g, b), step);
-        }
-    }
+    //     let (mut r, mut g, mut b) = (r, g, b);
+    //     if self.text.len() > size.x {
+    //         for _ in 0..offset {
+    //             (r, g, b) = self.add_step((r, g, b), step);
+    //         }
+    //     };
+    //     for c in line.chars() {
+    //         res.push_str(&Fg::RGB(r, g, b).to_string());
+    //         res.push(c);
+    //         (r, g, b) = self.add_step((r, g, b), step);
+    //     }
+    // }
 
-    /// Sets text alignment and returns its offset
-    fn set_alignment(&self, size: &Coords, len: usize) -> usize {
+    /// Gets text alignment offset
+    fn get_align_offset(&self, buffer: &Buffer, len: usize) -> usize {
         match self.align {
             TextAlign::Left => 0,
-            TextAlign::Center => size.x.saturating_sub(len) >> 1,
-            TextAlign::Right => size.x.saturating_sub(len),
+            TextAlign::Center => buffer.width().saturating_sub(len) >> 1,
+            TextAlign::Right => buffer.width().saturating_sub(len),
         }
     }
 
@@ -491,6 +497,232 @@ impl Grad {
     /// Gets size of the [`Grad`] when using letter wrap
     fn size_letter_wrap(&self, size: usize) -> usize {
         (self.text.len() as f32 / size as f32).ceil() as usize
+    }
+
+    fn render_word(&self, buffer: &mut Buffer, offset: usize) {
+        match self.direction {
+            Direction::Vertical => {
+                let height = min(
+                    self.height_word_wrap(buffer.size_ref()) - 1,
+                    buffer.height(),
+                );
+                let step = self.get_step(height as i16);
+                self.render_words(
+                    &self.text,
+                    buffer,
+                    offset,
+                    (0, 0, 0),
+                    step,
+                    |t, b, p, r, s| self.render_ver_line(t, b, p, r, s),
+                );
+            }
+            Direction::Horizontal => {
+                let width = min(buffer.width(), self.text.len());
+                let step = self.get_step(width as i16);
+                self.render_words(
+                    &self.text,
+                    buffer,
+                    offset,
+                    step,
+                    (0, 0, 0),
+                    |t, b, p, r, s| self.render_hor_line(t, b, p, r, s),
+                );
+            }
+        }
+    }
+
+    fn render_letter(&self, buffer: &mut Buffer, offset: usize) {
+        match self.direction {
+            Direction::Vertical => {
+                let height = min(
+                    self.height_word_wrap(buffer.size_ref()) - 1,
+                    buffer.height(),
+                );
+                let step = self.get_step(height as i16);
+                self.render_letters(
+                    &self.text,
+                    buffer,
+                    offset,
+                    (0, 0, 0),
+                    step,
+                    |t, b, p, r, s| self.render_ver_line(t, b, p, r, s),
+                );
+            }
+            Direction::Horizontal => {
+                let width = min(buffer.width(), self.text.len());
+                let step = self.get_step(width as i16);
+                self.render_letters(
+                    &self.text,
+                    buffer,
+                    offset,
+                    step,
+                    (0, 0, 0),
+                    |t, b, p, r, s| self.render_hor_line(t, b, p, r, s),
+                );
+            }
+        }
+    }
+
+    fn render_words<F>(
+        &self,
+        text: &str,
+        buffer: &mut Buffer,
+        offset: usize,
+        step_x: (i16, i16, i16),
+        step_y: (i16, i16, i16),
+        render_line: F,
+    ) -> Coords
+    where
+        F: Fn(String, &mut Buffer, &Coords, (u8, u8, u8), (i16, i16, i16)),
+    {
+        let mut line = Vec::<&str>::new();
+        let mut coords = Coords::new(offset, buffer.y());
+
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+
+        for word in text.split_whitespace() {
+            if coords.x + word.len() + !line.is_empty() as usize
+                > buffer.width()
+            {
+                if coords.y + 1 >= buffer.y() + buffer.height()
+                    || word.len() > buffer.width()
+                {
+                    let mut line_str = line.join(" ");
+                    let sum = coords.x + self.ellipsis.len();
+                    if sum >= buffer.width() {
+                        let end =
+                            buffer.width().saturating_sub(self.ellipsis.len());
+                        line_str = line_str[..end].to_string();
+                    }
+
+                    line_str.push_str(&self.ellipsis);
+                    coords.x = line.len();
+                    render_line(
+                        line_str,
+                        buffer,
+                        &Coords::new(buffer.x(), coords.y),
+                        (r, g, b),
+                        step_x,
+                    );
+                    return coords;
+                }
+
+                render_line(
+                    line.join(" "),
+                    buffer,
+                    &Coords::new(buffer.x(), coords.y),
+                    (r, g, b),
+                    step_x,
+                );
+                (coords.x, coords.y) = (0, coords.y + 1);
+                (r, g, b) = self.add_step((r, g, b), step_y);
+                line.clear();
+            }
+            coords.x += word.len() + !line.is_empty() as usize;
+            line.push(word);
+        }
+
+        if !line.is_empty() {
+            render_line(
+                line.join(" "),
+                buffer,
+                &Coords::new(buffer.x(), coords.y),
+                (r, g, b),
+                step_x,
+            );
+        }
+
+        coords
+    }
+
+    fn render_letters<F>(
+        &self,
+        text: &str,
+        buffer: &mut Buffer,
+        offset: usize,
+        step_x: (i16, i16, i16),
+        step_y: (i16, i16, i16),
+        render_line: F,
+    ) -> Coords
+    where
+        F: Fn(String, &mut Buffer, &Coords, (u8, u8, u8), (i16, i16, i16)),
+    {
+        let mut chars = text.chars().peekable();
+        let mut coords = Coords::new(offset, buffer.y());
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+
+        for _ in 0..buffer.height() {
+            if chars.peek().is_none() {
+                break;
+            }
+
+            let line: String = chars.by_ref().take(buffer.width()).collect();
+            coords.x = line.len();
+            let pos = Coords::new(buffer.x(), coords.y);
+            render_line(line, buffer, &pos, (r, g, b), step_x);
+
+            coords.y += 1;
+            (r, g, b) = self.add_step((r, g, b), step_y);
+        }
+
+        coords.y -= 1;
+        coords
+
+        // let stext: String = text.chars().take(buffer.area()).collect();
+        // buffer.set_str(&stext, &Coords::new(buffer.x() + offset, buffer.y()));
+
+        // if stext.len() != text.len() && !self.ellipsis.is_empty() {
+        //     let coords = Coords::new(
+        //         (buffer.x() + buffer.width())
+        //             .saturating_sub(self.ellipsis.len()),
+        //         (buffer.y() + buffer.height()).saturating_sub(1),
+        //     );
+        //     buffer.set_str(&self.ellipsis, &coords)
+        // }
+
+        // buffer.coords_of(stext.len() + offset)
+    }
+
+    fn render_hor_line(
+        &self,
+        line: String,
+        buffer: &mut Buffer,
+        pos: &Coords,
+        (mut r, mut g, mut b): (u8, u8, u8),
+        step: (i16, i16, i16),
+    ) {
+        let offset = self.get_align_offset(buffer, line.len());
+        for _ in 0..offset {
+            (r, g, b) = self.add_step((r, g, b), step);
+        }
+
+        let mut coords = Coords::new(pos.x + offset, pos.y);
+        for c in line.chars() {
+            buffer.set_val(c, &coords);
+            buffer.set_fg(Color::Rgb(r, g, b), &coords);
+
+            coords.x += 1;
+            (r, g, b) = self.add_step((r, g, b), step);
+        }
+    }
+
+    fn render_ver_line(
+        &self,
+        line: String,
+        buffer: &mut Buffer,
+        pos: &Coords,
+        (r, g, b): (u8, u8, u8),
+        _step: (i16, i16, i16),
+    ) {
+        let offset = self.get_align_offset(buffer, line.len());
+        buffer.set_str_styled(
+            line,
+            &Coords::new(pos.x + offset, pos.y),
+            Color::Rgb(r, g, b),
+            self.bg,
+        );
     }
 }
 

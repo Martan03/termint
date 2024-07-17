@@ -44,8 +44,8 @@ impl Display for Cell {
 impl Default for Cell {
     fn default() -> Self {
         Self {
-            fg: Color::Reset,
-            bg: Color::Reset,
+            fg: Color::Default,
+            bg: Color::Default,
             val: ' ',
         }
     }

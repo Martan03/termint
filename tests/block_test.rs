@@ -10,7 +10,7 @@ mod tests {
 
     #[test]
     fn block_render() {
-        let block = Block::new().title("Block".to_span());
+        let block = Block::vertical().title("Block".to_span());
         let mut buffer = Buffer::empty(Rect::from_coords(
             Coords::new(1, 1),
             Coords::new(15, 5),

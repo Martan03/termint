@@ -60,12 +60,17 @@ pub struct Block {
 }
 
 impl Block {
-    /// Creates new [`Block`] with no title and all borders
-    pub fn new() -> Self {
-        Default::default()
+    /// Creates new [`Block`] that flexes in given [`Direction`]
+    /// with no title and all borders
+    pub fn new(direction: Direction) -> Self {
+        Self {
+            layout: Layout::new(direction),
+            ..Default::default()
+        }
     }
 
     /// Creates new [`Block`] with horizontal layout
+    /// with no title and all borders
     pub fn horizontal() -> Self {
         Self {
             layout: Layout::horizontal(),
@@ -74,6 +79,7 @@ impl Block {
     }
 
     /// Creates new [`Block`] with horizontal layout
+    /// with no title and all borders
     pub fn vertical() -> Self {
         Self {
             layout: Layout::vertical(),
@@ -81,7 +87,7 @@ impl Block {
         }
     }
 
-    /// Sets [`Text`] as a title of [`Block`]
+    /// Sets [`Text`] as a title of the [`Block`]
     pub fn title<T>(mut self, title: T) -> Self
     where
         T: Into<Box<dyn Text>>,
@@ -90,13 +96,13 @@ impl Block {
         self
     }
 
-    /// Sets on which sides border of the [`Block`] should be rendered
+    /// Sets which [`Block`] borders should be displayed
     pub fn borders(mut self, borders: u8) -> Self {
         self.borders = borders;
         self
     }
 
-    /// Sets [`BorderType`] of the [`Block`]
+    /// Sets type of the border of the [`Block`]
     pub fn border_type(mut self, border_type: BorderType) -> Self {
         self.border_type = border_type;
         self
