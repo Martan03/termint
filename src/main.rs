@@ -2,8 +2,8 @@ use termint::{
     buffer::buffer::Buffer,
     enums::{bg::Bg, fg::Fg, modifier::Modifier, wrap::Wrap, Color},
     geometry::{
-        constraint::Constraint, coords::Coords, rect::Rect,
-        text_align::TextAlign,
+        constraint::Constraint, coords::Coords, direction::Direction,
+        rect::Rect, text_align::TextAlign,
     },
     mods,
     term::Term,
