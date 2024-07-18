@@ -14,7 +14,7 @@ use super::widget::Widget;
 /// Creates layout for widgets
 ///
 /// ## Example usage:
-/// ```ignore
+/// ```rust
 /// # use termint::{
 /// #     buffer::buffer::Buffer,
 /// #     geometry::{constraint::Constraint, rect::Rect},
@@ -148,7 +148,7 @@ impl Widget for Layout {
     }
 
     fn height(&self, size: &Coords) -> usize {
-        match self.direction {
+        let h = match self.direction {
             Direction::Vertical => {
                 let mut size = Coords::new(
                     size.x.saturating_sub(self.padding.get_horizontal()),
@@ -160,11 +160,13 @@ impl Widget for Layout {
                 }) + self.padding.get_vertical()
             }
             Direction::Horizontal => self.height_horizontal(size),
-        }
+        };
+        println!("Height: {h}");
+        h
     }
 
     fn width(&self, size: &Coords) -> usize {
-        match self.direction {
+        let w = match self.direction {
             Direction::Vertical => self.width_vertical(size),
             Direction::Horizontal => {
                 let size = Coords::new(
@@ -175,7 +177,9 @@ impl Widget for Layout {
                     self.hor_child_size(child, constrain, size)
                 }) + self.padding.get_horizontal()
             }
-        }
+        };
+        println!("Width: {w}");
+        w
     }
 }
 
@@ -227,6 +231,8 @@ impl Layout {
                 c.transpone();
             }
 
+            println!("Child pos: {} {}", c.x, c.y);
+            println!("Child size: {} {}", child_size.x, child_size.y);
             let mut cbuffer =
                 buffer.get_subset(Rect::from_coords(c, child_size));
             self.children[i].render(&mut cbuffer);

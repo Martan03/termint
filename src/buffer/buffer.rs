@@ -88,6 +88,7 @@ impl Buffer {
         }
     }
 
+    /// Sets cell style and values starting at given coordinates
     pub fn set_str_styled<T1, T2, T3>(
         &mut self,
         str: T1,

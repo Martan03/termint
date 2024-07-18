@@ -155,11 +155,13 @@ impl Text for Span {
     ) -> Coords {
         let wrap = wrap.unwrap_or(self.wrap);
         match wrap {
-            Wrap::Letter => self.render_lines(buffer, offset, |t, b, o| {
-                self.render_letter(t, b, o)
-            }),
-            Wrap::Word => self.render_lines(buffer, offset, |t, b, o| {
-                self.render_word(t, b, o)
+            Wrap::Letter => {
+                self.render_lines(buffer, offset, |t, b, ox, oy| {
+                    self.render_letter(t, b, ox, oy)
+                })
+            }
+            Wrap::Word => self.render_lines(buffer, offset, |t, b, ox, oy| {
+                self.render_word(t, b, ox, oy)
             }),
         }
     }
@@ -218,7 +220,7 @@ impl Span {
         text_render: F,
     ) -> Coords
     where
-        F: Fn(&str, &mut Buffer, usize) -> Coords,
+        F: Fn(&str, &mut Buffer, usize, usize) -> Coords,
     {
         let mut fin_coords = Coords::new(0, buffer.y());
         let mut coords = Coords::new(buffer.x(), buffer.y());
@@ -230,7 +232,7 @@ impl Span {
                 break;
             }
 
-            fin_coords = text_render(line, buffer, offset);
+            fin_coords = text_render(line, buffer, offset, coords.y);
             (coords.x, coords.y) = (buffer.x(), fin_coords.y + 1);
             lsize.y = buffer.height().saturating_sub(coords.y - buffer.y());
             offset = 0;
@@ -244,10 +246,11 @@ impl Span {
         &self,
         text: &str,
         buffer: &mut Buffer,
-        offset: usize,
+        offset_x: usize,
+        offset_y: usize,
     ) -> Coords {
         let mut line = Vec::<&str>::new();
-        let mut coords = Coords::new(offset, buffer.y());
+        let mut coords = Coords::new(offset_x, offset_y);
 
         for word in text.split_whitespace() {
             if coords.x + word.len() + !line.is_empty() as usize
@@ -303,10 +306,11 @@ impl Span {
         &self,
         text: &str,
         buffer: &mut Buffer,
-        offset: usize,
+        offset_x: usize,
+        offset_y: usize,
     ) -> Coords {
         let stext: String = text.chars().take(buffer.area()).collect();
-        buffer.set_str(&stext, &Coords::new(buffer.x() + offset, buffer.y()));
+        buffer.set_str(&stext, &Coords::new(buffer.x() + offset_x, offset_y));
 
         if stext.len() != text.len() && !self.ellipsis.is_empty() {
             let coords = Coords::new(
@@ -317,7 +321,7 @@ impl Span {
             buffer.set_str(&self.ellipsis, &coords)
         }
 
-        buffer.coords_of(stext.len() + offset)
+        buffer.coords_of(stext.len() + offset_x)
     }
 
     /// Renders one line of text and aligns it based on set alignment

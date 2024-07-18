@@ -3,7 +3,7 @@ use termint::{
     enums::{modifier::Modifier, wrap::Wrap, Color},
     geometry::{
         constraint::Constraint, coords::Coords, rect::Rect,
-        text_align::TextAlign,
+        text_align::TextAlign, unit::Unit,
     },
     mods,
     term::Term,
@@ -12,6 +12,7 @@ use termint::{
         block::Block,
         border::{Border, BorderType},
         grad::Grad,
+        grid::Grid,
         layout::Layout,
         list::List,
         paragraph::Paragraph,
@@ -21,7 +22,7 @@ use termint::{
 };
 
 fn main() {
-    test_block();
+    // test_block();
     // test_layout();
     // test_grad();
     // cool_example();
@@ -31,7 +32,10 @@ fn main() {
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
-    // let span = "This is a test of the span rendering".align(TextAlign::Center);
+    grid_test();
+
+    // let span =
+    //     "This is a test of\n the span rendering".align(TextAlign::Center);
     // let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
     // span.render(&mut buffer);
 
@@ -45,19 +49,19 @@ fn test_block() {
 
     let mut block = Block::horizontal().title("Not easy");
 
-    let mut block1 = Block::vertical();
+    let block1 = Block::vertical().title("Test");
+    let mut block2 = Block::vertical();
     let grad =
         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
-    block1.add_child(grad, Constraint::Percent(100));
-    let block2 = Block::vertical().title("Test");
+    block2.add_child(grad, Constraint::Percent(100));
     let block3 = Block::vertical().title(Grad::new(
         "Test",
         (100, 200, 100),
         (20, 160, 255),
     ));
 
-    block.add_child(block2, Constraint::Min(0));
     block.add_child(block1, Constraint::Min(0));
+    block.add_child(block2, Constraint::Min(0));
     block.add_child(block3, Constraint::Fill);
 
     let mut buffer = Buffer::empty(Rect::from_coords(
@@ -65,7 +69,7 @@ fn test_block() {
         Coords::new(30, 9),
     ));
     block.render(&mut buffer);
-    buffer.render();
+    // buffer.render();
 
     // println!("\x1b[7B");
 }
@@ -288,4 +292,18 @@ fn term_test() {
     layout.add_child(span, Constraint::Length(10));
 
     term.render(layout);
+}
+
+#[allow(unused)]
+fn grid_test() {
+    let mut grid = Grid::new(
+        vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],
+        vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
+    );
+
+    grid.add_child("Grid", 1, 1);
+
+    let mut buffer = Buffer::empty(Rect::new(1, 1, 15, 6));
+    grid.render(&mut buffer);
+    buffer.render();
 }

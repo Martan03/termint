@@ -20,6 +20,8 @@ pub mod block;
 pub mod border;
 /// Contains Grad widget
 pub mod grad;
+/// Contains Grid widget
+pub mod grid;
 /// Contains Layout widget
 pub mod layout;
 /// Contains List widget
