@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use termint::{
     buffer::buffer::Buffer,
     enums::{modifier::Modifier, wrap::Wrap, Color},
@@ -14,7 +16,7 @@ use termint::{
         grad::Grad,
         grid::Grid,
         layout::Layout,
-        list::List,
+        list::{List, ListState},
         paragraph::Paragraph,
         span::StrSpanExtension,
         widget::Widget,
@@ -22,13 +24,13 @@ use termint::{
 };
 
 fn main() {
-    test_block();
+    // test_block();
     // test_layout();
     // test_grad();
     // cool_example();
     // test_paragraph();
     // readme_example();
-    // test_list();
+    test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
@@ -230,20 +232,24 @@ fn readme_example() {
 fn test_list() {
     println!("\x1b[2J");
 
+    let mut offset = Rc::new(RefCell::new(ListState { offset: 3 }));
+
     let mut block = Block::vertical();
-    let list =
-        List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
-            .selected(Some(2))
-            .sel_fg(Color::Yellow)
-            .sel_bg(Color::Blue)
-            .sel_char("-");
+    let list = List::new(
+        vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"],
+        offset,
+    )
+    .selected(Some(2))
+    .sel_fg(Color::Yellow)
+    .sel_bg(Color::Blue)
+    .sel_char("-");
     block.add_child(list, Constraint::Fill);
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
         Coords::new(20, 6),
     ));
     block.render(&mut buffer);
-    println!("\x1b[2B");
+    buffer.render();
 }
 
 #[allow(unused)]

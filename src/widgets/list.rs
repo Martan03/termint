@@ -1,12 +1,22 @@
-use std::cmp::max;
+use std::{
+    cell::RefCell,
+    cmp::{max, min},
+    rc::Rc,
+};
 
 use crate::{
     buffer::buffer::Buffer,
-    enums::{cursor::Cursor, Color},
-    geometry::coords::Coords,
+    enums::Color,
+    geometry::{coords::Coords, rect::Rect},
 };
 
-use super::{span::StrSpanExtension, widget::Widget};
+use super::{span::StrSpanExtension, text::Text, widget::Widget};
+
+/// State of the [`List`] widget
+#[derive(Debug)]
+pub struct ListState {
+    pub offset: usize,
+}
 
 /// List widget with scrollbar
 ///
@@ -39,7 +49,7 @@ pub struct List {
     items: Vec<String>,
     current: Option<usize>,
     prev_offset: Option<usize>,
-    offset: usize,
+    offset: Rc<RefCell<ListState>>,
     fg: Color,
     sel_fg: Color,
     sel_bg: Option<Color>,
@@ -51,7 +61,7 @@ pub struct List {
 impl List {
     /// Creates new [`List`] with given items.
     /// Automatically sets current to the first item, when `items` aren't empty
-    pub fn new<T>(items: Vec<T>) -> Self
+    pub fn new<T>(items: Vec<T>, offset: Rc<RefCell<ListState>>) -> Self
     where
         T: AsRef<str>,
     {
@@ -62,7 +72,14 @@ impl List {
         Self {
             items,
             current,
-            ..Default::default()
+            prev_offset: None,
+            offset,
+            fg: Color::Default,
+            sel_fg: Color::Cyan,
+            sel_bg: None,
+            sel_char: String::new(),
+            scrollbar_fg: Color::Default,
+            thumb_fg: Color::Default,
         }
     }
 
@@ -79,17 +96,6 @@ impl List {
     pub fn selected<T: Into<Option<usize>>>(mut self, current: T) -> Self {
         self.current = current.into();
         self
-    }
-
-    /// Sets scroll offset of the [`List`]
-    pub fn offset(mut self, offset: usize) -> Self {
-        self.offset = offset;
-        self
-    }
-
-    /// Gets current [`List`] offset
-    pub fn get_offset(&self) -> usize {
-        self.offset
     }
 
     /// Scrolls [`List`] from given offset so current item is visible
@@ -145,40 +151,32 @@ impl List {
 
 impl Widget for List {
     fn render(&self, buffer: &mut Buffer) {
-        let mut res = String::new();
-        let text_pos =
+        if !self.fits(buffer.size_ref()) {
+            self.render_scrollbar(buffer);
+        }
+
+        let mut text_pos =
             Coords::new(buffer.x() + self.sel_char.len(), buffer.y());
         let mut text_size =
             Coords::new(buffer.width() - self.sel_char.len(), buffer.height());
         let offset = self.get_render_offset(buffer.size_ref());
 
-        let fits = self.fits(buffer.size_ref());
-        if !fits {
-            text_size.x -= 1;
-            self.get_scrollbar(
-                &mut res,
-                &Coords::new(
-                    (buffer.x() + buffer.width()).saturating_sub(1),
-                    buffer.y(),
-                ),
-                buffer.size_ref(),
-                offset,
-            );
-        }
-
         for i in offset..self.items.len() {
-            // let mut fg = self.fg;
-            // let mut bg: Option<Color> = None;
+            let mut fg = self.fg;
+            let mut bg: Option<Color> = None;
             if Some(i) == self.current {
-                res.push_str(&Cursor::Pos(buffer.x(), text_pos.y).to_string());
-                res.push_str(&self.sel_char);
-                // fg = self.sel_fg;
-                // bg = self.sel_bg;
+                fg = self.sel_fg;
+                bg = self.sel_bg;
             }
 
-            // let span = self.items[i].fg(fg).bg(bg);
-            // res.push_str(&span.get_string(&text_pos, &text_size));
-            // text_pos.y += span.height(&text_size);
+            let span = self.items[i].fg(fg).bg(bg);
+            let mut ibuffer =
+                buffer.get_subset(Rect::from_coords(text_pos, text_size));
+            let res_pos = span.render_offset(&mut ibuffer, 0, None);
+            buffer.union(ibuffer);
+
+            text_size.y = text_size.y.saturating_sub(res_pos.y - text_pos.y);
+            text_pos.y = res_pos.y + 1;
 
             if buffer.y() + buffer.height() <= text_pos.y {
                 break;
@@ -206,60 +204,39 @@ impl Widget for List {
     }
 }
 
-impl Default for List {
-    fn default() -> Self {
-        Self {
-            items: Vec::new(),
-            current: None,
-            prev_offset: None,
-            offset: 0,
-            fg: Color::Default,
-            sel_fg: Color::Cyan,
-            sel_bg: None,
-            sel_char: String::new(),
-            scrollbar_fg: Color::Default,
-            thumb_fg: Color::Default,
-        }
-    }
-}
-
 impl List {
     /// Renders [`List`] scrollbar
-    fn get_scrollbar(
-        &self,
-        _res: &mut str,
-        _pos: &Coords,
-        _size: &Coords,
-        _offset: usize,
-    ) {
-        // let rat = self.items.len() as f32 / size.y as f32;
-        // let thumb_size = min((size.y as f32 / rat) as usize, size.y);
-        // let thumb_offset =
-        //     min((offset as f32 / rat) as usize, size.y - thumb_size);
+    fn render_scrollbar(&self, buffer: &mut Buffer) {
+        let rat = self.items.len() as f32 / buffer.height() as f32;
+        let thumb_size =
+            min((buffer.height() as f32 / rat) as usize, buffer.height());
+        let thumb_offset = min(
+            (self.offset.borrow().offset as f32 / rat) as usize,
+            buffer.height() - thumb_size,
+        );
 
-        // let mut bar_pos = Coords::new(pos.x, pos.y);
-        // let bar = "│".fg(self.scrollbar_fg);
-        // for _ in 0..size.y {
-        //     // TODO
-        //     // res.push_str(&bar.get_string(&bar_pos, size));
-        //     bar_pos.y += 1;
-        // }
+        let x = (buffer.x() + buffer.width()).saturating_sub(1);
+        let mut bar_pos = Coords::new(x, buffer.y());
+        for _ in 0..buffer.height() {
+            buffer.set_val('|', &bar_pos);
+            buffer.set_fg(self.scrollbar_fg, &bar_pos);
+            bar_pos.y += 1;
+        }
 
-        // bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
-        // let thumb = "┃".fg(self.thumb_fg);
-        // for _ in 0..thumb_size {
-        //     // TODO
-        //     // res.push_str(&thumb.get_string(&bar_pos, size));
-        //     bar_pos.y += 1;
-        // }
+        bar_pos = Coords::new(x, buffer.y() + thumb_offset);
+        for _ in 0..thumb_size {
+            buffer.set_val('┃', &bar_pos);
+            buffer.set_fg(self.thumb_fg, &bar_pos);
+            bar_pos.y += 1;
+        }
     }
 
     fn get_render_offset(&self, size: &Coords) -> usize {
         let Some(current) = self.current else {
-            return self.offset;
+            return self.offset.borrow().offset;
         };
         let Some(prev_offset) = self.prev_offset else {
-            return self.offset;
+            return self.offset.borrow().offset;
         };
 
         if prev_offset > current {
