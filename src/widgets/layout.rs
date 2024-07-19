@@ -11,6 +11,13 @@ use crate::{
 
 use super::widget::Widget;
 
+/// Contains layout child and constraint of its size
+#[derive(Debug)]
+struct LayoutChild {
+    pub child: Box<dyn Widget>,
+    pub constraint: Constraint,
+}
+
 /// Creates layout for widgets
 ///
 /// ## Example usage:
@@ -39,8 +46,7 @@ use super::widget::Widget;
 #[derive(Debug)]
 pub struct Layout {
     direction: Direction,
-    constraint: Vec<Constraint>,
-    children: Vec<Box<dyn Widget>>,
+    children: Vec<LayoutChild>,
     bg: Option<Color>,
     padding: Padding,
     center: bool,
@@ -100,8 +106,10 @@ impl Layout {
     where
         T: Into<Box<dyn Widget>>,
     {
-        self.children.push(child.into());
-        self.constraint.push(constraint);
+        self.children.push(LayoutChild {
+            child: child.into(),
+            constraint,
+        });
     }
 }
 
@@ -147,39 +155,26 @@ impl Widget for Layout {
         }
     }
 
+    /// Reverted to old implementation for now, which should work worse,
+    /// but somehow it ends up better (better for widgets, which don't have
+    /// fixed one of its side sizes, such as text)
     fn height(&self, size: &Coords) -> usize {
-        let h = match self.direction {
-            Direction::Vertical => {
-                let mut size = Coords::new(
-                    size.x.saturating_sub(self.padding.get_horizontal()),
-                    size.y,
-                );
-                size.transpone();
-                self.get_size(&size, |child, constrain, size| {
-                    self.ver_child_size(child, constrain, size)
-                }) + self.padding.get_vertical()
-            }
-            Direction::Horizontal => self.height_horizontal(size),
-        };
-        println!("Height: {h}");
-        h
+        let mut height = 0;
+        for LayoutChild { child, .. } in self.children.iter() {
+            height += child.height(size);
+        }
+        height
     }
 
+    /// Reverted to old implementation for now, which should work worse,
+    /// but somehow it ends up better (better for widgets, which don't have
+    /// fixed one of its side sizes, such as text)
     fn width(&self, size: &Coords) -> usize {
-        let w = match self.direction {
-            Direction::Vertical => self.width_vertical(size),
-            Direction::Horizontal => {
-                let size = Coords::new(
-                    size.x,
-                    size.y.saturating_sub(self.padding.get_vertical()),
-                );
-                self.get_size(&size, |child, constrain, size| {
-                    self.hor_child_size(child, constrain, size)
-                }) + self.padding.get_horizontal()
-            }
-        };
-        println!("Width: {w}");
-        w
+        let mut width = 0;
+        for LayoutChild { child, .. } in self.children.iter() {
+            width += child.width(size);
+        }
+        width
     }
 }
 
@@ -187,7 +182,6 @@ impl Default for Layout {
     fn default() -> Self {
         Self {
             direction: Direction::Vertical,
-            constraint: Vec::new(),
             children: Vec::new(),
             bg: None,
             padding: Default::default(),
@@ -216,7 +210,7 @@ impl Layout {
                 break;
             }
 
-            let mut child_size = match self.constraint[i] {
+            let mut child_size = match self.children[i].constraint {
                 Constraint::Fill => Coords::new(fill, size.y),
                 _ => Coords::new(*s, size.y),
             };
@@ -231,33 +225,10 @@ impl Layout {
                 c.transpone();
             }
 
-            println!("Child pos: {} {}", c.x, c.y);
-            println!("Child size: {} {}", child_size.x, child_size.y);
             let mut cbuffer =
                 buffer.get_subset(Rect::from_coords(c, child_size));
-            self.children[i].render(&mut cbuffer);
+            self.children[i].child.render(&mut cbuffer);
             buffer.union(cbuffer);
-        }
-    }
-
-    /// Gets total layout size
-    fn get_size<F>(&self, size: &Coords, child_size: F) -> usize
-    where
-        F: Fn(&dyn Widget, &Constraint, &Coords) -> usize,
-    {
-        let mut total = 0;
-        let mut fill = 0;
-        for i in 0..self.children.len() {
-            if self.constraint[i] == Constraint::Fill {
-                fill += 1;
-            }
-            total += child_size(&*self.children[i], &self.constraint[i], size);
-        }
-
-        if fill > 0 {
-            max(total, size.x)
-        } else {
-            total
         }
     }
 
@@ -271,9 +242,7 @@ impl Layout {
         let size = size.inverse();
         match constrain {
             Constraint::Length(len) => *len,
-            Constraint::Percent(p) => {
-                (*p as f32 / 100.0 * size.y as f32) as usize
-            }
+            Constraint::Percent(p) => size.y * p / 100,
             Constraint::Min(val) => max(child.height(&size), *val),
             Constraint::Max(val) => min(child.height(&size), *val),
             Constraint::MinMax(l, h) => min(max(child.height(&size), *l), *h),
@@ -290,9 +259,7 @@ impl Layout {
     ) -> usize {
         match constrain {
             Constraint::Length(len) => *len,
-            Constraint::Percent(p) => {
-                (*p as f32 / 100.0 * size.x as f32) as usize
-            }
+            Constraint::Percent(p) => size.x * p / 100,
             Constraint::Min(val) => max(child.width(size), *val),
             Constraint::Max(val) => min(child.width(size), *val),
             Constraint::MinMax(l, h) => min(max(child.width(size), *l), *h),
@@ -313,16 +280,13 @@ impl Layout {
         let mut sizes: Vec<usize> = Vec::new();
         let mut total = 0;
         let mut fill = 0;
-        for i in 0..self.children.len() {
-            if self.constraint[i] == Constraint::Fill {
+        for LayoutChild { child, constraint } in self.children.iter() {
+            if constraint == &Constraint::Fill {
                 fill += 1;
             }
-            sizes.push(child_size(
-                &*self.children[i],
-                &self.constraint[i],
-                size,
-            ));
-            total += sizes[i];
+            let csize = child_size(&**child, constraint, size);
+            sizes.push(csize);
+            total += csize;
         }
 
         let fills =
@@ -349,52 +313,6 @@ impl Layout {
                 buffer.set_bg(bg, &Coords::new(x, y));
             }
         }
-    }
-
-    fn height_horizontal(&self, size: &Coords) -> usize {
-        let mut size = *size;
-        let (sizes, fill) = self.get_sizes(
-            &mut size,
-            &mut Coords::new(1, 1),
-            |child, constrain, size| {
-                self.hor_child_size(child, constrain, size)
-            },
-        );
-
-        let mut max = 2;
-        for (i, s) in sizes.iter().enumerate() {
-            max = std::cmp::max(
-                match self.constraint[i] {
-                    Constraint::Fill => fill,
-                    _ => *s,
-                },
-                max,
-            );
-        }
-        max
-    }
-
-    fn width_vertical(&self, size: &Coords) -> usize {
-        let mut size = *size;
-        let (sizes, fill) = self.get_sizes(
-            &mut size,
-            &mut Coords::new(1, 1),
-            |child, constrain, size| {
-                self.ver_child_size(child, constrain, size)
-            },
-        );
-
-        let mut max = 2;
-        for (i, s) in sizes.iter().enumerate() {
-            max = std::cmp::max(
-                match self.constraint[i] {
-                    Constraint::Fill => fill,
-                    _ => *s,
-                },
-                max,
-            );
-        }
-        max
     }
 }
 

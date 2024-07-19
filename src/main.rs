@@ -22,7 +22,7 @@ use termint::{
 };
 
 fn main() {
-    // test_block();
+    test_block();
     // test_layout();
     // test_grad();
     // cool_example();
@@ -32,7 +32,7 @@ fn main() {
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
-    grid_test();
+    // grid_test();
 
     // let span =
     //     "This is a test of\n the span rendering".align(TextAlign::Center);
@@ -69,7 +69,7 @@ fn test_block() {
         Coords::new(30, 9),
     ));
     block.render(&mut buffer);
-    // buffer.render();
+    buffer.render();
 
     // println!("\x1b[7B");
 }
