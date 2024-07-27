@@ -310,7 +310,12 @@ impl Span {
         offset_y: usize,
     ) -> Coords {
         let stext: String = text.chars().take(buffer.area()).collect();
-        buffer.set_str(&stext, &Coords::new(buffer.x() + offset_x, offset_y));
+        buffer.set_str_styled(
+            &stext,
+            &Coords::new(buffer.x() + offset_x, offset_y),
+            self.fg,
+            self.bg,
+        );
 
         if stext.len() != text.len() && !self.ellipsis.is_empty() {
             let coords = Coords::new(
@@ -318,7 +323,7 @@ impl Span {
                     .saturating_sub(self.ellipsis.len()),
                 (buffer.y() + buffer.height()).saturating_sub(1),
             );
-            buffer.set_str(&self.ellipsis, &coords)
+            buffer.set_str_styled(&self.ellipsis, &coords, self.fg, self.bg)
         }
 
         buffer.coords_of(stext.len() + offset_x)
@@ -326,17 +331,14 @@ impl Span {
 
     /// Renders one line of text and aligns it based on set alignment
     fn render_line(&self, buffer: &mut Buffer, line: String, pos: &Coords) {
-        match self.align {
-            TextAlign::Left => buffer.set_str(line, pos),
+        let x = match self.align {
+            TextAlign::Left => pos.x,
             TextAlign::Center => {
-                let offset = buffer.width().saturating_sub(line.len()) >> 1;
-                buffer.set_str(line, &Coords::new(pos.x + offset, pos.y));
+                buffer.width().saturating_sub(line.len()) >> 1
             }
-            TextAlign::Right => {
-                let offset = buffer.width().saturating_sub(line.len());
-                buffer.set_str(line, &Coords::new(pos.x + offset, pos.y));
-            }
-        }
+            TextAlign::Right => buffer.width().saturating_sub(line.len()),
+        };
+        buffer.set_str_styled(line, &Coords::new(x, pos.y), self.fg, self.bg);
     }
 
     /// Gets height of the [`Span`] when using word wrap

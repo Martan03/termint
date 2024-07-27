@@ -16,6 +16,25 @@ use super::{span::StrSpanExtension, text::Text, widget::Widget};
 #[derive(Debug)]
 pub struct ListState {
     pub offset: usize,
+    pub selected: Option<usize>,
+}
+
+impl ListState {
+    /// Creates new [`ListState`] with given offset and no item selected
+    pub fn new(offset: usize) -> Self {
+        Self {
+            offset,
+            selected: None,
+        }
+    }
+
+    /// Creates new [`ListState`] with given offset and selected item
+    pub fn selected(offset: usize, selected: usize) -> Self {
+        Self {
+            offset,
+            selected: Some(selected),
+        }
+    }
 }
 
 /// List widget with scrollbar
@@ -47,9 +66,8 @@ pub struct ListState {
 #[derive(Debug)]
 pub struct List {
     items: Vec<String>,
-    current: Option<usize>,
     prev_offset: Option<usize>,
-    offset: Rc<RefCell<ListState>>,
+    state: Rc<RefCell<ListState>>,
     fg: Color,
     sel_fg: Color,
     sel_bg: Option<Color>,
@@ -61,7 +79,7 @@ pub struct List {
 impl List {
     /// Creates new [`List`] with given items.
     /// Automatically sets current to the first item, when `items` aren't empty
-    pub fn new<T>(items: Vec<T>, offset: Rc<RefCell<ListState>>) -> Self
+    pub fn new<T>(items: Vec<T>, state: Rc<RefCell<ListState>>) -> Self
     where
         T: AsRef<str>,
     {
@@ -71,9 +89,8 @@ impl List {
 
         Self {
             items,
-            current,
             prev_offset: None,
-            offset,
+            state,
             fg: Color::Default,
             sel_fg: Color::Cyan,
             sel_bg: None,
@@ -84,17 +101,11 @@ impl List {
     }
 
     /// Sets selected item in [`List`]
-    /// This method exists for compatibility purposes and is deprecated, use
-    /// `selected` method instead
-    #[deprecated]
-    pub fn current<T: Into<Option<usize>>>(mut self, current: T) -> Self {
-        self.current = current.into();
-        self
-    }
-
-    /// Sets selected item in [`List`]
-    pub fn selected<T: Into<Option<usize>>>(mut self, current: T) -> Self {
-        self.current = current.into();
+    pub fn selected<T>(self, current: T) -> Self
+    where
+        T: Into<Option<usize>>,
+    {
+        self.state.borrow_mut().selected = current.into();
         self
     }
 
@@ -161,10 +172,11 @@ impl Widget for List {
             Coords::new(buffer.width() - self.sel_char.len(), buffer.height());
         let offset = self.get_render_offset(buffer.size_ref());
 
+        let selected = self.state.borrow().selected;
         for i in offset..self.items.len() {
             let mut fg = self.fg;
             let mut bg: Option<Color> = None;
-            if Some(i) == self.current {
+            if Some(i) == selected {
                 fg = self.sel_fg;
                 bg = self.sel_bg;
             }
@@ -211,7 +223,7 @@ impl List {
         let thumb_size =
             min((buffer.height() as f32 / rat) as usize, buffer.height());
         let thumb_offset = min(
-            (self.offset.borrow().offset as f32 / rat) as usize,
+            (self.state.borrow().offset as f32 / rat) as usize,
             buffer.height() - thumb_size,
         );
 
@@ -232,11 +244,11 @@ impl List {
     }
 
     fn get_render_offset(&self, size: &Coords) -> usize {
-        let Some(current) = self.current else {
-            return self.offset.borrow().offset;
+        let Some(current) = self.state.borrow().selected else {
+            return self.state.borrow().offset;
         };
         let Some(prev_offset) = self.prev_offset else {
-            return self.offset.borrow().offset;
+            return self.state.borrow().offset;
         };
 
         if prev_offset > current {

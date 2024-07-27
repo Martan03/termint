@@ -232,14 +232,13 @@ fn readme_example() {
 fn test_list() {
     println!("\x1b[2J");
 
-    let mut offset = Rc::new(RefCell::new(ListState { offset: 3 }));
+    let mut offset = Rc::new(RefCell::new(ListState::selected(2, 2)));
 
     let mut block = Block::vertical();
     let list = List::new(
         vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"],
         offset,
     )
-    .selected(Some(2))
     .sel_fg(Color::Yellow)
     .sel_bg(Color::Blue)
     .sel_char("-");
