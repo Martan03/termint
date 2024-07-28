@@ -66,7 +66,6 @@ impl ListState {
 #[derive(Debug)]
 pub struct List {
     items: Vec<String>,
-    prev_offset: Option<usize>,
     state: Rc<RefCell<ListState>>,
     fg: Color,
     sel_fg: Color,
@@ -77,19 +76,16 @@ pub struct List {
 }
 
 impl List {
-    /// Creates new [`List`] with given items.
-    /// Automatically sets current to the first item, when `items` aren't empty
+    /// Creates new [`List`] with given items and given state
     pub fn new<T>(items: Vec<T>, state: Rc<RefCell<ListState>>) -> Self
     where
         T: AsRef<str>,
     {
         let items: Vec<String> =
             items.iter().map(|i| i.as_ref().to_string()).collect();
-        let current = if items.is_empty() { None } else { Some(0) };
 
         Self {
             items,
-            prev_offset: None,
             state,
             fg: Color::Default,
             sel_fg: Color::Cyan,
@@ -106,12 +102,6 @@ impl List {
         T: Into<Option<usize>>,
     {
         self.state.borrow_mut().selected = current.into();
-        self
-    }
-
-    /// Scrolls [`List`] from given offset so current item is visible
-    pub fn to_current(mut self, from: usize) -> Self {
-        self.prev_offset = Some(from);
         self
     }
 
@@ -243,23 +233,24 @@ impl List {
         }
     }
 
-    fn get_render_offset(&self, size: &Coords) -> usize {
+    fn get_render_offset(&self, _size: &Coords) -> usize {
         let Some(current) = self.state.borrow().selected else {
             return self.state.borrow().offset;
         };
-        let Some(prev_offset) = self.prev_offset else {
-            return self.state.borrow().offset;
-        };
+        // let Some(prev_offset) = self.prev_offset else {
+        //     return self.state.borrow().offset;
+        // };
 
-        if prev_offset > current {
-            return current;
-        }
+        // if prev_offset > current {
+        //     return current;
+        // }
 
-        let mut offset = prev_offset;
-        while !self.is_visible(current, offset, size) {
-            offset += 1;
-        }
-        offset
+        // let mut offset = prev_offset;
+        // while !self.is_visible(current, offset, size) {
+        //     offset += 1;
+        // }
+        // offset
+        current
     }
 
     /// Checks if item is visible with given offset

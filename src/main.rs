@@ -27,22 +27,14 @@ fn main() {
     // test_block();
     // test_layout();
     // test_grad();
-    // cool_example();
+    cool_example();
     // test_paragraph();
     // readme_example();
-    test_list();
+    // test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
     // grid_test();
-
-    // let span =
-    //     "This is a test of\n the span rendering".align(TextAlign::Center);
-    // let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
-    // span.render(&mut buffer);
-
-    // println!("\x1b[2J");
-    // buffer.render();
 }
 
 #[allow(unused)]
@@ -102,7 +94,7 @@ fn test_layout() {
         Coords::new(30, 8),
     ));
     main.render(&mut buffer);
-    println!("\x1b[2B");
+    buffer.render();
 }
 
 #[allow(unused)]
@@ -166,7 +158,7 @@ fn cool_example() {
         Coords::new(30, 9),
     ));
     main.render(&mut buffer);
-    println!("\x1b[2B");
+    buffer.render();
 }
 
 #[allow(unused)]
@@ -225,7 +217,7 @@ fn readme_example() {
         Coords::new(30, 9),
     ));
     main.render(&mut buffer);
-    println!("\x1b[4B");
+    buffer.render();
 }
 
 #[allow(unused)]
@@ -266,7 +258,7 @@ fn test_layout_centering() {
         Coords::new(20, 8),
     ));
     main.render(&mut buffer);
-    println!("\x1b[3B");
+    buffer.render();
 }
 
 #[allow(unused)]
@@ -283,7 +275,6 @@ fn test_bg_grad() {
     ));
     grad.render(&mut buffer);
     buffer.render();
-    println!("\x1b[5B");
 }
 
 #[allow(unused)]
@@ -294,7 +285,7 @@ fn term_test() {
 
     let mut layout = Layout::vertical().padding(1);
     let mut span = "This is test of small message rendering";
-    layout.add_child(span, Constraint::Length(10));
+    layout.add_child(span, Constraint::Length(9));
 
     term.render(layout);
 }

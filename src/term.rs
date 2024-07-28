@@ -76,6 +76,7 @@ impl Term {
             }
             _ => widget.render(&mut buffer),
         };
+        buffer.render();
         Ok(())
     }
 

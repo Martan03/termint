@@ -160,8 +160,11 @@ impl Widget for Layout {
     /// fixed one of its side sizes, such as text)
     fn height(&self, size: &Coords) -> usize {
         let mut height = 0;
-        for LayoutChild { child, .. } in self.children.iter() {
-            height += child.height(size);
+        for LayoutChild { child, constraint } in self.children.iter() {
+            match constraint {
+                Constraint::Length(len) => height += len,
+                _ => height += child.height(size),
+            }
         }
         height
     }
@@ -171,8 +174,11 @@ impl Widget for Layout {
     /// fixed one of its side sizes, such as text)
     fn width(&self, size: &Coords) -> usize {
         let mut width = 0;
-        for LayoutChild { child, .. } in self.children.iter() {
-            width += child.width(size);
+        for LayoutChild { child, constraint } in self.children.iter() {
+            match constraint {
+                Constraint::Length(len) => width += len,
+                _ => width += child.height(size),
+            }
         }
         width
     }
