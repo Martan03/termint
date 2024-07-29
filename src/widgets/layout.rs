@@ -163,6 +163,10 @@ impl Widget for Layout {
         for LayoutChild { child, constraint } in self.children.iter() {
             match constraint {
                 Constraint::Length(len) => height += len,
+                Constraint::Min(m) => height += max(*m, child.height(size)),
+                Constraint::MinMax(mn, mx) => {
+                    height += min(*mx, max(*mn, child.height(size)))
+                }
                 _ => height += child.height(size),
             }
         }
@@ -177,6 +181,10 @@ impl Widget for Layout {
         for LayoutChild { child, constraint } in self.children.iter() {
             match constraint {
                 Constraint::Length(len) => width += len,
+                Constraint::Min(m) => width += max(*m, child.height(size)),
+                Constraint::MinMax(mn, mx) => {
+                    width += min(*mx, max(*mn, child.height(size)))
+                }
                 _ => width += child.height(size),
             }
         }

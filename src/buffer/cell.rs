@@ -5,9 +5,9 @@ use crate::enums::Color;
 /// Represents rendering buffer cell
 #[derive(Debug, Clone, Copy)]
 pub struct Cell {
-    fg: Color,
-    bg: Color,
-    val: char,
+    pub fg: Color,
+    pub bg: Color,
+    pub val: char,
 }
 
 impl Cell {

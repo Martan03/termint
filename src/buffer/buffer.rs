@@ -8,7 +8,7 @@ use crate::{
 use super::cell::Cell;
 
 /// Represents rendering buffer
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
     rect: Rect,
     content: Vec<Cell>,
@@ -36,11 +36,77 @@ impl Buffer {
     /// Renders the [`Buffer`]
     pub fn render(&self) {
         let mut id = 0;
+        let mut fg = Color::Default;
+        let mut bg = Color::Default;
+
         for y in 0..self.height() {
             print!("{}", Cursor::Pos(self.x(), self.y() + y));
             for _ in 0..self.width() {
-                print!("{}", self.content[id]);
+                let child = self.content[id];
+
+                if child.fg != fg {
+                    fg = child.fg;
+                    print!("{}", fg.to_fg());
+                }
+                if child.bg != bg {
+                    bg = child.bg;
+                    print!("{}", bg.to_fg());
+                }
+                print!("{}", child.val);
+
                 id += 1;
+            }
+        }
+
+        print!("\x1b[0m");
+        _ = stdout().flush();
+    }
+
+    /// Renders different characters only between current buffer and given one
+    pub fn render_diff(&self, diff: &Buffer) {
+        // Rerenders whole buffer when size or position is different
+        // TODO: make it compare the cells on shared positions
+        if self.width() != diff.width()
+            || self.height() != diff.height()
+            || self.x() != diff.x()
+            || self.y() != diff.y()
+        {
+            self.render();
+            return;
+        }
+
+        let mut id = 0;
+        let mut fg = Color::Default;
+        let mut bg = Color::Default;
+
+        for y in 0..self.height() {
+            let mut prev = false;
+            for x in 0..self.width() {
+                let child = self.content[id];
+                let dchild = diff.get_cell(id);
+
+                id += 1;
+                if child.fg == dchild.fg
+                    && child.bg == dchild.bg
+                    && child.val == dchild.val
+                {
+                    prev = false;
+                    continue;
+                }
+
+                if !prev {
+                    print!("{}", Cursor::Pos(self.x() + x, self.y() + y))
+                }
+                if child.fg != fg {
+                    fg = child.fg;
+                    print!("{}", fg.to_fg());
+                }
+                if child.bg != bg {
+                    bg = child.bg;
+                    print!("{}", bg.to_fg());
+                }
+                print!("{}", child.val);
+                prev = true;
             }
         }
 
@@ -68,6 +134,11 @@ impl Buffer {
         for (i, cell) in buffer.content().iter().enumerate() {
             self.set(*cell, &buffer.coords_of(i));
         }
+    }
+
+    /// Gets [`Buffer`] [`Cell`] with the given id
+    pub fn get_cell(&self, id: usize) -> Cell {
+        self.content[id]
     }
 
     /// Sets cell to given value on given position relative to buffer

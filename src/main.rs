@@ -27,7 +27,7 @@ fn main() {
     // test_block();
     // test_layout();
     // test_grad();
-    cool_example();
+    // cool_example();
     // test_paragraph();
     // readme_example();
     // test_list();
@@ -35,6 +35,7 @@ fn main() {
     // test_bg_grad();
     // term_test();
     // grid_test();
+    diff_render_test();
 }
 
 #[allow(unused)]
@@ -131,7 +132,7 @@ fn cool_example() {
         .border_color(Color::Gray);
     main.add_child(block, Constraint::Min(0));
 
-    let span = "Re-coloring text".fg(Color::Red).modifiers(mods!(Italic));
+    let span = "Re-coloring".fg(Color::Red).modifiers(mods!(Italic));
     main.add_child(span, Constraint::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
     main.add_child(grad, Constraint::Min(0));
@@ -158,6 +159,7 @@ fn cool_example() {
         Coords::new(30, 9),
     ));
     main.render(&mut buffer);
+
     buffer.render();
 }
 
@@ -285,7 +287,7 @@ fn term_test() {
 
     let mut layout = Layout::vertical().padding(1);
     let mut span = "This is test of small message rendering";
-    layout.add_child(span, Constraint::Length(9));
+    layout.add_child(span, Constraint::Length(10));
 
     term.render(layout);
 }
@@ -302,4 +304,59 @@ fn grid_test() {
     let mut buffer = Buffer::empty(Rect::new(1, 1, 15, 6));
     grid.render(&mut buffer);
     buffer.render();
+}
+
+#[allow(unused)]
+fn diff_render_test() {
+    let mut main = Block::horizontal()
+        .title("Termint".to_span())
+        .border_type(BorderType::Double);
+
+    // Creates block1 and adds span as its child
+    let mut block1 = Block::vertical().title("Sub block");
+    let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
+    block1.add_child(span1, Constraint::Percent(100));
+    // Adds block1 as child of main block
+    main.add_child(block1, Constraint::Min(0));
+
+    // Create block2 and adds span as its child
+    let mut block2 = Block::horizontal().title("Another");
+    let span2 = "This is really cool".fg(Color::Blue);
+    block2.add_child(span2, Constraint::Percent(100));
+    // Adds block2 as child of main block
+    main.add_child(block2, Constraint::Fill);
+
+    // Renders the main block which renders all the children
+    let mut dbuffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(30, 9),
+    ));
+    main.render(&mut dbuffer);
+    // dbuffer.render();
+
+    let mut main = Block::horizontal()
+        .title("Termint".to_span())
+        .border_type(BorderType::Double);
+
+    // Creates block1 and adds span as its child
+    let mut block1 = Block::vertical().title("Sub block");
+    let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
+    block1.add_child(span1, Constraint::Percent(100));
+    // Adds block1 as child of main block
+    main.add_child(block1, Constraint::Min(0));
+
+    // Create block2 and adds span as its child
+    let mut block2 = Block::horizontal().title("Another");
+    let span2 = "This is really cool, right?".fg(Color::Blue);
+    block2.add_child(span2, Constraint::Percent(100));
+    // Adds block2 as child of main block
+    main.add_child(block2, Constraint::Fill);
+
+    // Renders the main block which renders all the children
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(30, 9),
+    ));
+    main.render(&mut buffer);
+    buffer.render_diff(&dbuffer);
 }
