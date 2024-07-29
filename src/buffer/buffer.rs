@@ -50,7 +50,7 @@ impl Buffer {
                 }
                 if child.bg != bg {
                     bg = child.bg;
-                    print!("{}", bg.to_fg());
+                    print!("{}", bg.to_bg());
                 }
                 print!("{}", child.val);
 
@@ -103,7 +103,7 @@ impl Buffer {
                 }
                 if child.bg != bg {
                     bg = child.bg;
-                    print!("{}", bg.to_fg());
+                    print!("{}", bg.to_bg());
                 }
                 print!("{}", child.val);
                 prev = true;

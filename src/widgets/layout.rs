@@ -170,7 +170,7 @@ impl Widget for Layout {
                 _ => height += child.height(size),
             }
         }
-        height
+        height + self.padding.get_vertical()
     }
 
     /// Reverted to old implementation for now, which should work worse,
@@ -188,7 +188,7 @@ impl Widget for Layout {
                 _ => width += child.height(size),
             }
         }
-        width
+        width + self.padding.get_horizontal()
     }
 }
 

@@ -30,12 +30,12 @@ fn main() {
     // cool_example();
     // test_paragraph();
     // readme_example();
-    // test_list();
+    test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
     // grid_test();
-    diff_render_test();
+    // diff_render_test();
 }
 
 #[allow(unused)]
@@ -226,22 +226,32 @@ fn readme_example() {
 fn test_list() {
     println!("\x1b[2J");
 
-    let mut offset = Rc::new(RefCell::new(ListState::selected(2, 2)));
+    let mut offset = Rc::new(RefCell::new(ListState::selected(0, 2)));
 
     let mut block = Block::vertical();
     let list = List::new(
         vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"],
-        offset,
+        offset.clone(),
     )
     .sel_fg(Color::Yellow)
     .sel_bg(Color::Blue)
     .sel_char("-");
+
     block.add_child(list, Constraint::Fill);
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
         Coords::new(20, 6),
     ));
     block.render(&mut buffer);
+    buffer.render();
+
+    let mut buffer = Buffer::empty(Rect::from_coords(
+        Coords::new(1, 1),
+        Coords::new(20, 6),
+    ));
+    offset.borrow_mut().selected = Some(1);
+    block.render(&mut buffer);
+
     buffer.render();
 }
 
@@ -283,11 +293,11 @@ fn test_bg_grad() {
 fn term_test() {
     println!("\x1b[2J");
     let small = "Too small";
-    let term = Term::new().small_screen(small);
+    let mut term = Term::new().small_screen(small);
 
     let mut layout = Layout::vertical().padding(1);
     let mut span = "This is test of small message rendering";
-    layout.add_child(span, Constraint::Length(10));
+    layout.add_child(span, Constraint::Length(9));
 
     term.render(layout);
 }

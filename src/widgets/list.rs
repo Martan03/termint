@@ -67,6 +67,7 @@ impl ListState {
 pub struct List {
     items: Vec<String>,
     state: Rc<RefCell<ListState>>,
+    auto_scroll: bool,
     fg: Color,
     sel_fg: Color,
     sel_bg: Option<Color>,
@@ -87,6 +88,7 @@ impl List {
         Self {
             items,
             state,
+            auto_scroll: false,
             fg: Color::Default,
             sel_fg: Color::Cyan,
             sel_bg: None,
@@ -102,6 +104,12 @@ impl List {
         T: Into<Option<usize>>,
     {
         self.state.borrow_mut().selected = current.into();
+        self
+    }
+
+    /// Automatically scrolls so the selected item is visible
+    pub fn auto_scroll(mut self) -> Self {
+        self.auto_scroll = true;
         self
     }
 
@@ -160,10 +168,9 @@ impl Widget for List {
             Coords::new(buffer.x() + self.sel_char.len(), buffer.y());
         let mut text_size =
             Coords::new(buffer.width() - self.sel_char.len(), buffer.height());
-        let offset = self.get_render_offset(buffer.size_ref());
 
         let selected = self.state.borrow().selected;
-        for i in offset..self.items.len() {
+        for i in self.state.borrow().offset..self.items.len() {
             let mut fg = self.fg;
             let mut bg: Option<Color> = None;
             if Some(i) == selected {
@@ -231,26 +238,6 @@ impl List {
             buffer.set_fg(self.thumb_fg, &bar_pos);
             bar_pos.y += 1;
         }
-    }
-
-    fn get_render_offset(&self, _size: &Coords) -> usize {
-        let Some(current) = self.state.borrow().selected else {
-            return self.state.borrow().offset;
-        };
-        // let Some(prev_offset) = self.prev_offset else {
-        //     return self.state.borrow().offset;
-        // };
-
-        // if prev_offset > current {
-        //     return current;
-        // }
-
-        // let mut offset = prev_offset;
-        // while !self.is_visible(current, offset, size) {
-        //     offset += 1;
-        // }
-        // offset
-        current
     }
 
     /// Checks if item is visible with given offset

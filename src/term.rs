@@ -25,6 +25,7 @@ use crate::{
 /// ```
 #[derive(Debug, Default)]
 pub struct Term {
+    prev: Option<Buffer>,
     small: Option<Box<dyn Widget>>,
     padding: Padding,
 }
@@ -53,7 +54,7 @@ impl Term {
 
     /// Renders given widget on full screen with set padding. Displays small
     /// screen when cannot fit (only when `small_screen` is set)
-    pub fn render<T>(&self, widget: T) -> Result<(), &'static str>
+    pub fn render<T>(&mut self, widget: T) -> Result<(), &'static str>
     where
         T: Widget + 'static,
     {
@@ -76,7 +77,41 @@ impl Term {
             }
             _ => widget.render(&mut buffer),
         };
-        buffer.render();
+
+        match &self.prev {
+            Some(prev) => buffer.render_diff(prev),
+            None => buffer.render(),
+        }
+        self.prev = Some(buffer);
+
+        Ok(())
+    }
+
+    pub fn rerender(&mut self) -> Result<(), &'static str> {
+        let Some(prev) = &self.prev else {
+            return Err("Cannot rerender: no previous rendering");
+        };
+
+        let Some((w, h)) = Term::get_size() else {
+            return Err("Cannot determine terminal size");
+        };
+
+        let pos = Coords::new(1 + self.padding.left, 1 + self.padding.top);
+        let size = Coords::new(
+            w.saturating_sub(self.padding.get_horizontal()),
+            h.saturating_sub(self.padding.get_vertical()),
+        );
+
+        match &self.small {
+            Some(small) if w < prev.width() || h < prev.height() => {
+                let mut buffer = Buffer::empty(Rect::from_coords(pos, size));
+                small.render(&mut buffer);
+                buffer.render();
+                self.prev = Some(buffer);
+            }
+            _ => prev.render(),
+        };
+
         Ok(())
     }
 
