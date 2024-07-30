@@ -1,7 +1,7 @@
 use std::io::{stdout, Write};
 
 use crate::{
-    enums::{Color, Cursor},
+    enums::{Color, Cursor, Modifier},
     geometry::{Coords, Rect},
     style::Style,
 };
@@ -61,12 +61,19 @@ impl Buffer {
         let mut id = 0;
         let mut fg = Color::Default;
         let mut bg = Color::Default;
+        let mut modifier = Modifier::empty();
 
         for y in 0..self.height() {
             print!("{}", Cursor::Pos(self.x(), self.y() + y));
             for _ in 0..self.width() {
                 let child = self.content[id];
 
+                if child.modifier != modifier {
+                    modifier = child.modifier;
+                    fg = Color::default();
+                    bg = Color::default();
+                    print!("\x1b[0m{}", modifier);
+                }
                 if child.fg != fg {
                     fg = child.fg;
                     print!("{}", fg.to_fg());

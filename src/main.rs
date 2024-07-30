@@ -4,6 +4,7 @@ use termint::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap},
     geometry::{Constraint, Coords, Rect, TextAlign, Unit},
+    style::Style,
     term::Term,
     widgets::{
         BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
@@ -16,9 +17,9 @@ fn main() {
     // test_layout();
     // test_grad();
     // cool_example();
-    // test_paragraph();
+    test_paragraph();
     // readme_example();
-    test_list();
+    // test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
@@ -157,12 +158,12 @@ fn test_paragraph() {
     let mut main = Block::horizontal().title("Paragraph");
 
     let mut p = Paragraph::new(vec![
-        Box::new(Grad::new("this", (0, 120, 255), (120, 255, 0))),
-        Box::new("This is a text in".fg(Color::Yellow)),
-        // Box::new("paragraph".modifiers(vec![Modifier::Bold]).fg(Color::Cyan)),
-        Box::new("and it adds".to_span()),
-        // Box::new("separator".modifiers(vec![Modifier::Italic])),
-        Box::new("between each span".to_span()),
+        "This is a text in".fg(Color::Yellow).into(),
+        Grad::new("this", (0, 120, 255), (120, 255, 0)).into(),
+        "paragraph".modifier(Modifier::BOLD).fg(Color::Cyan).into(),
+        "and it adds".to_span().into(),
+        "separator".modifier(Modifier::ITALIC).into(),
+        "between each span".to_span().into(),
     ]);
 
     let block = Block::vertical();
@@ -172,11 +173,10 @@ fn test_paragraph() {
 
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
-        Coords::new(30, 9),
+        Coords::new(30, 8),
     ));
     main.render(&mut buffer);
-
-    println!("\x1b[1B");
+    buffer.render();
 }
 
 #[allow(unused)]
@@ -221,9 +221,9 @@ fn test_list() {
         vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"],
         offset.clone(),
     )
-    .sel_fg(Color::Yellow)
-    .sel_bg(Color::Blue)
-    .sel_char("-");
+    .selected_style(Style::new().fg(Color::Yellow).bg(Color::Blue))
+    .highlight_symbol(">")
+    .highlight_style(Style::new().fg(Color::Red).modifier(Modifier::BOLD));
 
     block.add_child(list, Constraint::Fill);
     let mut buffer = Buffer::empty(Rect::from_coords(

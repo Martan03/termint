@@ -243,7 +243,7 @@ impl Span {
         &self,
         text: &str,
         buffer: &mut Buffer,
-        offset_x: usize,
+        mut offset_x: usize,
         offset_y: usize,
     ) -> Coords {
         let mut line = Vec::<&str>::new();
@@ -257,19 +257,20 @@ impl Span {
                     || word.len() > buffer.width()
                 {
                     let mut line_str = line.join(" ");
-                    let sum = coords.x + self.ellipsis.len();
+                    let sum = coords.x + self.ellipsis.len() + offset_x;
                     if sum >= buffer.width() {
-                        let end =
-                            buffer.width().saturating_sub(self.ellipsis.len());
+                        let end = buffer
+                            .width()
+                            .saturating_sub(self.ellipsis.len() + offset_x);
                         line_str = line_str[..end].to_string();
                     }
 
                     line_str.push_str(&self.ellipsis);
-                    coords.x = line.len();
+                    coords.x = line_str.len() + offset_x;
                     self.render_line(
                         buffer,
                         line_str,
-                        &Coords::new(buffer.x(), coords.y),
+                        &Coords::new(buffer.x() + offset_x, coords.y),
                     );
                     return coords;
                 }
@@ -277,8 +278,9 @@ impl Span {
                 self.render_line(
                     buffer,
                     line.join(" "),
-                    &Coords::new(buffer.x(), coords.y),
+                    &Coords::new(buffer.x() + offset_x, coords.y),
                 );
+                offset_x = 0;
                 (coords.x, coords.y) = (0, coords.y + 1);
                 line.clear();
             }
@@ -290,7 +292,7 @@ impl Span {
             self.render_line(
                 buffer,
                 line.join(" "),
-                &Coords::new(buffer.x(), coords.y),
+                &Coords::new(buffer.x() + offset_x, coords.y),
             );
         }
 
@@ -377,6 +379,11 @@ impl Span {
 
 /// Enables creating [`Span`] by calling one of the functions on string
 pub trait StrSpanExtension {
+    /// Creates [`Span`] from string and sets its style to given value
+    fn style<T>(self, style: T) -> Span
+    where
+        T: Into<Style>;
+
     /// Creates [`Span`] from string and sets its fg to given color
     fn fg<T>(self, fg: T) -> Span
     where
@@ -409,6 +416,13 @@ pub trait StrSpanExtension {
 }
 
 impl StrSpanExtension for &str {
+    fn style<T>(self, style: T) -> Span
+    where
+        T: Into<Style>,
+    {
+        Span::new(self).style(style)
+    }
+
     fn fg<T>(self, fg: T) -> Span
     where
         T: Into<Option<Color>>,

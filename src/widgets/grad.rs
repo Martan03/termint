@@ -148,18 +148,17 @@ impl Text for Grad {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
-        _offset: usize,
-        _wrap: Option<Wrap>,
+        offset: usize,
+        wrap: Option<Wrap>,
     ) -> Coords {
         if buffer.width() == 0 || buffer.height() == 0 {
             return Coords::new(0, 0);
         }
 
-        match self.wrap {
-            Wrap::Letter => self.render_letter(buffer, 0),
-            Wrap::Word => self.render_word(buffer, 0),
-        };
-        Coords::new(0, 0)
+        match wrap.unwrap_or(self.wrap) {
+            Wrap::Letter => self.render_letter(buffer, offset),
+            Wrap::Word => self.render_word(buffer, offset),
+        }
     }
 
     fn get(&self) -> String {
@@ -199,7 +198,7 @@ impl fmt::Display for Grad {
 
 impl Grad {
     /// Renders [`Grad`] widget with word wrap
-    fn render_word(&self, buffer: &mut Buffer, offset: usize) {
+    fn render_word(&self, buffer: &mut Buffer, offset: usize) -> Coords {
         match self.direction {
             Direction::Vertical => {
                 let height = min(
@@ -214,7 +213,7 @@ impl Grad {
                     (0, 0, 0),
                     step,
                     |t, b, p, r, s| self.render_ver_line(t, b, p, r, s),
-                );
+                )
             }
             Direction::Horizontal => {
                 let width = min(buffer.width(), self.text.len());
@@ -226,13 +225,13 @@ impl Grad {
                     step,
                     (0, 0, 0),
                     |t, b, p, r, s| self.render_hor_line(t, b, p, r, s),
-                );
+                )
             }
         }
     }
 
     /// Renders [`Grad`] widget with letter wrap
-    fn render_letter(&self, buffer: &mut Buffer, offset: usize) {
+    fn render_letter(&self, buffer: &mut Buffer, offset: usize) -> Coords {
         match self.direction {
             Direction::Vertical => {
                 let height = min(
@@ -247,7 +246,7 @@ impl Grad {
                     (0, 0, 0),
                     step,
                     |t, b, p, r, s| self.render_ver_line(t, b, p, r, s),
-                );
+                )
             }
             Direction::Horizontal => {
                 let width = min(buffer.width(), self.text.len());
@@ -259,7 +258,7 @@ impl Grad {
                     step,
                     (0, 0, 0),
                     |t, b, p, r, s| self.render_hor_line(t, b, p, r, s),
-                );
+                )
             }
         }
     }
@@ -269,7 +268,7 @@ impl Grad {
         &self,
         text: &str,
         buffer: &mut Buffer,
-        offset: usize,
+        mut offset: usize,
         step_x: (i16, i16, i16),
         step_y: (i16, i16, i16),
         render_line: F,
@@ -281,8 +280,10 @@ impl Grad {
         let mut coords = Coords::new(offset, buffer.y());
 
         let mut rgb = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        for _ in 0..offset {
-            rgb = self.add_step(rgb, step_x);
+        if self.text.len() + offset >= buffer.width() {
+            for _ in 0..offset {
+                rgb = self.add_step(rgb, step_x);
+            }
         }
 
         for word in text.split_whitespace() {
@@ -294,9 +295,10 @@ impl Grad {
                 {
                     let mut line_str = line.join(" ");
                     let sum = coords.x + self.ellipsis.len();
-                    if sum >= buffer.width() {
-                        let end =
-                            buffer.width().saturating_sub(self.ellipsis.len());
+                    if sum + offset >= buffer.width() {
+                        let end = buffer
+                            .width()
+                            .saturating_sub(self.ellipsis.len() + offset);
                         line_str = line_str[..end].to_string();
                     }
 
@@ -305,7 +307,7 @@ impl Grad {
                     render_line(
                         line_str,
                         buffer,
-                        &Coords::new(buffer.x(), coords.y),
+                        &Coords::new(buffer.x() + offset, coords.y),
                         rgb,
                         step_x,
                     );
@@ -315,10 +317,11 @@ impl Grad {
                 render_line(
                     line.join(" "),
                     buffer,
-                    &Coords::new(buffer.x(), coords.y),
+                    &Coords::new(buffer.x() + offset, coords.y),
                     rgb,
                     step_x,
                 );
+                offset = 0;
                 (coords.x, coords.y) = (0, coords.y + 1);
                 rgb = self.add_step(rgb, step_y);
                 line.clear();
@@ -331,7 +334,7 @@ impl Grad {
             render_line(
                 line.join(" "),
                 buffer,
-                &Coords::new(buffer.x(), coords.y),
+                &Coords::new(buffer.x() + offset, coords.y),
                 rgb,
                 step_x,
             );

@@ -8,6 +8,7 @@ use crate::{
     buffer::Buffer,
     enums::Color,
     geometry::{Coords, Rect},
+    style::Style,
 };
 
 use super::{span::StrSpanExtension, text::Text, widget::Widget};
@@ -68,31 +69,32 @@ pub struct List {
     items: Vec<String>,
     state: Rc<RefCell<ListState>>,
     auto_scroll: bool,
-    fg: Color,
-    sel_fg: Color,
-    sel_bg: Option<Color>,
-    sel_char: String,
+    style: Style,
+    sel_style: Style,
+    highlight: String,
+    highlight_style: Style,
     scrollbar_fg: Color,
     thumb_fg: Color,
 }
 
 impl List {
     /// Creates new [`List`] with given items and given state
-    pub fn new<T>(items: Vec<T>, state: Rc<RefCell<ListState>>) -> Self
+    pub fn new<T>(items: T, state: Rc<RefCell<ListState>>) -> Self
     where
-        T: AsRef<str>,
+        T: IntoIterator,
+        T::Item: AsRef<str>,
     {
-        let items: Vec<String> =
-            items.iter().map(|i| i.as_ref().to_string()).collect();
+        let items =
+            items.into_iter().map(|i| i.as_ref().to_string()).collect();
 
         Self {
             items,
             state,
             auto_scroll: false,
-            fg: Color::Default,
-            sel_fg: Color::Cyan,
-            sel_bg: None,
-            sel_char: String::new(),
+            style: Default::default(),
+            sel_style: Default::default(),
+            highlight: String::new(),
+            highlight_style: Default::default(),
             scrollbar_fg: Color::Default,
             thumb_fg: Color::Default,
         }
@@ -113,35 +115,40 @@ impl List {
         self
     }
 
-    /// Sets foreground of [`List`] item
-    pub fn fg(mut self, fg: Color) -> Self {
-        self.fg = fg;
-        self
-    }
-
-    /// Sets [`List`] selected item foreground color
-    pub fn sel_fg(mut self, sel_color: Color) -> Self {
-        self.sel_fg = sel_color;
-        self
-    }
-
-    /// Sets [`List`] selected item background color
-    pub fn sel_bg<T>(mut self, sel_color: T) -> Self
+    /// Sets style of the [`List`]
+    pub fn style<T>(mut self, style: T) -> Self
     where
-        T: Into<Option<Color>>,
+        T: Into<Style>,
     {
-        self.sel_bg = sel_color.into();
+        self.style = style.into();
         self
     }
 
-    /// Sets [`List`] selected item character
-    /// Character that will display in front of selected items.
-    /// Other items will be shifted to be aligned with selected item
-    pub fn sel_char<T>(mut self, sel_char: T) -> Self
+    /// Sets style of the selected item in the [`List`]
+    pub fn selected_style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.sel_style = style.into();
+        self
+    }
+
+    /// Sets highlight symbol of the selected item
+    pub fn highlight_symbol<T>(mut self, sel_char: T) -> Self
     where
         T: AsRef<str>,
     {
-        self.sel_char = sel_char.as_ref().to_string();
+        self.highlight = sel_char.as_ref().to_string();
+        self
+    }
+
+    /// Sets style of the highlight symbol
+    /// (seperate from the selected item style)
+    pub fn highlight_style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.highlight_style = style.into();
         self
     }
 
@@ -165,9 +172,11 @@ impl Widget for List {
         }
 
         let mut text_pos =
-            Coords::new(buffer.x() + self.sel_char.len(), buffer.y());
-        let mut text_size =
-            Coords::new(buffer.width() - self.sel_char.len(), buffer.height());
+            Coords::new(buffer.x() + self.highlight.len(), buffer.y());
+        let mut text_size = Coords::new(
+            buffer.width() - self.highlight.len(),
+            buffer.height(),
+        );
 
         if !self.fits(buffer.size_ref()) {
             text_size.x -= 1;
@@ -176,13 +185,14 @@ impl Widget for List {
 
         let selected = self.state.borrow().selected;
         for i in self.state.borrow().offset..self.items.len() {
-            let mut span = self.items[i].fg(self.fg);
+            let mut span = self.items[i].style(self.style);
             if Some(i) == selected {
-                buffer.set_str(
-                    self.sel_char.to_owned(),
+                buffer.set_str_styled(
+                    self.highlight.to_owned(),
                     &Coords::new(buffer.x(), text_pos.y),
+                    self.highlight_style,
                 );
-                span = self.items[i].fg(self.sel_fg).bg(self.sel_bg);
+                span = self.items[i].style(self.sel_style);
             }
 
             let mut ibuffer =
