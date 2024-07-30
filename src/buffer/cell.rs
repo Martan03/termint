@@ -1,13 +1,17 @@
 use std::fmt::Display;
 
-use crate::enums::{bg::Bg, fg::Fg};
+use crate::{
+    enums::{Color, Modifier},
+    style::Style,
+};
 
-/// Represents rendering buffer cell
-#[derive(Debug, Clone)]
+/// A buffer cell containing foreground, background, modifiers and symbol.
+#[derive(Debug, Clone, Copy)]
 pub struct Cell {
-    fg: Option<Fg>,
-    bg: Option<Bg>,
-    val: char,
+    pub fg: Color,
+    pub bg: Color,
+    pub modifier: Modifier,
+    pub val: char,
 }
 
 impl Cell {
@@ -20,19 +24,35 @@ impl Cell {
     }
 
     /// Sets [`Cell`] foreground color to given value
-    pub fn fg<T>(&mut self, fg: T)
-    where
-        T: Into<Option<Fg>>,
-    {
-        self.fg = fg.into();
+    pub fn fg(&mut self, fg: Color) {
+        self.fg = fg;
     }
 
     /// Sets [`Cell`] background color to given value
-    pub fn bg<T>(&mut self, bg: T)
+    pub fn bg(&mut self, bg: Color) {
+        self.bg = bg;
+    }
+
+    /// Sets [`Cell`] modifier to the given flag
+    pub fn modifier(&mut self, flag: u8) {
+        self.modifier.clear();
+        self.modifier.add(flag);
+    }
+
+    /// Sets style of the [`Cell`] to the given value. If `fg` or `bg` are
+    /// none, it keeps the original value.
+    pub fn style<T>(&mut self, style: T)
     where
-        T: Into<Option<Bg>>,
+        T: Into<Style>,
     {
-        self.bg = bg.into();
+        let style = style.into();
+        if let Some(fg) = style.fg {
+            self.fg = fg;
+        }
+        if let Some(bg) = style.bg {
+            self.bg = bg;
+        }
+        self.modifier = style.modifier;
     }
 
     /// Sets value of the [`Cell`]
@@ -43,21 +63,23 @@ impl Cell {
 
 impl Display for Cell {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(fg) = self.fg {
-            write!(f, "{}", fg)?
-        }
-        if let Some(bg) = self.bg {
-            write!(f, "{}", bg)?;
-        }
-        write!(f, "{}", self.val)
+        write!(
+            f,
+            "{}{}{}{}",
+            self.modifier,
+            self.fg.to_fg(),
+            self.bg.to_bg(),
+            self.val
+        )
     }
 }
 
 impl Default for Cell {
     fn default() -> Self {
         Self {
-            fg: None,
-            bg: None,
+            fg: Color::Default,
+            bg: Color::Default,
+            modifier: Modifier::empty(),
             val: ' ',
         }
     }

@@ -12,40 +12,58 @@
 //! - [`Spacer`]: widget for creating spaces between widgets (better layouting)
 //! - [`Span`]: widget for styling text
 
-/// Background gradient widget, which works as Layout as well
-pub mod bg_grad;
-/// Layout with addition of border and title
-pub mod block;
-/// Defines Border sides and BorderType
-pub mod border;
-/// Contains Grad widget
-pub mod grad;
-/// Contains Layout widget
-pub mod layout;
-/// Contains List widget
-pub mod list;
-/// Constains Paragraph widget
-pub mod paragraph;
+/// [`Layout`] widget with gradient background
+mod bg_grad;
+/// [`Layout`] widget with border around it
+mod block;
+/// Border sides definition and border type enum
+mod border;
+/// Text with gradient foreground
+mod grad;
+/// Creates layout by specifying columns and rows
+mod grid;
+/// Creates layout flexing in one direction
+mod layout;
+/// List widget with scrollbar, that displays vector of strings and its state
+mod list;
+/// Chaining widgets implementing [`Text`] trait
+mod paragraph;
 /// Spacer widget for better layouting
-pub mod spacer;
-/// Contains Span widget
-pub mod span;
-/// Defines Text trait
-pub mod text;
-/// Defines Widget trait
-pub mod widget;
+mod spacer;
+/// Widget for styling text
+mod span;
+/// Trait for text widgets to implement
+mod text;
+/// Trait for widgets to implement
+mod widget;
 
-#[allow(unused)]
-use block::Block;
-#[allow(unused)]
-use grad::Grad;
-#[allow(unused)]
-use layout::Layout;
-#[allow(unused)]
-use list::List;
-#[allow(unused)]
-use paragraph::Paragraph;
-#[allow(unused)]
-use spacer::Spacer;
-#[allow(unused)]
-use span::Span;
+/// [`Layout`] widget with gradient background
+pub use bg_grad::BgGrad;
+/// [`Layout`] widget with border around it
+pub use block::Block;
+/// Border sides definition
+pub use border::Border;
+/// Border type enum
+pub use border::BorderType;
+/// Text with gradient foreground
+pub use grad::Grad;
+/// Creates layout by specifying columns and rows
+pub use grid::Grid;
+/// Creates layout flexing in one direction
+pub use layout::Layout;
+/// List widget with scrollbar, that displays vector of strings
+pub use list::List;
+/// State of the [`List`] widget
+pub use list::ListState;
+/// Chaining widgets implementing [`Text`] trait
+pub use paragraph::Paragraph;
+/// Spacer widget for better layouting
+pub use spacer::Spacer;
+/// Widget for styling text
+pub use span::Span;
+/// Enables better string conversion to [`Span`]
+pub use span::StrSpanExtension;
+/// Trait for text widgets to implement
+pub use text::Text;
+/// Trait for widgets to implement
+pub use widget::Widget;

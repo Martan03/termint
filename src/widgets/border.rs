@@ -5,17 +5,17 @@ use crate::borders;
 /// Combining sides:
 /// Using binary or (`|`):
 /// ```rust
-/// # use termint::widgets::border::Border;
+/// # use termint::widgets::Border;
 /// // Border containing top and left side
 /// let sides = Border::TOP | Border::LEFT;
 /// ```
 /// Using macro:
 /// ```rust
-/// # use termint::{borders, widgets::border::Border};
+/// # use termint::{borders, widgets::Border};
 /// // Border containing top and left side
 /// let sides = borders!(TOP, LEFT);
 /// ```
-pub struct Border(u8);
+pub struct Border;
 
 #[allow(unused)]
 impl Border {
@@ -28,7 +28,7 @@ impl Border {
     pub const ALL: u8 = 0b1111;
 }
 
-/// BorderType enum
+/// Border type enum
 #[derive(Debug)]
 pub enum BorderType {
     /// Simple line

@@ -1,8 +1,9 @@
 use core::fmt;
-use std::io::{stdout, Write};
 
 use crate::{
-    buffer::buffer::Buffer, enums::wrap::Wrap, geometry::coords::Coords,
+    buffer::Buffer,
+    enums::Wrap,
+    geometry::{Coords, Rect},
     widgets::text::Text,
 };
 
@@ -13,7 +14,7 @@ use super::widget::Widget;
 /// each other, which you can't really achieve with Layout
 ///
 /// ## Example usage:
-/// ```
+/// ```ignore
 /// # use termint::{
 /// #     paragraph,
 /// #     enums::{fg::Fg, modifier::Modifier},
@@ -102,68 +103,33 @@ impl Paragraph {
 
 impl Widget for Paragraph {
     fn render(&self, buffer: &mut Buffer) {
-        let pos = buffer.pos();
-        let size = buffer.size();
-        
-        let mut text_pos = Coords::new(pos.x, pos.y);
-        let mut text_size = Coords::new(size.x, size.y);
+        let mut pos = Coords::new(buffer.x(), buffer.y());
+        let mut size = Coords::new(buffer.width(), buffer.height());
         let mut offset = 0;
 
         for child in self.children.iter() {
-            print!("{}", child.get_mods());
+            let mut cbuffer = buffer.get_subset(Rect::from_coords(pos, size));
+            let end =
+                child.render_offset(&mut cbuffer, offset, Some(self.wrap));
+            buffer.union(cbuffer);
 
-            let end = child.render_offset(
-                &text_pos,
-                &text_size,
-                offset,
-                Some(&self.wrap),
-            );
-            text_pos.y = end.y;
+            size.y = size.y.saturating_sub(end.y - pos.y);
+            pos.y = end.y;
             offset = end.x + self.separator.len();
 
-            if pos.y + size.y <= end.y {
+            if end.y >= buffer.y() + buffer.height()
+                && end.x >= buffer.x() + buffer.width()
+            {
                 break;
             }
-            text_size.y = pos.y + size.y - end.y;
 
-            print!("\x1b[0m");
-            if offset < size.x {
-                print!("{}", self.separator);
+            if offset + self.separator.len() <= buffer.width() && offset != 0 {
+                buffer.set_str(
+                    &self.separator,
+                    &Coords::new(buffer.x() + offset - 1, pos.y),
+                );
             }
         }
-        _ = stdout().flush();
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        let mut res = String::new();
-        let mut text_pos = Coords::new(pos.x, pos.y);
-        let mut text_size = Coords::new(size.x, size.y);
-        let mut offset = 0;
-
-        for child in self.children.iter() {
-            res.push_str(&child.get_mods());
-
-            let (child_res, end) = child.get_offset(
-                &text_pos,
-                &text_size,
-                offset,
-                Some(&self.wrap),
-            );
-            res.push_str(&child_res);
-            text_pos.y = end.y;
-            offset = end.x + self.separator.len();
-
-            if pos.y + size.y <= end.y {
-                break;
-            }
-            text_size.y = pos.y + size.y - end.y;
-
-            res.push_str("\x1b[0m");
-            if offset < size.x {
-                res.push_str(&self.separator);
-            }
-        }
-        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -192,7 +158,7 @@ impl Default for Paragraph {
     fn default() -> Self {
         Self {
             children: Vec::new(),
-            separator: " ".to_string(),
+            separator: "-".to_string(),
             wrap: Wrap::Word,
         }
     }

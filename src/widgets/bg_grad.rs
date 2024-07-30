@@ -1,31 +1,42 @@
-use std::io::{stdout, Write};
-
 use crate::{
-    buffer::buffer::Buffer,
-    enums::{bg::Bg, cursor::Cursor, rgb::RGB},
-    geometry::{
-        constrain::Constrain, coords::Coords, direction::Direction,
-        padding::Padding,
-    },
+    buffer::Buffer,
+    enums::{Color, RGB},
+    geometry::{Constraint, Coords, Direction, Padding},
 };
 
 use super::{layout::Layout, widget::Widget};
 
-/// [`BgGrad`] widget renders Gradient background and works as [`Layout`]
-/// as well
+/// [`Layout`] widget with gradient background
 ///
-/// Note that the background behind the layout will be overriden
+/// ## Example usage using [`Term`] (automatically renders on full screen):
+/// ```rust
+/// # use termint::{term::Term, widgets::BgGrad};
+/// # fn example() -> Result<(), &'static str> {
+/// // Creates new background gradient with horizontal direction
+/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
-/// ## Example usage:
+/// // Renders background gradient using Term struct
+/// let mut term = Term::new();
+/// term.render(grad)?;
+/// # Ok(())
+/// # }
+/// ```
+///
+/// ## Example usage without using [`Term`]:
 /// ```rust
 /// # use termint::{
-/// #     geometry::coords::Coords,
-/// #     widgets::{bg_grad::BgGrad, widget::Widget},
+/// #     buffer::Buffer,
+/// #     geometry::Rect,
+/// #     widgets::{BgGrad, Widget},
 /// # };
 /// // Creates new background gradient with horizontal direction
-/// let grad = BgGrad::new((0, 150, 255), (150, 255, 0));
-/// // Renders background gradient
-/// grad.render(&Coords::new(1, 1), &Coords::new(20, 9));
+/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+///
+/// // Renders background gradient using [`Buffer`]
+/// // (position and size given by the Rect supplied to the Buffer)
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
+/// grad.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct BgGrad {
@@ -37,10 +48,38 @@ pub struct BgGrad {
 
 impl BgGrad {
     /// Creates new [`BgGrad`] with given gradient colors
-    pub fn new<T, R>(start: T, end: R) -> Self
+    pub fn new<T1, T2>(direction: Direction, start: T1, end: T2) -> Self
     where
-        T: Into<RGB>,
-        R: Into<RGB>,
+        T1: Into<RGB>,
+        T2: Into<RGB>,
+    {
+        Self {
+            bg_start: start.into(),
+            bg_end: end.into(),
+            direction,
+            layout: Default::default(),
+        }
+    }
+
+    /// Creates new vertical [`BgGrad`] with given gradient colors
+    pub fn vertical<T1, T2>(start: T1, end: T2) -> Self
+    where
+        T1: Into<RGB>,
+        T2: Into<RGB>,
+    {
+        Self {
+            bg_start: start.into(),
+            bg_end: end.into(),
+            direction: Direction::Vertical,
+            layout: Default::default(),
+        }
+    }
+
+    /// Creates new horizontal [`BgGrad`] with given gradient colors
+    pub fn horizontal<T1, T2>(start: T1, end: T2) -> Self
+    where
+        T1: Into<RGB>,
+        T2: Into<RGB>,
     {
         Self {
             bg_start: start.into(),
@@ -63,7 +102,10 @@ impl BgGrad {
     }
 
     /// Sets [`Padding`] of the [`Layout`]
-    pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
+    pub fn padding<T>(mut self, padding: T) -> Self
+    where
+        T: Into<Padding>,
+    {
         self.layout = self.layout.padding(padding);
         self
     }
@@ -75,32 +117,26 @@ impl BgGrad {
     }
 
     /// Adds child to the [`BgGrad`]'s [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    pub fn add_child<T>(&mut self, child: T, constraint: Constraint)
     where
         T: Into<Box<dyn Widget>>,
     {
-        self.layout.add_child(child, constrain);
+        self.layout.add_child(child, constraint);
     }
 }
 
 impl Widget for BgGrad {
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        if size.x == 0 || size.y == 0 {
-            return String::new();
+        if buffer.width() == 0 || buffer.height() == 0 {
+            return;
         }
 
-        let mut res = match self.direction {
-            Direction::Vertical => self.ver_render(pos, size),
-            Direction::Horizontal => self.hor_render(pos, size),
+        match self.direction {
+            Direction::Vertical => self.render_ver(buffer),
+            Direction::Horizontal => self.render_hor(buffer),
         };
-        res.push_str("\x1b[0m");
-        res.push_str(&self.layout.get_string(pos, size));
-        res
+
+        self.layout.render(buffer);
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -114,39 +150,35 @@ impl Widget for BgGrad {
 
 impl BgGrad {
     /// Renders horizontal background gradient
-    fn hor_render(&self, pos: &Coords, size: &Coords) -> String {
-        let step = self.get_step(size.x as i16);
+    fn render_hor(&self, buffer: &mut Buffer) {
+        let step = self.get_step(buffer.width() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
-        let mut line = String::new();
-        for _ in 0..size.x {
-            line.push_str(&format!("{} ", Bg::RGB(r, g, b)));
+        for x in buffer.x()..buffer.width() + buffer.x() {
+            let bg = Color::Rgb(r, g, b);
             (r, g, b) = self.add_step((r, g, b), step);
-        }
 
-        let mut res = String::new();
-        for y in 0..size.y {
-            res.push_str(&Cursor::Pos(pos.x, pos.y + y).to_string());
-            res.push_str(&line);
+            for y in buffer.y()..buffer.height() + buffer.y() {
+                buffer.set_bg(bg, &Coords::new(x, y));
+            }
         }
-        res
     }
 
     /// Renders vertical background gradient
-    fn ver_render(&self, pos: &Coords, size: &Coords) -> String {
-        let step = self.get_step(size.y as i16);
+    fn render_ver(&self, buffer: &mut Buffer) {
+        let step = self.get_step(buffer.height() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
-        let mut res = String::new();
-        for y in 0..size.y {
-            let line = format!("{} ", Bg::RGB(r, g, b)).repeat(size.x);
-            res.push_str(&Cursor::Pos(pos.x, pos.y + y).to_string());
-            res.push_str(&line);
+        for y in buffer.y()..buffer.height() + buffer.y() {
+            let bg = Color::Rgb(r, g, b);
             (r, g, b) = self.add_step((r, g, b), step);
+
+            for x in buffer.x()..buffer.width() + buffer.x() {
+                buffer.set_bg(bg, &Coords::new(x, y));
+            }
         }
-        res
     }
 
     /// Gets step per character based on start and eng background color

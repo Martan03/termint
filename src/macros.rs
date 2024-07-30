@@ -1,7 +1,7 @@
 /// Macro to combine [`Border`] sides
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{borders, widgets::border::Border};
 /// // Without macro:
 /// let top_left_right = Border::TOP | Border::LEFT | Border::RIGHT;
@@ -38,7 +38,7 @@ macro_rules! borders {
 /// ```
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{enums::fg::Fg, help, widgets::span::StrSpanExtension};
 /// help!(
 ///     "Usage":
@@ -55,7 +55,7 @@ macro_rules! borders {
 macro_rules! help {
     // Rule for parsing header
     ($header:literal: $($rest:tt)*) => {
-        println!("{}:", $header.fg(Fg::Green));
+        println!("{}:", $header.fg(Color::Green));
         help!($($rest)*);
     };
 
@@ -64,7 +64,7 @@ macro_rules! help {
         $cmd:literal $([$param:literal])* => $description:literal
         $($rest:tt)*
     ) => {
-        print!("  {}", $cmd.fg(Fg::Yellow));
+        print!("  {}", $cmd.fg(Color::Yellow));
         $(print!(" [{}]", $param);)*
         println!();
         println!("    {}", $description);
@@ -78,7 +78,7 @@ macro_rules! help {
         }
         $($rest:tt)*
     ) => {
-        print!("  {}", $cmd.fg(Fg::Yellow));
+        print!("  {}", $cmd.fg(Color::Yellow));
         $(print!(" [{}]", $param);)*
         println!();
         $(println!("    {}", $description);)*
@@ -91,7 +91,7 @@ macro_rules! help {
 /// Creates vector with given given Modifiers
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{enums::modifier::Modifier, mods};
 /// // Without macro:
 /// let mods = vec![Modifier::Bold, Modifier::Italic];
@@ -99,16 +99,16 @@ macro_rules! help {
 /// let mods = mods!(Bold, Italic);
 /// ```
 #[macro_export]
-macro_rules! mods {
+macro_rules! modifiers {
     ($($mod:ident),*) => {
-        vec![$(Modifier::$mod, )*]
+        $(Modifier::$mod |)* 0
     };
 }
 
 /// Creates new paragraph in more simple way
 ///
 /// ## Usage:
-/// ```
+/// ```ignore
 /// # use termint::{
 /// #     enums::fg::Fg,
 /// #     paragraph,

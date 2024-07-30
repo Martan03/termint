@@ -3,13 +3,18 @@ extern crate termint;
 #[cfg(test)]
 mod tests {
     use termint::{
-        geometry::coords::Coords,
-        widgets::{block::Block, span::StrSpanExtension, widget::Widget},
+        buffer::Buffer,
+        geometry::{Coords, Rect},
+        widgets::{Block, StrSpanExtension, Widget},
     };
 
     #[test]
     fn block_render() {
-        let block = Block::new().title("Block".to_span());
-        block.render(&Coords::new(0, 0), &Coords::new(15, 5));
+        let block = Block::vertical().title("Block".to_span());
+        let mut buffer = Buffer::empty(Rect::from_coords(
+            Coords::new(1, 1),
+            Coords::new(15, 5),
+        ));
+        block.render(&mut buffer);
     }
 }

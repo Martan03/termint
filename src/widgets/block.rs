@@ -1,17 +1,10 @@
-use std::{
-    cmp::max,
-    io::{stdout, Write},
-    iter::repeat,
-};
+use std::cmp::max;
 
 use crate::{
     borders,
-    buffer::buffer::Buffer,
-    enums::{cursor::Cursor, fg::Fg},
-    geometry::{
-        constrain::Constrain, coords::Coords, direction::Direction,
-        padding::Padding,
-    },
+    buffer::Buffer,
+    enums::Color,
+    geometry::{Constraint, Coords, Direction, Padding, Rect},
     widgets::span::Span,
 };
 
@@ -22,55 +15,73 @@ use super::{
     widget::Widget,
 };
 
-/// [`Layout`] widget with addition of optional border, title and styles
+/// [`Layout`] widget with border around it
 ///
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     enums::fg::Fg,
-/// #        geometry::{
-/// #         constrain::Constrain, coords::Coords, direction::Direction,
-/// #     },
-/// #     widgets::{
-/// #         block::Block, border::BorderType, span::StrSpanExtension,
-/// #         widget::Widget,
-/// #     },
+/// #     buffer::Buffer,
+/// #     enums::Color,
+/// #     geometry::{Constraint, Rect},
+/// #     widgets::{Block, BorderType, StrSpanExtension, Widget},
 /// # };
 /// // Creates block with title Termint in red
 /// // with double line border in lightgray
 /// // Block layout will be horizontal
-/// let mut main = Block::new()
-///     .title("Termint".fg(Fg::Red))
-///     .direction(Direction::Horizontal)
+/// let mut main = Block::horizontal()
+///     .title("Termint".fg(Color::Red))
 ///     .border_type(BorderType::Double)
-///     .border_color(Fg::LightGray);
+///     .border_color(Color::LightGray);
 ///
-/// // Adds two Block widgets as children for demonstration
-/// let mut block1 = Block::new().title("Sub block".to_span());
-/// main.add_child(block1, Constrain::Percent(50));
+/// // Adds two block widgets as children for demonstration
+/// let block1 = Block::vertical().title("Sub block");
+/// main.add_child(block1, Constraint::Percent(50));
+/// let block2 = Block::vertical().title("Another");
+/// main.add_child(block2, Constraint::Percent(50));
 ///
-/// let mut block2 = Block::new().title("Another".to_span());
-/// main.add_child(block2, Constrain::Percent(50));
-///
-/// // Renders block on coordinates 1, 1, with width 30 and height 8
-/// main.render(&Coords::new(1, 1), &Coords::new(30, 8));
+/// // Renders main block using buffer
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 30, 8));
+/// main.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct Block {
     title: Box<dyn Text>,
     borders: u8,
     border_type: BorderType,
-    border_color: Fg,
+    border_color: Color,
     layout: Layout,
 }
 
 impl Block {
-    /// Creates new [`Block`] with no title and all borders
-    pub fn new() -> Self {
-        Default::default()
+    /// Creates new [`Block`] that flexes in given [`Direction`]
+    /// with no title and all borders
+    pub fn new(direction: Direction) -> Self {
+        Self {
+            layout: Layout::new(direction),
+            ..Default::default()
+        }
     }
 
-    /// Sets [`Text`] as a title of [`Block`]
+    /// Creates new [`Block`] with horizontal layout
+    /// with no title and all borders
+    pub fn horizontal() -> Self {
+        Self {
+            layout: Layout::horizontal(),
+            ..Default::default()
+        }
+    }
+
+    /// Creates new [`Block`] with horizontal layout
+    /// with no title and all borders
+    pub fn vertical() -> Self {
+        Self {
+            layout: Layout::vertical(),
+            ..Default::default()
+        }
+    }
+
+    /// Sets [`Text`] as a title of the [`Block`]
     pub fn title<T>(mut self, title: T) -> Self
     where
         T: Into<Box<dyn Text>>,
@@ -79,20 +90,20 @@ impl Block {
         self
     }
 
-    /// Sets on which sides border of the [`Block`] should be rendered
+    /// Sets which [`Block`] borders should be displayed
     pub fn borders(mut self, borders: u8) -> Self {
         self.borders = borders;
         self
     }
 
-    /// Sets [`BorderType`] of the [`Block`]
+    /// Sets type of the border of the [`Block`]
     pub fn border_type(mut self, border_type: BorderType) -> Self {
         self.border_type = border_type;
         self
     }
 
     /// Sets [`Block`] border color
-    pub fn border_color(mut self, color: Fg) -> Self {
+    pub fn border_color(mut self, color: Color) -> Self {
         self.border_color = color;
         self
     }
@@ -116,7 +127,7 @@ impl Block {
     }
 
     /// Adds child to the [`Block`]'s [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constrain: Constrain)
+    pub fn add_child<T>(&mut self, child: T, constrain: Constraint)
     where
         T: Into<Box<dyn Widget>>,
     {
@@ -127,35 +138,30 @@ impl Block {
 impl Widget for Block {
     /// Renders [`Block`] with selected borders and title
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
+        self.render_border(buffer);
 
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        let mut res = self.get_border(pos, size);
-
-        res.push_str(&self.title.get_mods());
-        let (title_str, _) = self.title.get_offset(
-            &Coords::new(pos.x + 1, pos.y),
-            &Coords::new(size.x.saturating_sub(2), 1),
-            0,
-            None,
-        );
-        res.push_str(&title_str);
-        res.push_str("\x1b[0m");
+        let mut tbuffer = buffer.get_subset(Rect::new(
+            buffer.x() + 1,
+            buffer.y(),
+            buffer.width().saturating_sub(2),
+            1,
+        ));
+        _ = self.title.render_offset(&mut tbuffer, 0, None);
+        buffer.union(tbuffer);
 
         let (width, height) = self.border_size();
         let top = ((self.borders & Border::TOP) != 0
             || !self.title.get_text().is_empty()) as usize;
         let left = ((self.borders & Border::LEFT) != 0) as usize;
-        res.push_str(&self.layout.get_string(
-            &Coords::new(pos.x + left, pos.y + top),
-            &Coords::new(
-                size.x.saturating_sub(width),
-                size.y.saturating_sub(height),
-            ),
+
+        let mut cbuffer = buffer.get_subset(Rect::new(
+            buffer.x() + left,
+            buffer.y() + top,
+            buffer.width().saturating_sub(width),
+            buffer.height().saturating_sub(height),
         ));
-        res
+        self.layout.render(&mut cbuffer);
+        buffer.union(cbuffer);
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -183,7 +189,7 @@ impl Default for Block {
             title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
-            border_color: Fg::Default,
+            border_color: Color::default(),
             layout: Default::default(),
         }
     }
@@ -191,69 +197,61 @@ impl Default for Block {
 
 impl Block {
     /// Renders [`Block`] border
-    fn get_border(&self, pos: &Coords, size: &Coords) -> String {
-        let mut border = String::new();
-        let right_top = Coords::new(pos.x + size.x - 1, pos.y);
-        let left_bottom = Coords::new(pos.x, size.y + pos.y - 1);
+    fn render_border(&self, buffer: &mut Buffer) {
+        let rt = Coords::new(buffer.x() + buffer.width() - 1, buffer.y());
+        let lb = Coords::new(buffer.x(), buffer.height() + buffer.y() - 1);
 
-        border.push_str(&self.border_color.to_string());
-        self.ver_border(&mut border, size.y, pos, Border::LEFT);
-        self.ver_border(&mut border, size.y, &right_top, Border::RIGHT);
-        self.hor_border(&mut border, size.x, pos, Border::TOP);
-        self.hor_border(&mut border, size.x, &left_bottom, Border::BOTTOM);
+        self.render_ver_border(buffer, buffer.left(), Border::LEFT);
+        self.render_ver_border(buffer, buffer.right(), Border::RIGHT);
+        self.render_hor_border(buffer, buffer.top(), Border::TOP);
+        self.render_hor_border(buffer, buffer.bottom(), Border::BOTTOM);
 
-        if size.x > 1 && size.y > 1 {
-            self.corner(&mut border, pos, borders!(TOP, LEFT));
-            self.corner(&mut border, &right_top, borders!(TOP, RIGHT));
-            self.corner(&mut border, &left_bottom, borders!(BOTTOM, LEFT));
-            self.corner(
-                &mut border,
-                &Coords::new(right_top.x, left_bottom.y),
-                borders!(BOTTOM, RIGHT),
-            );
+        if buffer.width() == 0 || buffer.height() == 0 {
+            return;
         }
-        border
+
+        self.render_corner(buffer, &buffer.pos(), borders!(TOP, LEFT));
+        self.render_corner(buffer, &rt, borders!(TOP, RIGHT));
+        self.render_corner(buffer, &lb, borders!(BOTTOM, LEFT));
+        self.render_corner(
+            buffer,
+            &Coords::new(rt.x, lb.y),
+            borders!(BOTTOM, RIGHT),
+        );
     }
 
     /// Adds horizontal border to the string
-    fn hor_border(
-        &self,
-        res: &mut String,
-        width: usize,
-        pos: &Coords,
-        border: u8,
-    ) {
+    fn render_hor_border(&self, buffer: &mut Buffer, y: usize, border: u8) {
         if (self.borders & border) != 0 {
             let hor = self.border_type.get(border);
-            let hor_border: String = repeat(hor).take(width).collect();
-            res.push_str(&Cursor::Pos(pos.x, pos.y).to_string());
-            res.push_str(&hor_border);
+
+            for x in buffer.x()..buffer.width() + buffer.x() {
+                let coords = Coords::new(x, y);
+                buffer.set_val(hor, &coords);
+                buffer.set_fg(self.border_color, &coords);
+            }
         }
     }
 
     /// Adds vertical border to the string
-    fn ver_border(
-        &self,
-        res: &mut String,
-        height: usize,
-        pos: &Coords,
-        border: u8,
-    ) {
+    fn render_ver_border(&self, buffer: &mut Buffer, x: usize, border: u8) {
         if (self.borders & border) != 0 {
             let ver = self.border_type.get(border);
-            for y in 0..height {
-                res.push_str(&Cursor::Pos(pos.x, pos.y + y).to_string());
-                res.push(ver);
+
+            for y in buffer.y()..buffer.height() + buffer.y() {
+                let coords = Coords::new(x, y);
+                buffer.set_val(ver, &coords);
+                buffer.set_fg(self.border_color, &coords);
             }
         }
     }
 
     /// Adds corner of [`Block`] border to the string
-    fn corner(&self, res: &mut String, pos: &Coords, border: u8) {
-        let c = self.border_type.get(border);
+    fn render_corner(&self, buffer: &mut Buffer, pos: &Coords, border: u8) {
         if (self.borders & border) == border {
-            res.push_str(&Cursor::Pos(pos.x, pos.y).to_string());
-            res.push(c);
+            let c = self.border_type.get(border);
+            buffer.set_val(c, pos);
+            buffer.set_fg(self.border_color, pos);
         }
     }
 

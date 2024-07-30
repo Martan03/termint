@@ -1,4 +1,4 @@
-/// Contains direction in which Layout can flex
+/// Direction enum
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Direction {
     Vertical,

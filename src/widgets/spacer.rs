@@ -1,4 +1,4 @@
-use crate::{buffer::buffer::Buffer, geometry::coords::Coords};
+use crate::{buffer::Buffer, geometry::Coords};
 
 use super::widget::Widget;
 
@@ -7,19 +7,19 @@ use super::widget::Widget;
 /// Can be used to add spaces to the layout, for example, between two widget.
 ///
 /// ## Example usage:
-/// ```
+/// ```rust
 /// # use termint::{
-/// #     geometry::constrain::Constrain,
-/// #     widgets::{layout::Layout, spacer::Spacer, span::StrSpanExtension},
+/// #     geometry::Constraint,
+/// #     widgets::{Layout, Spacer, StrSpanExtension},
 /// # };
 /// let mut layout = Layout::vertical();
-/// layout.add_child("Example of Spacer".to_span(), Constrain::Min(0));
+/// layout.add_child("Example of Spacer", Constraint::Min(0));
 ///
 /// // Spacer creates one height space between spans
 /// // Spacer size is set using [`Constrain`] when adding it to [`Layout`]
-/// layout.add_child(Spacer::new(), Constrain::Length(1));
+/// layout.add_child(Spacer::new(), Constraint::Length(1));
 ///
-/// layout.add_child("One space above".to_span(), Constrain::Min(0));
+/// layout.add_child("One space above", Constraint::Min(0));
 /// ```
 #[derive(Debug, Default)]
 pub struct Spacer {}
@@ -33,10 +33,6 @@ impl Spacer {
 
 impl Widget for Spacer {
     fn render(&self, _buffer: &mut Buffer) {}
-
-    fn get_string(&self, _pos: &Coords, _size: &Coords) -> String {
-        String::new()
-    }
 
     fn height(&self, _size: &Coords) -> usize {
         0

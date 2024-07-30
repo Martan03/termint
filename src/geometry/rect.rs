@@ -1,6 +1,6 @@
 use super::coords::Coords;
 
-/// Represents rectangle containing its position and size
+/// A rectangular area containing its position and size
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Rect {
     pos: Coords,
@@ -9,16 +9,10 @@ pub struct Rect {
 
 impl Rect {
     /// Creates new [`Rect`]
-    pub fn new<T1, T2, T3, T4>(x: T1, y: T2, width: T3, height: T4) -> Self
-    where
-        T1: Into<usize>,
-        T2: Into<usize>,
-        T3: Into<usize>,
-        T4: Into<usize>,
-    {
+    pub fn new(x: usize, y: usize, width: usize, height: usize) -> Self {
         Self {
-            pos: Coords::new(x.into(), y.into()),
-            size: Coords::new(width.into(), height.into()),
+            pos: Coords::new(x, y),
+            size: Coords::new(width, height),
         }
     }
 
@@ -36,7 +30,12 @@ impl Rect {
 
     /// Gets position of the [`Rect`]
     pub fn pos(&self) -> Coords {
-        self.pos.clone()
+        self.pos
+    }
+
+    /// Gets position of the [`Rect`] as reference
+    pub fn pos_ref(&self) -> &Coords {
+        &self.pos
     }
 
     /// Gets x coordinate of the [`Rect`]
@@ -51,7 +50,7 @@ impl Rect {
 
     /// Gets x coordinate of the most right cell of the [`Rect`]
     pub fn right(&self) -> usize {
-        self.pos.x + self.size.x
+        (self.pos.x + self.size.x).saturating_sub(1)
     }
 
     /// Gets y coordinate of the [`Rect`]
@@ -66,12 +65,17 @@ impl Rect {
 
     /// Gets y coordinate of the most bottom cell of the [`Rect`]
     pub fn bottom(&self) -> usize {
-        self.pos.y + self.size.y
+        (self.pos.y + self.size.y).saturating_sub(1)
     }
 
     /// Gets size of the [`Rect`]
     pub fn size(&self) -> Coords {
-        self.size.clone()
+        self.size
+    }
+
+    /// Gets size of the [`Rect`] as reference
+    pub fn size_ref(&self) -> &Coords {
+        &self.size
     }
 
     /// Gets width of the [`Rect`]

@@ -1,17 +1,44 @@
 use std::{
+    cell::RefCell,
     cmp::{max, min},
-    io::{stdout, Write},
+    rc::Rc,
 };
 
 use crate::{
-    buffer::buffer::Buffer,
-    enums::{bg::Bg, cursor::Cursor, fg::Fg},
-    geometry::coords::Coords,
+    buffer::Buffer,
+    enums::Color,
+    geometry::{Coords, Rect},
+    style::Style,
 };
 
-use super::{span::StrSpanExtension, widget::Widget};
+use super::{span::StrSpanExtension, text::Text, widget::Widget};
 
-/// List widget with scrollbar
+/// State of the [`List`] widget
+#[derive(Debug)]
+pub struct ListState {
+    pub offset: usize,
+    pub selected: Option<usize>,
+}
+
+impl ListState {
+    /// Creates new [`ListState`] with given offset and no item selected
+    pub fn new(offset: usize) -> Self {
+        Self {
+            offset,
+            selected: None,
+        }
+    }
+
+    /// Creates new [`ListState`] with given offset and selected item
+    pub fn selected(offset: usize, selected: usize) -> Self {
+        Self {
+            offset,
+            selected: Some(selected),
+        }
+    }
+}
+
+/// List widget with scrollbar, that displays vector of strings
 ///
 /// ### Features:
 /// - Scrollbar (doesn't show when not necessary):
@@ -23,9 +50,9 @@ use super::{span::StrSpanExtension, widget::Widget};
 ///     - Character in front
 ///
 /// ## Example usage:
-/// ```
+/// ```ignore
 /// # use termint::{
-/// #     enums::fg::Fg, widgets::list::List,
+/// #     widgets::List,
 /// #     geometry::coords::Coords, widgets::widget::Widget
 /// # };
 /// // Creates list, where selected item has yellow foreground and '*' in
@@ -40,101 +67,99 @@ use super::{span::StrSpanExtension, widget::Widget};
 #[derive(Debug)]
 pub struct List {
     items: Vec<String>,
-    current: Option<usize>,
-    prev_offset: Option<usize>,
-    offset: usize,
-    fg: Fg,
-    sel_fg: Fg,
-    sel_bg: Option<Bg>,
-    sel_char: String,
-    scrollbar_fg: Fg,
-    thumb_fg: Fg,
+    state: Rc<RefCell<ListState>>,
+    auto_scroll: bool,
+    style: Style,
+    sel_style: Style,
+    highlight: String,
+    highlight_style: Style,
+    scrollbar_fg: Color,
+    thumb_fg: Color,
 }
 
 impl List {
-    /// Creates new [`List`] with given items.
-    /// Automatically sets current to the first item, when `items` aren't empty
-    pub fn new<T>(items: Vec<T>) -> Self
+    /// Creates new [`List`] with given items and given state
+    pub fn new<T>(items: T, state: Rc<RefCell<ListState>>) -> Self
     where
-        T: AsRef<str>,
+        T: IntoIterator,
+        T::Item: AsRef<str>,
     {
-        let items: Vec<String> =
-            items.iter().map(|i| i.as_ref().to_string()).collect();
-        let current = if items.is_empty() { None } else { Some(0) };
+        let items =
+            items.into_iter().map(|i| i.as_ref().to_string()).collect();
 
         Self {
             items,
-            current,
-            ..Default::default()
+            state,
+            auto_scroll: false,
+            style: Default::default(),
+            sel_style: Default::default(),
+            highlight: String::new(),
+            highlight_style: Default::default(),
+            scrollbar_fg: Color::Default,
+            thumb_fg: Color::Default,
         }
     }
 
     /// Sets selected item in [`List`]
-    /// This method exists for compatibility purposes and is deprecated, use
-    /// `selected` method instead
-    #[deprecated]
-    pub fn current<T: Into<Option<usize>>>(mut self, current: T) -> Self {
-        self.current = current.into();
+    pub fn selected<T>(self, current: T) -> Self
+    where
+        T: Into<Option<usize>>,
+    {
+        self.state.borrow_mut().selected = current.into();
         self
     }
 
-    /// Sets selected item in [`List`]
-    pub fn selected<T: Into<Option<usize>>>(mut self, current: T) -> Self {
-        self.current = current.into();
+    /// Automatically scrolls so the selected item is visible
+    pub fn auto_scroll(mut self) -> Self {
+        self.auto_scroll = true;
         self
     }
 
-    /// Sets scroll offset of the [`List`]
-    pub fn offset(mut self, offset: usize) -> Self {
-        self.offset = offset;
+    /// Sets style of the [`List`]
+    pub fn style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.style = style.into();
         self
     }
 
-    /// Gets current [`List`] offset
-    pub fn get_offset(&self) -> usize {
-        self.offset
-    }
-
-    /// Scrolls [`List`] from given offset so current item is visible
-    pub fn to_current(mut self, from: usize) -> Self {
-        self.prev_offset = Some(from);
+    /// Sets style of the selected item in the [`List`]
+    pub fn selected_style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.sel_style = style.into();
         self
     }
 
-    /// Sets foreground of [`List`] item
-    pub fn fg(mut self, fg: Fg) -> Self {
-        self.fg = fg;
+    /// Sets highlight symbol of the selected item
+    pub fn highlight_symbol<T>(mut self, sel_char: T) -> Self
+    where
+        T: AsRef<str>,
+    {
+        self.highlight = sel_char.as_ref().to_string();
         self
     }
 
-    /// Sets [`List`] selected item foreground color
-    pub fn sel_fg(mut self, sel_color: Fg) -> Self {
-        self.sel_fg = sel_color;
-        self
-    }
-
-    /// Sets [`List`] selected item background color
-    pub fn sel_bg<T: Into<Option<Bg>>>(mut self, sel_color: T) -> Self {
-        self.sel_bg = sel_color.into();
-        self
-    }
-
-    /// Sets [`List`] selected item character
-    /// Character that will display in front of selected items.
-    /// Other items will be shifted to be aligned with selected item
-    pub fn sel_char<T: AsRef<str>>(mut self, sel_char: T) -> Self {
-        self.sel_char = sel_char.as_ref().to_string();
+    /// Sets style of the highlight symbol
+    /// (seperate from the selected item style)
+    pub fn highlight_style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.highlight_style = style.into();
         self
     }
 
     /// Sets [`List`] scrollbar color
-    pub fn scrollbar_fg(mut self, fg: Fg) -> Self {
+    pub fn scrollbar_fg(mut self, fg: Color) -> Self {
         self.scrollbar_fg = fg;
         self
     }
 
     /// Sets [`List`] scrollbar thumb color
-    pub fn thumb_fg(mut self, fg: Fg) -> Self {
+    pub fn thumb_fg(mut self, fg: Color) -> Self {
         self.thumb_fg = fg;
         self
     }
@@ -142,47 +167,47 @@ impl List {
 
 impl Widget for List {
     fn render(&self, buffer: &mut Buffer) {
-        print!("{}", self.get_string(&buffer.pos(), &buffer.size()));
-        _ = stdout().flush();
-    }
-
-    fn get_string(&self, pos: &Coords, size: &Coords) -> String {
-        let mut res = String::new();
-        let mut text_pos = Coords::new(pos.x + self.sel_char.len(), pos.y);
-        let mut text_size = Coords::new(size.x - self.sel_char.len(), size.y);
-        let offset = self.get_render_offset(size);
-
-        let fits = self.fits(size);
-        if !fits {
-            text_size.x -= 1;
-            self.get_scrollbar(
-                &mut res,
-                &Coords::new((pos.x + size.x).saturating_sub(1), pos.y),
-                size,
-                offset,
-            );
+        if self.auto_scroll {
+            self.scroll_offset(buffer.size_ref());
         }
 
-        for i in offset..self.items.len() {
-            let mut fg = self.fg;
-            let mut bg: Option<Bg> = None;
-            if Some(i) == self.current {
-                res.push_str(&Cursor::Pos(pos.x, text_pos.y).to_string());
-                res.push_str(&self.sel_char);
-                fg = self.sel_fg;
-                bg = self.sel_bg;
+        let mut text_pos =
+            Coords::new(buffer.x() + self.highlight.len(), buffer.y());
+        let mut text_size = Coords::new(
+            buffer.width() - self.highlight.len(),
+            buffer.height(),
+        );
+
+        if !self.fits(buffer.size_ref()) {
+            text_size.x -= 1;
+            self.render_scrollbar(buffer);
+        }
+
+        let selected = self.state.borrow().selected;
+        for i in self.state.borrow().offset..self.items.len() {
+            let mut span = self.items[i].style(self.style);
+            if Some(i) == selected {
+                buffer.set_str_styled(
+                    self.highlight.to_owned(),
+                    &Coords::new(buffer.x(), text_pos.y),
+                    self.highlight_style,
+                );
+                span = self.items[i].style(self.sel_style);
             }
 
-            let span = self.items[i].fg(fg).bg(bg);
-            res.push_str(&span.get_string(&text_pos, &text_size));
-            text_pos.y += span.height(&text_size);
+            let mut ibuffer =
+                buffer.get_subset(Rect::from_coords(text_pos, text_size));
+            let res_pos = span.render_offset(&mut ibuffer, 0, None);
+            buffer.union(ibuffer);
 
-            if pos.y + size.y <= text_pos.y {
+            text_size.y = text_size.y.saturating_sub(res_pos.y - text_pos.y);
+            text_pos.y = res_pos.y + 1;
+
+            if buffer.y() + buffer.height() <= text_pos.y {
                 break;
             }
-            text_size.y = pos.y + size.y - text_pos.y;
+            text_size.y = buffer.y() + buffer.height() - text_pos.y;
         }
-        res
     }
 
     fn height(&self, size: &Coords) -> usize {
@@ -204,69 +229,47 @@ impl Widget for List {
     }
 }
 
-impl Default for List {
-    fn default() -> Self {
-        Self {
-            items: Vec::new(),
-            current: None,
-            prev_offset: None,
-            offset: 0,
-            fg: Fg::Default,
-            sel_fg: Fg::Cyan,
-            sel_bg: None,
-            sel_char: String::new(),
-            scrollbar_fg: Fg::Default,
-            thumb_fg: Fg::Default,
-        }
-    }
-}
-
 impl List {
     /// Renders [`List`] scrollbar
-    fn get_scrollbar(
-        &self,
-        res: &mut String,
-        pos: &Coords,
-        size: &Coords,
-        offset: usize,
-    ) {
-        let rat = self.items.len() as f32 / size.y as f32;
-        let thumb_size = min((size.y as f32 / rat) as usize, size.y);
-        let thumb_offset =
-            min((offset as f32 / rat) as usize, size.y - thumb_size);
+    fn render_scrollbar(&self, buffer: &mut Buffer) {
+        let rat = self.items.len() as f32 / buffer.height() as f32;
+        let thumb_size =
+            min((buffer.height() as f32 / rat) as usize, buffer.height());
+        let thumb_offset = min(
+            (self.state.borrow().offset as f32 / rat) as usize,
+            buffer.height() - thumb_size,
+        );
 
-        let mut bar_pos = Coords::new(pos.x, pos.y);
-        let bar = "│".fg(self.scrollbar_fg);
-        for _ in 0..size.y {
-            res.push_str(&bar.get_string(&bar_pos, size));
+        let x = (buffer.x() + buffer.width()).saturating_sub(1);
+        let mut bar_pos = Coords::new(x, buffer.y());
+        for _ in 0..buffer.height() {
+            buffer.set_val('|', &bar_pos);
+            buffer.set_fg(self.scrollbar_fg, &bar_pos);
             bar_pos.y += 1;
         }
 
-        bar_pos = Coords::new(pos.x, pos.y + thumb_offset);
-        let thumb = "┃".fg(self.thumb_fg);
+        bar_pos = Coords::new(x, buffer.y() + thumb_offset);
         for _ in 0..thumb_size {
-            res.push_str(&thumb.get_string(&bar_pos, size));
+            buffer.set_val('┃', &bar_pos);
+            buffer.set_fg(self.thumb_fg, &bar_pos);
             bar_pos.y += 1;
         }
     }
 
-    fn get_render_offset(&self, size: &Coords) -> usize {
-        let Some(current) = self.current else {
-            return self.offset;
-        };
-        let Some(prev_offset) = self.prev_offset else {
-            return self.offset;
+    /// Automatically scrolls so the selected item is visible
+    fn scroll_offset(&self, size: &Coords) {
+        let Some(selected) = self.state.borrow().selected else {
+            return;
         };
 
-        if prev_offset > current {
-            return current;
+        if selected < self.state.borrow().offset {
+            self.state.borrow_mut().offset = selected;
+            return;
         }
 
-        let mut offset = prev_offset;
-        while !self.is_visible(current, offset, size) {
-            offset += 1;
+        while !self.is_visible(selected, self.state.borrow().offset, size) {
+            self.state.borrow_mut().offset += 1;
         }
-        offset
     }
 
     /// Checks if item is visible with given offset

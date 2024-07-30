@@ -1,6 +1,6 @@
-/// [`Constrain`] enum contains some constrains for when adjusting layout
+/// Size constraints
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub enum Constrain {
+pub enum Constraint {
     /// Actual size
     Length(usize),
     /// Percentage size of the parent widget
