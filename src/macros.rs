@@ -55,7 +55,7 @@ macro_rules! borders {
 macro_rules! help {
     // Rule for parsing header
     ($header:literal: $($rest:tt)*) => {
-        println!("{}:", $header.fg(Fg::Green));
+        println!("{}:", $header.fg(Color::Green));
         help!($($rest)*);
     };
 
@@ -64,7 +64,7 @@ macro_rules! help {
         $cmd:literal $([$param:literal])* => $description:literal
         $($rest:tt)*
     ) => {
-        print!("  {}", $cmd.fg(Fg::Yellow));
+        print!("  {}", $cmd.fg(Color::Yellow));
         $(print!(" [{}]", $param);)*
         println!();
         println!("    {}", $description);
@@ -78,7 +78,7 @@ macro_rules! help {
         }
         $($rest:tt)*
     ) => {
-        print!("  {}", $cmd.fg(Fg::Yellow));
+        print!("  {}", $cmd.fg(Color::Yellow));
         $(print!(" [{}]", $param);)*
         println!();
         $(println!("    {}", $description);)*
@@ -99,9 +99,9 @@ macro_rules! help {
 /// let mods = mods!(Bold, Italic);
 /// ```
 #[macro_export]
-macro_rules! mods {
+macro_rules! modifiers {
     ($($mod:ident),*) => {
-        vec![$(Modifier::$mod, )*]
+        $(Modifier::$mod |)* 0
     };
 }
 

@@ -88,6 +88,7 @@
 //! - **Documentation**: [docs.rs](https://docs.rs/termint/latest/termint/)
 //! - **Author website:** [martan03.github.io](https://martan03.github.io)
 
+
 pub mod buffer;
 /// Contains enums for foreground, background and more
 pub mod enums;
@@ -95,6 +96,7 @@ pub mod enums;
 pub mod geometry;
 /// Contains useful macros
 pub mod macros;
+pub mod style;
 /// Contains Term struct
 pub mod term;
 /// Contains widgets (Layout, Block, Span)

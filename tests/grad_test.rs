@@ -3,8 +3,8 @@ extern crate termint;
 #[cfg(test)]
 mod tests {
     use termint::{
-        enums::{bg::Bg, fg::Fg, modifier::Modifier, Color},
-        mods,
+        enums::{modifier::Modifier, Color},
+        modifiers,
         widgets::{grad::Grad, text::Text},
     };
 
@@ -14,14 +14,14 @@ mod tests {
         let grad = Grad::new("Gradient", (0, 220, 255), (175, 80, 255));
         let assert_val = format!(
             "{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
-            Fg::RGB(0, 220, 255),
-            Fg::RGB(25, 200, 255),
-            Fg::RGB(50, 180, 255),
-            Fg::RGB(75, 160, 255),
-            Fg::RGB(100, 140, 255),
-            Fg::RGB(125, 120, 255),
-            Fg::RGB(150, 100, 255),
-            Fg::RGB(175, 80, 255),
+            Color::Rgb(0, 220, 255).to_fg(),
+            Color::Rgb(25, 200, 255).to_fg(),
+            Color::Rgb(50, 180, 255).to_fg(),
+            Color::Rgb(75, 160, 255).to_fg(),
+            Color::Rgb(100, 140, 255).to_fg(),
+            Color::Rgb(125, 120, 255).to_fg(),
+            Color::Rgb(150, 100, 255).to_fg(),
+            Color::Rgb(175, 80, 255).to_fg(),
         );
         assert_eq!(grad.get(), assert_val);
     }
@@ -30,21 +30,19 @@ mod tests {
     #[test]
     fn grad_with_modifiers() {
         let grad = Grad::new("Gradient", (0, 220, 255), (175, 80, 255))
-            .modifiers(mods!(Bold, Underline))
+            .modifier(modifiers!(BOLD, UNDERLINED))
             .bg(Color::White);
         let assert_val = format!(
-            "{}{}{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
-            Bg::White,
-            Modifier::Bold,
-            Modifier::Underline,
-            Fg::RGB(0, 220, 255),
-            Fg::RGB(25, 200, 255),
-            Fg::RGB(50, 180, 255),
-            Fg::RGB(75, 160, 255),
-            Fg::RGB(100, 140, 255),
-            Fg::RGB(125, 120, 255),
-            Fg::RGB(150, 100, 255),
-            Fg::RGB(175, 80, 255),
+            "\x1b[1;34;1;4m{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
+            Color::White.to_bg(),
+            Color::Rgb(0, 220, 255).to_fg(),
+            Color::Rgb(25, 200, 255).to_fg(),
+            Color::Rgb(50, 180, 255).to_fg(),
+            Color::Rgb(75, 160, 255).to_fg(),
+            Color::Rgb(100, 140, 255).to_fg(),
+            Color::Rgb(125, 120, 255).to_fg(),
+            Color::Rgb(150, 100, 255).to_fg(),
+            Color::Rgb(175, 80, 255).to_fg(),
         );
         assert_eq!(grad.get(), assert_val);
     }

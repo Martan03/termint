@@ -5,6 +5,7 @@ use crate::{
     buffer::buffer::Buffer,
     enums::{modifier::Modifier, rgb::RGB, wrap::Wrap, Color},
     geometry::{coords::Coords, direction::Direction, text_align::TextAlign},
+    style::Style,
 };
 
 use super::{text::Text, widget::Widget};
@@ -36,7 +37,7 @@ pub struct Grad {
     fg_end: RGB,
     direction: Direction,
     bg: Option<Color>,
-    modifier: Vec<Modifier>,
+    modifier: Modifier,
     align: TextAlign,
     wrap: Wrap,
     ellipsis: String,
@@ -56,7 +57,7 @@ impl Grad {
             fg_end: end.into(),
             direction: Direction::Horizontal,
             bg: None,
-            modifier: Vec::new(),
+            modifier: Modifier::empty(),
             align: Default::default(),
             wrap: Wrap::Word,
             ellipsis: "...".to_string(),
@@ -78,15 +79,22 @@ impl Grad {
         self
     }
 
-    /// Adds [`Grad`] modifier to current modifiers
-    pub fn modifier(mut self, modifier: Modifier) -> Self {
-        self.modifier.push(modifier);
+    /// Sets [`Grad`] modifier to given modifiers
+    pub fn modifier(mut self, modifier: u8) -> Self {
+        self.modifier.clear();
+        self.modifier.add(modifier);
         self
     }
 
-    /// Sets modifiers of [`Grad`] to given modifiers
-    pub fn modifiers(mut self, mods: Vec<Modifier>) -> Self {
-        self.modifier = mods;
+    /// Adds given modifier to current [`Grad`] modifiers
+    pub fn add_modifier(mut self, flag: u8) -> Self {
+        self.modifier.add(flag);
+        self
+    }
+
+    /// Removes given modifier from the current [`Grad`] modifiers
+    pub fn remove_modifier(mut self, flag: u8) -> Self {
+        self.modifier.sub(flag);
         self
     }
 
@@ -174,16 +182,10 @@ impl Text for Grad {
     }
 
     fn get_mods(&self) -> String {
-        let m = self
-            .modifier
-            .iter()
-            .map(|m| m.to_ansi())
-            .collect::<Vec<&str>>()
-            .join("");
         format!(
             "{}{}",
+            self.modifier,
             self.bg.map_or_else(|| "".to_string(), |bg| bg.to_bg()),
-            m
         )
     }
 }
@@ -400,13 +402,19 @@ impl Grad {
             (r, g, b) = self.add_step((r, g, b), step);
         }
 
+        let mut style = Style::new()
+            .fg(Color::Rgb(r, g, b))
+            .bg(self.bg)
+            .modifier(self.modifier.val());
+
         let mut coords = Coords::new(pos.x + offset, pos.y);
         for c in line.chars() {
             buffer.set_val(c, &coords);
-            buffer.set_fg(Color::Rgb(r, g, b), &coords);
+            buffer.set_style(style, &coords);
 
             coords.x += 1;
             (r, g, b) = self.add_step((r, g, b), step);
+            style = style.fg(Color::Rgb(r, g, b));
         }
     }
 
@@ -420,11 +428,11 @@ impl Grad {
         _step: (i16, i16, i16),
     ) {
         let offset = self.get_align_offset(buffer, line.len());
+        let style = Style::new().fg(Color::Rgb(r, g, b)).bg(self.bg);
         buffer.set_str_styled(
             line,
             &Coords::new(pos.x + offset, pos.y),
-            Color::Rgb(r, g, b),
-            self.bg,
+            style,
         );
     }
 

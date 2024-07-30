@@ -7,7 +7,6 @@ use termint::{
         constraint::Constraint, coords::Coords, rect::Rect,
         text_align::TextAlign, unit::Unit,
     },
-    mods,
     term::Term,
     widgets::{
         bg_grad::BgGrad,
@@ -132,13 +131,13 @@ fn cool_example() {
         .border_color(Color::Gray);
     main.add_child(block, Constraint::Min(0));
 
-    let span = "Re-coloring".fg(Color::Red).modifiers(mods!(Italic));
+    let span = "Re-coloring".fg(Color::Red).modifier(Modifier::ITALIC);
     main.add_child(span, Constraint::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
     main.add_child(grad, Constraint::Min(0));
 
     let mut fill = Block::horizontal()
-        .title("Layout features".modifiers(mods!(Underline)))
+        .title("Layout features".modifier(Modifier::UNDERLINED))
         .border_type(BorderType::Rounded)
         .border_color(Color::Gray);
 
@@ -171,9 +170,9 @@ fn test_paragraph() {
     let mut p = Paragraph::new(vec![
         Box::new(Grad::new("this", (0, 120, 255), (120, 255, 0))),
         Box::new("This is a text in".fg(Color::Yellow)),
-        Box::new("paragraph".modifiers(vec![Modifier::Bold]).fg(Color::Cyan)),
+        // Box::new("paragraph".modifiers(vec![Modifier::Bold]).fg(Color::Cyan)),
         Box::new("and it adds".to_span()),
-        Box::new("separator".modifiers(vec![Modifier::Italic])),
+        // Box::new("separator".modifiers(vec![Modifier::Italic])),
         Box::new("between each span".to_span()),
     ]);
 
@@ -249,10 +248,10 @@ fn test_list() {
         Coords::new(1, 1),
         Coords::new(20, 6),
     ));
-    offset.borrow_mut().selected = Some(1);
+    offset.borrow_mut().selected = Some(4);
     block.render(&mut buffer);
 
-    buffer.render();
+    // buffer.render();
 }
 
 #[allow(unused)]

@@ -2,8 +2,9 @@ use std::fmt;
 
 use crate::{
     buffer::buffer::Buffer,
-    enums::{modifier::Modifier, wrap::Wrap, Color},
+    enums::{wrap::Wrap, Color},
     geometry::{coords::Coords, text_align::TextAlign},
+    style::Style,
 };
 
 use super::{text::Text, widget::Widget};
@@ -57,9 +58,7 @@ use super::{text::Text, widget::Widget};
 #[derive(Debug)]
 pub struct Span {
     text: String,
-    fg: Option<Color>,
-    bg: Option<Color>,
-    modifier: Vec<Modifier>,
+    style: Style,
     align: TextAlign,
     wrap: Wrap,
     ellipsis: String,
@@ -77,12 +76,21 @@ impl Span {
         }
     }
 
+    /// Sets [`Span`] style to given style
+    pub fn style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.style = style.into();
+        self
+    }
+
     /// Sets foreground of [`Span`] to given color
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
     {
-        self.fg = fg.into();
+        self.style = self.style.fg(fg);
         self
     }
 
@@ -91,19 +99,25 @@ impl Span {
     where
         T: Into<Option<Color>>,
     {
-        self.bg = bg.into();
+        self.style = self.style.bg(bg);
         self
     }
 
-    /// Adds [`Span`] modifier to current modifiers
-    pub fn modifier(mut self, modifier: Modifier) -> Self {
-        self.modifier.push(modifier);
+    /// Sets [`Span`] modifier to given modifier
+    pub fn modifier(mut self, modifier: u8) -> Self {
+        self.style = self.style.modifier(modifier);
         self
     }
 
     /// Sets modifiers of [`Span`] to given modifiers
-    pub fn modifiers(mut self, mods: Vec<Modifier>) -> Self {
-        self.modifier = mods;
+    pub fn add_modifier(mut self, flag: u8) -> Self {
+        self.style = self.style.add_modifier(flag);
+        self
+    }
+
+    /// Removes given modifier from [`Span`] modifiers
+    pub fn remove_modifier(mut self, flag: u8) -> Self {
+        self.style = self.style.remove_modifier(flag);
         self
     }
 
@@ -175,19 +189,7 @@ impl Text for Span {
     }
 
     fn get_mods(&self) -> String {
-        let mut res = self
-            .modifier
-            .iter()
-            .map(|m| m.to_ansi())
-            .collect::<Vec<&str>>()
-            .join("");
-        if let Some(fg) = self.fg {
-            res.push_str(&fg.to_fg());
-        }
-        if let Some(bg) = self.bg {
-            res.push_str(&bg.to_bg());
-        }
-        res
+        self.style.to_string()
     }
 }
 
@@ -195,11 +197,9 @@ impl Default for Span {
     fn default() -> Self {
         Self {
             text: Default::default(),
-            fg: Default::default(),
-            bg: Default::default(),
-            modifier: Default::default(),
+            style: Default::default(),
             align: Default::default(),
-            wrap: Wrap::Word,
+            wrap: Default::default(),
             ellipsis: "...".to_string(),
         }
     }
@@ -313,8 +313,7 @@ impl Span {
         buffer.set_str_styled(
             &stext,
             &Coords::new(buffer.x() + offset_x, offset_y),
-            self.fg,
-            self.bg,
+            self.style,
         );
 
         if stext.len() != text.len() && !self.ellipsis.is_empty() {
@@ -323,7 +322,7 @@ impl Span {
                     .saturating_sub(self.ellipsis.len()),
                 (buffer.y() + buffer.height()).saturating_sub(1),
             );
-            buffer.set_str_styled(&self.ellipsis, &coords, self.fg, self.bg)
+            buffer.set_str_styled(&self.ellipsis, &coords, self.style)
         }
 
         buffer.coords_of(stext.len() + offset_x)
@@ -338,7 +337,7 @@ impl Span {
             }
             TextAlign::Right => buffer.width().saturating_sub(line.len()),
         };
-        buffer.set_str_styled(line, &Coords::new(x, pos.y), self.fg, self.bg);
+        buffer.set_str_styled(line, &Coords::new(x, pos.y), self.style);
     }
 
     /// Gets height of the [`Span`] when using word wrap
@@ -392,10 +391,10 @@ pub trait StrSpanExtension {
         T: Into<Option<Color>>;
 
     /// Creates [`Span`] from string and sets its modifier to given value
-    fn modifier(self, modifier: Modifier) -> Span;
+    fn modifier(self, modifier: u8) -> Span;
 
-    /// Creates [`Span`] from string and sets its modifier to given values
-    fn modifiers(self, mods: Vec<Modifier>) -> Span;
+    /// Creates [`Span`] from string and add given modifier to it
+    fn add_modifier(self, flag: u8) -> Span;
 
     /// Creates [`Span`] from string and sets its alignment to given value
     fn align(self, align: TextAlign) -> Span;
@@ -427,12 +426,12 @@ impl StrSpanExtension for &str {
         Span::new(self).bg(bg)
     }
 
-    fn modifier(self, modifier: Modifier) -> Span {
+    fn modifier(self, modifier: u8) -> Span {
         Span::new(self).modifier(modifier)
     }
 
-    fn modifiers(self, mods: Vec<Modifier>) -> Span {
-        Span::new(self).modifiers(mods)
+    fn add_modifier(self, flag: u8) -> Span {
+        Span::new(self).add_modifier(flag)
     }
 
     fn align(self, align: TextAlign) -> Span {

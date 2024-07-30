@@ -7,7 +7,7 @@ extern crate termint;
 mod tests {
     use termint::{
         enums::{modifier::Modifier, Color},
-        mods,
+        modifiers,
         widgets::{
             span::{Span, StrSpanExtension},
             text::Text,
@@ -76,36 +76,23 @@ mod tests {
     #[test]
     fn span_modifier() {
         // Creates span using new
-        let span = Span::new("Span modifier").modifiers(vec![
-            Modifier::Bold,
-            Modifier::Blink,
-            Modifier::Italic,
-            Modifier::Inverse,
-        ]);
-        assert_eq!(
-            span.get(),
-            "\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
+        let span = Span::new("Span modifier").modifier(
+            Modifier::BOLD
+                | Modifier::BLINK
+                | Modifier::ITALIC
+                | Modifier::INVERSED,
         );
+        assert_eq!(span.get(), "\x1b[1;34;1;3;5;7mSpan modifier\x1b[0m");
 
         // Creates span from &str
-        let span = "Span modifier".modifiers(vec![
-            Modifier::Bold,
-            Modifier::Blink,
-            Modifier::Italic,
-            Modifier::Inverse,
-        ]);
-        assert_eq!(
-            span.get(),
-            "\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
-        );
+        let span = "Span modifier"
+            .modifier(modifiers!(BOLD, BLINK, ITALIC, INVERSED));
+        assert_eq!(span.get(), "\x1b[1;34;1;3;5;7mSpan modifier\x1b[0m");
 
         // Using modifiers macro
-        let span =
-            "Span modifier".modifiers(mods!(Bold, Blink, Italic, Inverse));
-        assert_eq!(
-            span.get(),
-            "\x1b[1m\x1b[5m\x1b[3m\x1b[7mSpan modifier\x1b[0m"
-        );
+        let span = "Span modifier"
+            .modifier(modifiers!(BOLD, BLINK, ITALIC, INVERSED));
+        assert_eq!(span.get(), "\x1b[1;34;1;3;5;7mSpan modifier\x1b[0m");
     }
 
     /// Tests setting both fg and bg with RGB values

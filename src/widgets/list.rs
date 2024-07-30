@@ -37,7 +37,7 @@ impl ListState {
     }
 }
 
-/// List widget with scrollbar
+/// List widget with scrollbar, that displays vector of strings
 ///
 /// ### Features:
 /// - Scrollbar (doesn't show when not necessary):
@@ -160,8 +160,8 @@ impl List {
 
 impl Widget for List {
     fn render(&self, buffer: &mut Buffer) {
-        if !self.fits(buffer.size_ref()) {
-            self.render_scrollbar(buffer);
+        if self.auto_scroll {
+            self.scroll_offset(buffer.size_ref());
         }
 
         let mut text_pos =
@@ -169,16 +169,22 @@ impl Widget for List {
         let mut text_size =
             Coords::new(buffer.width() - self.sel_char.len(), buffer.height());
 
+        if !self.fits(buffer.size_ref()) {
+            text_size.x -= 1;
+            self.render_scrollbar(buffer);
+        }
+
         let selected = self.state.borrow().selected;
         for i in self.state.borrow().offset..self.items.len() {
-            let mut fg = self.fg;
-            let mut bg: Option<Color> = None;
+            let mut span = self.items[i].fg(self.fg);
             if Some(i) == selected {
-                fg = self.sel_fg;
-                bg = self.sel_bg;
+                buffer.set_str(
+                    self.sel_char.to_owned(),
+                    &Coords::new(buffer.x(), text_pos.y),
+                );
+                span = self.items[i].fg(self.sel_fg).bg(self.sel_bg);
             }
 
-            let span = self.items[i].fg(fg).bg(bg);
             let mut ibuffer =
                 buffer.get_subset(Rect::from_coords(text_pos, text_size));
             let res_pos = span.render_offset(&mut ibuffer, 0, None);
@@ -237,6 +243,22 @@ impl List {
             buffer.set_val('┃', &bar_pos);
             buffer.set_fg(self.thumb_fg, &bar_pos);
             bar_pos.y += 1;
+        }
+    }
+
+    /// Automatically scrolls so the selected item is visible
+    fn scroll_offset(&self, size: &Coords) {
+        let Some(selected) = self.state.borrow().selected else {
+            return;
+        };
+
+        if selected < self.state.borrow().offset {
+            self.state.borrow_mut().offset = selected;
+            return;
+        }
+
+        while !self.is_visible(selected, self.state.borrow().offset, size) {
+            self.state.borrow_mut().offset += 1;
         }
     }
 

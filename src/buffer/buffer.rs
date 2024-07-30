@@ -3,6 +3,7 @@ use std::io::{stdout, Write};
 use crate::{
     enums::{cursor::Cursor, Color},
     geometry::{coords::Coords, rect::Rect},
+    style::Style,
 };
 
 use super::cell::Cell;
@@ -160,30 +161,16 @@ impl Buffer {
     }
 
     /// Sets cell style and values starting at given coordinates
-    pub fn set_str_styled<T1, T2, T3>(
-        &mut self,
-        str: T1,
-        pos: &Coords,
-        fg: T2,
-        bg: T3,
-    ) where
+    pub fn set_str_styled<T1, T2>(&mut self, str: T1, pos: &Coords, style: T2)
+    where
         T1: AsRef<str>,
-        T2: Into<Option<Color>>,
-        T3: Into<Option<Color>>,
+        T2: Into<Style>,
     {
-        let fg = fg.into();
-        let bg = bg.into();
-
+        let style = style.into();
         let mut id = self.index_of(pos);
         for c in str.as_ref().chars() {
             self.content[id].val(c);
-
-            if let Some(fg) = fg {
-                self.content[id].fg(fg);
-            }
-            if let Some(bg) = bg {
-                self.content[id].bg(bg);
-            }
+            self.content[id].style(style);
             id += 1;
         }
     }
@@ -192,6 +179,12 @@ impl Buffer {
     pub fn set_val(&mut self, val: char, pos: &Coords) {
         let id = self.index_of(pos);
         self.content[id].val(val);
+    }
+
+    /// Sets style of the cell on given coordinates to given value
+    pub fn set_style(&mut self, style: Style, pos: &Coords) {
+        let id = self.index_of(pos);
+        self.content[id].style(style);
     }
 
     /// Sets foreground of the cell on given position relative to buffer
