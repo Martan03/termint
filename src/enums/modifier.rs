@@ -1,12 +1,22 @@
 use std::fmt;
 
-/// Enum for modifier ANSI codes
+/// Modifier struct used for bitflags for the modifiers
 ///
-/// You can use macro to get vector with Modifers:
+/// Since modifier is bitflag, you can combine multiple modifiers using `|`, or
+/// you can use `add` method, or use `modifiers!` macro.
+///
 /// ```rust
-/// # use termint::{enums::modifier::Modifier, mods};
-/// // Gets vector with Bold and Italic modifier
-/// let modifiers = mods!(Bold, Italic);
+/// # use termint::{enums::Modifier, modifiers};
+/// // Combines using binary or
+/// let modifiers: u8 = Modifier::BOLD | Modifier::ITALIC;
+///
+/// // Combines using the Modifier struct
+/// let mut modifiers: Modifier = Modifier::empty();
+/// modifiers.add(Modifier::BOLD);
+/// modifiers.add(Modifier::ITALIC);
+///
+/// // Uses macro (does the same as binary or in shorter way)
+/// let modifiers: u8 = modifiers!(BOLD, ITALIC);
 /// ```
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Modifier(u8);
@@ -52,10 +62,6 @@ impl Modifier {
     /// Subs given flag from the [`Modifier`]
     pub fn sub(&mut self, flag: u8) {
         self.0 &= !flag;
-    }
-
-    pub fn to_ansi(&self) -> &'static str {
-        ""
     }
 }
 

@@ -6,12 +6,9 @@ extern crate termint;
 #[cfg(test)]
 mod tests {
     use termint::{
-        enums::{modifier::Modifier, Color},
+        enums::{Color, Modifier},
         modifiers,
-        widgets::{
-            span::{Span, StrSpanExtension},
-            text::Text,
-        },
+        widgets::{Span, StrSpanExtension, Text},
     };
 
     /// Tests creating new span

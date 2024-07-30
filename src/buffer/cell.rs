@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
 use crate::{
-    enums::{modifier::Modifier, Color},
+    enums::{Color, Modifier},
     style::Style,
 };
 
-/// Represents rendering buffer cell
+/// A buffer cell containing foreground, background, modifiers and symbol.
 #[derive(Debug, Clone, Copy)]
 pub struct Cell {
     pub fg: Color,
@@ -33,11 +33,14 @@ impl Cell {
         self.bg = bg;
     }
 
+    /// Sets [`Cell`] modifier to the given flag
     pub fn modifier(&mut self, flag: u8) {
         self.modifier.clear();
         self.modifier.add(flag);
     }
 
+    /// Sets style of the [`Cell`] to the given value. If `fg` or `bg` are
+    /// none, it keeps the original value.
     pub fn style<T>(&mut self, style: T)
     where
         T: Into<Style>,

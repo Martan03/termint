@@ -1,8 +1,7 @@
 use core::fmt;
 
 use crate::{
-    buffer::buffer::Buffer, enums::wrap::Wrap, geometry::coords::Coords,
-    widgets::text::Text,
+    buffer::Buffer, enums::Wrap, geometry::Coords, widgets::text::Text,
 };
 
 use super::widget::Widget;

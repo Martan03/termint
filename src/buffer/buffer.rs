@@ -1,14 +1,36 @@
 use std::io::{stdout, Write};
 
 use crate::{
-    enums::{cursor::Cursor, Color},
-    geometry::{coords::Coords, rect::Rect},
+    enums::{Color, Cursor},
+    geometry::{Coords, Rect},
     style::Style,
 };
 
 use super::cell::Cell;
 
-/// Represents rendering buffer
+/// A buffer that stores the result of the widget render method. Every widget
+/// interacts with the buffer, instead of printing to the terminal.
+///
+/// [`Term`] struct automatically renders on the whole screen using the
+/// [`Buffer`], so you don't have to care about it. But if you would like to do
+/// it without the [`Term`] struct, you can do it like this:
+/// ```rust
+/// # use termint::{
+/// #     buffer::Buffer,
+/// #     widgets::{Block, Widget},
+/// #     geometry::Rect,
+/// # };
+/// # fn get_your_widget() -> Block { Block::vertical() }
+/// // Creates new buffer with desired position and size given by the [`Rect`]
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
+///
+/// // Gets widget and renders it to the [`Buffer`]
+/// let widget = get_your_widget();
+/// widget.render(&mut buffer);
+///
+/// // Renders [`Buffer`], which prints the result to the terminal
+/// buffer.render();
+/// ```
 #[derive(Debug, Clone)]
 pub struct Buffer {
     rect: Rect,
@@ -16,7 +38,7 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    /// Creates new empty [`Buffer`]
+    /// Creates new [`Buffer`] with all cells set to the default cell
     pub fn empty(rect: Rect) -> Self {
         let area = rect.area();
         Self {

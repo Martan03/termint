@@ -1,5 +1,6 @@
 use crate::enums::rgb::RGB;
 
+/// ANSI colors
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum Color {
     /// Black (fg: 30, bg: 40)

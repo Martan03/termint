@@ -1,4 +1,4 @@
-/// Struct containing Padding on all four sides
+/// Defines padding struct
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Padding {
     pub top: usize,
@@ -8,7 +8,7 @@ pub struct Padding {
 }
 
 impl Padding {
-    /// Creates new [`Padding`]
+    /// Creates new [`Padding`] based on given values
     pub fn new<T: Into<Padding>>(padding: T) -> Self {
         padding.into()
     }
@@ -37,6 +37,7 @@ impl Default for Padding {
 }
 
 impl From<usize> for Padding {
+    /// Uses the value for all four sides
     fn from(value: usize) -> Self {
         Self {
             top: value,
@@ -48,6 +49,8 @@ impl From<usize> for Padding {
 }
 
 impl From<(usize, usize)> for Padding {
+    /// Uses the first value for the top and bottom side,
+    /// second for right and left
     fn from(value: (usize, usize)) -> Self {
         Self {
             top: value.0,
@@ -59,6 +62,8 @@ impl From<(usize, usize)> for Padding {
 }
 
 impl From<(usize, usize, usize, usize)> for Padding {
+    /// Each value represent one side, starting from the top and continuing
+    /// clockwise
     fn from(value: (usize, usize, usize, usize)) -> Self {
         Self {
             top: value.0,

@@ -1,4 +1,7 @@
-/// RGB struct containing 3 items (r, g, b)
+/// Struct representing RGB color
+///
+/// It exists along the Color enum for the sake of ensuring the RGB value
+/// (which is needed, for example, for gradients)
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct RGB {
     /// Red value

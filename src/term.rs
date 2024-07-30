@@ -1,7 +1,7 @@
 use crate::{
-    buffer::buffer::Buffer,
-    geometry::{coords::Coords, padding::Padding, rect::Rect},
-    widgets::widget::Widget,
+    buffer::Buffer,
+    geometry::{Coords, Padding, Rect},
+    widgets::Widget,
 };
 
 /// [`Term`] implements full screen rendering with option to set padding
@@ -9,7 +9,7 @@ use crate::{
 /// ## Usage:
 /// ```
 /// # use termint::{
-/// #    term::Term, widgets::{block::Block, span::StrSpanExtension}
+/// #    term::Term, widgets::{Block, StrSpanExtension}
 /// # };
 ///
 /// let main = Block::vertical().title("Example".to_span());

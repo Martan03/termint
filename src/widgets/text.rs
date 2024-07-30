@@ -1,8 +1,6 @@
 use core::fmt;
 
-use crate::{
-    buffer::buffer::Buffer, enums::wrap::Wrap, geometry::coords::Coords,
-};
+use crate::{buffer::Buffer, enums::Wrap, geometry::Coords};
 
 /// Trait for text widgets to implement
 /// Makes work with more [`Text`] widgets easier

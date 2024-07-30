@@ -1,6 +1,6 @@
 use crate::{
-    buffer::buffer::Buffer,
-    geometry::{coords::Coords, rect::Rect, unit::Unit},
+    buffer::Buffer,
+    geometry::{Coords, Rect, Unit},
 };
 
 use super::widget::Widget;
@@ -13,14 +13,14 @@ struct GridChild {
     pub col: usize,
 }
 
-/// Grid widget creates layout for other widgets by specifying columns and rows
+/// Creates layout by specifying columns and rows
 ///
 /// ## Example usage without using Term:
 /// ```rust
 /// # use termint::{
-/// #     buffer::buffer::Buffer,
-/// #     geometry::{rect::Rect, unit::Unit},
-/// #     widgets::{grid::Grid, widget::Widget},
+/// #     buffer::Buffer,
+/// #     geometry::{Rect, Unit},
+/// #     widgets::{Grid, Widget},
 /// # };
 /// let mut grid = Grid::new(
 ///     vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],

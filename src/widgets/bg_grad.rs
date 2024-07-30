@@ -1,26 +1,22 @@
 use crate::{
-    buffer::buffer::Buffer,
-    enums::{rgb::RGB, Color},
-    geometry::{
-        constraint::Constraint, coords::Coords, direction::Direction,
-        padding::Padding,
-    },
+    buffer::Buffer,
+    enums::{Color, RGB},
+    geometry::{Constraint, Coords, Direction, Padding},
 };
 
 use super::{layout::Layout, widget::Widget};
 
-/// [`BgGrad`] widget renders Gradient Background and works as [`Layout`]
-/// as well
+/// [`Layout`] widget with gradient background
 ///
 /// ## Example usage using [`Term`] (automatically renders on full screen):
 /// ```rust
-/// # use termint::{term::Term, widgets::bg_grad::BgGrad};
+/// # use termint::{term::Term, widgets::BgGrad};
 /// # fn example() -> Result<(), &'static str> {
 /// // Creates new background gradient with horizontal direction
 /// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
 /// // Renders background gradient using Term struct
-/// let term = Term::new();
+/// let mut term = Term::new();
 /// term.render(grad)?;
 /// # Ok(())
 /// # }
@@ -29,9 +25,9 @@ use super::{layout::Layout, widget::Widget};
 /// ## Example usage without using [`Term`]:
 /// ```rust
 /// # use termint::{
-/// #     buffer::buffer::Buffer,
-/// #     geometry::rect::Rect,
-/// #     widgets::{bg_grad::BgGrad, widget::Widget},
+/// #     buffer::Buffer,
+/// #     geometry::Rect,
+/// #     widgets::{BgGrad, Widget},
 /// # };
 /// // Creates new background gradient with horizontal direction
 /// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
@@ -121,11 +117,11 @@ impl BgGrad {
     }
 
     /// Adds child to the [`BgGrad`]'s [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constrain: Constraint)
+    pub fn add_child<T>(&mut self, child: T, constraint: Constraint)
     where
         T: Into<Box<dyn Widget>>,
     {
-        self.layout.add_child(child, constrain);
+        self.layout.add_child(child, constraint);
     }
 }
 

@@ -3,9 +3,9 @@ extern crate termint;
 #[cfg(test)]
 mod tests {
     use termint::{
-        buffer::buffer::Buffer,
-        geometry::{coords::Coords, rect::Rect},
-        widgets::{block::Block, span::StrSpanExtension, widget::Widget},
+        buffer::Buffer,
+        geometry::{Coords, Rect},
+        widgets::{Block, StrSpanExtension, Widget},
     };
 
     #[test]

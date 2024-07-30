@@ -1,4 +1,4 @@
-use crate::{buffer::buffer::Buffer, geometry::coords::Coords};
+use crate::{buffer::Buffer, geometry::Coords};
 
 use super::widget::Widget;
 
@@ -9,8 +9,8 @@ use super::widget::Widget;
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     geometry::constraint::Constraint,
-/// #     widgets::{layout::Layout, spacer::Spacer, span::StrSpanExtension},
+/// #     geometry::Constraint,
+/// #     widgets::{Layout, Spacer, StrSpanExtension},
 /// # };
 /// let mut layout = Layout::vertical();
 /// layout.add_child("Example of Spacer", Constraint::Min(0));

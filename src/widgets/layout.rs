@@ -1,12 +1,9 @@
 use std::cmp::{max, min};
 
 use crate::{
-    buffer::buffer::Buffer,
+    buffer::Buffer,
     enums::Color,
-    geometry::{
-        constraint::Constraint, coords::Coords, direction::Direction,
-        padding::Padding, rect::Rect,
-    },
+    geometry::{Constraint, Coords, Direction, Padding, Rect},
 };
 
 use super::widget::Widget;
@@ -18,17 +15,14 @@ struct LayoutChild {
     pub constraint: Constraint,
 }
 
-/// Creates layout for widgets
+/// Creates layout flexing in one direction
 ///
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     buffer::buffer::Buffer,
-/// #     geometry::{constraint::Constraint, rect::Rect},
-/// #     widgets::{
-/// #         block::Block, layout::Layout, span::StrSpanExtension,
-/// #         widget::Widget,
-/// #     },
+/// #     buffer::Buffer,
+/// #     geometry::{Constraint, Rect},
+/// #     widgets::{Block, Layout, StrSpanExtension, Widget},
 /// # };
 /// // Creates horizontal layout containing two blocks each covering 50%
 /// let block1 = Block::vertical().title("Block 1");

@@ -1,24 +1,13 @@
 use std::{cell::RefCell, rc::Rc};
 
 use termint::{
-    buffer::buffer::Buffer,
-    enums::{modifier::Modifier, wrap::Wrap, Color},
-    geometry::{
-        constraint::Constraint, coords::Coords, rect::Rect,
-        text_align::TextAlign, unit::Unit,
-    },
+    buffer::Buffer,
+    enums::{Color, Modifier, Wrap},
+    geometry::{Constraint, Coords, Rect, TextAlign, Unit},
     term::Term,
     widgets::{
-        bg_grad::BgGrad,
-        block::Block,
-        border::{Border, BorderType},
-        grad::Grad,
-        grid::Grid,
-        layout::Layout,
-        list::{List, ListState},
-        paragraph::Paragraph,
-        span::StrSpanExtension,
-        widget::Widget,
+        BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
+        ListState, Paragraph, StrSpanExtension, Widget,
     },
 };
 

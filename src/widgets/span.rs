@@ -1,9 +1,9 @@
 use std::fmt;
 
 use crate::{
-    buffer::buffer::Buffer,
-    enums::{wrap::Wrap, Color},
-    geometry::{coords::Coords, text_align::TextAlign},
+    buffer::Buffer,
+    enums::{Color, Wrap},
+    geometry::{Coords, TextAlign},
     style::Style,
 };
 
@@ -23,14 +23,11 @@ use super::{text::Text, widget::Widget};
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     buffer::buffer::Buffer,
-/// #     enums::{Color, modifier::Modifier},
-/// #     geometry::{coords::Coords, rect::Rect},
-/// #     mods,
-/// #     widgets::{
-/// #         span::{Span, StrSpanExtension},
-/// #         widget::Widget,
-/// #     },
+/// #     buffer::Buffer,
+/// #     enums::{Color, Modifier},
+/// #     geometry::{Coords, Rect},
+/// #     modifiers,
+/// #     widgets::{Span, StrSpanExtension, Widget},
 /// # };
 ///
 /// // Creating span using new with red foreground:
@@ -43,7 +40,7 @@ use super::{text::Text, widget::Widget};
 /// let span = "Cyan bold and italic on yellow"
 ///     .fg(Color::Cyan)
 ///     .bg(Color::Yellow)
-///     .modifiers(mods!(Bold, Italic));
+///     .modifier(modifiers!(BOLD, ITALIC));
 ///
 /// // Span can be printed like this
 /// println!("{span}");

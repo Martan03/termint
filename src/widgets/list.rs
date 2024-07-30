@@ -5,9 +5,9 @@ use std::{
 };
 
 use crate::{
-    buffer::buffer::Buffer,
+    buffer::Buffer,
     enums::Color,
-    geometry::{coords::Coords, rect::Rect},
+    geometry::{Coords, Rect},
 };
 
 use super::{span::StrSpanExtension, text::Text, widget::Widget};
@@ -51,7 +51,7 @@ impl ListState {
 /// ## Example usage:
 /// ```ignore
 /// # use termint::{
-/// #     enums::fg::Fg, widgets::list::List,
+/// #     widgets::List,
 /// #     geometry::coords::Coords, widgets::widget::Widget
 /// # };
 /// // Creates list, where selected item has yellow foreground and '*' in

@@ -1,4 +1,4 @@
-/// [`Constrain`] enum contains some constrains for when adjusting layout
+/// Size constraints
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Constraint {
     /// Actual size

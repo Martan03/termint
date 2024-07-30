@@ -2,12 +2,9 @@ use std::cmp::max;
 
 use crate::{
     borders,
-    buffer::buffer::Buffer,
+    buffer::Buffer,
     enums::Color,
-    geometry::{
-        constraint::Constraint, coords::Coords, direction::Direction,
-        padding::Padding, rect::Rect,
-    },
+    geometry::{Constraint, Coords, Direction, Padding, Rect},
     widgets::span::Span,
 };
 
@@ -18,18 +15,15 @@ use super::{
     widget::Widget,
 };
 
-/// [`Layout`] widget with addition of optional border, title and styles
+/// [`Layout`] widget with border around it
 ///
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     buffer::buffer::Buffer,
+/// #     buffer::Buffer,
 /// #     enums::Color,
-/// #     geometry::{constraint::Constraint, rect::Rect},
-/// #     widgets::{
-/// #         block::Block, border::BorderType, span::StrSpanExtension,
-/// #         widget::Widget,
-/// #     },
+/// #     geometry::{Constraint, Rect},
+/// #     widgets::{Block, BorderType, StrSpanExtension, Widget},
 /// # };
 /// // Creates block with title Termint in red
 /// // with double line border in lightgray

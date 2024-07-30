@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::enums::{modifier::Modifier, Color};
+use crate::enums::{Color, Modifier};
 
 /// Style struct containing foreground, background and modifiers
 #[derive(Debug, Clone, Copy, PartialEq)]

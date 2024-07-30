@@ -1,12 +1,21 @@
-/// Defines enum for Color
+/// ANSI colors
 mod color;
-/// Defines enum for Cursor ANSI codes (changing position,...)
-pub mod cursor;
-/// Defines enum for modifier ANSI codes (bold, italic,...)
-pub mod modifier;
-/// Defines RGB structure for better work with colors
-pub mod rgb;
-/// Defines enum for wrap
-pub mod wrap;
+/// ANSI cursor manipulation
+mod cursor;
+/// ANSI modifiers bitflags
+mod modifier;
+/// Struct representing RGB color
+mod rgb;
+/// Indicates how text should be wrapped
+mod wrap;
 
-pub use color::*;
+/// ANSI colors
+pub use color::Color;
+/// ANSI cursor manipulation
+pub use cursor::Cursor;
+/// ANSI modifiers bitflags
+pub use modifier::Modifier;
+/// Struct representing RGB color
+pub use rgb::RGB;
+/// Indicates how text should be wrapped
+pub use wrap::Wrap;

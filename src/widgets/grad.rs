@@ -2,9 +2,9 @@ use core::fmt;
 use std::cmp::min;
 
 use crate::{
-    buffer::buffer::Buffer,
-    enums::{modifier::Modifier, rgb::RGB, wrap::Wrap, Color},
-    geometry::{coords::Coords, direction::Direction, text_align::TextAlign},
+    buffer::Buffer,
+    enums::{Color, Modifier, Wrap, RGB},
+    geometry::{Coords, Direction, TextAlign},
     style::Style,
 };
 
@@ -15,9 +15,9 @@ use super::{text::Text, widget::Widget};
 /// ## Example usage:
 /// ```rust
 /// # use termint::{
-/// #     buffer::buffer::Buffer,
-/// #     geometry::rect::Rect,
-/// #     widgets::{grad::Grad, widget::Widget},
+/// #     buffer::Buffer,
+/// #     geometry::Rect,
+/// #     widgets::{Grad, Widget},
 /// # };
 /// // Creates text gradient widget
 /// let grad = Grad::new(

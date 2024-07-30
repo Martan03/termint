@@ -1,4 +1,4 @@
-/// [`TextAlign`] enum contains text alignment options
+/// Text alignment options
 #[derive(Default, Debug, PartialEq, Copy, Clone)]
 pub enum TextAlign {
     #[default]

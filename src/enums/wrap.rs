@@ -3,7 +3,7 @@
 pub enum Wrap {
     /// Wraps after any letter
     Letter,
-    /// Wrap after word
+    /// Wraps after word
     #[default]
     Word,
 }

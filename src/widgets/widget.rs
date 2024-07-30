@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{buffer::buffer::Buffer, geometry::coords::Coords};
+use crate::{buffer::Buffer, geometry::Coords};
 
 /// Trait for widgets to implement
 pub trait Widget {

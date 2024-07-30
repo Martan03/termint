@@ -1,6 +1,6 @@
 use super::coords::Coords;
 
-/// Represents rectangle containing its position and size
+/// A rectangular area containing its position and size
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Rect {
     pos: Coords,
