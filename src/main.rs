@@ -17,9 +17,9 @@ fn main() {
     // test_layout();
     // test_grad();
     // cool_example();
-    test_paragraph();
+    // test_paragraph();
     // readme_example();
-    // test_list();
+    test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
@@ -230,17 +230,21 @@ fn test_list() {
         Coords::new(1, 1),
         Coords::new(20, 6),
     ));
-    block.render(&mut buffer);
-    buffer.render();
+    // block.render(&mut buffer);
+    // buffer.render();
+
+    let mut term = Term::new();
+    term.render(block);
 
     let mut buffer = Buffer::empty(Rect::from_coords(
         Coords::new(1, 1),
         Coords::new(20, 6),
     ));
     offset.borrow_mut().selected = Some(4);
-    block.render(&mut buffer);
+    // block.render(&mut buffer);
 
     // buffer.render();
+    term.rerender();
 }
 
 #[allow(unused)]

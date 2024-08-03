@@ -26,6 +26,7 @@ use crate::{
 #[derive(Debug, Default)]
 pub struct Term {
     prev: Option<Buffer>,
+    prev_widget: Option<Box<dyn Widget>>,
     small: Option<Box<dyn Widget>>,
     padding: Padding,
 }
@@ -77,6 +78,7 @@ impl Term {
             }
             _ => widget.render(&mut buffer),
         };
+        self.prev_widget = Some(Box::new(widget));
 
         match &self.prev {
             Some(prev) => buffer.render_diff(prev),
@@ -87,8 +89,9 @@ impl Term {
         Ok(())
     }
 
+    /// Rerenders the lastly rendered widget
     pub fn rerender(&mut self) -> Result<(), &'static str> {
-        let Some(prev) = &self.prev else {
+        let Some(widget) = &self.prev_widget else {
             return Err("Cannot rerender: no previous rendering");
         };
 
@@ -102,15 +105,21 @@ impl Term {
             h.saturating_sub(self.padding.get_vertical()),
         );
 
+        let mut buffer = Buffer::empty(Rect::from_coords(pos, size));
         match &self.small {
-            Some(small) if w < prev.width() || h < prev.height() => {
-                let mut buffer = Buffer::empty(Rect::from_coords(pos, size));
+            Some(small)
+                if w < widget.width(&size) || h < widget.height(&size) =>
+            {
                 small.render(&mut buffer);
-                buffer.render();
-                self.prev = Some(buffer);
             }
-            _ => prev.render(),
+            _ => widget.render(&mut buffer),
         };
+
+        match &self.prev {
+            Some(prev) => buffer.render_diff(prev),
+            None => buffer.render(),
+        }
+        self.prev = Some(buffer);
 
         Ok(())
     }

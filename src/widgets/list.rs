@@ -188,7 +188,7 @@ impl Widget for List {
             let mut span = self.items[i].style(self.style);
             if Some(i) == selected {
                 buffer.set_str_styled(
-                    self.highlight.to_owned(),
+                    &self.highlight,
                     &Coords::new(buffer.x(), text_pos.y),
                     self.highlight_style,
                 );
@@ -243,7 +243,7 @@ impl List {
         let x = (buffer.x() + buffer.width()).saturating_sub(1);
         let mut bar_pos = Coords::new(x, buffer.y());
         for _ in 0..buffer.height() {
-            buffer.set_val('|', &bar_pos);
+            buffer.set_val('│', &bar_pos);
             buffer.set_fg(self.scrollbar_fg, &bar_pos);
             bar_pos.y += 1;
         }
