@@ -4,6 +4,7 @@ use crate::{
     buffer::Buffer,
     enums::Color,
     geometry::{Constraint, Coords, Direction, Padding, Rect},
+    style::Style,
 };
 
 use super::widget::Widget;
@@ -41,7 +42,7 @@ struct LayoutChild {
 pub struct Layout {
     direction: Direction,
     children: Vec<LayoutChild>,
-    bg: Option<Color>,
+    style: Style,
     padding: Padding,
     center: bool,
 }
@@ -74,17 +75,38 @@ impl Layout {
         self
     }
 
-    /// Sets background color of the [`Layout`]
+    /// Sets the base style of the [`Layout`]
+    pub fn style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.style = style.into();
+        self
+    }
+
+    /// Sets base background color of the [`Layout`]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
     {
-        self.bg = bg.into();
+        self.style = self.style.bg(bg);
+        self
+    }
+
+    /// Sets base foreground color of the [`Layout`]
+    pub fn fg<T>(mut self, fg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
+        self.style = self.style.fg(fg);
         self
     }
 
     /// Sets [`Padding`] of the [`Layout`]
-    pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
+    pub fn padding<T>(mut self, padding: T) -> Self
+    where
+        T: Into<Padding>,
+    {
         self.padding = padding.into();
         self
     }
@@ -175,11 +197,11 @@ impl Widget for Layout {
         for LayoutChild { child, constraint } in self.children.iter() {
             match constraint {
                 Constraint::Length(len) => width += len,
-                Constraint::Min(m) => width += max(*m, child.height(size)),
+                Constraint::Min(m) => width += max(*m, child.width(size)),
                 Constraint::MinMax(mn, mx) => {
-                    width += min(*mx, max(*mn, child.height(size)))
+                    width += min(*mx, max(*mn, child.width(size)))
                 }
-                _ => width += child.height(size),
+                _ => width += child.width(size),
             }
         }
         width + self.padding.get_horizontal()
@@ -191,7 +213,7 @@ impl Default for Layout {
         Self {
             direction: Direction::Vertical,
             children: Vec::new(),
-            bg: None,
+            style: Style::new(),
             padding: Default::default(),
             center: false,
         }
@@ -209,7 +231,7 @@ impl Layout {
     ) where
         F: Fn(&dyn Widget, &Constraint, &Coords) -> usize,
     {
-        self.render_bg(buffer);
+        self.render_base_style(buffer);
 
         let (sizes, fill) = self.get_sizes(size, pos, child_size);
         let mut coords = *pos;
@@ -310,15 +332,11 @@ impl Layout {
         (sizes, fills)
     }
 
-    /// Renders [`Layout`] background color
-    fn render_bg(&self, buffer: &mut Buffer) {
-        let Some(bg) = self.bg else {
-            return;
-        };
-
+    /// Renders [`Layout`] base style
+    fn render_base_style(&self, buffer: &mut Buffer) {
         for y in buffer.y()..buffer.y() + buffer.height() {
             for x in buffer.x()..buffer.x() + buffer.width() {
-                buffer.set_bg(bg, &Coords::new(x, y));
+                buffer.set_style(self.style, &Coords::new(x, y));
             }
         }
     }

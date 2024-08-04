@@ -228,6 +228,11 @@ impl Buffer {
         self.content[id].bg(bg);
     }
 
+    /// Gets [`Rect`] of the [`Buffer`]
+    pub fn rect(&self) -> Rect {
+        self.rect
+    }
+
     /// Gets position of the [`Buffer`]
     pub fn pos(&self) -> Coords {
         self.rect.pos()

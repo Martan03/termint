@@ -13,13 +13,13 @@ use termint::{
 };
 
 fn main() {
-    // test_block();
+    test_block();
     // test_layout();
     // test_grad();
     // cool_example();
     // test_paragraph();
     // readme_example();
-    test_list();
+    // test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
@@ -29,8 +29,6 @@ fn main() {
 
 #[allow(unused)]
 fn test_block() {
-    // println!("\x1b[2J");
-
     let mut block = Block::horizontal().title("Not easy");
 
     let block1 = Block::vertical().title("Test");

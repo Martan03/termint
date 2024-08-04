@@ -42,11 +42,17 @@ pub struct Grid {
 
 impl Grid {
     /// Creates new [`Grid`] with given rows and columns
-    pub fn new(cols: Vec<Unit>, rows: Vec<Unit>) -> Self {
+    pub fn new<T1, T2>(cols: T1, rows: T2) -> Self
+    where
+        T1: IntoIterator,
+        T1::Item: Into<Unit>,
+        T2: IntoIterator,
+        T2::Item: Into<Unit>,
+    {
         Self {
             children: vec![],
-            rows,
-            cols,
+            rows: rows.into_iter().map(|r| r.into()).collect(),
+            cols: cols.into_iter().map(|c| c.into()).collect(),
         }
     }
 

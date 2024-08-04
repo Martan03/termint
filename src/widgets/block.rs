@@ -5,6 +5,7 @@ use crate::{
     buffer::Buffer,
     enums::Color,
     geometry::{Constraint, Coords, Direction, Padding, Rect},
+    style::Style,
     widgets::span::Span,
 };
 
@@ -49,7 +50,7 @@ pub struct Block {
     title: Box<dyn Text>,
     borders: u8,
     border_type: BorderType,
-    border_color: Color,
+    border_style: Style,
     layout: Layout,
 }
 
@@ -102,9 +103,18 @@ impl Block {
         self
     }
 
+    /// Sets [`Block`] border style to the given style
+    pub fn border_style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.border_style = style.into();
+        self
+    }
+
     /// Sets [`Block`] border color
     pub fn border_color(mut self, color: Color) -> Self {
-        self.border_color = color;
+        self.border_style = self.border_style.fg(color);
         self
     }
 
@@ -114,8 +124,38 @@ impl Block {
         self
     }
 
+    /// Sets the base style of the [`Layout`]
+    pub fn style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.layout = self.layout.style(style);
+        self
+    }
+
+    /// Sets base background color of the [`Layout`]
+    pub fn bg<T>(mut self, bg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
+        self.layout = self.layout.bg(bg);
+        self
+    }
+
+    /// Sets base foreground color of the [`Layout`]
+    pub fn fg<T>(mut self, fg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
+        self.layout = self.layout.fg(fg);
+        self
+    }
+
     /// Sets [`Padding`] of the [`Block`]'s [`Layout`]
-    pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
+    pub fn padding<T>(mut self, padding: T) -> Self
+    where
+        T: Into<Padding>,
+    {
         self.layout = self.layout.padding(padding);
         self
     }
@@ -189,7 +229,7 @@ impl Default for Block {
             title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
-            border_color: Color::default(),
+            border_style: Default::default(),
             layout: Default::default(),
         }
     }
@@ -228,7 +268,7 @@ impl Block {
             for x in buffer.x()..buffer.width() + buffer.x() {
                 let coords = Coords::new(x, y);
                 buffer.set_val(hor, &coords);
-                buffer.set_fg(self.border_color, &coords);
+                buffer.set_style(self.border_style, &coords);
             }
         }
     }
@@ -241,7 +281,7 @@ impl Block {
             for y in buffer.y()..buffer.height() + buffer.y() {
                 let coords = Coords::new(x, y);
                 buffer.set_val(ver, &coords);
-                buffer.set_fg(self.border_color, &coords);
+                buffer.set_style(self.border_style, &coords);
             }
         }
     }
@@ -251,7 +291,7 @@ impl Block {
         if (self.borders & border) == border {
             let c = self.border_type.get(border);
             buffer.set_val(c, pos);
-            buffer.set_fg(self.border_color, pos);
+            buffer.set_style(self.border_style, pos);
         }
     }
 
