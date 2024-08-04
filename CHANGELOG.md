@@ -1,5 +1,19 @@
 # Termint changelog
 
+## v0.5.0
+### Features:
+- Add Grid widget
+- Add rendering Buffer (edit all rendering functions)
+- Add rerendering and rendering only changed characters to Term
+- Add small screen option to Term, when widget cannot fit
+- Add Style struct
+- Add universal Color enum (removed Fg and Bg enums)
+- Edit Modifier to work as bitflag rather then enum
+
+### Fixes:
+- Fix Layout width & height functions
+- Fix List to have proper state
+
 ## v0.4.2
 ### Features:
 - Add option to get String representation of Widget and Text
