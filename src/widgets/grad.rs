@@ -4,7 +4,7 @@ use std::cmp::min;
 use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap, RGB},
-    geometry::{Coords, Direction, TextAlign},
+    geometry::{Direction, TextAlign, Vec2},
     style::Style,
 };
 
@@ -129,14 +129,14 @@ impl Widget for Grad {
         };
     }
 
-    fn height(&self, size: &Coords) -> usize {
+    fn height(&self, size: &Vec2) -> usize {
         match self.wrap {
             Wrap::Letter => self.size_letter_wrap(size.x),
             Wrap::Word => self.height_word_wrap(size),
         }
     }
 
-    fn width(&self, size: &Coords) -> usize {
+    fn width(&self, size: &Vec2) -> usize {
         match self.wrap {
             Wrap::Letter => self.size_letter_wrap(size.y),
             Wrap::Word => self.width_word_wrap(size),
@@ -150,9 +150,9 @@ impl Text for Grad {
         buffer: &mut Buffer,
         offset: usize,
         wrap: Option<Wrap>,
-    ) -> Coords {
+    ) -> Vec2 {
         if buffer.width() == 0 || buffer.height() == 0 {
-            return Coords::new(0, 0);
+            return Vec2::new(0, 0);
         }
 
         match wrap.unwrap_or(self.wrap) {
@@ -198,11 +198,11 @@ impl fmt::Display for Grad {
 
 impl Grad {
     /// Renders [`Grad`] widget with word wrap
-    fn render_word(&self, buffer: &mut Buffer, offset: usize) -> Coords {
+    fn render_word(&self, buffer: &mut Buffer, offset: usize) -> Vec2 {
         match self.direction {
             Direction::Vertical => {
                 let height = min(
-                    self.height_word_wrap(buffer.size_ref()) - 1,
+                    self.height_word_wrap(buffer.size()) - 1,
                     buffer.height(),
                 );
                 let step = self.get_step(height as i16);
@@ -231,11 +231,11 @@ impl Grad {
     }
 
     /// Renders [`Grad`] widget with letter wrap
-    fn render_letter(&self, buffer: &mut Buffer, offset: usize) -> Coords {
+    fn render_letter(&self, buffer: &mut Buffer, offset: usize) -> Vec2 {
         match self.direction {
             Direction::Vertical => {
                 let height = min(
-                    self.height_word_wrap(buffer.size_ref()) - 1,
+                    self.height_word_wrap(buffer.size()) - 1,
                     buffer.height(),
                 );
                 let step = self.get_step(height as i16);
@@ -272,12 +272,12 @@ impl Grad {
         step_x: (i16, i16, i16),
         step_y: (i16, i16, i16),
         render_line: F,
-    ) -> Coords
+    ) -> Vec2
     where
-        F: Fn(String, &mut Buffer, &Coords, (u8, u8, u8), (i16, i16, i16)),
+        F: Fn(String, &mut Buffer, &Vec2, (u8, u8, u8), (i16, i16, i16)),
     {
         let mut line = Vec::<&str>::new();
-        let mut coords = Coords::new(offset, buffer.y());
+        let mut coords = Vec2::new(offset, buffer.y());
 
         let mut rgb = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
         if self.text.len() + offset >= buffer.width() {
@@ -307,7 +307,7 @@ impl Grad {
                     render_line(
                         line_str,
                         buffer,
-                        &Coords::new(buffer.x() + offset, coords.y),
+                        &Vec2::new(buffer.x() + offset, coords.y),
                         rgb,
                         step_x,
                     );
@@ -317,7 +317,7 @@ impl Grad {
                 render_line(
                     line.join(" "),
                     buffer,
-                    &Coords::new(buffer.x() + offset, coords.y),
+                    &Vec2::new(buffer.x() + offset, coords.y),
                     rgb,
                     step_x,
                 );
@@ -334,7 +334,7 @@ impl Grad {
             render_line(
                 line.join(" "),
                 buffer,
-                &Coords::new(buffer.x() + offset, coords.y),
+                &Vec2::new(buffer.x() + offset, coords.y),
                 rgb,
                 step_x,
             );
@@ -352,12 +352,12 @@ impl Grad {
         step_x: (i16, i16, i16),
         step_y: (i16, i16, i16),
         render_line: F,
-    ) -> Coords
+    ) -> Vec2
     where
-        F: Fn(String, &mut Buffer, &Coords, (u8, u8, u8), (i16, i16, i16)),
+        F: Fn(String, &mut Buffer, &Vec2, (u8, u8, u8), (i16, i16, i16)),
     {
         let mut chars = text.chars().peekable();
-        let mut coords = Coords::new(offset, buffer.y());
+        let mut coords = Vec2::new(offset, buffer.y());
         let mut rgb = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
         for _ in 0..offset {
             rgb = self.add_step(rgb, step_x);
@@ -372,7 +372,7 @@ impl Grad {
 
             line = chars.by_ref().take(buffer.width()).collect();
             coords.x = line.len();
-            let pos = Coords::new(buffer.x(), coords.y);
+            let pos = Vec2::new(buffer.x(), coords.y);
             render_line(line.clone(), buffer, &pos, rgb, step_x);
 
             coords.y += 1;
@@ -385,7 +385,7 @@ impl Grad {
             line = line[..end].to_string();
             line.push_str(&self.ellipsis);
 
-            let pos = Coords::new(buffer.x(), coords.y);
+            let pos = Vec2::new(buffer.x(), coords.y);
             render_line(line, buffer, &pos, rgb, step_x);
         }
         coords
@@ -396,7 +396,7 @@ impl Grad {
         &self,
         line: String,
         buffer: &mut Buffer,
-        pos: &Coords,
+        pos: &Vec2,
         (mut r, mut g, mut b): (u8, u8, u8),
         step: (i16, i16, i16),
     ) {
@@ -410,7 +410,7 @@ impl Grad {
             .bg(self.bg)
             .modifier(self.modifier.val());
 
-        let mut coords = Coords::new(pos.x + offset, pos.y);
+        let mut coords = Vec2::new(pos.x + offset, pos.y);
         for c in line.chars() {
             buffer.set_val(c, &coords);
             buffer.set_style(style, &coords);
@@ -426,17 +426,13 @@ impl Grad {
         &self,
         line: String,
         buffer: &mut Buffer,
-        pos: &Coords,
+        pos: &Vec2,
         (r, g, b): (u8, u8, u8),
         _step: (i16, i16, i16),
     ) {
         let offset = self.get_align_offset(buffer, line.len());
         let style = Style::new().fg(Color::Rgb(r, g, b)).bg(self.bg);
-        buffer.set_str_styled(
-            line,
-            &Coords::new(pos.x + offset, pos.y),
-            style,
-        );
+        buffer.set_str_styled(line, &Vec2::new(pos.x + offset, pos.y), style);
     }
 
     /// Gets text alignment offset
@@ -471,8 +467,8 @@ impl Grad {
     }
 
     /// Gets height of the [`Grad`] when using word wrap
-    fn height_word_wrap(&self, size: &Coords) -> usize {
-        let mut coords = Coords::new(0, 0);
+    fn height_word_wrap(&self, size: &Vec2) -> usize {
+        let mut coords = Vec2::new(0, 0);
 
         let words: Vec<&str> = self.text.split_whitespace().collect();
         for word in words {
@@ -491,8 +487,8 @@ impl Grad {
     }
 
     /// Gets width of the [`Grad`] when using word wrap
-    fn width_word_wrap(&self, size: &Coords) -> usize {
-        let mut guess = Coords::new(self.size_letter_wrap(size.y), 0);
+    fn width_word_wrap(&self, size: &Vec2) -> usize {
+        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
 
         while self.height_word_wrap(&guess) > size.y {
             guess.x += 1;

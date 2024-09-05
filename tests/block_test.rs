@@ -4,7 +4,7 @@ extern crate termint;
 mod tests {
     use termint::{
         buffer::Buffer,
-        geometry::{Coords, Rect},
+        geometry::{Vec2, Rect},
         widgets::{Block, StrSpanExtension, Widget},
     };
 
@@ -12,8 +12,8 @@ mod tests {
     fn block_render() {
         let block = Block::vertical().title("Block".to_span());
         let mut buffer = Buffer::empty(Rect::from_coords(
-            Coords::new(1, 1),
-            Coords::new(15, 5),
+            Vec2::new(1, 1),
+            Vec2::new(15, 5),
         ));
         block.render(&mut buffer);
     }

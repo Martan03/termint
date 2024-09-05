@@ -1,7 +1,5 @@
 /// Size constraints
 mod constraint;
-/// Contains x and y coordinates
-mod coords;
 /// Direction enum
 mod direction;
 /// Defines padding struct
@@ -12,11 +10,13 @@ mod rect;
 mod text_align;
 /// Size unit enum
 mod unit;
+/// A 2D vector implementing basic operations
+mod vec2;
+/// A range bounded by Vec2 inclusively below and exclusively above
+mod vec2_range;
 
 /// Size constraints
 pub use constraint::Constraint;
-/// Contains x and y coordinates
-pub use coords::Coords;
 /// Direction enum
 pub use direction::Direction;
 /// Defines padding struct
@@ -27,3 +27,7 @@ pub use rect::Rect;
 pub use text_align::TextAlign;
 /// Size unit enum
 pub use unit::Unit;
+/// A 2D vector implementing basic operations
+pub use vec2::Vec2;
+/// A range bounded by Vec2 inclusively below and exclusively above
+pub use vec2_range::Vec2Range;

@@ -3,7 +3,7 @@ use std::cmp::{max, min};
 use crate::{
     buffer::Buffer,
     enums::Color,
-    geometry::{Constraint, Coords, Direction, Padding, Rect},
+    geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
 };
 
@@ -117,14 +117,15 @@ impl Layout {
         self
     }
 
-    /// Adds child with its [`Constrain`] to [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constraint: Constraint)
+    /// Adds child with its [`Constraint`] to [`Layout`]
+    pub fn add_child<T, C>(&mut self, child: T, constraint: C)
     where
         T: Into<Box<dyn Widget>>,
+        C: Into<Constraint>,
     {
         self.children.push(LayoutChild {
             child: child.into(),
-            constraint,
+            constraint: constraint.into(),
         });
     }
 }
@@ -132,11 +133,11 @@ impl Layout {
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
     fn render(&self, buffer: &mut Buffer) {
-        let mut pos = Coords::new(
+        let mut pos = Vec2::new(
             buffer.x() + self.padding.left,
             buffer.y() + self.padding.top,
         );
-        let mut size = Coords::new(
+        let mut size = Vec2::new(
             buffer.width().saturating_sub(self.padding.get_horizontal()),
             buffer.height().saturating_sub(self.padding.get_vertical()),
         );
@@ -174,7 +175,7 @@ impl Widget for Layout {
     /// Reverted to old implementation for now, which should work worse,
     /// but somehow it ends up better (better for widgets, which don't have
     /// fixed one of its side sizes, such as text)
-    fn height(&self, size: &Coords) -> usize {
+    fn height(&self, size: &Vec2) -> usize {
         let mut height = 0;
         for LayoutChild { child, constraint } in self.children.iter() {
             match constraint {
@@ -192,7 +193,7 @@ impl Widget for Layout {
     /// Reverted to old implementation for now, which should work worse,
     /// but somehow it ends up better (better for widgets, which don't have
     /// fixed one of its side sizes, such as text)
-    fn width(&self, size: &Coords) -> usize {
+    fn width(&self, size: &Vec2) -> usize {
         let mut width = 0;
         for LayoutChild { child, constraint } in self.children.iter() {
             match constraint {
@@ -225,11 +226,11 @@ impl Layout {
     fn _render<F>(
         &self,
         buffer: &mut Buffer,
-        pos: &mut Coords,
-        size: &mut Coords,
+        pos: &mut Vec2,
+        size: &mut Vec2,
         child_size: F,
     ) where
-        F: Fn(&dyn Widget, &Constraint, &Coords) -> usize,
+        F: Fn(&dyn Widget, &Constraint, &Vec2) -> usize,
     {
         self.render_base_style(buffer);
 
@@ -241,8 +242,8 @@ impl Layout {
             }
 
             let mut child_size = match self.children[i].constraint {
-                Constraint::Fill => Coords::new(fill, size.y),
-                _ => Coords::new(*s, size.y),
+                Constraint::Fill => Vec2::new(fill, size.y),
+                _ => Vec2::new(*s, size.y),
             };
             if child_size.x + coords.x - pos.x > size.x {
                 child_size.x = size.x.saturating_sub(coords.x - pos.x);
@@ -255,10 +256,9 @@ impl Layout {
                 c.transpone();
             }
 
-            let mut cbuffer =
-                buffer.get_subset(Rect::from_coords(c, child_size));
+            let mut cbuffer = buffer.subset(Rect::from_coords(c, child_size));
             self.children[i].child.render(&mut cbuffer);
-            buffer.union(cbuffer);
+            buffer.merge(cbuffer);
         }
     }
 
@@ -267,7 +267,7 @@ impl Layout {
         &self,
         child: &dyn Widget,
         constrain: &Constraint,
-        size: &Coords,
+        size: &Vec2,
     ) -> usize {
         let size = size.inverse();
         match constrain {
@@ -285,7 +285,7 @@ impl Layout {
         &self,
         child: &dyn Widget,
         constrain: &Constraint,
-        size: &Coords,
+        size: &Vec2,
     ) -> usize {
         match constrain {
             Constraint::Length(len) => *len,
@@ -300,12 +300,12 @@ impl Layout {
     /// Gets children sizes
     fn get_sizes<F>(
         &self,
-        size: &mut Coords,
-        pos: &mut Coords,
+        size: &mut Vec2,
+        pos: &mut Vec2,
         child_size: F,
     ) -> (Vec<usize>, usize)
     where
-        F: Fn(&dyn Widget, &Constraint, &Coords) -> usize,
+        F: Fn(&dyn Widget, &Constraint, &Vec2) -> usize,
     {
         let mut sizes: Vec<usize> = Vec::new();
         let mut total = 0;
@@ -336,7 +336,7 @@ impl Layout {
     fn render_base_style(&self, buffer: &mut Buffer) {
         for y in buffer.y()..buffer.y() + buffer.height() {
             for x in buffer.x()..buffer.x() + buffer.width() {
-                buffer.set_style(self.style, &Coords::new(x, y));
+                buffer.set_style(self.style, &Vec2::new(x, y));
             }
         }
     }

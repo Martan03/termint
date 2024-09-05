@@ -3,7 +3,7 @@ use core::fmt;
 use crate::{
     buffer::Buffer,
     enums::Wrap,
-    geometry::{Coords, Rect},
+    geometry::{Rect, Vec2},
     widgets::text::Text,
 };
 
@@ -14,38 +14,41 @@ use super::widget::Widget;
 /// each other, which you can't really achieve with Layout
 ///
 /// ## Example usage:
-/// ```ignore
+/// ```
 /// # use termint::{
+/// #     buffer::Buffer,
 /// #     paragraph,
-/// #     enums::{fg::Fg, modifier::Modifier},
-/// #     geometry::coords::Coords,
+/// #     enums::{Color, Modifier},
+/// #     geometry::Rect,
 /// #     widgets::{
-/// #         paragraph::Paragraph, span::StrSpanExtension, widget::Widget,
+/// #         Paragraph, StrSpanExtension, Widget,
 /// #     },
 /// # };
 /// // Creates new Paragraph filled with spans
 /// let mut p = Paragraph::new(vec![
-///     Box::new("This is a text in".fg(Fg::Yellow)),
-///     Box::new("paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan)),
+///     Box::new("This is a text in".fg(Color::Yellow)),
+///     Box::new("paragraph".modifier(Modifier::BOLD).fg(Color::Cyan)),
 ///     Box::new("and it adds".to_span()),
-///     Box::new("separator".modifier(vec![Modifier::Italic])),
+///     Box::new("separator".modifier(Modifier::ITALIC)),
 /// ]);
 ///
 /// // Creates new Paragraph filled with spans using macro
 /// let mut p = paragraph!(
-///     "This is a text in".fg(Fg::Yellow),
-///     "paragraph".modifier(vec![Modifier::Bold]).fg(Fg::Cyan),
+///     "This is a text in".fg(Color::Yellow),
+///     "paragraph".modifier(Modifier::BOLD).fg(Color::Cyan),
 ///     "and it adds".to_span(),
-///     "separator".modifier(vec![Modifier::Italic]),
+///     "separator".modifier(Modifier::ITALIC),
 /// );
 /// // You can also add child later
-/// p.add("between each span".to_span());
+/// p.add("between each span");
 ///
 /// // Paragraph can be printed like this
 /// println!("{p}");
 ///
-/// // Or you can render it on given position and with given size
-/// p.render(&Coords::new(1, 1), &Coords::new(20, 10));
+/// // Or you can render it using the buffer
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 10));
+/// p.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct Paragraph {
@@ -103,15 +106,15 @@ impl Paragraph {
 
 impl Widget for Paragraph {
     fn render(&self, buffer: &mut Buffer) {
-        let mut pos = Coords::new(buffer.x(), buffer.y());
-        let mut size = Coords::new(buffer.width(), buffer.height());
+        let mut pos = Vec2::new(buffer.x(), buffer.y());
+        let mut size = Vec2::new(buffer.width(), buffer.height());
         let mut offset = 0;
 
         for child in self.children.iter() {
-            let mut cbuffer = buffer.get_subset(Rect::from_coords(pos, size));
+            let mut cbuffer = buffer.subset(Rect::from_coords(pos, size));
             let end =
                 child.render_offset(&mut cbuffer, offset, Some(self.wrap));
-            buffer.union(cbuffer);
+            buffer.merge(cbuffer);
 
             size.y = size.y.saturating_sub(end.y - pos.y);
             pos.y = end.y;
@@ -126,20 +129,20 @@ impl Widget for Paragraph {
             if offset + self.separator.len() <= buffer.width() && offset != 0 {
                 buffer.set_str(
                     &self.separator,
-                    &Coords::new(buffer.x() + offset - 1, pos.y),
+                    &Vec2::new(buffer.x() + offset - 1, pos.y),
                 );
             }
         }
     }
 
-    fn height(&self, size: &Coords) -> usize {
+    fn height(&self, size: &Vec2) -> usize {
         match self.wrap {
             Wrap::Letter => self.size_letter_wrap(size.x),
             Wrap::Word => self.height_word_wrap(size),
         }
     }
 
-    fn width(&self, size: &Coords) -> usize {
+    fn width(&self, size: &Vec2) -> usize {
         match self.wrap {
             Wrap::Letter => self.size_letter_wrap(size.y),
             Wrap::Word => self.width_word_wrap(size),
@@ -158,7 +161,7 @@ impl Default for Paragraph {
     fn default() -> Self {
         Self {
             children: Vec::new(),
-            separator: "-".to_string(),
+            separator: " ".to_string(),
             wrap: Wrap::Word,
         }
     }
@@ -166,8 +169,8 @@ impl Default for Paragraph {
 
 impl Paragraph {
     /// Gets [`Paragraph`] height when using word wrap
-    fn height_word_wrap(&self, size: &Coords) -> usize {
-        let mut coords = Coords::new(0, 0);
+    fn height_word_wrap(&self, size: &Vec2) -> usize {
+        let mut coords = Vec2::new(0, 0);
 
         for child in self.children.iter() {
             let words: Vec<&str> =
@@ -190,8 +193,8 @@ impl Paragraph {
     }
 
     /// Gets width of [`Paragraph`] when using word wrap
-    fn width_word_wrap(&self, size: &Coords) -> usize {
-        let mut guess = Coords::new(self.size_letter_wrap(size.y), 0);
+    fn width_word_wrap(&self, size: &Vec2) -> usize {
+        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
 
         while self.height_word_wrap(&guess) > size.y {
             guess.x += 1;

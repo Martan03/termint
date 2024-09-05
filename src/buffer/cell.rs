@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// A buffer cell containing foreground, background, modifiers and symbol.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Cell {
     pub fg: Color,
     pub bg: Color,
@@ -24,24 +24,27 @@ impl Cell {
     }
 
     /// Sets [`Cell`] foreground color to given value
-    pub fn fg(&mut self, fg: Color) {
+    pub fn fg(mut self, fg: Color) -> Self {
         self.fg = fg;
+        self
     }
 
     /// Sets [`Cell`] background color to given value
-    pub fn bg(&mut self, bg: Color) {
+    pub fn bg(mut self, bg: Color) -> Self {
         self.bg = bg;
+        self
     }
 
     /// Sets [`Cell`] modifier to the given flag
-    pub fn modifier(&mut self, flag: u8) {
+    pub fn modifier(mut self, flag: u8) -> Self {
         self.modifier.clear();
         self.modifier.add(flag);
+        self
     }
 
     /// Sets style of the [`Cell`] to the given value. If `fg` or `bg` are
     /// none, it keeps the original value.
-    pub fn style<T>(&mut self, style: T)
+    pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
     {
@@ -53,11 +56,13 @@ impl Cell {
             self.bg = bg;
         }
         self.modifier = style.modifier;
+        self
     }
 
     /// Sets value of the [`Cell`]
-    pub fn val(&mut self, val: char) {
+    pub fn val(mut self, val: char) -> Self {
         self.val = val;
+        self
     }
 }
 

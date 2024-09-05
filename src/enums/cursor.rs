@@ -23,26 +23,19 @@ pub enum Cursor {
     Col(usize),
 }
 
-impl Cursor {
-    /// Converts [`Cursor`] to coresponding ANSI code
-    pub fn to_ansi(&self) -> String {
-        match self {
-            Cursor::Home => "\x1b[H".to_string(),
-            Cursor::Pos(x, y) => format!("\x1b[{};{}H", y, x),
-            Cursor::Up(n) => format!("\x1b[{n}A"),
-            Cursor::Down(n) => format!("\x1b[{n}B"),
-            Cursor::Right(n) => format!("\x1b[{n}C"),
-            Cursor::Left(n) => format!("\x1b[{n}D"),
-            Cursor::NextBeg(n) => format!("\x1b[{n}E"),
-            Cursor::PrevBeg(n) => format!("\x1b[{n}F"),
-            Cursor::Col(n) => format!("\x1b[{n}G"),
-        }
-    }
-}
-
 impl fmt::Display for Cursor {
     /// Automatically converts [`Cursor`] to ANSI code when printing
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_ansi())
+        match self {
+            Cursor::Home => write!(f, "\x1b[H"),
+            Cursor::Pos(x, y) => write!(f, "\x1b[{};{}H", y, x),
+            Cursor::Up(n) => write!(f, "\x1b[{n}A"),
+            Cursor::Down(n) => write!(f, "\x1b[{n}B"),
+            Cursor::Right(n) => write!(f, "\x1b[{n}C"),
+            Cursor::Left(n) => write!(f, "\x1b[{n}D"),
+            Cursor::NextBeg(n) => write!(f, "\x1b[{n}E"),
+            Cursor::PrevBeg(n) => write!(f, "\x1b[{n}F"),
+            Cursor::Col(n) => write!(f, "\x1b[{n}G"),
+        }
     }
 }

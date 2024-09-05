@@ -12,3 +12,18 @@ pub enum Unit {
     /// Fills rest of the space (space is divided by all widgets with fill)
     Fill(usize),
 }
+
+impl From<usize> for Unit {
+    fn from(value: usize) -> Self {
+        Self::Length(value)
+    }
+}
+
+impl From<f64> for Unit {
+    fn from(value: f64) -> Self {
+        if value < 0.0 || value > 1.0 {
+            panic!("Float in range from 0 to 1 is expected");
+        }
+        Self::Percent((value * 100.0) as usize)
+    }
+}

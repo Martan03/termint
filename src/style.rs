@@ -11,7 +11,7 @@ pub struct Style {
 }
 
 impl Style {
-    /// Creates new [`Style`]
+    /// Creates a new [`Style`]
     pub fn new() -> Self {
         Self::default()
     }
@@ -81,5 +81,34 @@ impl Default for Style {
             bg: None,
             modifier: Modifier::empty(),
         }
+    }
+}
+
+impl From<Color> for Style {
+    /// Creates a new [`Style`] with given foreground color
+    fn from(value: Color) -> Self {
+        Self::new().fg(value)
+    }
+}
+
+impl From<(Color, Color)> for Style {
+    /// Creates a new [`Style`] with given foreground and background color
+    fn from((fg, bg): (Color, Color)) -> Self {
+        Self::new().fg(fg).bg(bg)
+    }
+}
+
+impl From<Modifier> for Style {
+    /// Creates a new [`Style`] with given modifier
+    fn from(value: Modifier) -> Self {
+        Self::new().modifier(value.val())
+    }
+}
+
+impl From<(Color, Color, Modifier)> for Style {
+    /// Creates a new [`Style`] with given foreground and background color and
+    /// with given modifier
+    fn from((fg, bg, modifier): (Color, Color, Modifier)) -> Self {
+        Self::new().fg(fg).bg(bg).modifier(modifier.val())
     }
 }

@@ -14,3 +14,24 @@ pub enum Constraint {
     /// Fills rest of the space (space is divided by all widgets with fill)
     Fill,
 }
+
+impl From<usize> for Constraint {
+    fn from(value: usize) -> Self {
+        Self::Length(value)
+    }
+}
+
+impl From<(usize, usize)> for Constraint {
+    fn from((min, max): (usize, usize)) -> Self {
+        Self::MinMax(min, max)
+    }
+}
+
+impl From<f64> for Constraint {
+    fn from(value: f64) -> Self {
+        if value < 0.0 || value > 1.0 {
+            panic!("Float in range from 0 to 1 is expected");
+        }
+        Self::Percent((value * 100.0) as usize)
+    }
+}

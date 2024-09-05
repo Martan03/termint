@@ -1,4 +1,4 @@
-use crate::{buffer::Buffer, geometry::Coords};
+use crate::{buffer::Buffer, geometry::Vec2};
 
 use super::widget::Widget;
 
@@ -34,11 +34,11 @@ impl Spacer {
 impl Widget for Spacer {
     fn render(&self, _buffer: &mut Buffer) {}
 
-    fn height(&self, _size: &Coords) -> usize {
+    fn height(&self, _size: &Vec2) -> usize {
         0
     }
 
-    fn width(&self, _size: &Coords) -> usize {
+    fn width(&self, _size: &Vec2) -> usize {
         0
     }
 }

@@ -1,8 +1,8 @@
 /// Macro to combine [`Border`] sides
 ///
 /// ## Usage:
-/// ```ignore
-/// # use termint::{borders, widgets::border::Border};
+/// ```rust
+/// # use termint::{borders, widgets::Border};
 /// // Without macro:
 /// let top_left_right = Border::TOP | Border::LEFT | Border::RIGHT;
 /// // With macro:
@@ -38,8 +38,8 @@ macro_rules! borders {
 /// ```
 ///
 /// ## Usage:
-/// ```ignore
-/// # use termint::{enums::fg::Fg, help, widgets::span::StrSpanExtension};
+/// ```rust
+/// # use termint::{enums::Color, help, widgets::StrSpanExtension};
 /// help!(
 ///     "Usage":
 ///     "-t" ["value"] => "Tests program with [value]"
@@ -91,12 +91,12 @@ macro_rules! help {
 /// Creates vector with given given Modifiers
 ///
 /// ## Usage:
-/// ```ignore
-/// # use termint::{enums::modifier::Modifier, mods};
+/// ```rust
+/// # use termint::{enums::Modifier, modifiers};
 /// // Without macro:
-/// let mods = vec![Modifier::Bold, Modifier::Italic];
+/// let mods = Modifier::BOLD | Modifier::ITALIC;
 /// // With macro:
-/// let mods = mods!(Bold, Italic);
+/// let mods = modifiers!(BOLD, ITALIC);
 /// ```
 #[macro_export]
 macro_rules! modifiers {
@@ -108,21 +108,21 @@ macro_rules! modifiers {
 /// Creates new paragraph in more simple way
 ///
 /// ## Usage:
-/// ```ignore
+/// ```rust
 /// # use termint::{
-/// #     enums::fg::Fg,
+/// #     enums::Color,
 /// #     paragraph,
-/// #     widgets::{paragraph::Paragraph, span::StrSpanExtension, grad::Grad},
+/// #     widgets::{Paragraph, StrSpanExtension},
 /// # };
 /// // Without macro:
 /// let p = Paragraph::new(vec![
 ///     Box::new("Macro".to_span()),
-///     Box::new("test".fg(Fg::Red))
+///     Box::new("test".fg(Color::Red))
 /// ]);
 /// // With macro:
 /// let p = paragraph!(
-///     Grad::new("Macro", (0, 120, 255), (120, 255, 0)),
-///     "test".fg(Fg::Red)
+///     "Macro".to_span(),
+///     "test".fg(Color::Red)
 /// );
 /// ```
 #[macro_export]

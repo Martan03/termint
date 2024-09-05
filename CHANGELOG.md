@@ -1,5 +1,14 @@
 # Termint changelog
 
+## v0.5.1
+### Features:
+- Rename Coords to Vec2
+- Add trait implementations and new features:
+    - Buffer
+    - Padding
+    - Rect
+    - Vec2
+
 ## v0.5.0
 ### Features:
 - Add Grid widget

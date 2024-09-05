@@ -7,7 +7,7 @@ use std::{
 use crate::{
     buffer::Buffer,
     enums::Color,
-    geometry::{Coords, Rect},
+    geometry::{Rect, Vec2},
     style::Style,
 };
 
@@ -50,19 +50,33 @@ impl ListState {
 ///     - Character in front
 ///
 /// ## Example usage:
-/// ```ignore
-/// # use termint::{
-/// #     widgets::List,
-/// #     geometry::coords::Coords, widgets::widget::Widget
+/// ```rust
+/// # use std::{
+/// #     cell::RefCell,
+/// #     rc::Rc,
 /// # };
+/// # use termint::{
+/// #     buffer::Buffer,
+/// #     enums::Color,
+/// #     widgets::{List, ListState, Widget},
+/// #     geometry::Rect,
+/// # };
+/// // Creates list state with selected item on position 1 and scroll offset 0
+/// let state = Rc::new(RefCell::new(ListState::selected(0, 1)));
+///
 /// // Creates list, where selected item has yellow foreground and '*' in
-/// // front of it
+/// // front of it and automatically scrolls to selected item
+/// let items = vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"];
 /// let list =
-///     List::new(vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"])
-///         .current(Some(1))
-///         .sel_fg(Fg::Yellow)
-///         .sel_char("*");
-/// list.render(&Coords::new(1, 1), &Coords::new(20, 5));
+///     List::new(items, state.clone())
+///         .selected_style((Color::Yellow))
+///         .highlight_symbol("*")
+///         .auto_scroll();
+///
+/// // Renders using the buffer
+/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 5));
+/// list.render(&mut buffer);
+/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct List {
@@ -168,17 +182,15 @@ impl List {
 impl Widget for List {
     fn render(&self, buffer: &mut Buffer) {
         if self.auto_scroll {
-            self.scroll_offset(buffer.size_ref());
+            self.scroll_offset(buffer.size());
         }
 
         let mut text_pos =
-            Coords::new(buffer.x() + self.highlight.len(), buffer.y());
-        let mut text_size = Coords::new(
-            buffer.width() - self.highlight.len(),
-            buffer.height(),
-        );
+            Vec2::new(buffer.x() + self.highlight.len(), buffer.y());
+        let mut text_size =
+            Vec2::new(buffer.width() - self.highlight.len(), buffer.height());
 
-        if !self.fits(buffer.size_ref()) {
+        if !self.fits(buffer.size()) {
             text_size.x -= 1;
             self.render_scrollbar(buffer);
         }
@@ -189,16 +201,16 @@ impl Widget for List {
             if Some(i) == selected {
                 buffer.set_str_styled(
                     &self.highlight,
-                    &Coords::new(buffer.x(), text_pos.y),
+                    &Vec2::new(buffer.x(), text_pos.y),
                     self.highlight_style,
                 );
                 span = self.items[i].style(self.sel_style);
             }
 
             let mut ibuffer =
-                buffer.get_subset(Rect::from_coords(text_pos, text_size));
+                buffer.subset(Rect::from_coords(text_pos, text_size));
             let res_pos = span.render_offset(&mut ibuffer, 0, None);
-            buffer.union(ibuffer);
+            buffer.merge(ibuffer);
 
             text_size.y = text_size.y.saturating_sub(res_pos.y - text_pos.y);
             text_pos.y = res_pos.y + 1;
@@ -210,7 +222,7 @@ impl Widget for List {
         }
     }
 
-    fn height(&self, size: &Coords) -> usize {
+    fn height(&self, size: &Vec2) -> usize {
         let mut height = 0;
         for i in 0..self.items.len() {
             let span = self.items[i].to_span();
@@ -219,7 +231,7 @@ impl Widget for List {
         height
     }
 
-    fn width(&self, size: &Coords) -> usize {
+    fn width(&self, size: &Vec2) -> usize {
         let mut width = 0;
         for item in self.items.iter() {
             let span = item.to_span();
@@ -233,22 +245,24 @@ impl List {
     /// Renders [`List`] scrollbar
     fn render_scrollbar(&self, buffer: &mut Buffer) {
         let rat = self.items.len() as f32 / buffer.height() as f32;
-        let thumb_size =
-            min((buffer.height() as f32 / rat) as usize, buffer.height());
+        let thumb_size = min(
+            (buffer.height() as f32 / rat).floor() as usize,
+            buffer.height(),
+        );
         let thumb_offset = min(
             (self.state.borrow().offset as f32 / rat) as usize,
             buffer.height() - thumb_size,
         );
 
         let x = (buffer.x() + buffer.width()).saturating_sub(1);
-        let mut bar_pos = Coords::new(x, buffer.y());
+        let mut bar_pos = Vec2::new(x, buffer.y());
         for _ in 0..buffer.height() {
             buffer.set_val('│', &bar_pos);
             buffer.set_fg(self.scrollbar_fg, &bar_pos);
             bar_pos.y += 1;
         }
 
-        bar_pos = Coords::new(x, buffer.y() + thumb_offset);
+        bar_pos = Vec2::new(x, buffer.y() + thumb_offset);
         for _ in 0..thumb_size {
             buffer.set_val('┃', &bar_pos);
             buffer.set_fg(self.thumb_fg, &bar_pos);
@@ -257,7 +271,7 @@ impl List {
     }
 
     /// Automatically scrolls so the selected item is visible
-    fn scroll_offset(&self, size: &Coords) {
+    fn scroll_offset(&self, size: &Vec2) {
         let Some(selected) = self.state.borrow().selected else {
             return;
         };
@@ -273,7 +287,7 @@ impl List {
     }
 
     /// Checks if item is visible with given offset
-    fn is_visible(&self, item: usize, offset: usize, size: &Coords) -> bool {
+    fn is_visible(&self, item: usize, offset: usize, size: &Vec2) -> bool {
         let mut height = 0;
         for i in offset..self.items.len() {
             height += self.items[i].to_span().height(size);
@@ -289,7 +303,7 @@ impl List {
     }
 
     /// Checks if list fits to the visible area
-    fn fits(&self, size: &Coords) -> bool {
+    fn fits(&self, size: &Vec2) -> bool {
         self.is_visible(self.items.len() - 1, 0, size)
     }
 }

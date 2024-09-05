@@ -8,18 +8,109 @@ pub struct Padding {
 }
 
 impl Padding {
-    /// Creates new [`Padding`] based on given values
-    pub fn new<T: Into<Padding>>(padding: T) -> Self {
-        padding.into()
+    /// Creates a [`Padding`] by specifying every field
+    pub const fn new(
+        top: usize,
+        right: usize,
+        bottom: usize,
+        left: usize,
+    ) -> Self {
+        Self {
+            top,
+            right,
+            bottom,
+            left,
+        }
+    }
+
+    /// Creates a [`Padding`] with same the value for all fields
+    pub const fn uniform(value: usize) -> Self {
+        Self {
+            top: value,
+            right: value,
+            bottom: value,
+            left: value,
+        }
+    }
+
+    /// Creates a [`Padding`] with `horizontal` value for `left` and `right`
+    /// and `vertical` value for `top` and `bottom`
+    pub const fn symmetric(horizontal: usize, vertical: usize) -> Self {
+        Self {
+            top: vertical,
+            right: horizontal,
+            bottom: vertical,
+            left: horizontal,
+        }
+    }
+
+    /// Creates a [`Padding`] with the same value for `top` and `bottom` fields
+    pub const fn vertical(value: usize) -> Self {
+        Self {
+            top: value,
+            right: 0,
+            bottom: value,
+            left: 0,
+        }
+    }
+
+    /// Creates a [`Padding`] with the same value for `left` and `right` fields
+    pub const fn horizontal(value: usize) -> Self {
+        Self {
+            top: 0,
+            right: value,
+            bottom: 0,
+            left: value,
+        }
+    }
+
+    /// Creates a [`Padding`] that only sets the `top` padding
+    pub const fn top(value: usize) -> Self {
+        Self {
+            top: value,
+            right: 0,
+            bottom: 0,
+            left: 0,
+        }
+    }
+
+    /// Creates a [`Padding`] that only sets the `right` padding
+    pub const fn right(value: usize) -> Self {
+        Self {
+            top: 0,
+            right: value,
+            bottom: 0,
+            left: 0,
+        }
+    }
+
+    /// Creates a [`Padding`] that only sets the `bottom` padding
+    pub const fn bottom(value: usize) -> Self {
+        Self {
+            top: 0,
+            right: 0,
+            bottom: value,
+            left: 0,
+        }
+    }
+
+    /// Creates a [`Padding`] that only sets the `left` padding
+    pub const fn left(value: usize) -> Self {
+        Self {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: value,
+        }
     }
 
     /// Gets total padding in vertical axis
-    pub fn get_vertical(&self) -> usize {
+    pub const fn get_vertical(&self) -> usize {
         self.top + self.bottom
     }
 
     /// Gets total padding in horizontal axis
-    pub fn get_horizontal(&self) -> usize {
+    pub const fn get_horizontal(&self) -> usize {
         self.left + self.right
     }
 }

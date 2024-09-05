@@ -1,7 +1,7 @@
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
-    geometry::{Constraint, Coords, Direction, Padding},
+    geometry::{Constraint, Vec2, Direction, Padding},
 };
 
 use super::{layout::Layout, widget::Widget};
@@ -139,11 +139,11 @@ impl Widget for BgGrad {
         self.layout.render(buffer);
     }
 
-    fn height(&self, size: &Coords) -> usize {
+    fn height(&self, size: &Vec2) -> usize {
         self.layout.height(size)
     }
 
-    fn width(&self, size: &Coords) -> usize {
+    fn width(&self, size: &Vec2) -> usize {
         self.layout.width(size)
     }
 }
@@ -160,7 +160,7 @@ impl BgGrad {
             (r, g, b) = self.add_step((r, g, b), step);
 
             for y in buffer.y()..buffer.height() + buffer.y() {
-                buffer.set_bg(bg, &Coords::new(x, y));
+                buffer.set_bg(bg, &Vec2::new(x, y));
             }
         }
     }
@@ -176,7 +176,7 @@ impl BgGrad {
             (r, g, b) = self.add_step((r, g, b), step);
 
             for x in buffer.x()..buffer.width() + buffer.x() {
-                buffer.set_bg(bg, &Coords::new(x, y));
+                buffer.set_bg(bg, &Vec2::new(x, y));
             }
         }
     }

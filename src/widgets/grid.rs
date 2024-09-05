@@ -1,6 +1,6 @@
 use crate::{
     buffer::Buffer,
-    geometry::{Coords, Rect, Unit},
+    geometry::{Rect, Unit, Vec2},
 };
 
 use super::widget::Widget;
@@ -93,18 +93,18 @@ impl Widget for Grid {
         let (cols, rows) = self.get_sizes(buffer);
 
         for GridChild { child, row, col } in self.children.iter() {
-            let mut cbuffer = buffer.get_subset(Rect::new(
+            let mut cbuffer = buffer.subset(Rect::new(
                 buffer.x() + cols[*col].y,
                 buffer.y() + rows[*row].y,
                 cols[*col].x,
                 rows[*row].x,
             ));
             child.render(&mut cbuffer);
-            buffer.union(cbuffer);
+            buffer.merge(cbuffer);
         }
     }
 
-    fn height(&self, size: &Coords) -> usize {
+    fn height(&self, size: &Vec2) -> usize {
         let mut height = 0;
         for row in self.rows.iter() {
             match row {
@@ -116,7 +116,7 @@ impl Widget for Grid {
         height
     }
 
-    fn width(&self, size: &Coords) -> usize {
+    fn width(&self, size: &Vec2) -> usize {
         let mut width = 0;
         for col in self.cols.iter() {
             match col {
@@ -131,7 +131,7 @@ impl Widget for Grid {
 
 impl Grid {
     /// Gets sizes and starting positions of each row and column
-    fn get_sizes(&self, buffer: &mut Buffer) -> (Vec<Coords>, Vec<Coords>) {
+    fn get_sizes(&self, buffer: &mut Buffer) -> (Vec<Vec2>, Vec<Vec2>) {
         (
             Self::get_size(&self.cols, buffer.width()),
             Self::get_size(&self.rows, buffer.height()),
@@ -139,7 +139,7 @@ impl Grid {
     }
 
     /// Gets sizes and positions of given units
-    fn get_size(units: &[Unit], size: usize) -> Vec<Coords> {
+    fn get_size(units: &[Unit], size: usize) -> Vec<Vec2> {
         let mut total = 0;
         let mut fills = 0;
 
@@ -147,16 +147,16 @@ impl Grid {
         for unit in units {
             match unit {
                 Unit::Length(len) => {
-                    sizes.push(Coords::new(*len, 0));
+                    sizes.push(Vec2::new(*len, 0));
                     total += len;
                 }
                 Unit::Percent(p) => {
                     let len = size * p / 100;
-                    sizes.push(Coords::new(len, 0));
+                    sizes.push(Vec2::new(len, 0));
                     total += len;
                 }
                 Unit::Fill(f) => {
-                    sizes.push(Coords::new(0, 0));
+                    sizes.push(Vec2::new(0, 0));
                     fills += f;
                 }
             }
@@ -179,5 +179,11 @@ impl Grid {
         }
 
         sizes
+    }
+}
+
+impl From<Grid> for Box<dyn Widget> {
+    fn from(value: Grid) -> Self {
+        Box::new(value)
     }
 }

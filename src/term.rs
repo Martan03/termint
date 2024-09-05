@@ -1,6 +1,6 @@
 use crate::{
     buffer::Buffer,
-    geometry::{Coords, Padding, Rect},
+    geometry::{Vec2, Padding, Rect},
     widgets::Widget,
 };
 
@@ -63,8 +63,8 @@ impl Term {
             return Err("Cannot determine terminal size");
         };
 
-        let pos = Coords::new(1 + self.padding.left, 1 + self.padding.top);
-        let size = Coords::new(
+        let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
+        let size = Vec2::new(
             w.saturating_sub(self.padding.get_horizontal()),
             h.saturating_sub(self.padding.get_vertical()),
         );
@@ -99,8 +99,8 @@ impl Term {
             return Err("Cannot determine terminal size");
         };
 
-        let pos = Coords::new(1 + self.padding.left, 1 + self.padding.top);
-        let size = Coords::new(
+        let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
+        let size = Vec2::new(
             w.saturating_sub(self.padding.get_horizontal()),
             h.saturating_sub(self.padding.get_vertical()),
         );

@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use termint::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap},
-    geometry::{Constraint, Coords, Rect, TextAlign, Unit},
+    geometry::{Constraint, Rect, TextAlign, Unit, Vec2},
     style::Style,
     term::Term,
     widgets::{
@@ -13,7 +13,7 @@ use termint::{
 };
 
 fn main() {
-    test_block();
+    // test_block();
     // test_layout();
     // test_grad();
     // cool_example();
@@ -25,6 +25,7 @@ fn main() {
     // term_test();
     // grid_test();
     // diff_render_test();
+    merge_test();
 }
 
 #[allow(unused)]
@@ -46,10 +47,8 @@ fn test_block() {
     block.add_child(block2, Constraint::Min(0));
     block.add_child(block3, Constraint::Fill);
 
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(30, 9),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
     block.render(&mut buffer);
     buffer.render();
 
@@ -77,10 +76,8 @@ fn test_layout() {
     block2.add_child(span2, Constraint::Percent(100));
     main.add_child(block2, Constraint::Percent(50));
 
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(30, 8),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8)));
     main.render(&mut buffer);
     buffer.render();
 }
@@ -96,10 +93,8 @@ fn test_grad() {
     .align(TextAlign::Center);
     println!("\x1b[2J");
 
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(10, 5),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(10, 5)));
     grad.render(&mut buffer);
     buffer.render();
 }
@@ -141,10 +136,8 @@ fn cool_example() {
 
     main.add_child(fill, Constraint::Fill);
 
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(30, 9),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
     main.render(&mut buffer);
 
     buffer.render();
@@ -169,10 +162,8 @@ fn test_paragraph() {
     main.add_child(p, Constraint::Fill);
     main.add_child(block, Constraint::Fill);
 
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(30, 8),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8)));
     main.render(&mut buffer);
     buffer.render();
 }
@@ -200,10 +191,8 @@ fn readme_example() {
     main.add_child(block2, Constraint::Fill);
 
     // Renders the main block which renders all the children
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(30, 9),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
     main.render(&mut buffer);
     buffer.render();
 }
@@ -224,20 +213,16 @@ fn test_list() {
     .highlight_style(Style::new().fg(Color::Red).modifier(Modifier::BOLD));
 
     block.add_child(list, Constraint::Fill);
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(20, 6),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 6)));
     // block.render(&mut buffer);
     // buffer.render();
 
     let mut term = Term::new();
     term.render(block);
 
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(20, 6),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 6)));
     offset.borrow_mut().selected = Some(4);
     // block.render(&mut buffer);
 
@@ -255,10 +240,8 @@ fn test_layout_centering() {
 
     let mut main = Block::vertical().center();
     main.add_child(block, Constraint::Length(4));
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(20, 8),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 8)));
     main.render(&mut buffer);
     buffer.render();
 }
@@ -271,10 +254,8 @@ fn test_bg_grad() {
     layout.add_child(Block::vertical(), Constraint::Length(6));
     grad.add_child(layout, Constraint::Length(3));
 
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(20, 9),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 9)));
     grad.render(&mut buffer);
     buffer.render();
 }
@@ -327,10 +308,8 @@ fn diff_render_test() {
     main.add_child(block2, Constraint::Fill);
 
     // Renders the main block which renders all the children
-    let mut dbuffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(30, 9),
-    ));
+    let mut dbuffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
     main.render(&mut dbuffer);
     // dbuffer.render();
 
@@ -353,10 +332,26 @@ fn diff_render_test() {
     main.add_child(block2, Constraint::Fill);
 
     // Renders the main block which renders all the children
-    let mut buffer = Buffer::empty(Rect::from_coords(
-        Coords::new(1, 1),
-        Coords::new(30, 9),
-    ));
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
     main.render(&mut buffer);
     buffer.render_diff(&dbuffer);
+}
+
+#[allow(unused)]
+fn merge_test() {
+    println!("\x1b[2J");
+
+    let mut block1 = Block::vertical();
+    block1.add_child("This will be covered", Constraint::Min(0));
+    let mut buffer = Buffer::empty(Rect::new(1, 1, 8, 5));
+    block1.render(&mut buffer);
+
+    let mut block2 = Block::vertical();
+    block2.add_child("This will go above", Constraint::Min(0));
+    let mut sbuffer = Buffer::empty(Rect::new(4, 3, 7, 5));
+    block2.render(&mut sbuffer);
+
+    buffer.merge(sbuffer);
+    buffer.render();
 }

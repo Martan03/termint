@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::{buffer::Buffer, enums::Wrap, geometry::Coords};
+use crate::{buffer::Buffer, enums::Wrap, geometry::Vec2};
 
 /// Trait for text widgets to implement
 /// Makes work with more [`Text`] widgets easier
@@ -12,7 +12,7 @@ pub trait Text {
         buffer: &mut Buffer,
         offset: usize,
         wrap: Option<Wrap>,
-    ) -> Coords;
+    ) -> Vec2;
 
     /// Gets [`Text`] widget as string
     fn get(&self) -> String;

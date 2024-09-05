@@ -4,7 +4,7 @@ use crate::{
     borders,
     buffer::Buffer,
     enums::Color,
-    geometry::{Constraint, Coords, Direction, Padding, Rect},
+    geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
     widgets::span::Span,
 };
@@ -167,9 +167,10 @@ impl Block {
     }
 
     /// Adds child to the [`Block`]'s [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constrain: Constraint)
+    pub fn add_child<T, C>(&mut self, child: T, constrain: C)
     where
         T: Into<Box<dyn Widget>>,
+        C: Into<Constraint>,
     {
         self.layout.add_child(child, constrain);
     }
@@ -180,42 +181,42 @@ impl Widget for Block {
     fn render(&self, buffer: &mut Buffer) {
         self.render_border(buffer);
 
-        let mut tbuffer = buffer.get_subset(Rect::new(
+        let mut tbuffer = buffer.subset(Rect::new(
             buffer.x() + 1,
             buffer.y(),
             buffer.width().saturating_sub(2),
             1,
         ));
         _ = self.title.render_offset(&mut tbuffer, 0, None);
-        buffer.union(tbuffer);
+        buffer.merge(tbuffer);
 
         let (width, height) = self.border_size();
         let top = ((self.borders & Border::TOP) != 0
             || !self.title.get_text().is_empty()) as usize;
         let left = ((self.borders & Border::LEFT) != 0) as usize;
 
-        let mut cbuffer = buffer.get_subset(Rect::new(
+        let mut cbuffer = buffer.subset(Rect::new(
             buffer.x() + left,
             buffer.y() + top,
             buffer.width().saturating_sub(width),
             buffer.height().saturating_sub(height),
         ));
         self.layout.render(&mut cbuffer);
-        buffer.union(cbuffer);
+        buffer.merge(cbuffer);
     }
 
-    fn height(&self, size: &Coords) -> usize {
+    fn height(&self, size: &Vec2) -> usize {
         let (width, height) = self.border_size();
-        let size = Coords::new(
+        let size = Vec2::new(
             size.x.saturating_sub(width),
             size.y.saturating_sub(height),
         );
         height + self.layout.height(&size)
     }
 
-    fn width(&self, size: &Coords) -> usize {
+    fn width(&self, size: &Vec2) -> usize {
         let (width, height) = self.border_size();
-        let size = Coords::new(
+        let size = Vec2::new(
             size.x.saturating_sub(width),
             size.y.saturating_sub(height),
         );
@@ -238,8 +239,8 @@ impl Default for Block {
 impl Block {
     /// Renders [`Block`] border
     fn render_border(&self, buffer: &mut Buffer) {
-        let rt = Coords::new(buffer.x() + buffer.width() - 1, buffer.y());
-        let lb = Coords::new(buffer.x(), buffer.height() + buffer.y() - 1);
+        let rt = Vec2::new(buffer.x() + buffer.width() - 1, buffer.y());
+        let lb = Vec2::new(buffer.x(), buffer.height() + buffer.y() - 1);
 
         self.render_ver_border(buffer, buffer.left(), Border::LEFT);
         self.render_ver_border(buffer, buffer.right(), Border::RIGHT);
@@ -250,12 +251,12 @@ impl Block {
             return;
         }
 
-        self.render_corner(buffer, &buffer.pos(), borders!(TOP, LEFT));
+        self.render_corner(buffer, &buffer.pos().clone(), borders!(TOP, LEFT));
         self.render_corner(buffer, &rt, borders!(TOP, RIGHT));
         self.render_corner(buffer, &lb, borders!(BOTTOM, LEFT));
         self.render_corner(
             buffer,
-            &Coords::new(rt.x, lb.y),
+            &Vec2::new(rt.x, lb.y),
             borders!(BOTTOM, RIGHT),
         );
     }
@@ -266,7 +267,7 @@ impl Block {
             let hor = self.border_type.get(border);
 
             for x in buffer.x()..buffer.width() + buffer.x() {
-                let coords = Coords::new(x, y);
+                let coords = Vec2::new(x, y);
                 buffer.set_val(hor, &coords);
                 buffer.set_style(self.border_style, &coords);
             }
@@ -279,7 +280,7 @@ impl Block {
             let ver = self.border_type.get(border);
 
             for y in buffer.y()..buffer.height() + buffer.y() {
-                let coords = Coords::new(x, y);
+                let coords = Vec2::new(x, y);
                 buffer.set_val(ver, &coords);
                 buffer.set_style(self.border_style, &coords);
             }
@@ -287,7 +288,7 @@ impl Block {
     }
 
     /// Adds corner of [`Block`] border to the string
-    fn render_corner(&self, buffer: &mut Buffer, pos: &Coords, border: u8) {
+    fn render_corner(&self, buffer: &mut Buffer, pos: &Vec2, border: u8) {
         if (self.borders & border) == border {
             let c = self.border_type.get(border);
             buffer.set_val(c, pos);
