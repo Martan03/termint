@@ -195,12 +195,16 @@ impl Widget for Block {
             || !self.title.get_text().is_empty()) as usize;
         let left = ((self.borders & Border::LEFT) != 0) as usize;
 
-        let mut cbuffer = buffer.subset(Rect::new(
+        let rect = Rect::new(
             buffer.x() + left,
             buffer.y() + top,
             buffer.width().saturating_sub(width),
             buffer.height().saturating_sub(height),
-        ));
+        );
+        if !buffer.rect().contains(&rect) {
+            return;
+        }
+        let mut cbuffer = buffer.subset(rect);
         self.layout.render(&mut cbuffer);
         buffer.merge(cbuffer);
     }
@@ -247,7 +251,7 @@ impl Block {
         self.render_hor_border(buffer, buffer.top(), Border::TOP);
         self.render_hor_border(buffer, buffer.bottom(), Border::BOTTOM);
 
-        if buffer.width() == 0 || buffer.height() == 0 {
+        if buffer.width() <= 1 || buffer.height() <= 1 {
             return;
         }
 

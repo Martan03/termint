@@ -1,4 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
 use termint::{
     buffer::Buffer,
@@ -8,7 +11,8 @@ use termint::{
     term::Term,
     widgets::{
         BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
-        ListState, Paragraph, StrSpanExtension, Widget,
+        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState,
+        StrSpanExtension, Widget,
     },
 };
 
@@ -25,7 +29,9 @@ fn main() {
     // term_test();
     // grid_test();
     // diff_render_test();
-    merge_test();
+    // merge_test();
+    // scrollbar_test();
+    scrollable_test();
 }
 
 #[allow(unused)]
@@ -276,10 +282,14 @@ fn term_test() {
 #[allow(unused)]
 fn grid_test() {
     let mut grid = Grid::new(
-        vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],
+        vec![Unit::Length(3), Unit::Length(4), Unit::Fill(1)],
         vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
     );
 
+    grid.add_child(Block::vertical(), 1, 0);
+    grid.add_child(Block::vertical(), 0, 1);
+    grid.add_child(Block::vertical(), 1, 2);
+    grid.add_child(Block::vertical(), 2, 1);
     grid.add_child("Grid", 1, 1);
 
     let mut buffer = Buffer::empty(Rect::new(1, 1, 15, 6));
@@ -353,5 +363,62 @@ fn merge_test() {
     block2.render(&mut sbuffer);
 
     buffer.merge(sbuffer);
+    buffer.render();
+}
+
+#[allow(unused)]
+fn scrollbar_test() {
+    println!("\x1b[2J");
+
+    let state = Rc::new(Cell::new(ScrollbarState::new(3).content_len(30)));
+
+    let vertical = Scrollbar::vertical(state.clone());
+    let horizontal = Scrollbar::horizontal(state.clone());
+
+    let mut grid = Grid::new(
+        vec![Unit::Fill(1), Unit::Length(1)],
+        vec![Unit::Fill(1), Unit::Length(1)],
+    );
+    grid.add_child(vertical, 1, 0);
+    grid.add_child(horizontal, 0, 1);
+
+    let mut buffer = Buffer::empty(Rect::new(1, 1, 12, 7));
+    grid.render(&mut buffer);
+    buffer.render();
+}
+
+#[allow(unused)]
+fn scrollable_test() {
+    println!("\x1b[2J");
+
+    // // Widget to wrap scrollable around
+    // let span = "Long text that cannot fit so scrolling is needed".to_span();
+    // // Scrollable state containing offset
+    // let state = Rc::new(Cell::new(ScrollbarState::new(2)));
+    // // Creates scrollable widget with vertical scrolling
+    // let scrollable = Scrollable::vertical(span, state);
+    // // Renders using the buffer
+    // let mut buffer = Buffer::empty(Rect::new(1, 1, 9, 5));
+    // scrollable.render(&mut buffer);
+    // buffer.render();
+
+    let mut layout = Layout::horizontal();
+    layout.add_child("Test", Constraint::Length(20));
+
+    let mut bg = BgGrad::vertical((10, 250, 30), (200, 60, 120));
+    bg.add_child(layout, Constraint::Length(10));
+
+    let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
+    let hstate = Rc::new(Cell::new(ScrollbarState::new(1)));
+    let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
+
+    // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));
+    // let scrollable = Scrollable::horizontal(
+    //     "This is a test of new widget with very long text".to_span(),
+    //     vstate.clone(),
+    // );
+
+    let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
+    scrollable.render(&mut buffer);
     buffer.render();
 }

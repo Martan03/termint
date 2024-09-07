@@ -129,7 +129,7 @@ impl Buffer {
 
     /// Unites current buffer with given one
     #[deprecated(
-        since = "0.5.1",
+        since = "0.6.0",
         note = "Kept for compatibility purposes; use `merge` function instead"
     )]
     pub fn union(&mut self, buffer: Buffer) {
@@ -150,6 +150,11 @@ impl Buffer {
 
         self.rect = merged.rect;
         self.content = merged.content;
+    }
+
+    /// Moves [`Buffer`] to given position
+    pub fn move_to(&mut self, pos: Vec2) {
+        self.rect.move_to(pos);
     }
 
     /// Gets [`Cell`] reference from the buffer on given position

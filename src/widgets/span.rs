@@ -7,7 +7,7 @@ use crate::{
     style::Style,
 };
 
-use super::{text::Text, widget::Widget};
+use super::{text::Text, widget::Widget, Element};
 
 /// Widget for styling text
 ///
@@ -487,8 +487,20 @@ impl From<Span> for Box<dyn Text> {
     }
 }
 
+impl From<Span> for Element {
+    fn from(value: Span) -> Self {
+        Element(Box::new(value))
+    }
+}
+
 impl From<&str> for Box<dyn Text> {
     fn from(value: &str) -> Self {
         Box::new(Span::new(value))
+    }
+}
+
+impl From<&str> for Element {
+    fn from(value: &str) -> Self {
+        Element(Box::new(Span::new(value)))
     }
 }

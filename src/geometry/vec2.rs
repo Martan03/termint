@@ -23,17 +23,12 @@ impl<T> Vec2<T> {
 }
 
 impl Vec2<usize> {
-    /// Transpones [`Vec2`]
-    pub fn transpone(&mut self) {
-        (self.x, self.y) = (self.y, self.x);
-    }
-
-    /// Transpones [`Vec2`] and returns new [`Vec2`]
-    pub fn inverse(&self) -> Self {
-        Self {
-            x: self.y,
-            y: self.x,
-        }
+    /// Subtracts number from both x and y and saturating at numeric bounds
+    /// instead of overflowing
+    pub fn saturating_sub(mut self, val: usize) -> Self {
+        self.x = self.x.saturating_sub(val);
+        self.y = self.y.saturating_sub(val);
+        self
     }
 }
 
@@ -52,6 +47,24 @@ where
     pub fn normalize(&self) -> Vec2<f64> {
         let mag = self.magnitude();
         Vec2::new(self.x.into() / mag, self.y.into() / mag)
+    }
+}
+
+impl<T> Vec2<T>
+where
+    T: Copy,
+{
+    /// Transpones [`Vec2`]
+    pub fn transpone(&mut self) {
+        (self.x, self.y) = (self.y, self.x);
+    }
+
+    /// Transpones [`Vec2`] and returns new [`Vec2`]
+    pub fn inverse(&self) -> Self {
+        Self {
+            x: self.y,
+            y: self.x,
+        }
     }
 }
 

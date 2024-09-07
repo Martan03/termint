@@ -28,6 +28,8 @@ mod layout;
 mod list;
 /// Chaining widgets implementing [`Text`] trait
 mod paragraph;
+mod scrollable;
+mod scrollbar;
 /// Spacer widget for better layouting
 mod spacer;
 /// Widget for styling text
@@ -57,6 +59,9 @@ pub use list::List;
 pub use list::ListState;
 /// Chaining widgets implementing [`Text`] trait
 pub use paragraph::Paragraph;
+/// Widget that uses scrollbar for overflown content
+pub use scrollable::*;
+pub use scrollbar::*;
 /// Spacer widget for better layouting
 pub use spacer::Spacer;
 /// Widget for styling text
@@ -66,4 +71,4 @@ pub use span::StrSpanExtension;
 /// Trait for text widgets to implement
 pub use text::Text;
 /// Trait for widgets to implement
-pub use widget::Widget;
+pub use widget::*;

@@ -19,3 +19,19 @@ impl fmt::Debug for dyn Widget {
         write!(f, "Converted widget")
     }
 }
+
+pub struct Element(pub Box<dyn Widget>);
+
+impl Widget for Element {
+    fn render(&self, buffer: &mut Buffer) {
+        self.0.render(buffer)
+    }
+
+    fn height(&self, size: &Vec2) -> usize {
+        self.0.height(size)
+    }
+
+    fn width(&self, size: &Vec2) -> usize {
+        self.0.width(size)
+    }
+}

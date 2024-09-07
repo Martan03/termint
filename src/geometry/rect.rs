@@ -66,7 +66,7 @@ impl Rect {
         let max_x = max(self.x(), other.x());
         let max_y = max(self.y(), other.y());
         let min_x = min(self.right() + 1, other.right() + 1);
-        let min_y = min(self.bottom() + 1, other.right() + 1);
+        let min_y = min(self.bottom() + 1, other.bottom() + 1);
 
         Self {
             pos: Vec2::new(max_x, max_y),
@@ -75,6 +75,11 @@ impl Rect {
                 min_y.saturating_sub(max_y),
             ),
         }
+    }
+
+    /// Moves [`Rect`] to given position
+    pub fn move_to(&mut self, pos: Vec2) {
+        self.pos = pos;
     }
 
     /// Gets reference to position of the [`Rect`]
@@ -129,7 +134,8 @@ impl Rect {
 
     /// Returns true if current [`Rect`] contains the given one
     pub fn contains(&self, other: &Self) -> bool {
-        self.x() <= other.x()
+        !other.is_empty()
+            && self.x() <= other.x()
             && self.y() <= other.y()
             && self.right() >= other.right()
             && self.bottom() >= other.bottom()
@@ -163,6 +169,24 @@ impl Rect {
 impl From<(Vec2, Vec2)> for Rect {
     fn from((pos, size): (Vec2, Vec2)) -> Self {
         Self { pos, size }
+    }
+}
+
+impl From<(usize, usize, Vec2)> for Rect {
+    fn from((x, y, size): (usize, usize, Vec2)) -> Self {
+        Self {
+            pos: Vec2::new(x, y),
+            size,
+        }
+    }
+}
+
+impl From<(Vec2, usize, usize)> for Rect {
+    fn from((pos, width, height): (Vec2, usize, usize)) -> Self {
+        Self {
+            pos,
+            size: Vec2::new(width, height),
+        }
     }
 }
 
