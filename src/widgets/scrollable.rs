@@ -239,6 +239,6 @@ where
     W: Widget + 'static,
 {
     fn from(value: Scrollable<W>) -> Self {
-        Element(Box::new(value))
+        Element::new(value)
     }
 }

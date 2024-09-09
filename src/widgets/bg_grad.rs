@@ -1,10 +1,10 @@
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
-    geometry::{Constraint, Vec2, Direction, Padding},
+    geometry::{Direction, Padding, Vec2},
 };
 
-use super::{layout::Layout, widget::Widget};
+use super::{widget::Widget, Element};
 
 /// [`Layout`] widget with gradient background
 ///
@@ -39,30 +39,17 @@ use super::{layout::Layout, widget::Widget};
 /// buffer.render();
 /// ```
 #[derive(Debug)]
-pub struct BgGrad {
+pub struct BgGrad<W = Element> {
     bg_start: RGB,
     bg_end: RGB,
     direction: Direction,
-    layout: Layout,
+    padding: Padding,
+    child: W,
 }
 
-impl BgGrad {
-    /// Creates new [`BgGrad`] with given gradient colors
-    pub fn new<T1, T2>(direction: Direction, start: T1, end: T2) -> Self
-    where
-        T1: Into<RGB>,
-        T2: Into<RGB>,
-    {
-        Self {
-            bg_start: start.into(),
-            bg_end: end.into(),
-            direction,
-            layout: Default::default(),
-        }
-    }
-
+impl<W> BgGrad<W> {
     /// Creates new vertical [`BgGrad`] with given gradient colors
-    pub fn vertical<T1, T2>(start: T1, end: T2) -> Self
+    pub fn vertical<T1, T2>(child: W, start: T1, end: T2) -> Self
     where
         T1: Into<RGB>,
         T2: Into<RGB>,
@@ -71,12 +58,13 @@ impl BgGrad {
             bg_start: start.into(),
             bg_end: end.into(),
             direction: Direction::Vertical,
-            layout: Default::default(),
+            padding: Default::default(),
+            child,
         }
     }
 
     /// Creates new horizontal [`BgGrad`] with given gradient colors
-    pub fn horizontal<T1, T2>(start: T1, end: T2) -> Self
+    pub fn horizontal<T1, T2>(child: W, start: T1, end: T2) -> Self
     where
         T1: Into<RGB>,
         T2: Into<RGB>,
@@ -85,7 +73,8 @@ impl BgGrad {
             bg_start: start.into(),
             bg_end: end.into(),
             direction: Direction::Horizontal,
-            layout: Default::default(),
+            padding: Default::default(),
+            child,
         }
     }
 
@@ -95,33 +84,13 @@ impl BgGrad {
         self
     }
 
-    /// Sets [`Direction`] of the [`Layout`]
-    pub fn direction(mut self, direction: Direction) -> Self {
-        self.layout = self.layout.direction(direction);
-        self
-    }
-
-    /// Sets [`Padding`] of the [`Layout`]
+    /// Sets padding of the [`BgGrad`]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
         T: Into<Padding>,
     {
-        self.layout = self.layout.padding(padding);
+        self.padding = padding.into();
         self
-    }
-
-    /// Centers the [`Layout`] of the [`BgGrad`]
-    pub fn center(mut self) -> Self {
-        self.layout = self.layout.center();
-        self
-    }
-
-    /// Adds child to the [`BgGrad`]'s [`Layout`]
-    pub fn add_child<T>(&mut self, child: T, constraint: Constraint)
-    where
-        T: Into<Box<dyn Widget>>,
-    {
-        self.layout.add_child(child, constraint);
     }
 }
 
@@ -132,25 +101,35 @@ impl Widget for BgGrad {
         }
 
         match self.direction {
-            Direction::Vertical => self.render_ver(buffer),
-            Direction::Horizontal => self.render_hor(buffer),
+            Direction::Vertical => self.ver_render(buffer),
+            Direction::Horizontal => self.hor_render(buffer),
         };
 
-        self.layout.render(buffer);
+        let mut cbuffer = buffer.subset(buffer.rect().inner(self.padding));
+        self.child.render(&mut cbuffer);
+        buffer.merge(cbuffer);
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        self.layout.height(size)
+        let size = Vec2::new(
+            size.x.saturating_sub(self.padding.get_horizontal()),
+            size.y.saturating_sub(self.padding.get_vertical()),
+        );
+        self.child.height(&size) + self.padding.get_vertical()
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        self.layout.width(size)
+        let size = Vec2::new(
+            size.x.saturating_sub(self.padding.get_horizontal()),
+            size.y.saturating_sub(self.padding.get_vertical()),
+        );
+        self.child.width(&size) + self.padding.get_horizontal()
     }
 }
 
 impl BgGrad {
     /// Renders horizontal background gradient
-    fn render_hor(&self, buffer: &mut Buffer) {
+    fn hor_render(&self, buffer: &mut Buffer) {
         let step = self.get_step(buffer.width() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
@@ -166,7 +145,7 @@ impl BgGrad {
     }
 
     /// Renders vertical background gradient
-    fn render_ver(&self, buffer: &mut Buffer) {
+    fn ver_render(&self, buffer: &mut Buffer) {
         let step = self.get_step(buffer.height() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
@@ -208,5 +187,12 @@ impl BgGrad {
 impl From<BgGrad> for Box<dyn Widget> {
     fn from(value: BgGrad) -> Self {
         Box::new(value)
+    }
+}
+
+impl From<BgGrad> for Element {
+    fn from(value: BgGrad) -> Self {
+        Element::new(value)
+        
     }
 }

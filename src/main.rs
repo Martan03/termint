@@ -11,7 +11,7 @@ use termint::{
     term::Term,
     widgets::{
         BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
-        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState,
+        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState, Spacer,
         StrSpanExtension, Widget,
     },
 };
@@ -20,7 +20,7 @@ fn main() {
     // test_block();
     // test_layout();
     // test_grad();
-    // cool_example();
+    cool_example();
     // test_paragraph();
     // readme_example();
     // test_list();
@@ -31,7 +31,7 @@ fn main() {
     // diff_render_test();
     // merge_test();
     // scrollbar_test();
-    scrollable_test();
+    // scrollable_test();
 }
 
 #[allow(unused)]
@@ -42,16 +42,16 @@ fn test_block() {
     let mut block2 = Block::vertical();
     let grad =
         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
-    block2.add_child(grad, Constraint::Percent(100));
+    block2.push(grad, Constraint::Percent(100));
     let block3 = Block::vertical().title(Grad::new(
         "Test",
         (100, 200, 100),
         (20, 160, 255),
     ));
 
-    block.add_child(block1, Constraint::Min(0));
-    block.add_child(block2, Constraint::Min(0));
-    block.add_child(block3, Constraint::Fill);
+    block.push(block1, Constraint::Min(0));
+    block.push(block2, Constraint::Min(0));
+    block.push(block3, Constraint::Fill(1));
 
     let mut buffer =
         Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
@@ -72,15 +72,15 @@ fn test_layout() {
 
     let mut block1 = Block::vertical().title("Sub block");
     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-    block1.add_child(span1, Constraint::Percent(100));
-    main.add_child(block1, Constraint::Percent(50));
+    block1.push(span1, Constraint::Percent(100));
+    main.push(block1, Constraint::Percent(50));
 
     let mut block2 = Block::vertical().title("Another");
     let span2 =
         "This is really cool, right? This is the best place for testing"
             .fg(Color::Blue);
-    block2.add_child(span2, Constraint::Percent(100));
-    main.add_child(block2, Constraint::Percent(50));
+    block2.push(span2, Constraint::Percent(100));
+    main.push(block2, Constraint::Percent(50));
 
     let mut buffer =
         Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8)));
@@ -118,29 +118,29 @@ fn cool_example() {
         .title("Features:")
         .borders(Border::TOP)
         .border_color(Color::Gray);
-    main.add_child(block, Constraint::Min(0));
+    main.push(block, Constraint::Min(0));
 
     let span = "Re-coloring".fg(Color::Red).modifier(Modifier::ITALIC);
-    main.add_child(span, Constraint::Min(0));
+    main.push(span, Constraint::Min(0));
     let grad = Grad::new("Gradient text", (0, 220, 255), (175, 80, 255));
-    main.add_child(grad, Constraint::Min(0));
+    main.push(grad, Constraint::Min(0));
 
     let mut fill = Block::horizontal()
         .title("Layout features".modifier(Modifier::UNDERLINED))
         .border_type(BorderType::Rounded)
         .border_color(Color::Gray);
 
-    fill.add_child("This text fits well", Constraint::Min(0));
+    fill.push("This text fits well", Constraint::Min(0));
     let sep = Block::vertical()
         .borders(Border::LEFT)
         .border_color(Color::Gray);
-    fill.add_child(sep, Constraint::Length(1));
-    fill.add_child(
+    fill.push(sep, Constraint::Length(1));
+    fill.push(
         "This text will fill the rest and have ellipsis when overflows",
-        Constraint::Fill,
+        Constraint::Fill(1),
     );
 
-    main.add_child(fill, Constraint::Fill);
+    main.push(fill, Constraint::Fill(1));
 
     let mut buffer =
         Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
@@ -165,8 +165,8 @@ fn test_paragraph() {
 
     let block = Block::vertical();
 
-    main.add_child(p, Constraint::Fill);
-    main.add_child(block, Constraint::Fill);
+    main.push(p, Constraint::Fill(1));
+    main.push(block, Constraint::Fill(1));
 
     let mut buffer =
         Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8)));
@@ -185,16 +185,16 @@ fn readme_example() {
     // Creates block1 and adds span as its child
     let mut block1 = Block::vertical().title("Sub block");
     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-    block1.add_child(span1, Constraint::Percent(100));
+    block1.push(span1, Constraint::Percent(100));
     // Adds block1 as child of main block
-    main.add_child(block1, Constraint::Min(0));
+    main.push(block1, Constraint::Min(0));
 
     // Create block2 and adds span as its child
     let mut block2 = Block::horizontal().title("Another");
     let span2 = "This is really cool, right?".fg(Color::Blue);
-    block2.add_child(span2, Constraint::Percent(100));
+    block2.push(span2, Constraint::Percent(100));
     // Adds block2 as child of main block
-    main.add_child(block2, Constraint::Fill);
+    main.push(block2, Constraint::Fill(1));
 
     // Renders the main block which renders all the children
     let mut buffer =
@@ -218,7 +218,7 @@ fn test_list() {
     .highlight_symbol(">")
     .highlight_style(Style::new().fg(Color::Red).modifier(Modifier::BOLD));
 
-    block.add_child(list, Constraint::Fill);
+    block.push(list, Constraint::Fill(1));
     let mut buffer =
         Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 6)));
     // block.render(&mut buffer);
@@ -242,10 +242,10 @@ fn test_layout_centering() {
     let span = Grad::new("This is a test", (0, 150, 255), (150, 255, 150))
         .wrap(Wrap::Letter);
     let mut block = Block::horizontal().center();
-    block.add_child(span, Constraint::Min(0));
+    block.push(span, Constraint::Min(0));
 
     let mut main = Block::vertical().center();
-    main.add_child(block, Constraint::Length(4));
+    main.push(block, Constraint::Length(4));
     let mut buffer =
         Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 8)));
     main.render(&mut buffer);
@@ -255,15 +255,15 @@ fn test_layout_centering() {
 #[allow(unused)]
 fn test_bg_grad() {
     println!("\x1b[2J");
-    let mut grad = BgGrad::horizontal(0x0096ff, (84.71, 1.0, 0.5)).center();
-    let mut layout = Layout::horizontal().center();
-    layout.add_child(Block::vertical(), Constraint::Length(6));
-    grad.add_child(layout, Constraint::Length(3));
+    // let mut grad = BgGrad::horizontal(0x0096ff, (84.71, 1.0, 0.5)).center();
+    // let mut layout = Layout::horizontal().center();
+    // layout.push(Block::vertical(), Constraint::Length(6));
+    // grad.push(layout, Constraint::Length(3));
 
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 9)));
-    grad.render(&mut buffer);
-    buffer.render();
+    // let mut buffer =
+    //     Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 9)));
+    // grad.render(&mut buffer);
+    // buffer.render();
 }
 
 #[allow(unused)]
@@ -274,7 +274,7 @@ fn term_test() {
 
     let mut layout = Layout::vertical().padding(1);
     let mut span = "This is test of small message rendering";
-    layout.add_child(span, Constraint::Length(9));
+    layout.push(span, Constraint::Length(9));
 
     term.render(layout);
 }
@@ -286,11 +286,11 @@ fn grid_test() {
         vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
     );
 
-    grid.add_child(Block::vertical(), 1, 0);
-    grid.add_child(Block::vertical(), 0, 1);
-    grid.add_child(Block::vertical(), 1, 2);
-    grid.add_child(Block::vertical(), 2, 1);
-    grid.add_child("Grid", 1, 1);
+    grid.push(Block::vertical(), 1, 0);
+    grid.push(Block::vertical(), 0, 1);
+    grid.push(Block::vertical(), 1, 2);
+    grid.push(Block::vertical(), 2, 1);
+    grid.push("Grid", 1, 1);
 
     let mut buffer = Buffer::empty(Rect::new(1, 1, 15, 6));
     grid.render(&mut buffer);
@@ -306,16 +306,16 @@ fn diff_render_test() {
     // Creates block1 and adds span as its child
     let mut block1 = Block::vertical().title("Sub block");
     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-    block1.add_child(span1, Constraint::Percent(100));
+    block1.push(span1, Constraint::Percent(100));
     // Adds block1 as child of main block
-    main.add_child(block1, Constraint::Min(0));
+    main.push(block1, Constraint::Min(0));
 
     // Create block2 and adds span as its child
     let mut block2 = Block::horizontal().title("Another");
     let span2 = "This is really cool".fg(Color::Blue);
-    block2.add_child(span2, Constraint::Percent(100));
+    block2.push(span2, Constraint::Percent(100));
     // Adds block2 as child of main block
-    main.add_child(block2, Constraint::Fill);
+    main.push(block2, Constraint::Fill(1));
 
     // Renders the main block which renders all the children
     let mut dbuffer =
@@ -330,16 +330,16 @@ fn diff_render_test() {
     // Creates block1 and adds span as its child
     let mut block1 = Block::vertical().title("Sub block");
     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-    block1.add_child(span1, Constraint::Percent(100));
+    block1.push(span1, Constraint::Percent(100));
     // Adds block1 as child of main block
-    main.add_child(block1, Constraint::Min(0));
+    main.push(block1, Constraint::Min(0));
 
     // Create block2 and adds span as its child
     let mut block2 = Block::horizontal().title("Another");
     let span2 = "This is really cool, right?".fg(Color::Blue);
-    block2.add_child(span2, Constraint::Percent(100));
+    block2.push(span2, Constraint::Percent(100));
     // Adds block2 as child of main block
-    main.add_child(block2, Constraint::Fill);
+    main.push(block2, Constraint::Fill(1));
 
     // Renders the main block which renders all the children
     let mut buffer =
@@ -353,12 +353,12 @@ fn merge_test() {
     println!("\x1b[2J");
 
     let mut block1 = Block::vertical();
-    block1.add_child("This will be covered", Constraint::Min(0));
+    block1.push("This will be covered", Constraint::Min(0));
     let mut buffer = Buffer::empty(Rect::new(1, 1, 8, 5));
     block1.render(&mut buffer);
 
     let mut block2 = Block::vertical();
-    block2.add_child("This will go above", Constraint::Min(0));
+    block2.push("This will go above", Constraint::Min(0));
     let mut sbuffer = Buffer::empty(Rect::new(4, 3, 7, 5));
     block2.render(&mut sbuffer);
 
@@ -379,8 +379,8 @@ fn scrollbar_test() {
         vec![Unit::Fill(1), Unit::Length(1)],
         vec![Unit::Fill(1), Unit::Length(1)],
     );
-    grid.add_child(vertical, 1, 0);
-    grid.add_child(horizontal, 0, 1);
+    grid.push(vertical, 1, 0);
+    grid.push(horizontal, 0, 1);
 
     let mut buffer = Buffer::empty(Rect::new(1, 1, 12, 7));
     grid.render(&mut buffer);
@@ -402,23 +402,23 @@ fn scrollable_test() {
     // scrollable.render(&mut buffer);
     // buffer.render();
 
-    let mut layout = Layout::horizontal();
-    layout.add_child("Test", Constraint::Length(20));
+    // let mut layout = Layout::horizontal();
+    // layout.push("Test", Constraint::Length(20));
 
-    let mut bg = BgGrad::vertical((10, 250, 30), (200, 60, 120));
-    bg.add_child(layout, Constraint::Length(10));
+    // let mut bg = BgGrad::vertical((10, 250, 30), (200, 60, 120));
+    // bg.push(layout, Constraint::Length(10));
 
-    let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
-    let hstate = Rc::new(Cell::new(ScrollbarState::new(1)));
-    let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
+    // let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
+    // let hstate = Rc::new(Cell::new(ScrollbarState::new(1)));
+    // let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
 
-    // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));
-    // let scrollable = Scrollable::horizontal(
-    //     "This is a test of new widget with very long text".to_span(),
-    //     vstate.clone(),
-    // );
+    // // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));
+    // // let scrollable = Scrollable::horizontal(
+    // //     "This is a test of new widget with very long text".to_span(),
+    // //     vstate.clone(),
+    // // );
 
-    let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
-    scrollable.render(&mut buffer);
-    buffer.render();
+    // let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
+    // scrollable.render(&mut buffer);
+    // buffer.render();
 }

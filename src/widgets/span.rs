@@ -489,7 +489,7 @@ impl From<Span> for Box<dyn Text> {
 
 impl From<Span> for Element {
     fn from(value: Span) -> Self {
-        Element(Box::new(value))
+        Element::new(value)
     }
 }
 
@@ -501,6 +501,6 @@ impl From<&str> for Box<dyn Text> {
 
 impl From<&str> for Element {
     fn from(value: &str) -> Self {
-        Element(Box::new(Span::new(value)))
+        Element::new(Span::new(value))
     }
 }

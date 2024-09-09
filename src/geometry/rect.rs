@@ -117,6 +117,26 @@ impl Rect {
         (self.pos.y + self.size.y).saturating_sub(1)
     }
 
+    /// Gets top left corner position
+    pub fn top_left(&self) -> Vec2 {
+        *self.pos()
+    }
+
+    /// Gets top right corner position
+    pub fn top_right(&self) -> Vec2 {
+        Vec2::new(self.right(), self.top())
+    }
+
+    /// Gets bottom left corner position
+    pub fn bottom_left(&self) -> Vec2 {
+        Vec2::new(self.x(), self.bottom())
+    }
+
+    /// Gets bottom right corner position
+    pub fn bottom_right(&self) -> Vec2 {
+        Vec2::new(self.right(), self.bottom())
+    }
+
     /// Gets reference to size of the [`Rect`]
     pub fn size(&self) -> &Vec2 {
         &self.size

@@ -72,7 +72,23 @@ impl Grid {
     }
 
     /// Adds child to the grid to given row and column
+    #[deprecated(
+        since = "0.6.0",
+        note = "Kept for compatibility purposes; use `push` function instead"
+    )]
     pub fn add_child<T>(&mut self, child: T, col: usize, row: usize)
+    where
+        T: Into<Box<dyn Widget>>,
+    {
+        self.children.push(GridChild {
+            child: child.into(),
+            row,
+            col,
+        })
+    }
+
+    /// Adds child to the grid to given row and column
+    pub fn push<T>(&mut self, child: T, col: usize, row: usize)
     where
         T: Into<Box<dyn Widget>>,
     {

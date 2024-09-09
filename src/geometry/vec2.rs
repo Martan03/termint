@@ -72,7 +72,8 @@ impl<T> Vec2<T>
 where
     T: Copy + PartialOrd,
 {
-    /// Creates new 2D vector range
+    /// Creates new 2D vector range with first value inclusive and second
+    /// exclusive
     pub fn to(self, other: Vec2<T>) -> Vec2Range<T> {
         Vec2Range::new(self, other)
     }

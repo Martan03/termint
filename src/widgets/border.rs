@@ -29,9 +29,10 @@ impl Border {
 }
 
 /// Border type enum
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum BorderType {
     /// Simple line
+    #[default]
     Normal,
     /// Line with rounded corners
     Rounded,

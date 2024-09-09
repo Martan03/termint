@@ -12,7 +12,7 @@ pub enum Constraint {
     /// Minimum and maximum size of the widget, widget expands to fit content
     MinMax(usize, usize),
     /// Fills rest of the space (space is divided by all widgets with fill)
-    Fill,
+    Fill(usize),
 }
 
 impl From<usize> for Constraint {

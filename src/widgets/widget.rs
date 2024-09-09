@@ -20,7 +20,18 @@ impl fmt::Debug for dyn Widget {
     }
 }
 
-pub struct Element(pub Box<dyn Widget>);
+#[derive(Debug)]
+pub struct Element(Box<dyn Widget>);
+
+impl Element {
+    /// Creates new element
+    pub fn new<W>(widget: W) -> Self
+    where
+        W: Widget + 'static,
+    {
+        Element(Box::new(widget))
+    }
+}
 
 impl Widget for Element {
     fn render(&self, buffer: &mut Buffer) {

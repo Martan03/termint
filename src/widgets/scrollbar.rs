@@ -288,6 +288,6 @@ impl From<Scrollbar> for Box<dyn Widget> {
 
 impl From<Scrollbar> for Element {
     fn from(value: Scrollbar) -> Self {
-        Element(Box::new(value))
+        Element::new(value)
     }
 }

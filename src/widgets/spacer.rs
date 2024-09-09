@@ -1,6 +1,6 @@
 use crate::{buffer::Buffer, geometry::Vec2};
 
-use super::widget::Widget;
+use super::{widget::Widget, Element};
 
 /// Spacer widget for better layouting
 ///
@@ -46,5 +46,11 @@ impl Widget for Spacer {
 impl From<Spacer> for Box<dyn Widget> {
     fn from(value: Spacer) -> Self {
         Box::new(value)
+    }
+}
+
+impl From<Spacer> for Element {
+    fn from(value: Spacer) -> Self {
+        Element::new(value)
     }
 }
