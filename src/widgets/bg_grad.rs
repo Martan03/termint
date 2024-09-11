@@ -1,10 +1,11 @@
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
-    geometry::{Direction, Padding, Vec2},
+    geometry::{Constraint, Direction, Padding, Vec2},
+    style::Style,
 };
 
-use super::{widget::Widget, Element};
+use super::{widget::Widget, Element, Layout};
 
 /// [`Layout`] widget with gradient background
 ///
@@ -47,7 +48,10 @@ pub struct BgGrad<W = Element> {
     child: W,
 }
 
-impl<W> BgGrad<W> {
+impl<W> BgGrad<W>
+where
+    W: Widget,
+{
     /// Creates new vertical [`BgGrad`] with given gradient colors
     pub fn vertical<T1, T2>(child: W, start: T1, end: T2) -> Self
     where
@@ -94,7 +98,73 @@ impl<W> BgGrad<W> {
     }
 }
 
-impl Widget for BgGrad {
+impl BgGrad<Layout> {
+    /// Sets [`Direction`] of the [`Layout`]
+    pub fn direction(mut self, direction: Direction) -> Self {
+        self.child = self.child.direction(direction);
+        self
+    }
+
+    /// Sets the base style of the [`Layout`]
+    pub fn style<T>(mut self, style: T) -> Self
+    where
+        T: Into<Style>,
+    {
+        self.child = self.child.style(style);
+        self
+    }
+
+    /// Sets base background color of the [`Layout`]
+    pub fn bg<T>(mut self, bg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
+        self.child = self.child.bg(bg);
+        self
+    }
+
+    /// Sets base foreground color of the [`Layout`]
+    pub fn fg<T>(mut self, fg: T) -> Self
+    where
+        T: Into<Option<Color>>,
+    {
+        self.child = self.child.fg(fg);
+        self
+    }
+
+    /// Makes [`Layout`] center its content in its direction
+    pub fn center(mut self) -> Self {
+        self.child = self.child.center();
+        self
+    }
+
+    /// Adds child with its [`Constraint`] to [`Layout`]
+    #[deprecated(
+        since = "0.6.0",
+        note = "Kept for compatibility purposes; use `push` function instead"
+    )]
+    pub fn add_child<T, C>(&mut self, child: T, constraint: C)
+    where
+        T: Into<Box<dyn Widget>>,
+        C: Into<Constraint>,
+    {
+        self.child.push(child, constraint);
+    }
+
+    /// Pushes child with its [`Constraint`] to the [`Layout`]
+    pub fn push<T, C>(&mut self, child: T, constraint: C)
+    where
+        T: Into<Box<dyn Widget>>,
+        C: Into<Constraint>,
+    {
+        self.child.push(child, constraint);
+    }
+}
+
+impl<W> Widget for BgGrad<W>
+where
+    W: Widget,
+{
     fn render(&self, buffer: &mut Buffer) {
         if buffer.width() == 0 || buffer.height() == 0 {
             return;
@@ -127,7 +197,10 @@ impl Widget for BgGrad {
     }
 }
 
-impl BgGrad {
+impl<W> BgGrad<W>
+where
+    W: Widget,
+{
     /// Renders horizontal background gradient
     fn hor_render(&self, buffer: &mut Buffer) {
         let step = self.get_step(buffer.width() as i16);
@@ -184,15 +257,20 @@ impl BgGrad {
 }
 
 // From implementations
-impl From<BgGrad> for Box<dyn Widget> {
-    fn from(value: BgGrad) -> Self {
+impl<W> From<BgGrad<W>> for Box<dyn Widget>
+where
+    W: Widget + 'static,
+{
+    fn from(value: BgGrad<W>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<BgGrad> for Element {
-    fn from(value: BgGrad) -> Self {
+impl<W> From<BgGrad<W>> for Element
+where
+    W: Widget + 'static,
+{
+    fn from(value: BgGrad<W>) -> Self {
         Element::new(value)
-        
     }
 }

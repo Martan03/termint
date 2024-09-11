@@ -9,13 +9,6 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// Contains layout child and constraint of its size
-#[derive(Debug)]
-struct LayoutChild {
-    pub child: Box<dyn Widget>,
-    pub constraint: Constraint,
-}
-
 /// Creates layout flexing in one direction
 ///
 /// ## Example usage:
@@ -45,6 +38,13 @@ pub struct Layout {
     style: Style,
     padding: Padding,
     center: bool,
+}
+
+/// Contains layout child and constraint of its size
+#[derive(Debug)]
+struct LayoutChild {
+    pub child: Box<dyn Widget>,
+    pub constraint: Constraint,
 }
 
 impl Layout {
@@ -221,11 +221,7 @@ impl Layout {
     fn ver_render(&self, buffer: &mut Buffer, rect: Rect) {
         let (sizes, mut rect) = self.ver_sizes(rect);
         for (i, s) in sizes.iter().enumerate() {
-            let mut csize = *s;
-            if csize > rect.height() {
-                csize = rect.height().saturating_sub(rect.y() - buffer.y())
-            }
-
+            let csize = min(*s, rect.height());
             let mut cbuffer = buffer.subset(Rect::from_coords(
                 *rect.pos(),
                 Vec2::new(rect.width(), csize),
@@ -240,11 +236,7 @@ impl Layout {
     fn hor_render(&self, buffer: &mut Buffer, rect: Rect) {
         let (sizes, mut rect) = self.hor_sizes(rect);
         for (i, s) in sizes.iter().enumerate() {
-            let mut csize = *s;
-            if csize > rect.width() {
-                csize -= csize - rect.width();
-            }
-
+            let csize = min(*s, rect.width());
             let mut cbuffer = buffer.subset(Rect::from_coords(
                 *rect.pos(),
                 Vec2::new(csize, rect.height()),
@@ -263,7 +255,7 @@ impl Layout {
             |c, s| c.height(s),
             |s, v| s.y = s.y.saturating_sub(v),
             |s| s.y,
-            |r, s| r.inner((s, 0)),
+            |r, s| r.inner(Padding::vertical(s)),
         )
     }
 
@@ -275,7 +267,7 @@ impl Layout {
             |c, s| c.width(s),
             |s, v| s.x = s.x.saturating_sub(v),
             |s| s.x,
-            |r, s| r.inner((0, s)),
+            |r, s| r.inner(Padding::horizontal(s)),
         )
     }
 
@@ -326,7 +318,9 @@ impl Layout {
         }
 
         for f in fill_ids {
-            sizes[f] = left / fills * sizes[f];
+            let fill = sizes[f];
+            sizes[f] = left / fills * fill;
+            fills -= fill;
             left -= sizes[f];
         }
         (sizes, rect)
@@ -334,10 +328,8 @@ impl Layout {
 
     /// Renders [`Layout`] base style
     fn render_base_style(&self, buffer: &mut Buffer) {
-        for y in buffer.y()..buffer.y() + buffer.height() {
-            for x in buffer.x()..buffer.x() + buffer.width() {
-                buffer.set_style(self.style, &Vec2::new(x, y));
-            }
+        for pos in buffer.rect().into_iter() {
+            buffer.set_style(self.style, &pos);
         }
     }
 }

@@ -11,7 +11,7 @@ use termint::{
     term::Term,
     widgets::{
         BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
-        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState, Spacer,
+        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState,
         StrSpanExtension, Widget,
     },
 };
@@ -20,7 +20,7 @@ fn main() {
     // test_block();
     // test_layout();
     // test_grad();
-    cool_example();
+    // cool_example();
     // test_paragraph();
     // readme_example();
     // test_list();
@@ -31,7 +31,7 @@ fn main() {
     // diff_render_test();
     // merge_test();
     // scrollbar_test();
-    // scrollable_test();
+    scrollable_test();
 }
 
 #[allow(unused)]
@@ -255,15 +255,17 @@ fn test_layout_centering() {
 #[allow(unused)]
 fn test_bg_grad() {
     println!("\x1b[2J");
-    // let mut grad = BgGrad::horizontal(0x0096ff, (84.71, 1.0, 0.5)).center();
-    // let mut layout = Layout::horizontal().center();
-    // layout.push(Block::vertical(), Constraint::Length(6));
-    // grad.push(layout, Constraint::Length(3));
+    let mut grad =
+        BgGrad::horizontal(Layout::vertical(), 0x0096ff, (84.71, 1.0, 0.5))
+            .center();
+    let mut layout = Layout::horizontal().center();
+    layout.push(Block::vertical(), Constraint::Length(6));
+    grad.push(layout, Constraint::Length(3));
 
-    // let mut buffer =
-    //     Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 9)));
-    // grad.render(&mut buffer);
-    // buffer.render();
+    let mut buffer =
+        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 9)));
+    grad.render(&mut buffer);
+    buffer.render();
 }
 
 #[allow(unused)]
@@ -391,34 +393,35 @@ fn scrollbar_test() {
 fn scrollable_test() {
     println!("\x1b[2J");
 
-    // // Widget to wrap scrollable around
-    // let span = "Long text that cannot fit so scrolling is needed".to_span();
-    // // Scrollable state containing offset
-    // let state = Rc::new(Cell::new(ScrollbarState::new(2)));
-    // // Creates scrollable widget with vertical scrolling
-    // let scrollable = Scrollable::vertical(span, state);
-    // // Renders using the buffer
-    // let mut buffer = Buffer::empty(Rect::new(1, 1, 9, 5));
-    // scrollable.render(&mut buffer);
-    // buffer.render();
+    // Widget to wrap scrollable around
+    let span = "Long text that cannot fit so scrolling is needed".to_span();
+    // Scrollable state containing offset
+    let state = Rc::new(Cell::new(ScrollbarState::new(2)));
+    // Creates scrollable widget with vertical scrolling
+    let scrollable = Scrollable::vertical(span, state);
+    // Renders using the buffer
+    let mut buffer = Buffer::empty(Rect::new(1, 1, 9, 5));
+    scrollable.render(&mut buffer);
+    buffer.render();
 
-    // let mut layout = Layout::horizontal();
-    // layout.push("Test", Constraint::Length(20));
+    let mut layout = Layout::horizontal();
+    layout.push("Test", Constraint::Length(20));
 
-    // let mut bg = BgGrad::vertical((10, 250, 30), (200, 60, 120));
-    // bg.push(layout, Constraint::Length(10));
+    let mut bg =
+        BgGrad::vertical(Layout::vertical(), (10, 250, 30), (200, 60, 120));
+    bg.push(layout, Constraint::Length(10));
 
-    // let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
-    // let hstate = Rc::new(Cell::new(ScrollbarState::new(1)));
-    // let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
+    let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
+    let hstate = Rc::new(Cell::new(ScrollbarState::new(1)));
+    let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
 
-    // // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));
-    // // let scrollable = Scrollable::horizontal(
-    // //     "This is a test of new widget with very long text".to_span(),
-    // //     vstate.clone(),
-    // // );
+    // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));
+    // let scrollable = Scrollable::horizontal(
+    //     "This is a test of new widget with very long text".to_span(),
+    //     vstate.clone(),
+    // );
 
-    // let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
-    // scrollable.render(&mut buffer);
-    // buffer.render();
+    let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
+    scrollable.render(&mut buffer);
+    buffer.render();
 }

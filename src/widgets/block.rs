@@ -13,7 +13,7 @@ use super::{
     border::{Border, BorderType},
     text::Text,
     widget::Widget,
-    Element, Layout,
+    Element, Layout, Spacer,
 };
 
 /// Wraps widget and adds border to it
@@ -104,6 +104,19 @@ where
     pub fn border_color(mut self, color: Color) -> Self {
         self.border_style = self.border_style.fg(color);
         self
+    }
+}
+
+impl Block<Spacer> {
+    /// Creates new empty [`Block`] with no title and all borders
+    pub fn empty() -> Self {
+        Self {
+            title: Box::new(Span::new("")),
+            borders: Border::ALL,
+            border_type: BorderType::Normal,
+            border_style: Default::default(),
+            child: Spacer::new(),
+        }
     }
 }
 

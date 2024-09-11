@@ -11,32 +11,7 @@ use crate::{
     style::Style,
 };
 
-use super::{span::StrSpanExtension, text::Text, widget::Widget};
-
-/// State of the [`List`] widget
-#[derive(Debug)]
-pub struct ListState {
-    pub offset: usize,
-    pub selected: Option<usize>,
-}
-
-impl ListState {
-    /// Creates new [`ListState`] with given offset and no item selected
-    pub fn new(offset: usize) -> Self {
-        Self {
-            offset,
-            selected: None,
-        }
-    }
-
-    /// Creates new [`ListState`] with given offset and selected item
-    pub fn selected(offset: usize, selected: usize) -> Self {
-        Self {
-            offset,
-            selected: Some(selected),
-        }
-    }
-}
+use super::{span::StrSpanExtension, text::Text, widget::Widget, Element};
 
 /// List widget with scrollbar, that displays vector of strings
 ///
@@ -89,6 +64,13 @@ pub struct List {
     highlight_style: Style,
     scrollbar_fg: Color,
     thumb_fg: Color,
+}
+
+/// State of the [`List`] widget
+#[derive(Debug)]
+pub struct ListState {
+    pub offset: usize,
+    pub selected: Option<usize>,
 }
 
 impl List {
@@ -176,6 +158,24 @@ impl List {
     pub fn thumb_fg(mut self, fg: Color) -> Self {
         self.thumb_fg = fg;
         self
+    }
+}
+
+impl ListState {
+    /// Creates new [`ListState`] with given offset and no item selected
+    pub fn new(offset: usize) -> Self {
+        Self {
+            offset,
+            selected: None,
+        }
+    }
+
+    /// Creates new [`ListState`] with given offset and selected item
+    pub fn selected(offset: usize, selected: usize) -> Self {
+        Self {
+            offset,
+            selected: Some(selected),
+        }
     }
 }
 
@@ -312,5 +312,11 @@ impl List {
 impl From<List> for Box<dyn Widget> {
     fn from(value: List) -> Self {
         Box::new(value)
+    }
+}
+
+impl From<List> for Element {
+    fn from(value: List) -> Self {
+        Element::new(value)
     }
 }

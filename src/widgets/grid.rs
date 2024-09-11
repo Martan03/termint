@@ -3,15 +3,7 @@ use crate::{
     geometry::{Rect, Unit, Vec2},
 };
 
-use super::widget::Widget;
-
-/// Contains grid child and row and column in which it's located
-#[derive(Debug)]
-struct GridChild {
-    pub child: Box<dyn Widget>,
-    pub row: usize,
-    pub col: usize,
-}
+use super::{widget::Widget, Element};
 
 /// Creates layout by specifying columns and rows
 ///
@@ -38,6 +30,14 @@ pub struct Grid {
     children: Vec<GridChild>,
     rows: Vec<Unit>,
     cols: Vec<Unit>,
+}
+
+/// Contains grid child and row and column in which it's located
+#[derive(Debug)]
+struct GridChild {
+    pub child: Box<dyn Widget>,
+    pub row: usize,
+    pub col: usize,
 }
 
 impl Grid {
@@ -201,5 +201,11 @@ impl Grid {
 impl From<Grid> for Box<dyn Widget> {
     fn from(value: Grid) -> Self {
         Box::new(value)
+    }
+}
+
+impl From<Grid> for Element {
+    fn from(value: Grid) -> Self {
+        Element::new(value)
     }
 }

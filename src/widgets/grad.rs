@@ -8,7 +8,7 @@ use crate::{
     style::Style,
 };
 
-use super::{text::Text, widget::Widget};
+use super::{text::Text, widget::Widget, Element};
 
 /// Text with gradient foreground
 ///
@@ -506,6 +506,12 @@ impl Grad {
 impl From<Grad> for Box<dyn Widget> {
     fn from(value: Grad) -> Self {
         Box::new(value)
+    }
+}
+
+impl From<Grad> for Element {
+    fn from(value: Grad) -> Self {
+        Element::new(value)
     }
 }
 

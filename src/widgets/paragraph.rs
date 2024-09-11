@@ -7,7 +7,7 @@ use crate::{
     widgets::text::Text,
 };
 
-use super::widget::Widget;
+use super::{widget::Widget, Element};
 
 /// [`Paragraph`] allow to use multiple widgets implementing [`Text`] trait
 /// in one Widget, separating them with set separator. Spans are placed after
@@ -217,5 +217,11 @@ impl Paragraph {
 impl From<Paragraph> for Box<dyn Widget> {
     fn from(value: Paragraph) -> Self {
         Box::new(value)
+    }
+}
+
+impl From<Paragraph> for Element {
+    fn from(value: Paragraph) -> Self {
+        Element::new(value)
     }
 }
