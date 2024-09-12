@@ -17,7 +17,7 @@ use termint::{
 };
 
 fn main() {
-    // test_block();
+    test_block();
     // test_layout();
     // test_grad();
     // cool_example();
@@ -31,7 +31,7 @@ fn main() {
     // diff_render_test();
     // merge_test();
     // scrollbar_test();
-    scrollable_test();
+    // scrollable_test();
 }
 
 #[allow(unused)]
@@ -412,7 +412,7 @@ fn scrollable_test() {
     bg.push(layout, Constraint::Length(10));
 
     let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
-    let hstate = Rc::new(Cell::new(ScrollbarState::new(1)));
+    let hstate = Rc::new(Cell::new(ScrollbarState::new(10)));
     let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
 
     // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));

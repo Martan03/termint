@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    usize,
+};
 
 use crate::{
     buffer::Buffer,
@@ -171,17 +174,16 @@ impl Widget for Layout {
     /// but somehow it ends up better (better for widgets, which don't have
     /// fixed one of its side sizes, such as text)
     fn height(&self, size: &Vec2) -> usize {
-        let mut height = 0;
-        for LayoutChild { child, constraint } in self.children.iter() {
-            match constraint {
-                Constraint::Length(len) => height += len,
-                Constraint::Min(m) => height += max(*m, child.height(size)),
-                Constraint::MinMax(mn, mx) => {
-                    height += min(*mx, max(*mn, child.height(size)))
-                }
-                _ => height += child.height(size),
+        let size = Vec2::new(
+            size.x.saturating_sub(self.padding.get_horizontal()),
+            size.y.saturating_sub(self.padding.get_vertical()),
+        );
+        let height = match self.direction {
+            Direction::Vertical => {
+                self.size_sd(&size, size.y, |c, s| c.height(s))
             }
-        }
+            Direction::Horizontal => self.hor_height(&size),
+        };
         height + self.padding.get_vertical()
     }
 
@@ -189,17 +191,16 @@ impl Widget for Layout {
     /// but somehow it ends up better (better for widgets, which don't have
     /// fixed one of its side sizes, such as text)
     fn width(&self, size: &Vec2) -> usize {
-        let mut width = 0;
-        for LayoutChild { child, constraint } in self.children.iter() {
-            match constraint {
-                Constraint::Length(len) => width += len,
-                Constraint::Min(m) => width += max(*m, child.width(size)),
-                Constraint::MinMax(mn, mx) => {
-                    width += min(*mx, max(*mn, child.width(size)))
-                }
-                _ => width += child.width(size),
+        let size = Vec2::new(
+            size.x.saturating_sub(self.padding.get_horizontal()),
+            size.y.saturating_sub(self.padding.get_vertical()),
+        );
+        let width = match self.direction {
+            Direction::Vertical => self.ver_width(&size),
+            Direction::Horizontal => {
+                self.size_sd(&size, size.x, |c, s| c.width(s))
             }
-        }
+        };
         width + self.padding.get_horizontal()
     }
 }
@@ -331,6 +332,98 @@ impl Layout {
         for pos in buffer.rect().into_iter() {
             buffer.set_style(self.style, &pos);
         }
+    }
+
+    fn size_sd<F>(&self, size: &Vec2, prim: usize, csize: F) -> usize
+    where
+        F: Fn(&Box<dyn Widget>, &Vec2) -> usize,
+    {
+        let mut total = 0;
+        let mut fill = false;
+        for LayoutChild { child, constraint } in self.children.iter() {
+            match constraint {
+                Constraint::Length(len) => total += len,
+                Constraint::Percent(p) => total += prim * p / 100,
+                Constraint::Min(l) => total += max(*l, csize(child, size)),
+                Constraint::Max(h) => total += min(*h, csize(child, size)),
+                Constraint::MinMax(l, h) => {
+                    total += min(*h, max(*l, csize(child, size)))
+                }
+                Constraint::Fill(_) => fill = true,
+            }
+        }
+        if fill {
+            return max(prim, total);
+        }
+        total
+    }
+
+    fn ver_width(&self, size: &Vec2) -> usize {
+        let mut width = 0;
+        let mut total = 0;
+        let mut total_fills = 0;
+        let mut fills = Vec::new();
+        for LayoutChild { child, constraint } in self.children.iter() {
+            let csize = match constraint {
+                Constraint::Length(len) => *len,
+                Constraint::Percent(p) => size.y * p / 100,
+                Constraint::Min(l) => max(*l, child.height(size)),
+                Constraint::Max(h) => min(*h, child.height(size)),
+                Constraint::MinMax(l, h) => {
+                    min(*h, max(*l, child.height(size)))
+                }
+                Constraint::Fill(f) => {
+                    total_fills += f;
+                    fills.push((child, f));
+                    continue;
+                }
+            };
+            total += csize;
+            width = width.max(child.width(&Vec2::new(size.x, csize)));
+        }
+
+        let mut left = Vec2::new(size.x, size.y.saturating_sub(total));
+        for (child, f) in fills {
+            let h = left.y / total_fills * f;
+            width = width.max(child.width(&left));
+            left.y -= h;
+            total_fills -= f;
+        }
+        width
+    }
+
+    fn hor_height(&self, size: &Vec2) -> usize {
+        let mut height = 0;
+        let mut total = 0;
+        let mut total_fills = 0;
+        let mut fills = Vec::new();
+        for LayoutChild { child, constraint } in self.children.iter() {
+            let csize = match constraint {
+                Constraint::Length(len) => *len,
+                Constraint::Percent(p) => size.y * p / 100,
+                Constraint::Min(l) => max(*l, child.width(size)),
+                Constraint::Max(h) => min(*h, child.width(size)),
+                Constraint::MinMax(l, h) => {
+                    min(*h, max(*l, child.width(size)))
+                }
+                Constraint::Fill(f) => {
+                    total_fills += f;
+                    fills.push((child, f));
+                    continue;
+                }
+            };
+            total += csize;
+            height = height.max(child.height(&Vec2::new(csize, size.y)));
+        }
+
+        let mut left = Vec2::new(size.x, size.y.saturating_sub(total));
+        for (child, f) in fills {
+            let h = left.y / total_fills * f;
+            height = height.max(child.width(&left));
+            left.y -= h;
+            total_fills -= f;
+        }
+        height
     }
 }
 
