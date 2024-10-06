@@ -23,12 +23,30 @@ impl<T> Vec2<T> {
 }
 
 impl Vec2<usize> {
-    /// Subtracts number from both x and y and saturating at numeric bounds
-    /// instead of overflowing
-    pub fn saturating_sub(mut self, val: usize) -> Self {
-        self.x = self.x.saturating_sub(val);
-        self.y = self.y.saturating_sub(val);
-        self
+    /// Saturating [`Vec2`] subtraction. Computes `self - rhs`, saturating at
+    /// the numeric bounds instead of overlowing
+    pub fn saturating_sub<T>(&self, rhs: T) -> Self
+    where
+        T: Into<Self>,
+    {
+        let rhs = rhs.into();
+        Self {
+            x: self.x.saturating_sub(rhs.x),
+            y: self.y.saturating_sub(rhs.y),
+        }
+    }
+
+    /// Checked [`Vec2`] subtraction. Computes `self - rhs`, returning `None`
+    /// if overflow occured.
+    pub fn checked_sub<T>(&self, rhs: T) -> Option<Self>
+    where
+        T: Into<Self>,
+    {
+        let rhs = rhs.into();
+        Some(Self {
+            x: self.x.checked_sub(rhs.x)?,
+            y: self.y.checked_sub(rhs.y)?,
+        })
     }
 }
 

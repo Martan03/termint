@@ -128,7 +128,7 @@ impl ScrollbarState {
     pub fn new(offset: usize) -> Self {
         Self {
             content_len: 0,
-            offset: offset,
+            offset,
         }
     }
 

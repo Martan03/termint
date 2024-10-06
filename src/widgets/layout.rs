@@ -1,7 +1,4 @@
-use std::{
-    cmp::{max, min},
-    usize,
-};
+use std::cmp::{max, min};
 
 use crate::{
     buffer::Buffer,

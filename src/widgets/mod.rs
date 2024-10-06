@@ -26,9 +26,13 @@ mod grid;
 mod layout;
 /// List widget with scrollbar, that displays vector of strings and its state
 mod list;
+/// Widget that stack its children on top of each other
+mod overlay;
 /// Chaining widgets implementing [`Text`] trait
 mod paragraph;
+/// Widget that uses scrollbar for overflown content
 mod scrollable;
+/// Scrollbar widget
 mod scrollbar;
 /// Spacer widget for better layouting
 mod spacer;
@@ -57,10 +61,13 @@ pub use layout::Layout;
 pub use list::List;
 /// State of the [`List`] widget
 pub use list::ListState;
+/// Widget that stack its children on top of each other
+pub use overlay::*;
 /// Chaining widgets implementing [`Text`] trait
 pub use paragraph::Paragraph;
 /// Widget that uses scrollbar for overflown content
 pub use scrollable::*;
+/// Scrollbar widget
 pub use scrollbar::*;
 /// Spacer widget for better layouting
 pub use spacer::Spacer;
@@ -70,5 +77,5 @@ pub use span::Span;
 pub use span::StrSpanExtension;
 /// Trait for text widgets to implement
 pub use text::Text;
-/// Trait for widgets to implement
+/// Trait for widgets to implemen
 pub use widget::*;

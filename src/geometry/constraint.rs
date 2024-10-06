@@ -29,7 +29,7 @@ impl From<(usize, usize)> for Constraint {
 
 impl From<f64> for Constraint {
     fn from(value: f64) -> Self {
-        if value < 0.0 || value > 1.0 {
+        if !(0.0..=1.0).contains(&value) {
             panic!("Float in range from 0 to 1 is expected");
         }
         Self::Percent((value * 100.0) as usize)

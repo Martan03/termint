@@ -15,13 +15,13 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// # use termint::{
 /// #     buffer::Buffer,
 /// #     geometry::Rect,
-/// #     widgets::{StrSpanExtension, Scrollable, Widget}
+/// #     widgets::{StrSpanExtension, Scrollable, Widget, ScrollbarState}
 /// # };
 /// // Widget to wrap scrollable around
 /// let span = "Long text that cannot fit so scrolling is needed".to_span();
 ///
 /// // Scrollable state containing offset
-/// let state = Rc::new(Cell::new(0));
+/// let state = Rc::new(Cell::new(ScrollbarState::new(0)));
 ///
 /// // Creates scrollable widget with vertical scrolling
 /// let scrollable = Scrollable::vertical(span, state);
@@ -47,7 +47,7 @@ where
         Self {
             vertical: Some(Scrollbar::vertical(state.clone())),
             horizontal: None,
-            child: child,
+            child,
         }
     }
 
@@ -88,6 +88,7 @@ where
         }
     }
 
+    /// TODO both direction scrolling not correct
     fn height(&self, size: &Vec2) -> usize {
         match (self.vertical.is_some(), self.horizontal.is_some()) {
             (true, true) => self.child.height(&Vec2::new(
@@ -109,6 +110,7 @@ where
         }
     }
 
+    /// TODO both direction scrolling not correct
     fn width(&self, size: &Vec2) -> usize {
         match (self.vertical.is_some(), self.horizontal.is_some()) {
             (true, true) => self.child.width(&Vec2::new(
@@ -178,7 +180,7 @@ where
         vertical: &Scrollbar,
         horizontal: &Scrollbar,
     ) {
-        let mut size = buffer.size().saturating_sub(1);
+        let mut size = buffer.size().saturating_sub((1, 1));
         size.y = self.child.height(&size);
         size.x = self.child.width(&size);
 

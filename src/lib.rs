@@ -65,16 +65,16 @@
 //! // Creates block1 and adds span as its child
 //! let mut block1 = Block::vertical().title("Sub block");
 //! let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-//! block1.add_child(span1, Constraint::Percent(100));
+//! block1.push(span1, Constraint::Percent(100));
 //! // Adds block1 as child of main block
-//! main.add_child(block1, Constraint::Min(0));
+//! main.push(block1, Constraint::Min(0));
 //!
 //! // Creates block2 and adds span as its child
 //! let mut block2 = Block::vertical().title("Another");
 //! let span2 = "This is really cool, right?".fg(Color::Blue);
-//! block2.add_child(span2, Constraint::Percent(100));
+//! block2.push(span2, Constraint::Percent(100));
 //! // Adds block2 as child of main block
-//! main.add_child(block2, Constraint::Fill);
+//! main.push(block2, Constraint::Fill(1));
 //!
 //! // Renders the main block which renders all the children using Buffer
 //! let mut buffer = Buffer::empty(Rect::new(1, 1, 30, 8));

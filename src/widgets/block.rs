@@ -277,7 +277,7 @@ where
         }
 
         let a = *buffer.rect();
-        self.render_corner(buffer, a.pos().clone(), borders!(TOP, LEFT));
+        self.render_corner(buffer, *a.pos(), borders!(TOP, LEFT));
         self.render_corner(buffer, a.top_right(), borders!(TOP, RIGHT));
         self.render_corner(buffer, a.bottom_left(), borders!(BOTTOM, LEFT));
         self.render_corner(buffer, a.bottom_right(), borders!(BOTTOM, RIGHT));
@@ -297,7 +297,7 @@ where
             buffer[pos] = buffer[pos].val(c).style(self.border_style);
             pos.x += 1;
         }
-        return 1;
+        1
     }
 
     /// Adds vertical border to the buffer
@@ -312,7 +312,7 @@ where
             buffer[pos] = buffer[pos].val(c).style(self.border_style);
             pos.y += 1;
         }
-        return 1;
+        1
     }
 
     /// Adds corner of [`Block`] border to the string

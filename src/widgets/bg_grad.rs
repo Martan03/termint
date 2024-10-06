@@ -7,14 +7,15 @@ use crate::{
 
 use super::{widget::Widget, Element, Layout};
 
-/// [`Layout`] widget with gradient background
+/// Widget that renders gradient background and contains a children
 ///
 /// ## Example usage using [`Term`] (automatically renders on full screen):
 /// ```rust
-/// # use termint::{term::Term, widgets::BgGrad};
+/// # use termint::{term::Term, widgets::{BgGrad, Spacer}};
+/// # fn get_child() -> Spacer { Spacer::new() }
 /// # fn example() -> Result<(), &'static str> {
 /// // Creates new background gradient with horizontal direction
-/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+/// let grad = BgGrad::horizontal(get_child(), (0, 150, 255), (150, 255, 0));
 ///
 /// // Renders background gradient using Term struct
 /// let mut term = Term::new();
@@ -28,10 +29,11 @@ use super::{widget::Widget, Element, Layout};
 /// # use termint::{
 /// #     buffer::Buffer,
 /// #     geometry::Rect,
-/// #     widgets::{BgGrad, Widget},
+/// #     widgets::{BgGrad, Widget, Spacer},
 /// # };
+/// # fn get_child() -> Spacer { Spacer::new() }
 /// // Creates new background gradient with horizontal direction
-/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+/// let grad = BgGrad::horizontal(get_child(), (0, 150, 255), (150, 255, 0));
 ///
 /// // Renders background gradient using [`Buffer`]
 /// // (position and size given by the Rect supplied to the Buffer)

@@ -1,6 +1,6 @@
 # Termint changelog
 
-## v0.6.0
+## v0.5.1
 ### Features:
 - Rename Coords to Vec2
 - Add trait implementations and new features:
@@ -10,6 +10,7 @@
     - Vec2
 - Scrollbar widget
 - Scrollable widget - allows overflown content to be accessed by scrolling
+- Overlay widget
 
 ## v0.5.0
 ### Features:

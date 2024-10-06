@@ -20,10 +20,10 @@ use super::cell::Cell;
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,
-/// #     widgets::{Block, Widget},
+/// #     widgets::{Block, Widget, Layout},
 /// #     geometry::Rect,
 /// # };
-/// # fn get_your_widget() -> Block { Block::vertical() }
+/// # fn get_your_widget() -> Block<Layout> { Block::vertical() }
 /// // Creates new buffer with desired position and size given by the [`Rect`]
 /// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
 ///
