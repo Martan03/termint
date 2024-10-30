@@ -49,8 +49,8 @@ fn test_block() {
         (20, 160, 255),
     ));
 
-    block.push(block1, Constraint::Min(0));
-    block.push(block2, Constraint::Min(0));
+    block.push(block1, 0..);
+    block.push(block2, 0..);
     block.push(block3, Constraint::Fill(1));
 
     let mut buffer =

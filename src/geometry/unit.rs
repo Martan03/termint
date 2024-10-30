@@ -3,7 +3,7 @@
 /// [`Unit`] is currently used for the [`Grid`] widget, since it doesn't
 /// support some of the [`Constraint`] options. This might be changed in the
 /// future.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Unit {
     /// Actual size
     Length(usize),

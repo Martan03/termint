@@ -14,3 +14,10 @@ exclude = ["src/main.rs", ".github"]
 
 [dependencies]
 term_size = "0.3.2"
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "buffer"
+harness = false

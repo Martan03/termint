@@ -23,6 +23,17 @@ impl Cell {
         }
     }
 
+    /// Creates empty [`Cell`]
+    pub fn empty() -> Self {
+        Self::default()
+    }
+
+    /// Sets value of the [`Cell`]
+    pub fn val(mut self, val: char) -> Self {
+        self.val = val;
+        self
+    }
+
     /// Sets [`Cell`] foreground color to given value
     pub fn fg(mut self, fg: Color) -> Self {
         self.fg = fg;
@@ -59,10 +70,12 @@ impl Cell {
         self
     }
 
-    /// Sets value of the [`Cell`]
-    pub fn val(mut self, val: char) -> Self {
-        self.val = val;
-        self
+    /// Resets the [`Cell`] to defalt values
+    pub fn reset(&mut self) {
+        self.fg = Color::Default;
+        self.bg = Color::Default;
+        self.modifier = Modifier::empty();
+        self.val = ' ';
     }
 }
 

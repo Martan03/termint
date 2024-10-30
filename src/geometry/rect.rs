@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    ops::Range,
+};
 
 use super::{vec2::Vec2, Padding, Vec2Range};
 
@@ -213,6 +216,12 @@ impl From<(Vec2, usize, usize)> for Rect {
 impl From<(usize, usize, usize, usize)> for Rect {
     fn from((x, y, width, height): (usize, usize, usize, usize)) -> Self {
         Self::new(x, y, width, height)
+    }
+}
+
+impl From<(Range<usize>, Range<usize>)> for Rect {
+    fn from((x, y): (Range<usize>, Range<usize>)) -> Self {
+        Self::new(x.start, y.start, x.end - x.start, y.end - y.start)
     }
 }
 

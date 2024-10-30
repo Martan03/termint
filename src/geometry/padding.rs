@@ -33,9 +33,9 @@ impl Padding {
         }
     }
 
-    /// Creates a [`Padding`] with `horizontal` value for `left` and `right`
-    /// and `vertical` value for `top` and `bottom`
-    pub const fn symmetric(horizontal: usize, vertical: usize) -> Self {
+    /// Creates a [`Padding`] with `vertical` value for `top` and `bottom`
+    /// and `horizontal` value for `left` and `right`
+    pub const fn symmetric(vertical: usize, horizontal: usize) -> Self {
         Self {
             top: vertical,
             right: horizontal,

@@ -1,3 +1,5 @@
+use std::ops::{Range, RangeFrom, RangeTo};
+
 /// Size constraints
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Constraint {
@@ -21,9 +23,27 @@ impl From<usize> for Constraint {
     }
 }
 
+impl From<RangeFrom<usize>> for Constraint {
+    fn from(value: RangeFrom<usize>) -> Self {
+        Self::Min(value.start)
+    }
+}
+
+impl From<RangeTo<usize>> for Constraint {
+    fn from(value: RangeTo<usize>) -> Self {
+        Self::Max(value.end)
+    }
+}
+
 impl From<(usize, usize)> for Constraint {
     fn from((min, max): (usize, usize)) -> Self {
         Self::MinMax(min, max)
+    }
+}
+
+impl From<Range<usize>> for Constraint {
+    fn from(value: Range<usize>) -> Self {
+        Self::MinMax(value.start, value.end)
     }
 }
 

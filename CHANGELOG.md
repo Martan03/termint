@@ -1,5 +1,11 @@
 # Termint changelog
 
+## v0.5.2
+### Features:
+- Optimise Buffer merge function
+- Add more useful trait implementations
+- Edit docs
+
 ## v0.5.1
 ### Features:
 - Rename Coords to Vec2

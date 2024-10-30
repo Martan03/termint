@@ -114,4 +114,81 @@ impl Color {
             Color::Default => "\x1b[49m".to_string(),
         }
     }
+
+    fn str_to_hex(value: &str) -> Option<u32> {
+        let value = value.trim_start_matches('#');
+        let Ok(radix) = u32::from_str_radix(&value, 16) else {
+            return None;
+        };
+
+        let hex = match value.len() {
+            1 => {
+                let val = radix | (radix << 4);
+                (val << 16) | (val << 8) | val
+            }
+            2 => (radix << 16) | (radix << 8) | radix,
+            3 => {
+                let r = (radix & 0xf00) << 12 | (radix & 0xf00) << 8;
+                let g = (radix & 0x0f0) << 8 | (radix & 0x0f0) << 4;
+                let b = (radix & 0x00f) << 4 | (radix & 0x00f);
+                r | g | b
+            }
+            6 => radix,
+            _ => return None,
+        };
+        Some(hex)
+    }
+}
+
+impl From<u32> for Color {
+    fn from(value: u32) -> Self {
+        Self::Hex(value)
+    }
+}
+
+impl From<(u8, u8, u8)> for Color {
+    fn from((r, g, b): (u8, u8, u8)) -> Self {
+        Self::Rgb(r, g, b)
+    }
+}
+
+impl From<(f64, f64, f64)> for Color {
+    fn from((h, s, l): (f64, f64, f64)) -> Self {
+        Self::Hsl(h, s, l)
+    }
+}
+
+impl From<&str> for Color {
+    /// Converts given string to [`Color`].
+    ///
+    /// # Panics
+    /// Panics if the string is unknown color
+    fn from(value: &str) -> Self {
+        match value {
+            "black" | "bl" => Self::Black,
+            "dark_red" | "dr" => Self::DarkRed,
+            "dark_green" | "dg" => Self::DarkGreen,
+            "dark_yellow" | "dy" => Self::DarkYellow,
+            "dark_blue" | "db" => Self::DarkBlue,
+            "dark_magenta" | "dm" => Self::DarkMagenta,
+            "dark_cyan" | "dc" => Self::DarkCyan,
+            "light_gray" | "light_grey" | "lg" => Self::LightGray,
+            "gray" | "grey" | "gr" => Self::Gray,
+            "red" | "r" => Self::Red,
+            "green" | "g" => Self::Green,
+            "yellow" | "y" => Self::Yellow,
+            "blue" | "b" => Self::Blue,
+            "magenta" | "m" => Self::Magenta,
+            "cyan" | "c" => Self::Cyan,
+            "white" | "w" => Self::White,
+            "default" | "d" => Self::Default,
+            hex if hex.starts_with('#') => {
+                let Some(hex) = Self::str_to_hex(hex) else {
+                    panic!("invalid hex color provided");
+                };
+                Self::Hex(hex)
+            }
+            _ => panic!("unknown color"),
+        }
+    }
 }

@@ -42,7 +42,15 @@ pub struct Buffer {
 
 impl Buffer {
     /// Creates new [`Buffer`] with all cells set to the default cell
-    pub fn empty(rect: Rect) -> Self {
+    ///
+    /// This method accepts parameter that can be converted to [`Rect`] (e.g.
+    /// (x, y, width, height), or Rect::new(x, y, width, height)).
+    #[must_use]
+    pub fn empty<R>(rect: R) -> Self
+    where
+        R: Into<Rect>,
+    {
+        let rect = rect.into();
         let area = rect.area();
         Self {
             rect,
@@ -51,7 +59,15 @@ impl Buffer {
     }
 
     /// Creates new [`Buffer`] filled with given [`Cell`]
-    pub fn filled(rect: Rect, cell: Cell) -> Self {
+    ///
+    /// This method accepts parameter that can be converted to [`Rect`] (e.g.
+    /// (x, y, width, height), or Rect::new(x, y, width, height)).
+    #[must_use]
+    pub fn filled<R>(rect: R, cell: Cell) -> Self
+    where
+        R: Into<Rect>,
+    {
+        let rect = rect.into();
         let area = rect.area();
         Self {
             rect,
@@ -59,16 +75,15 @@ impl Buffer {
         }
     }
 
-    /// Renders the [`Buffer`]
+    /// Prints the content of the buffer to standard output
     pub fn render(&self) {
         let mut id = 0;
-        let mut style =
-            (Color::Default, Color::Default, Modifier::empty()).into();
+        let mut style = (Color::Default, Color::Default, Modifier::empty());
 
         for y in 0..self.height() {
             print!("{}", Cursor::Pos(self.x(), self.y() + y));
             for _ in 0..self.width() {
-                let child = self[id];
+                let child = self.content[id];
                 style = self.render_cell(&child, style);
                 id += 1;
             }
@@ -77,9 +92,11 @@ impl Buffer {
         _ = stdout().flush();
     }
 
-    /// Renders different characters only between current buffer and given one
+    /// Prints buffer characters, that are different then in given
+    /// buffer
+    ///
+    /// When the buffer sizes differ, it re-renders the whole buffer
     pub fn render_diff(&self, diff: &Buffer) {
-        // Rerenders whole buffer when size or position is different
         // TODO: make it compare the cells on shared positions
         if self.rect() != diff.rect() {
             self.render();
@@ -87,14 +104,13 @@ impl Buffer {
         }
 
         let mut id = 0;
-        let mut style =
-            (Color::Default, Color::Default, Modifier::empty()).into();
+        let mut style = (Color::Default, Color::Default, Modifier::empty());
 
         for y in 0..self.height() {
             let mut prev = false;
             for x in 0..self.width() {
-                let child = self[id];
-                let dchild = diff[id];
+                let child = self.content[id];
+                let dchild = diff.content[id];
 
                 id += 1;
                 if child == dchild {
@@ -114,10 +130,11 @@ impl Buffer {
         _ = stdout().flush();
     }
 
-    /// Gets subset of the [`Buffer`] based on given rectangle
+    /// Gets subset of the buffer based on given rectangle
     ///
     /// # Panics
-    /// Will panic if the given rectangle isn't contained in current buffer
+    /// Panics if the given rectangle isn't contained in the buffer
+    #[must_use]
     pub fn subset(&self, rect: Rect) -> Buffer {
         let mut buffer = Buffer::empty(rect);
 
@@ -136,23 +153,25 @@ impl Buffer {
         self.merge(buffer);
     }
 
-    /// Merges given buffer to the current,
+    /// Merges given buffer to the current. If the given buffer is not
+    /// contained in the current buffer, current buffer will be resized so to
+    /// contain the given buffer.
     pub fn merge(&mut self, buffer: Buffer) {
         let rect = self.rect().union(buffer.rect());
 
         let mut merged = Buffer::empty(rect);
-        for pos in self.rect().into_iter() {
-            merged.set(self[pos], &pos);
+        for (i, pos) in self.rect().into_iter().enumerate() {
+            merged.set(self.content[i], &pos);
         }
-        for pos in buffer.rect().into_iter() {
-            merged.set(buffer[pos], &pos);
+        for (i, pos) in buffer.rect().into_iter().enumerate() {
+            merged.set(buffer.content[i], &pos);
         }
 
         self.rect = merged.rect;
         self.content = merged.content;
     }
 
-    /// Moves [`Buffer`] to given position
+    /// Moves buffer to given position
     pub fn move_to(&mut self, pos: Vec2) {
         self.rect.move_to(pos);
     }
@@ -160,7 +179,7 @@ impl Buffer {
     /// Gets [`Cell`] reference from the buffer on given position
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
     pub fn cell(&self, pos: &Vec2) -> Option<&Cell> {
         let id = self.index_of(pos);
         self.content.get(id)
@@ -169,92 +188,105 @@ impl Buffer {
     /// Gets [`Cell`] mutable reference from the buffer on given position
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
     pub fn cell_mut(&mut self, pos: &Vec2) -> Option<&mut Cell> {
         let id = self.index_of(pos);
         self.content.get_mut(id)
     }
 
-    /// Sets cell to given value on given position relative to buffer
+    /// Sets [`Cell`] on given position in the buffer to given value
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
     pub fn set(&mut self, cell: Cell, pos: &Vec2) {
         let id = self.index_of(pos);
         self.content[id] = cell;
     }
 
-    /// Sets cell values to string starting at given coordinates
-    /// TODO: set only part of the string that fits to buffer
+    /// Prints given string to the [`Buffer`] starting at the given position.
+    ///
+    /// Truncates the string if it cannot fit the buffer.
+    ///
+    /// # Panics
+    /// Panics if the given position is outside of the buffer
     pub fn set_str<T>(&mut self, str: T, pos: &Vec2)
     where
         T: AsRef<str>,
     {
         let mut id = self.index_of(pos);
-        for c in str.as_ref().chars() {
-            self[id] = self[id].val(c);
+        let left = self.content.len() - id;
+
+        for c in str.as_ref().chars().take(left) {
+            self.content[id] = self.content[id].val(c);
             id += 1;
         }
     }
 
-    /// Sets cell style and values starting at given coordinates
-    /// TODO: set only part of the string that fits to buffer
-    pub fn set_str_styled<T1, T2>(&mut self, str: T1, pos: &Vec2, style: T2)
-    where
-        T1: AsRef<str>,
-        T2: Into<Style>,
-    {
-        let style = style.into();
-        let mut id = self.index_of(pos);
-        for c in str.as_ref().chars() {
-            self[id] = self[id].val(c).style(style);
-            id += 1;
-        }
-    }
-
-    /// Sets value of the cell on given position relative to buffer
+    /// Prints given string to the [`Buffer`] with given [`Style`] starting at
+    /// the given position.
+    ///
+    /// Truncates the string if it cannot fit the buffer.
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
+    pub fn set_str_styled<T, S>(&mut self, str: T, pos: &Vec2, style: S)
+    where
+        T: AsRef<str>,
+        S: Into<Style>,
+    {
+        let mut id = self.index_of(pos);
+        let left = self.content.len() - id;
+
+        let style = style.into();
+        for c in str.as_ref().chars().take(left) {
+            self.content[id] = self.content[id].val(c).style(style);
+            id += 1;
+        }
+    }
+
+    /// Sets value of the [`Cell`] on given position in the buffer
+    ///
+    /// # Panics
+    /// Panics if the given position is outside of the buffer
     pub fn set_val(&mut self, val: char, pos: &Vec2) {
         let id = self.index_of(pos);
-        self[id] = self[id].val(val);
+        self.content[id] = self.content[id].val(val);
     }
 
-    /// Sets style of the cell on given coordinates to given value
+    /// Sets style of the [`Cell`] on given position in the buffer
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
     pub fn set_style(&mut self, style: Style, pos: &Vec2) {
         let id = self.index_of(pos);
-        self[id] = self[id].style(style);
+        self.content[id] = self.content[id].style(style);
     }
 
-    /// Sets foreground of the cell on given position
+    /// Sets foreground of the [`Cell`] on given position in the buffer
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
     pub fn set_fg(&mut self, fg: Color, pos: &Vec2) {
         let id = self.index_of(pos);
-        self[id] = self[id].fg(fg);
+        self.content[id] = self.content[id].fg(fg);
     }
 
-    /// Sets foreground of the cell on given position
+    /// Sets background of the [`Cell`] on given position in the buffer
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
     pub fn set_bg(&mut self, bg: Color, pos: &Vec2) {
         let id = self.index_of(pos);
-        self[id] = self[id].bg(bg);
+        self.content[id] = self.content[id].bg(bg);
     }
 
-    /// Sets modifier of the cell on given position
+    /// Sets modifier of the [`Cell`] on given position in the buffer
     ///
     /// # Panics
-    /// Will panic if the given position is outside of the buffer
+    /// Panics if the given position is outside of the buffer
     pub fn set_modifier(&mut self, modifier: u8, pos: &Vec2) {
         let id = self.index_of(pos);
-        self[id] = self[id].modifier(modifier);
+        self.content[id] = self.content[id].modifier(modifier);
     }
 
     /// Gets reference to [`Rect`] of the [`Buffer`]
@@ -322,14 +354,14 @@ impl Buffer {
         &self.content
     }
 
-    /// Gets [`Cell`] index based on given position
+    /// Gets [`Cell`] index based on given position. Does not check if given
+    /// position is inside of the buffer.
     pub fn index_of(&self, pos: &Vec2) -> usize {
-        self.index_of_opt(pos).unwrap_or_else(|| {
-            panic!("position {} is outside of the buffer", pos)
-        })
+        (pos.x - self.x()) + (pos.y - self.y()) * self.rect.width()
     }
 
-    /// Gets [`Cell`] optional index based on given position
+    /// Gets [`Cell`] optional index based on given position. Returns `None` if
+    /// the position is outside of the buffer
     pub fn index_of_opt(&self, pos: &Vec2) -> Option<usize> {
         if !self.rect.contains_pos(pos) {
             return None;
@@ -337,13 +369,15 @@ impl Buffer {
         Some((pos.x - self.x()) + (pos.y - self.y()) * self.rect.width())
     }
 
-    /// Gets position of the [`Cell`] based on index
+    /// Gets position of the [`Cell`] based on index. Does not check if given
+    /// index is inside of the buffer.
     pub fn pos_of(&self, id: usize) -> Vec2 {
-        self.pos_of_opt(id)
-            .unwrap_or_else(|| panic!("index {id} is outside of the buffer"))
+        let (x, y) = (id % self.width(), id / self.width());
+        Vec2::new(x + self.x(), y + self.y())
     }
 
-    /// Gets optional position of the [`Cell`] based on index
+    /// Gets optional position of the [`Cell`] based on index. Returns `None`
+    /// if the position is outside of the buffer
     pub fn pos_of_opt(&self, id: usize) -> Option<Vec2> {
         if id >= self.content.len() {
             return None;
@@ -355,17 +389,21 @@ impl Buffer {
 
 impl Buffer {
     /// Renders given cell and returns current style
-    fn render_cell(&self, cell: &Cell, mut style: Style) -> Style {
-        if cell.modifier != style.modifier {
-            style = (Color::Default, Color::Default, cell.modifier).into();
+    fn render_cell(
+        &self,
+        cell: &Cell,
+        mut style: (Color, Color, Modifier),
+    ) -> (Color, Color, Modifier) {
+        if cell.modifier != style.2 {
+            style = (Color::Default, Color::Default, cell.modifier);
             print!("\x1b[0m{}", cell.modifier);
         }
-        if cell.fg != style.fg.unwrap_or(Color::Default) {
-            style = style.fg(cell.fg);
+        if cell.fg != style.0 {
+            style.0 = cell.fg;
             print!("{}", cell.fg.to_fg());
         }
-        if cell.bg != style.bg.unwrap_or(Color::Default) {
-            style = style.bg(cell.bg);
+        if cell.bg != style.1 {
+            style.1 = cell.bg;
             print!("{}", cell.bg.to_bg());
         }
         print!("{}", cell.val);
@@ -391,20 +429,28 @@ impl IndexMut<usize> for Buffer {
     }
 }
 
-impl Index<Vec2> for Buffer {
+impl<P> Index<P> for Buffer
+where
+    P: Into<Vec2>,
+{
     type Output = Cell;
 
-    fn index(&self, index: Vec2) -> &Self::Output {
-        self.cell(&index).unwrap_or_else(|| {
-            panic!("position {} is outside of the buffer", index)
+    fn index(&self, index: P) -> &Self::Output {
+        let pos = index.into();
+        self.cell(&pos).unwrap_or_else(|| {
+            panic!("position {} is outside of the buffer", pos)
         })
     }
 }
 
-impl IndexMut<Vec2> for Buffer {
-    fn index_mut(&mut self, index: Vec2) -> &mut Self::Output {
-        self.cell_mut(&index).unwrap_or_else(|| {
-            panic!("position {} is outside of the buffer", index)
+impl<P> IndexMut<P> for Buffer
+where
+    P: Into<Vec2>,
+{
+    fn index_mut(&mut self, index: P) -> &mut Self::Output {
+        let pos = index.into();
+        self.cell_mut(&pos).unwrap_or_else(|| {
+            panic!("position {} is outside of the buffer", pos)
         })
     }
 }
