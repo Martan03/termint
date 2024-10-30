@@ -1,6 +1,6 @@
 [package]
 name = "termint"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Martin Slezák (github.com/Martan03)"]
 description = "Library for colored printing and Terminal User Interfaces"
 keywords = ["tui", "terminal", "termint", "ansi-codes", "color-printing"]
@@ -17,7 +17,8 @@ term_size = "0.3.2"
 
 [dev-dependencies]
 criterion = "0.5.1"
+rand = "0.8.5"
 
 [[bench]]
-name = "buffer"
+name = "main"
 harness = false

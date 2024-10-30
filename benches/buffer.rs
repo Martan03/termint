@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, Criterion};
 use termint::{buffer::Buffer, geometry::Rect};
 
 fn benchmark_merge(c: &mut Criterion) {
@@ -11,4 +11,3 @@ fn benchmark_merge(c: &mut Criterion) {
 }
 
 criterion_group!(benches, benchmark_merge);
-criterion_main!(benches);

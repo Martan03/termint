@@ -157,25 +157,26 @@ impl Grid {
     /// Gets sizes and positions of given units
     fn get_size(units: &[Unit], size: usize) -> Vec<Vec2> {
         let mut total = 0;
-        let mut fills = 0;
+        let mut fills_total = 0;
 
         let mut sizes = Vec::new();
+        let mut fills = Vec::new();
         for unit in units {
-            match unit {
-                Unit::Length(len) => {
-                    sizes.push(Vec2::new(*len, 0));
-                    total += len;
-                }
-                Unit::Percent(p) => {
-                    let len = size * p / 100;
-                    sizes.push(Vec2::new(len, 0));
-                    total += len;
-                }
+            let len = match unit {
+                Unit::Length(len) => *len,
+                Unit::Percent(p) => size * p / 100,
                 Unit::Fill(f) => {
-                    sizes.push(Vec2::new(0, 0));
-                    fills += f;
+                    fills_total += f;
+                    fills.push(sizes.len());
+                    *f
                 }
-            }
+            };
+            sizes.push(Vec2::new(len, total));
+            total += len;
+        }
+
+        if fills_total == 0 {
+            return sizes;
         }
 
         let mut pos = 0;
@@ -183,7 +184,7 @@ impl Grid {
         for (i, row) in units.iter().enumerate() {
             match row {
                 Unit::Fill(f) => {
-                    sizes[i].x = remain * f / fills;
+                    sizes[i].x = remain * f / fills_total;
                     sizes[i].y = pos;
                     pos += sizes[i].x;
                 }
