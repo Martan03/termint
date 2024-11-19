@@ -64,3 +64,15 @@ impl Widget for Overlay {
             .unwrap_or(0)
     }
 }
+
+impl From<Overlay> for Element {
+    fn from(value: Overlay) -> Self {
+        Element::new(value)
+    }
+}
+
+impl From<Overlay> for Box<dyn Widget> {
+    fn from(value: Overlay) -> Self {
+        Box::new(value)
+    }
+}

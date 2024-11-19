@@ -1,5 +1,12 @@
 # Termint changelog
 
+## v0.5.3
+### Features:
+- Add missing From traits to Overlay widget
+
+### Fixes:
+- Layout not setting background properly
+
 ## v0.5.2
 ### Features:
 - Optimise Buffer merge function

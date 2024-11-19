@@ -328,6 +328,9 @@ impl Layout {
     fn render_base_style(&self, buffer: &mut Buffer) {
         for pos in buffer.rect().into_iter() {
             buffer.set_style(self.style, &pos);
+            if self.style.bg.is_some() {
+                buffer.set_val(' ', &pos);
+            }
         }
     }
 
