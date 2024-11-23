@@ -214,7 +214,7 @@ impl Buffer {
         T: AsRef<str>,
     {
         let mut id = self.index_of(pos);
-        let left = self.content.len() - id;
+        let left = self.content.len().saturating_sub(id);
 
         for c in str.as_ref().chars().take(left) {
             self.content[id] = self.content[id].val(c);
@@ -235,7 +235,7 @@ impl Buffer {
         S: Into<Style>,
     {
         let mut id = self.index_of(pos);
-        let left = self.content.len() - id;
+        let left = self.content.len().saturating_sub(id);
 
         let style = style.into();
         for c in str.as_ref().chars().take(left) {

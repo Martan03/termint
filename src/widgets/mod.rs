@@ -38,8 +38,6 @@ mod scrollbar;
 mod spacer;
 /// Widget for styling text
 mod span;
-/// Trait for text widgets to implement
-mod text;
 /// Trait for widgets to implement
 mod widget;
 
@@ -75,7 +73,5 @@ pub use spacer::Spacer;
 pub use span::Span;
 /// Enables better string conversion to [`Span`]
 pub use span::StrSpanExtension;
-/// Trait for text widgets to implement
-pub use text::Text;
 /// Trait for widgets to implemen
 pub use widget::*;

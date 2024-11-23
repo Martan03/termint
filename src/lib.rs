@@ -117,5 +117,6 @@ pub mod macros;
 pub mod style;
 /// Contains Term struct
 pub mod term;
+pub mod text;
 /// Contains widgets (Layout, Block, Span)
 pub mod widgets;

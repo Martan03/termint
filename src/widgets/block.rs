@@ -6,12 +6,12 @@ use crate::{
     enums::Color,
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
+    text::Text,
     widgets::span::Span,
 };
 
 use super::{
     border::{Border, BorderType},
-    text::Text,
     widget::Widget,
     Element, Layout, Spacer,
 };

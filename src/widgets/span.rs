@@ -5,9 +5,10 @@ use crate::{
     enums::{Color, Wrap},
     geometry::{TextAlign, Vec2},
     style::Style,
+    text::{Text, TextParser, TextToken},
 };
 
-use super::{text::Text, widget::Widget, Element};
+use super::{widget::Widget, Element};
 
 /// Widget for styling text
 ///
@@ -139,7 +140,11 @@ impl Span {
 
 impl Widget for Span {
     fn render(&self, buffer: &mut Buffer) {
-        let _ = self.render_offset(buffer, 0, None);
+        match self.wrap {
+            Wrap::Letter => todo!(),
+            Wrap::Word => self.render_words(buffer),
+        }
+        // let _ = self.render_offset(buffer, 0, None);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -237,6 +242,40 @@ impl Span {
         fin_coords
     }
 
+    fn render_words(&self, buffer: &mut Buffer) {
+        let mut chars = self.text.chars();
+        let mut parser = TextParser::new(&mut chars);
+
+        let mut pos = Vec2::new(buffer.x(), buffer.y());
+        let bottom = buffer.bottom();
+        loop {
+            match parser.next_line(buffer.width()) {
+                TextToken::Text { text, len } => {
+                    self.render_line2(buffer, text, len, &pos);
+                }
+                TextToken::Newline => pos.y += 1,
+                TextToken::End => break,
+            }
+            pos.y += 1;
+        }
+    }
+
+    /// Renders one line of text and aligns it based on set alignment
+    fn render_line2(
+        &self,
+        buffer: &mut Buffer,
+        line: String,
+        len: usize,
+        pos: &Vec2,
+    ) {
+        let x = match self.align {
+            TextAlign::Left => 0,
+            TextAlign::Center => buffer.width().saturating_sub(len) >> 1,
+            TextAlign::Right => buffer.width().saturating_sub(len),
+        };
+        buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
+    }
+
     /// Renders [`Span`] with word wrapping with given offset
     /// Returns [`Coords`] where rendered text ends
     fn render_word(
@@ -250,11 +289,11 @@ impl Span {
         let mut coords = Vec2::new(offset_x, offset_y);
 
         for word in text.split_whitespace() {
-            if coords.x + word.len() + !line.is_empty() as usize
-                > buffer.width()
+            let word_len = word.chars().count();
+            if coords.x + word_len + !line.is_empty() as usize > buffer.width()
             {
                 if coords.y + 1 >= buffer.y() + buffer.height()
-                    || word.len() > buffer.width()
+                    || word_len > buffer.width()
                 {
                     let mut line_str = line.join(" ");
                     let sum = coords.x + self.ellipsis.len() + offset_x;
@@ -284,7 +323,7 @@ impl Span {
                 (coords.x, coords.y) = (0, coords.y + 1);
                 line.clear();
             }
-            coords.x += word.len() + !line.is_empty() as usize;
+            coords.x += word_len + !line.is_empty() as usize;
             line.push(word);
         }
 
@@ -332,9 +371,11 @@ impl Span {
         let x = match self.align {
             TextAlign::Left => 0,
             TextAlign::Center => {
-                buffer.width().saturating_sub(line.len()) >> 1
+                buffer.width().saturating_sub(line.chars().count()) >> 1
             }
-            TextAlign::Right => buffer.width().saturating_sub(line.len()),
+            TextAlign::Right => {
+                buffer.width().saturating_sub(line.chars().count())
+            }
         };
         buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
     }

@@ -9,9 +9,10 @@ use crate::{
     enums::Color,
     geometry::{Rect, Vec2},
     style::Style,
+    text::Text,
 };
 
-use super::{span::StrSpanExtension, text::Text, widget::Widget, Element};
+use super::{span::StrSpanExtension, widget::Widget, Element};
 
 /// List widget with scrollbar, that displays vector of strings
 ///

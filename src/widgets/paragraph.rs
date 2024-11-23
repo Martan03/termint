@@ -4,7 +4,7 @@ use crate::{
     buffer::Buffer,
     enums::Wrap,
     geometry::{Rect, Vec2},
-    widgets::text::Text,
+    text::Text,
 };
 
 use super::{widget::Widget, Element};

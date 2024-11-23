@@ -6,9 +6,10 @@ use crate::{
     enums::{Color, Modifier, Wrap, RGB},
     geometry::{Direction, TextAlign, Vec2},
     style::Style,
+    text::Text,
 };
 
-use super::{text::Text, widget::Widget, Element};
+use super::{widget::Widget, Element};
 
 /// Text with gradient foreground
 ///
