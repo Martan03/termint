@@ -19,6 +19,7 @@ use std::fmt;
 /// let modifiers: u8 = modifiers!(BOLD, ITALIC);
 /// ```
 #[derive(Debug, PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Modifier(u8);
 
 impl Modifier {

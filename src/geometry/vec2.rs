@@ -10,6 +10,7 @@ use super::Vec2Range;
 
 /// A 2D vector implementing basic operations
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Vec2<T = usize> {
     pub x: T,
     pub y: T,

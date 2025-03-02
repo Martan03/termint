@@ -2,6 +2,7 @@ use crate::enums::rgb::RGB;
 
 /// ANSI colors
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Color {
     /// Black (fg: 30, bg: 40)
     Black,

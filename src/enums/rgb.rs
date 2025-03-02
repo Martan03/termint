@@ -3,6 +3,7 @@
 /// It exists along the Color enum for the sake of ensuring the RGB value
 /// (which is needed, for example, for gradients)
 #[derive(Debug, PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RGB {
     /// Red value
     pub r: u8,

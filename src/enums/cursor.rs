@@ -2,6 +2,7 @@ use std::fmt;
 
 /// ANSI cursor manipulation
 #[derive(Debug, PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Cursor {
     /// Moves cursor to home position (0, 0)
     Home,

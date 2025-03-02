@@ -7,6 +7,7 @@ use super::{vec2::Vec2, Padding, Vec2Range};
 
 /// A rectangular area containing its position and size
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Rect {
     pos: Vec2,
     size: Vec2,

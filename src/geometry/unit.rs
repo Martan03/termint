@@ -4,6 +4,7 @@
 /// support some of the [`Constraint`] options. This might be changed in the
 /// future.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Unit {
     /// Actual size
     Length(usize),
