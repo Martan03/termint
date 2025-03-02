@@ -1,5 +1,10 @@
 # Termint changelog
 
+## v0.6.0
+### Features:
+- Rework text rendering
+- Optional `serde` trait implementation
+
 ## v0.5.3
 ### Features:
 - Add missing From traits to Overlay widget
