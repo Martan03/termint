@@ -142,7 +142,7 @@ impl Widget for Span {
     fn render(&self, buffer: &mut Buffer) {
         match self.wrap {
             Wrap::Letter => todo!(),
-            Wrap::Word => self.render_words(buffer),
+            Wrap::Word => _ = self.render_words(buffer),
         }
         // let _ = self.render_offset(buffer, 0, None);
     }
@@ -242,7 +242,9 @@ impl Span {
         fin_coords
     }
 
-    fn render_words(&self, buffer: &mut Buffer) {
+    /// Renders [`Span`] with word wrapping.
+    /// Returns [`Vec2`] where rendered text ends.
+    fn render_words(&self, buffer: &mut Buffer) -> Vec2 {
         let mut chars = self.text.chars();
         let mut parser = TextParser::new(&mut chars);
 
@@ -250,7 +252,19 @@ impl Span {
         let bottom = buffer.bottom();
         while pos.y <= bottom {
             match parser.next_line(buffer.width()) {
-                TextToken::Text { text, len } => {
+                TextToken::Text { mut text, len } => {
+                    if pos.y + 1 >= buffer.y() + buffer.height()
+                        && !parser.is_end()
+                    {
+                        let sum = len + self.ellipsis.len();
+                        if sum > buffer.width() {
+                            let end = buffer
+                                .width()
+                                .saturating_sub(self.ellipsis.len());
+                            text = text[..end].to_string();
+                        }
+                        text.push_str(&self.ellipsis);
+                    }
                     self.render_line2(buffer, text, len, &pos);
                 }
                 TextToken::Newline => continue,
@@ -258,6 +272,7 @@ impl Span {
             }
             pos.y += 1;
         }
+        pos
     }
 
     /// Renders one line of text and aligns it based on set alignment

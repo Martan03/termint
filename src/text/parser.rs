@@ -84,6 +84,11 @@ impl<'a> TextParser<'a> {
         }
     }
 
+    /// Checks if text was read to the end
+    pub fn is_end(&self) -> bool {
+        matches!(self.last, Some(TextToken::End))
+    }
+
     /// Skips whitespace characters except newline.
     /// Returns true when no newline, else false
     fn skip_whitespace(&mut self) -> bool {
