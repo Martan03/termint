@@ -224,21 +224,19 @@ impl Widget for List {
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        let mut height = 0;
-        for i in 0..self.items.len() {
-            let span = self.items[i].to_span();
-            height += span.height(size);
-        }
-        height
+        self.items.iter().map(|i| i.to_span().height(size)).sum()
     }
 
     fn width(&self, size: &Vec2) -> usize {
         let mut width = 0;
+        let mut height = 0;
         for item in self.items.iter() {
             let span = item.to_span();
-            width = max(span.width(size), width);
+            let h = span.height(size);
+            width = max(span.width(&Vec2::new(size.x, h)), width);
+            height += h;
         }
-        width + 1
+        width + self.highlight.len() + (height > size.y) as usize
     }
 }
 

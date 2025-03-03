@@ -18,12 +18,12 @@ use termint::{
 
 fn main() {
     // test_block();
-    test_layout();
+    // test_layout();
     // test_grad();
     // cool_example();
     // test_paragraph();
     // readme_example();
-    // test_list();
+    test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
@@ -209,7 +209,7 @@ fn test_list() {
 
     let mut offset = Rc::new(RefCell::new(ListState::selected(0, 2)));
 
-    let mut block = Block::vertical();
+    let mut block = Block::horizontal();
     let list = List::new(
         vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"],
         offset.clone(),
@@ -218,22 +218,12 @@ fn test_list() {
     .highlight_symbol(">")
     .highlight_style(Style::new().fg(Color::Red).modifier(Modifier::BOLD));
 
-    block.push(list, Constraint::Fill(1));
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 6)));
-    // block.render(&mut buffer);
-    // buffer.render();
+    block.push(Block::empty(), Constraint::Fill(1));
+    block.push(list, Constraint::Min(1));
+    block.push(Block::empty(), Constraint::Fill(1));
 
     let mut term = Term::new();
     term.render(block);
-
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 6)));
-    offset.borrow_mut().selected = Some(4);
-    // block.render(&mut buffer);
-
-    // buffer.render();
-    term.rerender();
 }
 
 #[allow(unused)]

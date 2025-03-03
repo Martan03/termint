@@ -38,6 +38,7 @@ mod scrollbar;
 mod spacer;
 /// Widget for styling text
 mod span;
+mod table;
 /// Trait for widgets to implement
 mod widget;
 

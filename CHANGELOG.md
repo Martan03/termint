@@ -2,8 +2,13 @@
 
 ## v0.6.0
 ### Features:
-- Rework text rendering
+- Add Table widget
 - Optional `serde` trait implementation
+- Rework text rendering - add generic text parser
+
+### Fixes:
+- List widget width function prioritizes expanding list items to the width
+instead of taking up as little width as possible
 
 ## v0.5.3
 ### Features:
