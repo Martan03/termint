@@ -248,12 +248,12 @@ impl Span {
 
         let mut pos = Vec2::new(buffer.x(), buffer.y());
         let bottom = buffer.bottom();
-        loop {
+        while pos.y <= bottom {
             match parser.next_line(buffer.width()) {
                 TextToken::Text { text, len } => {
                     self.render_line2(buffer, text, len, &pos);
                 }
-                TextToken::Newline => pos.y += 1,
+                TextToken::Newline => continue,
                 TextToken::End => break,
             }
             pos.y += 1;

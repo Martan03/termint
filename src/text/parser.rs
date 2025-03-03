@@ -4,7 +4,7 @@ use super::text_token::TextToken;
 pub struct TextParser<'a> {
     text: &'a mut dyn Iterator<Item = char>,
     cur: Option<char>,
-    last: TextToken,
+    last: Option<TextToken>,
 }
 
 impl<'a> TextParser<'a> {
@@ -14,38 +14,47 @@ impl<'a> TextParser<'a> {
         Self {
             text,
             cur,
-            last: TextToken::End,
+            last: None,
         }
     }
 
     /// Gets next line from the text
     pub fn next_line(&mut self, max_len: usize) -> TextToken {
         let (mut words, mut line_len) = match &self.last {
-            TextToken::Text { text, len } => (vec![text.clone()], *len),
+            Some(TextToken::Text { text, len }) => (vec![text.clone()], *len),
+            Some(_) => return self.last.take().unwrap(),
             _ => (vec![], 0),
         };
         // TODO: handle when word cannot fit
-        self.last = TextToken::End;
+        self.last = None;
 
         loop {
             match self.next_word() {
                 TextToken::Text { text, len } => {
                     let space = (line_len != 0) as usize;
                     if line_len + len + space > max_len {
-                        self.last = TextToken::text(text, len);
+                        self.last = Some(TextToken::text(text, len));
                         break;
                     }
 
                     words.push(text);
                     line_len += len + space;
                 }
-                TextToken::Newline => return TextToken::Newline,
-                _ => break,
+                TextToken::Newline if line_len == 0 => {
+                    return TextToken::Newline
+                }
+                token => {
+                    self.last = Some(token);
+                    break;
+                }
             }
         }
 
         match line_len {
-            0 => TextToken::End,
+            0 => {
+                self.last = None;
+                TextToken::End
+            }
             _ => TextToken::text(words.join(" "), line_len),
         }
     }

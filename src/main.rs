@@ -17,8 +17,8 @@ use termint::{
 };
 
 fn main() {
-    test_block();
-    // test_layout();
+    // test_block();
+    test_layout();
     // test_grad();
     // cool_example();
     // test_paragraph();
