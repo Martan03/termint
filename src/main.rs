@@ -1,6 +1,7 @@
 use std::{
     cell::{Cell, RefCell},
     rc::Rc,
+    vec,
 };
 
 use termint::{
@@ -12,7 +13,7 @@ use termint::{
     widgets::{
         BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
         ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState,
-        StrSpanExtension, Widget,
+        StrSpanExtension, Table, Widget,
     },
 };
 
@@ -23,7 +24,7 @@ fn main() {
     // cool_example();
     // test_paragraph();
     // readme_example();
-    test_list();
+    // test_list();
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
@@ -32,6 +33,7 @@ fn main() {
     // merge_test();
     // scrollbar_test();
     // scrollable_test();
+    test_table();
 }
 
 #[allow(unused)]
@@ -414,4 +416,25 @@ fn scrollable_test() {
     let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
     scrollable.render(&mut buffer);
     buffer.render();
+}
+
+#[allow(unused)]
+fn test_table() {
+    println!("\x1b[2J");
+
+    let header = vec!["Name", "Surname"];
+    let content = vec![
+        vec!["Peppa", "Pig"],
+        vec!["Winnie", "Pooh"],
+        vec!["Mickey", "Mouse"],
+        vec!["Donald", "Duck"],
+    ];
+
+    let mut offset = Rc::new(RefCell::new(ListState::selected(0, 2)));
+    let mut table =
+        Table::new(content, [Unit::Fill(1), Unit::Fill(1)], offset.clone())
+            .header(header);
+
+    let mut term = Term::new();
+    term.render(table);
 }

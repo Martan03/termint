@@ -12,34 +12,20 @@
 //! - [`Spacer`]: widget for creating spaces between widgets (better layouting)
 //! - [`Span`]: widget for styling text
 
-/// [`Layout`] widget with gradient background
 mod bg_grad;
-/// [`Layout`] widget with border around it
 mod block;
-/// Border sides definition and border type enum
 mod border;
-/// Text with gradient foreground
 mod grad;
-/// Creates layout by specifying columns and rows
 mod grid;
-/// Creates layout flexing in one direction
 mod layout;
-/// List widget with scrollbar, that displays vector of strings and its state
 mod list;
-/// Widget that stack its children on top of each other
 mod overlay;
-/// Chaining widgets implementing [`Text`] trait
 mod paragraph;
-/// Widget that uses scrollbar for overflown content
 mod scrollable;
-/// Scrollbar widget
 mod scrollbar;
-/// Spacer widget for better layouting
 mod spacer;
-/// Widget for styling text
 mod span;
 mod table;
-/// Trait for widgets to implement
 mod widget;
 
 /// [`Layout`] widget with gradient background
@@ -74,5 +60,7 @@ pub use spacer::Spacer;
 pub use span::Span;
 /// Enables better string conversion to [`Span`]
 pub use span::StrSpanExtension;
+/// Table widget with scrollbar
+pub use table::Table;
 /// Trait for widgets to implemen
 pub use widget::*;
