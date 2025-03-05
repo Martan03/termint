@@ -6,11 +6,12 @@ use crate::{
     text::Text,
 };
 
-use super::{Element, ListState, Widget};
+use super::{Border, BorderType, Element, ListState, Widget};
 
 #[derive(Debug)]
 pub struct Table {
     header: Option<Vec<Box<dyn Text>>>,
+    header_separator: Option<BorderType>,
     rows: Vec<Vec<Element>>,
     widths: Vec<Unit>,
     column_spacing: usize,
@@ -33,6 +34,7 @@ impl Table {
     {
         Self {
             header: None,
+            header_separator: None,
             rows: rows
                 .into_iter()
                 .map(|r| r.into_iter().map(|i| i.into()).collect())
@@ -50,6 +52,12 @@ impl Table {
         H::Item: Into<Box<dyn Text>>,
     {
         self.header = Some(header.into_iter().map(|h| h.into()).collect());
+        self
+    }
+
+    /// Sets the header separator of the [`Table`]
+    pub fn header_separator(mut self, separator: BorderType) -> Self {
+        self.header_separator = Some(separator);
         self
     }
 
@@ -86,11 +94,25 @@ impl Table {
 
 impl Widget for Table {
     fn render(&self, buffer: &mut Buffer) {
-        let widths = self.calc_widths(buffer.size());
+        let mut pos = *buffer.pos();
+        let header_height = self.header.is_some() as usize
+            + self.header_separator.is_some() as usize;
+        pos.y += header_height;
+
+        let mut size = Vec2::new(
+            buffer.width(),
+            buffer.height().saturating_sub(header_height),
+        );
+
+        let mut widths = self.calc_widths(&size);
+        if !self.fits(&size, &widths) {
+            size.x = size.x.saturating_sub(1);
+            widths = self.calc_widths(&size);
+            self.render_scrollbar(buffer, header_height);
+        }
+
         self.render_header(buffer, &widths);
 
-        let mut pos = *buffer.pos();
-        pos.y += self.header.is_some() as usize;
         for i in self.state.borrow().offset..self.rows.len() {
             if buffer.bottom() < pos.y {
                 break;
@@ -118,10 +140,14 @@ impl Widget for Table {
 
     fn height(&self, size: &Vec2) -> usize {
         let widths = self.calc_widths(size);
-        self.rows
+        let height: usize = self
+            .rows
             .iter()
             .map(|r| Self::row_height(size.y, r, &widths))
-            .sum()
+            .sum();
+        height
+            + self.header.is_some() as usize
+            + self.header_separator.is_some() as usize
     }
 
     fn width(&self, size: &Vec2) -> usize {
@@ -142,6 +168,33 @@ impl Widget for Table {
 }
 
 impl Table {
+    /// Renders [`Table`] scrollbar
+    fn render_scrollbar(&self, buffer: &mut Buffer, offset: usize) {
+        let height = buffer.height().saturating_sub(offset);
+        let rat = self.rows.len() as f32 / height as f32;
+        let thumb_size =
+            std::cmp::min((height as f32 / rat).floor() as usize, height);
+        let thumb_offset = std::cmp::min(
+            (self.state.borrow().offset as f32 / rat) as usize,
+            height - thumb_size,
+        );
+
+        let mut bar_pos = Vec2::new(buffer.right(), buffer.y() + offset);
+        for _ in 0..height {
+            buffer.set_val('│', &bar_pos);
+            // buffer.set_fg(self.scrollbar_fg, &bar_pos);
+            bar_pos.y += 1;
+        }
+
+        bar_pos =
+            Vec2::new(buffer.right(), buffer.y() + offset + thumb_offset);
+        for _ in 0..thumb_size {
+            buffer.set_val('┃', &bar_pos);
+            // buffer.set_fg(self.thumb_fg, &bar_pos);
+            bar_pos.y += 1;
+        }
+    }
+
     /// Gets calculated column widths based on the given size
     fn calc_widths(&self, size: &Vec2) -> Vec<usize> {
         let mut calc_widths = Vec::new();
@@ -194,13 +247,16 @@ impl Table {
                 buffer.subset(Rect::from_coords(pos, Vec2::new(width, 1)));
             child.render_offset(&mut cbuffer, 0, None);
             buffer.merge(cbuffer);
-            pos.x += width;
+            pos.x += width + self.column_spacing;
         }
 
-        // buffer.set_str(
-        //     "─".repeat(buffer.width()),
-        //     &Vec2::new(buffer.x(), buffer.y() + 1),
-        // );
+        if let Some(separator) = &self.header_separator {
+            let line = separator
+                .get(Border::TOP)
+                .to_string()
+                .repeat(buffer.width());
+            buffer.set_str(line, &Vec2::new(buffer.x(), buffer.y() + 1));
+        }
     }
 
     fn row_height(height: usize, row: &[Element], widths: &[usize]) -> usize {
@@ -215,5 +271,32 @@ impl Table {
             row_height = row_height.max(height);
         }
         row_height
+    }
+
+    /// Checks if item is visible with given offset
+    fn is_visible(
+        &self,
+        item: usize,
+        offset: usize,
+        size: &Vec2,
+        widths: &[usize],
+    ) -> bool {
+        let mut height = 0;
+        for i in offset..self.rows.len() {
+            height += Self::row_height(size.y, &self.rows[i], widths);
+            if height > size.y {
+                return false;
+            }
+
+            if i == item {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Checks if list fits to the visible area
+    fn fits(&self, size: &Vec2, widths: &[usize]) -> bool {
+        self.is_visible(self.rows.len() - 1, 0, size, widths)
     }
 }

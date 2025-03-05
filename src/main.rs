@@ -428,12 +428,19 @@ fn test_table() {
         vec!["Winnie", "Pooh"],
         vec!["Mickey", "Mouse"],
         vec!["Donald", "Duck"],
+        vec!["Donald", "Duck"],
+        vec!["Donald", "Duck"],
+        vec!["Donald", "Duck"],
+        vec!["Donald", "Duck"],
+        vec!["Donald", "Duck"],
+        vec!["Donald", "Duck"],
     ];
 
     let mut offset = Rc::new(RefCell::new(ListState::selected(0, 2)));
     let mut table =
         Table::new(content, [Unit::Fill(1), Unit::Fill(1)], offset.clone())
-            .header(header);
+            .header(header)
+            .header_separator(BorderType::Double);
 
     let mut term = Term::new();
     term.render(table);
