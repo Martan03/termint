@@ -32,7 +32,7 @@
 //! ```rust
 //! # use termint::{
 //! #     enums::{Modifier, Color},
-//! #     widgets::StrSpanExtension
+//! #     widgets::ToSpan
 //! # };
 //! // Using Span widget
 //! println!("{}", "Cyan text".fg(Color::Cyan));
@@ -55,7 +55,7 @@
 //! #     buffer::Buffer,
 //! #     enums::Color,
 //! #     geometry::{Constraint, Rect},
-//! #     widgets::{Border, BorderType, Block, StrSpanExtension, Widget}
+//! #     widgets::{Border, BorderType, Block, ToSpan, Widget}
 //! # };
 //! // Creates main block and sets its properties
 //! let mut main = Block::horizontal()

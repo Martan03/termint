@@ -10,16 +10,16 @@ use super::{widget::Widget, Element};
 /// ```rust
 /// # use termint::{
 /// #     geometry::Constraint,
-/// #     widgets::{Layout, Spacer, StrSpanExtension},
+/// #     widgets::{Layout, Spacer, ToSpan},
 /// # };
 /// let mut layout = Layout::vertical();
-/// layout.add_child("Example of Spacer", Constraint::Min(0));
+/// layout.push("Example of Spacer", Constraint::Min(0));
 ///
 /// // Spacer creates one height space between spans
 /// // Spacer size is set using [`Constrain`] when adding it to [`Layout`]
-/// layout.add_child(Spacer::new(), Constraint::Length(1));
+/// layout.push(Spacer::new(), Constraint::Length(1));
 ///
-/// layout.add_child("One space above", Constraint::Min(0));
+/// layout.push("One space above", Constraint::Min(0));
 /// ```
 #[derive(Debug, Default)]
 pub struct Spacer {}

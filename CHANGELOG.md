@@ -4,6 +4,9 @@
 ### Features:
 - Add Table widget
 - Optional `serde` trait implementation
+
+### Changes:
+- Rename `StrSpanExtension` to `ToSpan`
 - Rework text rendering - add generic text parser
 
 ### Fixes:

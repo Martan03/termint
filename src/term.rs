@@ -9,7 +9,7 @@ use crate::{
 /// ## Usage:
 /// ```
 /// # use termint::{
-/// #    term::Term, widgets::{Block, StrSpanExtension}
+/// #    term::Term, widgets::{Block, ToSpan}
 /// # };
 ///
 /// let main = Block::vertical().title("Example".to_span());

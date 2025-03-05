@@ -10,30 +10,28 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// Widget for styling text
+/// Widget for styling text where all characters have the same style.
 ///
-/// Available styles:
-/// - foreground: can be set using [`Fg`]
-/// - background: can be set using [`Bg`]
-/// - modifications: can be set using [`Modifier`] (Bold, italic,...)
-/// - align: can be set using [`TextAlign`]
-/// - wrap: how text should be wrapped, can be set using [`Wrap`]
-/// - ellipsis: indication of overflown text, can be set to any string
+/// ## Available styles:
+/// - `style`: style of text, can be set using [`Style`]
+/// - `align`: text alignment, can be set using [`TextAlign`]
+/// - `wrap`: text wrapping type, can be set using [`Wrap`]
+/// - `ellipsis`: indication of overflown text, can be set to any string
 ///     (default: '...')
 ///
 /// ## Example usage:
+/// There are multiple ways to create a [`Span`].
 /// ```rust
 /// # use termint::{
-/// #     buffer::Buffer,
 /// #     enums::{Color, Modifier},
-/// #     geometry::Rect,
 /// #     modifiers,
-/// #     widgets::{Span, StrSpanExtension, Widget},
+/// #     widgets::{Span, ToSpan},
 /// # };
-///
-/// // Creating span using new with red foreground:
+/// // Using new with red foreground:
 /// let span = Span::new("Red text").fg(Color::Red);
-/// // Creating span using &str conversion with red text and white background
+/// // Using Into with blue background:
+/// let span: Span = "Blue background".bg(Color::Blue).into();
+/// // From AsRef<str> with red text and white background
 /// let span = "Red text on white".fg(Color::Red).bg(Color::White);
 ///
 /// // Cyan bold and italic text on yellow background
@@ -42,13 +40,34 @@ use super::{widget::Widget, Element};
 ///     .fg(Color::Cyan)
 ///     .bg(Color::Yellow)
 ///     .modifier(modifiers!(BOLD, ITALIC));
+/// ```
 ///
-/// // Span can be printed like this
+/// After creating the span you can print it. It's printed with set styling,
+/// but without the wrapping and ellipsis.
+/// ```rust
+/// # use termint::{
+/// #     widgets::{ToSpan},
+/// # };
+/// # let span = "test".to_span();
 /// println!("{span}");
+/// ```
 ///
-/// // Or rendered using the buffer
-/// // Text will be wrapping based on set value in wrap (Wrap::Word is default)
-/// // Text will use ellipsis when can't fit ("..." is default)
+/// The span can also be rendered using Term or using a Buffer. Using one of
+/// there will also apply wrapping and add ellipsis if text overflows.
+/// ```rust
+/// # use termint::{
+/// #     buffer::Buffer,
+/// #     geometry::Rect,
+/// #     widgets::{ToSpan, Widget},
+/// #     term::Term,
+/// # };
+/// # let span = "test".to_span();
+/// // Rendering using Term - uses screen size automatically,...
+/// let mut term = Term::new();
+/// term.render(span);
+///
+/// # let span = "test".to_span();
+/// // Rendering using Buffer - span renders to buffer, buffer is then rendered
 /// let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 3));
 /// span.render(&mut buffer);
 /// buffer.render();
@@ -64,6 +83,14 @@ pub struct Span {
 
 impl Span {
     /// Creates new [`Span`] with given text
+    /// ### Examples
+    /// ```rust
+    /// use termint::widgets::Span;
+    ///
+    /// let span = Span::new("Hello, World!");
+    /// let span = Span::new(String::from("Hello, Termint!"));
+    /// let span = Span::new(&String::from("Hello, All!"));
+    /// ```
     pub fn new<T>(text: T) -> Self
     where
         T: AsRef<str>,
@@ -74,7 +101,17 @@ impl Span {
         }
     }
 
-    /// Sets [`Span`] style to given style
+    /// Sets [`Span`] style to given style.
+    ///
+    /// `style` can be any type convertible to [`Style`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, style::Style, enums::{Color, Modifier}};
+    ///
+    /// let span = Span::new("style").style(Style::new().bg(Color::Red));
+    /// let span = Span::new("style").style(Color::Blue);
+    /// ```
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -83,7 +120,16 @@ impl Span {
         self
     }
 
-    /// Sets foreground of [`Span`] to given color
+    /// Sets foreground of the [`Span`] to given color
+    ///
+    /// `fg` can be any type convertible to [`Color`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, enums::Color};
+    ///
+    /// let span = Span::new("fg").fg(Color::Cyan);
+    /// ```
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -92,7 +138,16 @@ impl Span {
         self
     }
 
-    /// Sets background of [`Span`] to given color
+    /// Sets background of the [`Span`] to given color
+    ///
+    /// `bg` can be any type convertible to [`Color`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, enums::Color};
+    ///
+    /// let span = Span::new("bg").bg(Color::Cyan);
+    /// ```
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -102,38 +157,97 @@ impl Span {
     }
 
     /// Sets [`Span`] modifier to given modifier
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, enums::Modifier, modifiers};
+    ///
+    /// // Single modifier
+    /// let span = Span::new("modifier").modifier(Modifier::ITALIC);
+    /// // Multiple modifiers
+    /// let span = Span::new("modifier")
+    ///     .modifier(Modifier::ITALIC | Modifier::BOLD);
+    /// let span = Span::new("modifier").modifier(modifiers!(BOLD, ITALIC));
+    /// ```
     pub fn modifier(mut self, modifier: u8) -> Self {
         self.style = self.style.modifier(modifier);
         self
     }
 
-    /// Sets modifiers of [`Span`] to given modifiers
+    /// Adds given modifier to [`Span`] modifiers
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, enums::Modifier};
+    ///
+    /// let span = Span::new("add_modifier").add_modifier(Modifier::ITALIC);
+    /// ```
     pub fn add_modifier(mut self, flag: u8) -> Self {
         self.style = self.style.add_modifier(flag);
         self
     }
 
     /// Removes given modifier from [`Span`] modifiers
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, enums::Modifier};
+    ///
+    /// let span = Span::new("remove_modifier")
+    ///     .remove_modifier(Modifier::ITALIC);
+    /// ```
     pub fn remove_modifier(mut self, flag: u8) -> Self {
         self.style = self.style.remove_modifier(flag);
         self
     }
 
-    /// Sets [`Span`] text alignment
+    /// Sets text alignment of the [`Span`].
+    ///
+    /// Default value is [`TextAlign::Left`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, geometry::TextAlign};
+    ///
+    /// let span = Span::new("align").align(TextAlign::Center);
+    /// ```
     pub fn align(mut self, align: TextAlign) -> Self {
         self.align = align;
         self
     }
 
-    /// Sets [`Wrap`] of [`Span`] to given value
+    /// Sets text wrapping style of the [`Span`].
+    ///
+    /// Default value is [`Wrap::Word`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span, enums::Wrap};
+    ///
+    /// let span = Span::new("wrap").wrap(Wrap::Letter);
+    /// ```
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
         self
     }
 
-    /// Sets [`Span`] ellipsis to given string
-    pub fn ellipsis<T: Into<String>>(mut self, ellipsis: T) -> Self {
-        self.ellipsis = ellipsis.into();
+    /// Sets ellipsis string of the [`Span`] to use when text can't fit. It is
+    /// used to signal that text is overflown.
+    ///
+    /// Default value is "...". It can be any string.
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Span};
+    ///
+    /// // Overflown text will end with "~.~" sequence to signal overflow
+    /// let span = Span::new("align").ellipsis("~.~");
+    /// ```
+    pub fn ellipsis<T>(mut self, ellipsis: T) -> Self
+    where
+        T: AsRef<str>,
+    {
+        self.ellipsis = ellipsis.as_ref().to_string();
         self
     }
 }
@@ -175,25 +289,13 @@ impl Text for Span {
 
         let mut pos = Vec2::new(buffer.x() + offset, buffer.y());
         let mut fin_pos = pos;
-        let bottom = buffer.bottom();
-        while pos.y <= bottom {
-            match parser.next_line(buffer.right().saturating_sub(pos.x)) {
-                TextToken::Text { mut text, mut len } => {
-                    if pos.y + 1 >= buffer.y() + buffer.height()
-                        && !parser.is_end()
-                    {
-                        len += self.ellipsis.len();
-                        if len > buffer.width() {
-                            len = buffer.width();
-                            let end = buffer
-                                .width()
-                                .saturating_sub(self.ellipsis.len());
-                            text = text[..end].to_string();
-                        }
-                        text.push_str(&self.ellipsis);
-                    }
-                    self.render_line(buffer, text, len, &pos);
-                    fin_pos.x = len;
+
+        let right_end = buffer.x() + buffer.width();
+        while pos.y <= buffer.bottom() {
+            match parser.next_line(right_end.saturating_sub(pos.x)) {
+                TextToken::Text { text, len } => {
+                    fin_pos.x =
+                        self.render_line(buffer, &parser, text, len, &pos);
                 }
                 TextToken::Newline => {}
                 TextToken::End => break,
@@ -241,16 +343,28 @@ impl Span {
     fn render_line(
         &self,
         buffer: &mut Buffer,
-        line: String,
-        len: usize,
+        parser: &TextParser,
+        mut line: String,
+        mut len: usize,
         pos: &Vec2,
-    ) {
+    ) -> usize {
+        if pos.y >= buffer.bottom() && !parser.is_end() {
+            len += self.ellipsis.len();
+            if len > buffer.width() {
+                len = buffer.width();
+                let end = buffer.width().saturating_sub(self.ellipsis.len());
+                line = line[..end].to_string();
+            }
+            line.push_str(&self.ellipsis);
+        }
+
         let x = match self.align {
             TextAlign::Left => 0,
             TextAlign::Center => buffer.width().saturating_sub(len) >> 1,
             TextAlign::Right => buffer.width().saturating_sub(len),
         };
         buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
+        len
     }
 
     /// Gets height of the [`Span`] when using word wrap
@@ -307,7 +421,7 @@ impl Span {
 }
 
 /// Enables creating [`Span`] by calling one of the functions on string
-pub trait StrSpanExtension {
+pub trait ToSpan {
     /// Creates [`Span`] from string and sets its style to given value
     fn style<T>(self, style: T) -> Span
     where
@@ -344,60 +458,66 @@ pub trait StrSpanExtension {
     fn to_span(self) -> Span;
 }
 
-impl StrSpanExtension for &str {
-    fn style<T>(self, style: T) -> Span
+impl<T> ToSpan for &T
+where
+    T: std::fmt::Display,
+{
+    fn style<S>(self, style: S) -> Span
     where
-        T: Into<Style>,
+        S: Into<Style>,
     {
-        Span::new(self).style(style)
+        Span::new(self.to_string()).style(style)
     }
 
-    fn fg<T>(self, fg: T) -> Span
+    fn fg<C>(self, fg: C) -> Span
     where
-        T: Into<Option<Color>>,
+        C: Into<Option<Color>>,
     {
-        Span::new(self).fg(fg)
+        Span::new(self.to_string()).fg(fg)
     }
 
-    fn bg<T>(self, bg: T) -> Span
+    fn bg<C>(self, bg: C) -> Span
     where
-        T: Into<Option<Color>>,
+        C: Into<Option<Color>>,
     {
-        Span::new(self).bg(bg)
+        Span::new(self.to_string()).bg(bg)
     }
 
     fn modifier(self, modifier: u8) -> Span {
-        Span::new(self).modifier(modifier)
+        Span::new(self.to_string()).modifier(modifier)
     }
 
     fn add_modifier(self, flag: u8) -> Span {
-        Span::new(self).add_modifier(flag)
+        Span::new(self.to_string()).add_modifier(flag)
     }
 
     fn align(self, align: TextAlign) -> Span {
-        Span::new(self).align(align)
+        Span::new(self.to_string()).align(align)
     }
 
     fn wrap(self, wrap: Wrap) -> Span {
-        Span::new(self).wrap(wrap)
+        Span::new(self.to_string()).wrap(wrap)
     }
 
     fn ellipsis<R>(self, ellipsis: R) -> Span
     where
         R: AsRef<str>,
     {
-        Span::new(self).ellipsis(ellipsis.as_ref())
+        Span::new(self.to_string()).ellipsis(ellipsis.as_ref())
     }
 
     fn to_span(self) -> Span {
-        Span::new(self)
+        Span::new(self.to_string())
     }
 }
 
 // From implementations
-impl From<Span> for Box<dyn Widget> {
-    fn from(value: Span) -> Self {
-        Box::new(value)
+impl<T> From<T> for Span
+where
+    T: AsRef<str>,
+{
+    fn from(value: T) -> Self {
+        Span::new(value)
     }
 }
 
@@ -410,6 +530,30 @@ where
     }
 }
 
+impl<T> From<T> for Box<dyn Text>
+where
+    T: AsRef<str>,
+{
+    fn from(value: T) -> Self {
+        Box::new(Span::new(value))
+    }
+}
+
+impl<T> From<T> for Element
+where
+    T: AsRef<str>,
+{
+    fn from(value: T) -> Self {
+        Element::new(Span::new(value))
+    }
+}
+
+impl From<Span> for Box<dyn Widget> {
+    fn from(value: Span) -> Self {
+        Box::new(value)
+    }
+}
+
 impl From<Span> for Box<dyn Text> {
     fn from(value: Span) -> Self {
         Box::new(value)
@@ -419,17 +563,5 @@ impl From<Span> for Box<dyn Text> {
 impl From<Span> for Element {
     fn from(value: Span) -> Self {
         Element::new(value)
-    }
-}
-
-impl From<&str> for Box<dyn Text> {
-    fn from(value: &str) -> Self {
-        Box::new(Span::new(value))
-    }
-}
-
-impl From<&str> for Element {
-    fn from(value: &str) -> Self {
-        Element::new(Span::new(value))
     }
 }

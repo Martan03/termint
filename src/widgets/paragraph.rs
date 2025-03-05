@@ -21,7 +21,7 @@ use super::{widget::Widget, Element};
 /// #     enums::{Color, Modifier},
 /// #     geometry::Rect,
 /// #     widgets::{
-/// #         Paragraph, StrSpanExtension, Widget,
+/// #         Paragraph, ToSpan, Widget,
 /// #     },
 /// # };
 /// // Creates new Paragraph filled with spans

@@ -15,7 +15,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// # use termint::{
 /// #     buffer::Buffer,
 /// #     geometry::Rect,
-/// #     widgets::{StrSpanExtension, Scrollable, Widget, ScrollbarState}
+/// #     widgets::{ToSpan, Scrollable, Widget, ScrollbarState}
 /// # };
 /// // Widget to wrap scrollable around
 /// let span = "Long text that cannot fit so scrolling is needed".to_span();

@@ -12,7 +12,7 @@ use crate::{
     text::Text,
 };
 
-use super::{span::StrSpanExtension, widget::Widget, Element};
+use super::{span::ToSpan, widget::Widget, Element};
 
 /// List widget with scrollbar, that displays vector of strings
 ///

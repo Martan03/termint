@@ -80,7 +80,7 @@ impl<'a> TextParser<'a> {
             match self.next_word() {
                 TextToken::Text { text, len } => {
                     let space = (line_len != 0) as usize;
-                    if line_len + len + space > max_len + 1 {
+                    if line_len + len + space > max_len {
                         self.last = Some(TextToken::text(text, len));
                         break;
                     }
@@ -198,7 +198,7 @@ mod tests {
 
         assert_eq!(parser.next_line(14), TextToken::text("This is".into(), 7));
         assert_eq!(parser.next_line(14), TextToken::text("a".into(), 1));
-        assert_eq!(parser.next_line(14), TextToken::text("".into(), 0));
+        assert_eq!(parser.next_line(14), TextToken::Newline);
         assert_eq!(parser.next_line(14), TextToken::text("test".into(), 4));
         assert_eq!(parser.next_line(14), TextToken::End);
     }

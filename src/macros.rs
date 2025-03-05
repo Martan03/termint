@@ -39,7 +39,7 @@ macro_rules! borders {
 ///
 /// ## Usage:
 /// ```rust
-/// # use termint::{enums::Color, help, widgets::StrSpanExtension};
+/// # use termint::{enums::Color, help, widgets::ToSpan};
 /// help!(
 ///     "Usage":
 ///     "-t" ["value"] => "Tests program with [value]"
@@ -112,7 +112,7 @@ macro_rules! modifiers {
 /// # use termint::{
 /// #     enums::Color,
 /// #     paragraph,
-/// #     widgets::{Paragraph, StrSpanExtension},
+/// #     widgets::{Paragraph, ToSpan},
 /// # };
 /// // Without macro:
 /// let p = Paragraph::new(vec![

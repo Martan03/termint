@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, Criterion};
 use termint::{
     buffer::Buffer,
     geometry::Rect,
-    widgets::{StrSpanExtension, Widget},
+    widgets::{ToSpan, Widget},
 };
 
 fn benchmark_span(c: &mut Criterion) {

@@ -59,7 +59,7 @@ pub use spacer::Spacer;
 /// Widget for styling text
 pub use span::Span;
 /// Enables better string conversion to [`Span`]
-pub use span::StrSpanExtension;
+pub use span::ToSpan;
 /// Table widget with scrollbar
 pub use table::Table;
 /// Trait for widgets to implemen

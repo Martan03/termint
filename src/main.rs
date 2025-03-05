@@ -12,8 +12,8 @@ use termint::{
     term::Term,
     widgets::{
         BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
-        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState,
-        StrSpanExtension, Table, Widget,
+        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState, Table,
+        ToSpan, Widget,
     },
 };
 
@@ -21,8 +21,8 @@ fn main() {
     // test_block();
     // test_layout();
     // test_grad();
-    cool_example();
-    // test_paragraph();
+    // cool_example();
+    test_paragraph();
     // readme_example();
     // test_list();
     // test_layout_centering();

@@ -24,7 +24,7 @@ use super::{
 /// #     buffer::Buffer,
 /// #     enums::Color,
 /// #     geometry::{Constraint, Rect},
-/// #     widgets::{Block, BorderType, StrSpanExtension, Widget},
+/// #     widgets::{Block, BorderType, ToSpan, Widget},
 /// # };
 /// // Creates block with title Termint in red
 /// // with double line border in lightgray

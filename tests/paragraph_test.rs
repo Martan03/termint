@@ -7,7 +7,7 @@ extern crate termint;
 mod tests {
     // use termint::{
     //     enums::{modifier::Modifier, Color},
-    //     widgets::{paragraph::Paragraph, span::StrSpanExtension},
+    //     widgets::{paragraph::Paragraph, span::ToSpan},
     // };
 
     /// Tests creating new paragraph

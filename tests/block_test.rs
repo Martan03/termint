@@ -4,8 +4,8 @@ extern crate termint;
 mod tests {
     use termint::{
         buffer::Buffer,
-        geometry::{Vec2, Rect},
-        widgets::{Block, StrSpanExtension, Widget},
+        geometry::{Rect, Vec2},
+        widgets::{Block, ToSpan, Widget},
     };
 
     #[test]

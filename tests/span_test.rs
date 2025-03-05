@@ -9,7 +9,7 @@ mod tests {
         enums::{Color, Modifier},
         modifiers,
         text::Text,
-        widgets::{Span, StrSpanExtension},
+        widgets::{Span, ToSpan},
     };
 
     /// Tests creating new span

@@ -16,7 +16,7 @@ use super::{widget::Widget, Element};
 /// # use termint::{
 /// #     buffer::Buffer,
 /// #     geometry::{Constraint, Rect},
-/// #     widgets::{Block, Layout, StrSpanExtension, Widget},
+/// #     widgets::{Block, Layout, ToSpan, Widget},
 /// # };
 /// // Creates horizontal layout containing two blocks each covering 50%
 /// let block1 = Block::vertical().title("Block 1");
