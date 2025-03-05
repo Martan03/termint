@@ -1,7 +1,7 @@
 use crate::{
     buffer::Buffer,
-    geometry::{Vec2, Padding, Rect},
-    widgets::Widget,
+    geometry::{Padding, Rect, Vec2},
+    widgets::{Element, Widget},
 };
 
 /// [`Term`] implements full screen rendering with option to set padding
@@ -57,12 +57,13 @@ impl Term {
     /// screen when cannot fit (only when `small_screen` is set)
     pub fn render<T>(&mut self, widget: T) -> Result<(), &'static str>
     where
-        T: Widget + 'static,
+        T: Into<Element>,
     {
         let Some((w, h)) = Term::get_size() else {
             return Err("Cannot determine terminal size");
         };
 
+        let widget = widget.into();
         let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
         let size = Vec2::new(
             w.saturating_sub(self.padding.get_horizontal()),

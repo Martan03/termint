@@ -300,3 +300,15 @@ impl Table {
         self.is_visible(self.rows.len() - 1, 0, size, widths)
     }
 }
+
+impl From<Table> for Box<dyn Widget> {
+    fn from(value: Table) -> Self {
+        Box::new(value)
+    }
+}
+
+impl From<Table> for Element {
+    fn from(value: Table) -> Self {
+        Element::new(value)
+    }
+}

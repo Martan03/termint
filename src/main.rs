@@ -21,7 +21,7 @@ fn main() {
     // test_block();
     // test_layout();
     // test_grad();
-    // cool_example();
+    cool_example();
     // test_paragraph();
     // readme_example();
     // test_list();
@@ -33,7 +33,7 @@ fn main() {
     // merge_test();
     // scrollbar_test();
     // scrollable_test();
-    test_table();
+    // test_table();
 }
 
 #[allow(unused)]

@@ -140,23 +140,19 @@ impl Span {
 
 impl Widget for Span {
     fn render(&self, buffer: &mut Buffer) {
-        match self.wrap {
-            Wrap::Letter => todo!(),
-            Wrap::Word => _ = self.render_words(buffer),
-        }
-        // let _ = self.render_offset(buffer, 0, None);
+        _ = self.render_offset(buffer, 0, None);
     }
 
     fn height(&self, size: &Vec2) -> usize {
         match self.wrap {
-            Wrap::Letter => self.size_letter_wrap(size.x),
+            Wrap::Letter => self.height_letter_wrap(size),
             Wrap::Word => self.height_word_wrap(size),
         }
     }
 
     fn width(&self, size: &Vec2) -> usize {
         match self.wrap {
-            Wrap::Letter => self.size_letter_wrap(size.y),
+            Wrap::Letter => self.width_letter_wrap(size),
             Wrap::Word => self.width_word_wrap(size),
         }
     }
@@ -169,17 +165,44 @@ impl Text for Span {
         offset: usize,
         wrap: Option<Wrap>,
     ) -> Vec2 {
-        let wrap = wrap.unwrap_or(self.wrap);
-        match wrap {
-            Wrap::Letter => {
-                self.render_lines(buffer, offset, |t, b, ox, oy| {
-                    self.render_letter(t, b, ox, oy)
-                })
-            }
-            Wrap::Word => self.render_lines(buffer, offset, |t, b, ox, oy| {
-                self.render_word(t, b, ox, oy)
-            }),
+        if buffer.area() == 0 {
+            return *buffer.pos();
         }
+
+        let wrap = wrap.unwrap_or(self.wrap);
+        let mut chars = self.text.chars();
+        let mut parser = TextParser::new(&mut chars).wrap(wrap);
+
+        let mut pos = Vec2::new(buffer.x() + offset, buffer.y());
+        let mut fin_pos = pos;
+        let bottom = buffer.bottom();
+        while pos.y <= bottom {
+            match parser.next_line(buffer.right().saturating_sub(pos.x)) {
+                TextToken::Text { mut text, mut len } => {
+                    if pos.y + 1 >= buffer.y() + buffer.height()
+                        && !parser.is_end()
+                    {
+                        len += self.ellipsis.len();
+                        if len > buffer.width() {
+                            len = buffer.width();
+                            let end = buffer
+                                .width()
+                                .saturating_sub(self.ellipsis.len());
+                            text = text[..end].to_string();
+                        }
+                        text.push_str(&self.ellipsis);
+                    }
+                    self.render_line(buffer, text, len, &pos);
+                    fin_pos.x = len;
+                }
+                TextToken::Newline => {}
+                TextToken::End => break,
+            }
+            fin_pos.y = pos.y;
+            pos.x = buffer.x();
+            pos.y += 1;
+        }
+        fin_pos
     }
 
     fn get(&self) -> String {
@@ -214,69 +237,8 @@ impl fmt::Display for Span {
 }
 
 impl Span {
-    /// Renders each line of the [`Span`]
-    fn render_lines<F>(
-        &self,
-        buffer: &mut Buffer,
-        offset: usize,
-        text_render: F,
-    ) -> Vec2
-    where
-        F: Fn(&str, &mut Buffer, usize, usize) -> Vec2,
-    {
-        let mut fin_coords = Vec2::new(0, buffer.y());
-        let mut coords = Vec2::new(buffer.x(), buffer.y());
-        let mut lsize = *buffer.size();
-
-        let mut offset = offset;
-        for line in self.text.lines() {
-            if lsize.y == 0 {
-                break;
-            }
-
-            fin_coords = text_render(line, buffer, offset, coords.y);
-            (coords.x, coords.y) = (buffer.x(), fin_coords.y + 1);
-            lsize.y = buffer.height().saturating_sub(coords.y - buffer.y());
-            offset = 0;
-        }
-        fin_coords
-    }
-
-    /// Renders [`Span`] with word wrapping.
-    /// Returns [`Vec2`] where rendered text ends.
-    fn render_words(&self, buffer: &mut Buffer) -> Vec2 {
-        let mut chars = self.text.chars();
-        let mut parser = TextParser::new(&mut chars);
-
-        let mut pos = Vec2::new(buffer.x(), buffer.y());
-        let bottom = buffer.bottom();
-        while pos.y <= bottom {
-            match parser.next_line(buffer.width()) {
-                TextToken::Text { mut text, len } => {
-                    if pos.y + 1 >= buffer.y() + buffer.height()
-                        && !parser.is_end()
-                    {
-                        let sum = len + self.ellipsis.len();
-                        if sum > buffer.width() {
-                            let end = buffer
-                                .width()
-                                .saturating_sub(self.ellipsis.len());
-                            text = text[..end].to_string();
-                        }
-                        text.push_str(&self.ellipsis);
-                    }
-                    self.render_line2(buffer, text, len, &pos);
-                }
-                TextToken::Newline => continue,
-                TextToken::End => break,
-            }
-            pos.y += 1;
-        }
-        pos
-    }
-
     /// Renders one line of text and aligns it based on set alignment
-    fn render_line2(
+    fn render_line(
         &self,
         buffer: &mut Buffer,
         line: String,
@@ -291,135 +253,27 @@ impl Span {
         buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
     }
 
-    /// Renders [`Span`] with word wrapping with given offset
-    /// Returns [`Coords`] where rendered text ends
-    fn render_word(
-        &self,
-        text: &str,
-        buffer: &mut Buffer,
-        mut offset_x: usize,
-        offset_y: usize,
-    ) -> Vec2 {
-        let mut line = Vec::<&str>::new();
-        let mut coords = Vec2::new(offset_x, offset_y);
-
-        for word in text.split_whitespace() {
-            let word_len = word.chars().count();
-            if coords.x + word_len + !line.is_empty() as usize > buffer.width()
-            {
-                if coords.y + 1 >= buffer.y() + buffer.height()
-                    || word_len > buffer.width()
-                {
-                    let mut line_str = line.join(" ");
-                    let sum = coords.x + self.ellipsis.len() + offset_x;
-                    if sum >= buffer.width() {
-                        let end = buffer
-                            .width()
-                            .saturating_sub(self.ellipsis.len() + offset_x);
-                        line_str = line_str[..end].to_string();
-                    }
-
-                    line_str.push_str(&self.ellipsis);
-                    coords.x = line_str.len() + offset_x;
-                    self.render_line(
-                        buffer,
-                        line_str,
-                        &Vec2::new(buffer.x() + offset_x, coords.y),
-                    );
-                    return coords;
-                }
-
-                self.render_line(
-                    buffer,
-                    line.join(" "),
-                    &Vec2::new(buffer.x() + offset_x, coords.y),
-                );
-                offset_x = 0;
-                (coords.x, coords.y) = (0, coords.y + 1);
-                line.clear();
-            }
-            coords.x += word_len + !line.is_empty() as usize;
-            line.push(word);
-        }
-
-        if !line.is_empty() {
-            self.render_line(
-                buffer,
-                line.join(" "),
-                &Vec2::new(buffer.x() + offset_x, coords.y),
-            );
-        }
-
-        coords
-    }
-
-    /// Renders [`Span`] with letter wrapping with given offset
-    /// Returns [`Coords`] where rendered text ended
-    fn render_letter(
-        &self,
-        text: &str,
-        buffer: &mut Buffer,
-        offset_x: usize,
-        offset_y: usize,
-    ) -> Vec2 {
-        let stext: String = text.chars().take(buffer.area()).collect();
-        buffer.set_str_styled(
-            &stext,
-            &Vec2::new(buffer.x() + offset_x, offset_y),
-            self.style,
-        );
-
-        if stext.len() != text.len() && !self.ellipsis.is_empty() {
-            let coords = Vec2::new(
-                (buffer.x() + buffer.width())
-                    .saturating_sub(self.ellipsis.len()),
-                (buffer.y() + buffer.height()).saturating_sub(1),
-            );
-            buffer.set_str_styled(&self.ellipsis, &coords, self.style)
-        }
-
-        buffer.pos_of(stext.len() + offset_x)
-    }
-
-    /// Renders one line of text and aligns it based on set alignment
-    fn render_line(&self, buffer: &mut Buffer, line: String, pos: &Vec2) {
-        let x = match self.align {
-            TextAlign::Left => 0,
-            TextAlign::Center => {
-                buffer.width().saturating_sub(line.chars().count()) >> 1
-            }
-            TextAlign::Right => {
-                buffer.width().saturating_sub(line.chars().count())
-            }
-        };
-        buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
-    }
-
     /// Gets height of the [`Span`] when using word wrap
     fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut coords = Vec2::new(0, 0);
+        let mut chars = self.text.chars();
+        let mut parser = TextParser::new(&mut chars);
 
-        let words: Vec<&str> = self.text.split_whitespace().collect();
-        for word in words {
-            let len = word.len();
-            if (coords.x == 0 && coords.x + len > size.x)
-                || (coords.x != 0 && coords.x + len + 1 > size.x)
-            {
-                coords.y += 1;
-                coords.x = 0;
+        let mut pos = Vec2::new(0, 0);
+        loop {
+            match parser.next_line(size.x) {
+                TextToken::Text { .. } => {}
+                TextToken::Newline => continue,
+                TextToken::End => break,
             }
-
-            if coords.x != 0 {
-                coords.x += 1;
-            }
-            coords.x += len;
+            pos.y += 1;
         }
-        coords.y + 1
+        pos.y
     }
 
     /// Gets width of the [`Span`] when using word wrap
     fn width_word_wrap(&self, size: &Vec2) -> usize {
-        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
+        let mut guess =
+            Vec2::new(self.size_letter_wrap(size.y).saturating_sub(1), 0);
 
         while self.height_word_wrap(&guess) > size.y {
             guess.x += 1;
@@ -427,9 +281,28 @@ impl Span {
         guess.x
     }
 
+    /// Gets height of the [`Span`] when using letter wrap
+    fn height_letter_wrap(&self, size: &Vec2) -> usize {
+        self.text
+            .lines()
+            .map(|l| {
+                (l.chars().count() as f32 / size.x as f32).ceil() as usize
+            })
+            .sum()
+    }
+
+    /// Gets width of the [`Span`] when using letter wrap
+    fn width_letter_wrap(&self, size: &Vec2) -> usize {
+        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
+        while self.height_letter_wrap(&guess) > size.y {
+            guess.x += 1;
+        }
+        guess.x
+    }
+
     /// Gets size of the [`Span`] when using letter wrap
     fn size_letter_wrap(&self, size: usize) -> usize {
-        (self.text.len() as f32 / size as f32).ceil() as usize
+        (self.text.chars().count() as f32 / size as f32).ceil() as usize
     }
 }
 
