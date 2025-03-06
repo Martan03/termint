@@ -1,8 +1,11 @@
-/// Text token for parsing the text
+/// Text token used by the `TextParser`
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TextToken {
+    // Text token containing the text and its length
     Text { text: String, len: usize },
+    // Newline token
     Newline,
+    // End of the text token
     End,
 }
 

@@ -5,21 +5,21 @@ use crate::{
     enums::{Color, Wrap},
     geometry::{TextAlign, Vec2},
     style::Style,
-    text::{Text, TextParser, TextToken},
+    text::{Text, TextParser},
 };
 
 use super::{widget::Widget, Element};
 
 /// Widget for styling text where all characters have the same style.
 ///
-/// ## Available styles:
+/// # Available styles:
 /// - `style`: style of text, can be set using [`Style`]
 /// - `align`: text alignment, can be set using [`TextAlign`]
 /// - `wrap`: text wrapping type, can be set using [`Wrap`]
 /// - `ellipsis`: indication of overflown text, can be set to any string
 ///     (default: '...')
 ///
-/// ## Example usage:
+/// # Examples:
 /// There are multiple ways to create a [`Span`].
 /// ```rust
 /// # use termint::{
@@ -292,14 +292,12 @@ impl Text for Span {
 
         let right_end = buffer.x() + buffer.width();
         while pos.y <= buffer.bottom() {
-            match parser.next_line(right_end.saturating_sub(pos.x)) {
-                TextToken::Text { text, len } => {
-                    fin_pos.x =
-                        self.render_line(buffer, &parser, text, len, &pos);
-                }
-                TextToken::Newline => {}
-                TextToken::End => break,
-            }
+            let line_len = right_end.saturating_sub(pos.x);
+            let Some((text, len)) = parser.next_line(line_len) else {
+                break;
+            };
+
+            fin_pos.x = self.render_line(buffer, &parser, text, len, &pos);
             fin_pos.y = pos.y;
             pos.x = buffer.x();
             pos.y += 1;
@@ -374,10 +372,8 @@ impl Span {
 
         let mut pos = Vec2::new(0, 0);
         loop {
-            match parser.next_line(size.x) {
-                TextToken::Text { .. } => {}
-                TextToken::Newline => continue,
-                TextToken::End => break,
+            if parser.next_line(size.x).is_none() {
+                break;
             }
             pos.y += 1;
         }
