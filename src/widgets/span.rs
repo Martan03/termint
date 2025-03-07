@@ -42,7 +42,7 @@ use super::{widget::Widget, Element};
 ///     .modifier(modifiers!(BOLD, ITALIC));
 /// ```
 ///
-/// After creating the span you can print it. It's printed with set styling,
+/// After creating the span, you can print it. It's printed with set styling,
 /// but without the wrapping and ellipsis.
 /// ```rust
 /// # use termint::{
@@ -82,7 +82,7 @@ pub struct Span {
 }
 
 impl Span {
-    /// Creates new [`Span`] with given text
+    /// Creates new [`Span`] with given text.
     /// ### Examples
     /// ```rust
     /// use termint::widgets::Span;
@@ -103,7 +103,7 @@ impl Span {
 
     /// Sets [`Span`] style to given style.
     ///
-    /// `style` can be any type convertible to [`Style`].
+    /// - `style` can be any type convertible to [`Style`].
     ///
     /// ### Examples
     /// ```rust
@@ -120,9 +120,9 @@ impl Span {
         self
     }
 
-    /// Sets foreground of the [`Span`] to given color
+    /// Sets foreground of the [`Span`] to given color.
     ///
-    /// `fg` can be any type convertible to [`Color`].
+    /// - `fg` can be any type convertible to [`Color`].
     ///
     /// ### Examples
     /// ```rust
@@ -138,9 +138,9 @@ impl Span {
         self
     }
 
-    /// Sets background of the [`Span`] to given color
+    /// Sets background of the [`Span`] to given color.
     ///
-    /// `bg` can be any type convertible to [`Color`].
+    /// - `bg` can be any type convertible to [`Color`].
     ///
     /// ### Examples
     /// ```rust
@@ -156,7 +156,7 @@ impl Span {
         self
     }
 
-    /// Sets [`Span`] modifier to given modifier
+    /// Sets [`Span`] modifier to given modifier.
     ///
     /// ### Examples
     /// ```rust
@@ -174,7 +174,7 @@ impl Span {
         self
     }
 
-    /// Adds given modifier to [`Span`] modifiers
+    /// Adds given modifier to [`Span`] modifiers.
     ///
     /// ### Examples
     /// ```rust
@@ -187,7 +187,7 @@ impl Span {
         self
     }
 
-    /// Removes given modifier from [`Span`] modifiers
+    /// Removes given modifier from [`Span`] modifiers.
     ///
     /// ### Examples
     /// ```rust
@@ -238,7 +238,7 @@ impl Span {
     ///
     /// ### Examples
     /// ```rust
-    /// use termint::{widgets::Span};
+    /// use termint::widgets::Span;
     ///
     /// // Overflown text will end with "~.~" sequence to signal overflow
     /// let span = Span::new("align").ellipsis("~.~");
@@ -280,7 +280,7 @@ impl Text for Span {
         wrap: Option<Wrap>,
     ) -> Vec2 {
         if buffer.area() == 0 {
-            return *buffer.pos();
+            return Vec2::new(0, buffer.y());
         }
 
         let wrap = wrap.unwrap_or(self.wrap);
@@ -416,7 +416,11 @@ impl Span {
     }
 }
 
-/// Enables creating [`Span`] by calling one of the functions on string
+/// Enables creating [`Span`] by calling one of the functions on type
+/// implementing this trait.
+///
+/// It's recommended to use `std::fmt::Display` trait. Types implementing this
+/// trait will containg `ToSpan` as well and can be converted to `Span`.
 pub trait ToSpan {
     /// Creates [`Span`] from string and sets its style to given value
     fn style<T>(self, style: T) -> Span
@@ -450,7 +454,7 @@ pub trait ToSpan {
     where
         T: AsRef<str>;
 
-    /// Converts &str to [`Span`]
+    /// Converts type to [`Span`]
     fn to_span(self) -> Span;
 }
 

@@ -58,11 +58,15 @@ impl<'a> TextParser<'a> {
     /// ```
     pub fn new(text: &'a mut dyn Iterator<Item = char>) -> Self {
         let cur = text.next();
+        let last = match cur {
+            Some(_) => None,
+            None => Some(TextToken::End),
+        };
         Self {
             text,
             cur,
             wrap: Wrap::default(),
-            last: None,
+            last,
         }
     }
 
@@ -152,7 +156,7 @@ impl<'a> TextParser<'a> {
             }
         }
 
-        (line_len != 0 || self.cur.is_some())
+        (line_len != 0 || !self.is_end())
             .then_some((words.join(" "), line_len))
     }
 
@@ -240,7 +244,7 @@ impl<'a> TextParser<'a> {
 
     /// Checks if text was read to the end.
     pub fn is_end(&self) -> bool {
-        self.cur.is_none()
+        self.cur.is_none() && matches!(self.last, Some(TextToken::End))
     }
 
     /// Skips whitespace characters except newline.
@@ -287,15 +291,24 @@ mod tests {
 
     #[test]
     fn is_end() {
+        let mut text = "end test  ".chars();
+        let mut parser = TextParser::new(&mut text);
+
+        assert_eq!(parser.next_line(5), Some(("end".into(), 3)));
+        assert_eq!(parser.last, Some(TextToken::text("test".into(), 4)));
+        assert!(!parser.is_end());
+
+        assert_eq!(parser.next_line(5), Some(("test".into(), 4)));
+        assert_eq!(parser.last, Some(TextToken::End));
+        assert!(parser.is_end());
+    }
+
+    #[test]
+    fn is_end_empty() {
         let mut input = "".chars();
-        let mut parser = TextParser::new(&mut input);
+        let parser = TextParser::new(&mut input);
 
         assert!(parser.is_end());
-
-        let mut input = "test".chars();
-        parser = TextParser::new(&mut input);
-
-        assert!(!parser.is_end());
     }
 
     #[test]

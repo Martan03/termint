@@ -6,31 +6,49 @@ use crate::{
     enums::{Color, Modifier, Wrap, RGB},
     geometry::{Direction, TextAlign, Vec2},
     style::Style,
-    text::Text,
+    text::{Text, TextParser},
 };
 
 use super::{widget::Widget, Element};
 
-/// Text with gradient foreground
+/// Widget for styling text with gradient foreground.
 ///
-/// ## Example usage:
+/// # Examples:
+/// You can render text using the Term like this:
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,
-/// #     geometry::Rect,
 /// #     widgets::{Grad, Widget},
+/// #     term::Term,
 /// # };
-/// // Creates text gradient widget
 /// let grad = Grad::new(
 ///     "This text will have a gradient foreground and word wrap",
 ///     (0, 220, 255),
 ///     (200, 60, 255),
 /// );
 ///
-/// // Renders the text using buffer
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
-/// grad.render(&mut buffer);
-/// buffer.render();
+/// // Renders the text using Term
+/// let mut term = Term::new();
+/// term.render(grad);
+/// ```
+///
+/// You can also print the text directly to the terminal, but text wrapping
+/// and ellipsis won't work and the gradient will be generated for the whole
+/// text, not per line:
+///
+/// ```rust
+/// # use termint::{
+/// #     buffer::Buffer,
+/// #     widgets::{Grad, Widget},
+/// #     term::Term,
+/// # };
+/// let grad = Grad::new(
+///     "Printing gradient also works",
+///     (0, 220, 255),
+///     (200, 60, 255),
+/// );
+///
+/// println!("{grad}");
 /// ```
 pub struct Grad {
     text: String,
@@ -45,7 +63,23 @@ pub struct Grad {
 }
 
 impl Grad {
-    /// Creates new [`Grad`] with given text and given gradient
+    /// Creates new [`Grad`] with given text and given gradient.
+    ///
+    /// - `start` is any type convertible to [`RGB`] and represents the start
+    /// color of the gradient.
+    /// - `end` is any type convertible to [`RGB`] and represents the end color
+    /// of the gradient.
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{enums::RGB, widgets::Grad};
+    ///
+    /// let grad = Grad::new("Hello, World!",
+    ///     RGB::new(0, 220, 255),
+    ///     RGB::from_hex(0xC83CFF)
+    /// );
+    /// let grad = Grad::new("Hello, Termint!", (0, 220, 255), 0xC83CFF);
+    /// ```
     pub fn new<T, R, S>(text: T, start: R, end: S) -> Self
     where
         T: Into<String>,
@@ -60,18 +94,35 @@ impl Grad {
             bg: None,
             modifier: Modifier::empty(),
             align: Default::default(),
-            wrap: Wrap::Word,
+            wrap: Default::default(),
             ellipsis: "...".to_string(),
         }
     }
 
-    /// Sets gradient direction of [`Grad`]
+    /// Sets text gradient direction.
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{geometry::Direction, widgets::Grad};
+    ///
+    /// let grad = Grad::new("direction", (0, 220, 255), 0xC83CFF)
+    ///     .direction(Direction::Vertical);
+    /// ```
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
     }
 
-    /// Sets background of [`Grad`] to given color
+    /// Sets background of the [`Grad`] to given color.
+    ///
+    /// - `bg` can be any type convertible to [`Color`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Grad, enums::Color};
+    ///
+    /// let grad = Grad::new("bg", (0, 220, 255), 0xC83CFF).bg(Color::White);
+    /// ```
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -80,38 +131,96 @@ impl Grad {
         self
     }
 
-    /// Sets [`Grad`] modifier to given modifiers
+    /// Sets [`Grad`] modifier to given modifiers.
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Grad, enums::Modifier, modifiers};
+    ///
+    /// let grad = Grad::new("modifier", (0, 220, 255), 0xC83CFF)
+    ///     .modifier(Modifier::ITALIC | Modifier::BOLD);
+    /// let grad = Grad::new("modifier", (0, 220, 255), 0xC83CFF)
+    ///     .modifier(modifiers!(BOLD, ITALIC));
+    /// ```
     pub fn modifier(mut self, modifier: u8) -> Self {
         self.modifier.clear();
         self.modifier.add(modifier);
         self
     }
 
-    /// Adds given modifier to current [`Grad`] modifiers
+    /// Adds given modifier to current [`Grad`] modifiers.
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Grad, enums::Modifier};
+    ///
+    /// let grad = Grad::new("add_modifier", (0, 220, 255), 0xC83CFF)
+    ///     .add_modifier(Modifier::ITALIC);
+    /// ```
     pub fn add_modifier(mut self, flag: u8) -> Self {
         self.modifier.add(flag);
         self
     }
 
-    /// Removes given modifier from the current [`Grad`] modifiers
+    /// Removes given modifier from the current [`Grad`] modifiers.
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Grad, enums::Modifier};
+    ///
+    /// let grad = Grad::new("remove_modifier", (0, 220, 255), 0xC83CFF)
+    ///     .remove_modifier(Modifier::ITALIC);
+    /// ```
     pub fn remove_modifier(mut self, flag: u8) -> Self {
         self.modifier.sub(flag);
         self
     }
 
-    /// Sets [`Grad`] text alignment
+    /// Sets text alignment of the [`Grad`].
+    ///
+    /// Default value is [`TextAlign::Left`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Grad, geometry::TextAlign};
+    ///
+    /// let grad = Grad::new("align", (0, 220, 255), 0xC83CFF)
+    ///     .align(TextAlign::Center);
+    /// ```
     pub fn align(mut self, align: TextAlign) -> Self {
         self.align = align;
         self
     }
 
-    /// Sets [`Wrap`] of [`Grad`] to given value
+    /// Sets text wrapping style of the [`Grad`].
+    ///
+    /// Default value is [`Wrap::Word`].
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::{widgets::Grad, enums::Wrap};
+    ///
+    /// let grad = Grad::new("wrap", (0, 220, 255), 0xC83CFF)
+    ///     .wrap(Wrap::Letter);
+    /// ```
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
         self
     }
 
-    /// Sets [`Grad`] ellipsis to given string
+    /// Sets ellipsis string of the [`Grad`] to use when text can't fit. It is
+    /// used to signal that text is overflown.
+    ///
+    /// Default value is "...". It can be any string.
+    ///
+    /// ### Examples
+    /// ```rust
+    /// use termint::widgets::Grad;
+    ///
+    /// // Overflown text will end with "~.~" sequence to signal overflow
+    /// let grad = Grad::new("ellipsis", (0, 220, 255), 0xC83CFF)
+    ///     .ellipsis("~.~");
+    /// ```
     pub fn ellipsis(mut self, ellipsis: &str) -> Self {
         self.ellipsis = ellipsis.to_string();
         self
@@ -120,26 +229,19 @@ impl Grad {
 
 impl Widget for Grad {
     fn render(&self, buffer: &mut Buffer) {
-        if buffer.width() == 0 || buffer.height() == 0 {
-            return;
-        }
-
-        match self.wrap {
-            Wrap::Letter => self.render_letter(buffer, 0),
-            Wrap::Word => self.render_word(buffer, 0),
-        };
+        _ = self.render_offset(buffer, 0, None);
     }
 
     fn height(&self, size: &Vec2) -> usize {
         match self.wrap {
-            Wrap::Letter => self.size_letter_wrap(size.x),
+            Wrap::Letter => self.height_letter_wrap(size),
             Wrap::Word => self.height_word_wrap(size),
         }
     }
 
     fn width(&self, size: &Vec2) -> usize {
         match self.wrap {
-            Wrap::Letter => self.size_letter_wrap(size.y),
+            Wrap::Letter => self.width_letter_wrap(size),
             Wrap::Word => self.width_word_wrap(size),
         }
     }
@@ -152,13 +254,15 @@ impl Text for Grad {
         offset: usize,
         wrap: Option<Wrap>,
     ) -> Vec2 {
-        if buffer.width() == 0 || buffer.height() == 0 {
-            return Vec2::new(0, 0);
+        if buffer.area() == 0 {
+            return Vec2::new(0, buffer.y());
         }
 
-        match wrap.unwrap_or(self.wrap) {
-            Wrap::Letter => self.render_letter(buffer, offset),
-            Wrap::Word => self.render_word(buffer, offset),
+        match self.direction {
+            Direction::Vertical => self.render_vertical(buffer, offset, wrap),
+            Direction::Horizontal => {
+                self.render_horizontal(buffer, offset, wrap)
+            }
         }
     }
 
@@ -198,210 +302,120 @@ impl fmt::Display for Grad {
 }
 
 impl Grad {
-    /// Renders [`Grad`] widget with word wrap
-    fn render_word(&self, buffer: &mut Buffer, offset: usize) -> Vec2 {
-        match self.direction {
-            Direction::Vertical => {
-                let height = min(
-                    self.height_word_wrap(buffer.size()) - 1,
-                    buffer.height(),
-                );
-                let step = self.get_step(height as i16);
-                self.render_words(
-                    &self.text,
-                    buffer,
-                    offset,
-                    (0, 0, 0),
-                    step,
-                    |t, b, p, r, s| self.render_ver_line(t, b, p, r, s),
-                )
-            }
-            Direction::Horizontal => {
-                let width = min(buffer.width(), self.text.len());
-                let step = self.get_step(width as i16);
-                self.render_words(
-                    &self.text,
-                    buffer,
-                    offset,
-                    step,
-                    (0, 0, 0),
-                    |t, b, p, r, s| self.render_hor_line(t, b, p, r, s),
-                )
-            }
-        }
-    }
-
-    /// Renders [`Grad`] widget with letter wrap
-    fn render_letter(&self, buffer: &mut Buffer, offset: usize) -> Vec2 {
-        match self.direction {
-            Direction::Vertical => {
-                let height = min(
-                    self.height_word_wrap(buffer.size()) - 1,
-                    buffer.height(),
-                );
-                let step = self.get_step(height as i16);
-                self.render_letters(
-                    &self.text,
-                    buffer,
-                    offset,
-                    (0, 0, 0),
-                    step,
-                    |t, b, p, r, s| self.render_ver_line(t, b, p, r, s),
-                )
-            }
-            Direction::Horizontal => {
-                let width = min(buffer.width(), self.text.len());
-                let step = self.get_step(width as i16);
-                self.render_letters(
-                    &self.text,
-                    buffer,
-                    offset,
-                    step,
-                    (0, 0, 0),
-                    |t, b, p, r, s| self.render_hor_line(t, b, p, r, s),
-                )
-            }
-        }
-    }
-
-    /// Renders given text with word wrap
-    fn render_words<F>(
+    fn render_vertical(
         &self,
-        text: &str,
         buffer: &mut Buffer,
-        mut offset: usize,
+        offset: usize,
+        wrap: Option<Wrap>,
+    ) -> Vec2 {
+        let height = min(
+            self.height(buffer.size()).saturating_sub(1),
+            buffer.height(),
+        );
+        let step = self.get_step(height as i16);
+        self._render(
+            buffer,
+            offset,
+            wrap,
+            (0, 0, 0),
+            step,
+            |b, t, l, p, r, s| self.render_ver_line(b, t, l, p, r, s),
+        )
+    }
+
+    fn render_horizontal(
+        &self,
+        buffer: &mut Buffer,
+        offset: usize,
+        wrap: Option<Wrap>,
+    ) -> Vec2 {
+        let width = if self.height(buffer.size()) <= 1 {
+            self.text.chars().count()
+        } else {
+            buffer.width()
+        };
+        let step = self.get_step(width as i16);
+        self._render(
+            buffer,
+            offset,
+            wrap,
+            step,
+            (0, 0, 0),
+            |b, t, l, p, r, s| self.render_hor_line(b, t, l, p, r, s),
+        )
+    }
+
+    fn _render<F>(
+        &self,
+        buffer: &mut Buffer,
+        offset: usize,
+        wrap: Option<Wrap>,
         step_x: (i16, i16, i16),
         step_y: (i16, i16, i16),
         render_line: F,
     ) -> Vec2
     where
-        F: Fn(String, &mut Buffer, &Vec2, (u8, u8, u8), (i16, i16, i16)),
+        F: Fn(
+            &mut Buffer,
+            String,
+            usize,
+            &Vec2,
+            (u8, u8, u8),
+            (i16, i16, i16),
+        ),
     {
-        let mut line = Vec::<&str>::new();
-        let mut coords = Vec2::new(offset, buffer.y());
+        let wrap = wrap.unwrap_or(self.wrap);
+        let mut chars = self.text.chars();
+        let mut parser = TextParser::new(&mut chars).wrap(wrap);
+
+        let mut pos = Vec2::new(buffer.x() + offset, buffer.y());
+        let mut fin_pos = pos;
 
         let mut rgb = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        if self.text.len() + offset >= buffer.width() {
+        if self.text.chars().count() + offset >= buffer.width() {
             for _ in 0..offset {
                 rgb = self.add_step(rgb, step_x);
             }
         }
 
-        for word in text.split_whitespace() {
-            if coords.x + word.len() + !line.is_empty() as usize
-                > buffer.width()
-            {
-                if coords.y + 1 >= buffer.y() + buffer.height()
-                    || word.len() > buffer.width()
-                {
-                    let mut line_str = line.join(" ");
-                    let sum = coords.x + self.ellipsis.len();
-                    if sum + offset >= buffer.width() {
-                        let end = buffer
-                            .width()
-                            .saturating_sub(self.ellipsis.len() + offset);
-                        line_str = line_str[..end].to_string();
-                    }
+        let right_end = buffer.x() + buffer.width();
+        while pos.y <= buffer.bottom() {
+            let line_len = right_end.saturating_sub(pos.x);
+            let Some((mut text, mut len)) = parser.next_line(line_len) else {
+                break;
+            };
 
-                    line_str.push_str(&self.ellipsis);
-                    coords.x = line.len();
-                    render_line(
-                        line_str,
-                        buffer,
-                        &Vec2::new(buffer.x() + offset, coords.y),
-                        rgb,
-                        step_x,
-                    );
-                    return coords;
+            if pos.y >= buffer.bottom() && !parser.is_end() {
+                len += self.ellipsis.len();
+                if len > buffer.width() {
+                    len = buffer.width();
+                    let end =
+                        buffer.width().saturating_sub(self.ellipsis.len());
+                    text = text[..end].to_string();
                 }
-
-                render_line(
-                    line.join(" "),
-                    buffer,
-                    &Vec2::new(buffer.x() + offset, coords.y),
-                    rgb,
-                    step_x,
-                );
-                offset = 0;
-                (coords.x, coords.y) = (0, coords.y + 1);
-                rgb = self.add_step(rgb, step_y);
-                line.clear();
-            }
-            coords.x += word.len() + !line.is_empty() as usize;
-            line.push(word);
-        }
-
-        if !line.is_empty() {
-            render_line(
-                line.join(" "),
-                buffer,
-                &Vec2::new(buffer.x() + offset, coords.y),
-                rgb,
-                step_x,
-            );
-        }
-
-        coords
-    }
-
-    /// Renders given text with letter wrap
-    fn render_letters<F>(
-        &self,
-        text: &str,
-        buffer: &mut Buffer,
-        offset: usize,
-        step_x: (i16, i16, i16),
-        step_y: (i16, i16, i16),
-        render_line: F,
-    ) -> Vec2
-    where
-        F: Fn(String, &mut Buffer, &Vec2, (u8, u8, u8), (i16, i16, i16)),
-    {
-        let mut chars = text.chars().peekable();
-        let mut coords = Vec2::new(offset, buffer.y());
-        let mut rgb = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        for _ in 0..offset {
-            rgb = self.add_step(rgb, step_x);
-        }
-
-        let mut line = String::new();
-        for _ in 0..buffer.height() {
-            if chars.peek().is_none() {
-                coords.y -= 1;
-                return coords;
+                text.push_str(&self.ellipsis);
             }
 
-            line = chars.by_ref().take(buffer.width()).collect();
-            coords.x = line.len();
-            let pos = Vec2::new(buffer.x(), coords.y);
-            render_line(line.clone(), buffer, &pos, rgb, step_x);
-
-            coords.y += 1;
+            render_line(buffer, text, len, &pos, rgb, step_x);
+            (fin_pos.x, fin_pos.y) =
+                ((pos.x + len).saturating_sub(buffer.x()), pos.y);
+            (pos.x, pos.y) = (buffer.x(), pos.y + 1);
             rgb = self.add_step(rgb, step_y);
         }
-
-        coords.y -= 1;
-        if self.text.len() > buffer.area() {
-            let end = buffer.width().saturating_sub(self.ellipsis.len());
-            line = line[..end].to_string();
-            line.push_str(&self.ellipsis);
-
-            let pos = Vec2::new(buffer.x(), coords.y);
-            render_line(line, buffer, &pos, rgb, step_x);
-        }
-        coords
+        fin_pos
     }
 
     /// Renders line with horizontal gradient
     fn render_hor_line(
         &self,
-        line: String,
         buffer: &mut Buffer,
+        line: String,
+        len: usize,
         pos: &Vec2,
         (mut r, mut g, mut b): (u8, u8, u8),
         step: (i16, i16, i16),
     ) {
-        let offset = self.get_align_offset(buffer, line.len());
+        let offset = self.get_align_offset(buffer, len);
         for _ in 0..offset {
             (r, g, b) = self.add_step((r, g, b), step);
         }
@@ -425,13 +439,14 @@ impl Grad {
     /// Renders line with vertical gradient
     fn render_ver_line(
         &self,
-        line: String,
         buffer: &mut Buffer,
+        line: String,
+        len: usize,
         pos: &Vec2,
         (r, g, b): (u8, u8, u8),
         _step: (i16, i16, i16),
     ) {
-        let offset = self.get_align_offset(buffer, line.len());
+        let offset = self.get_align_offset(buffer, len);
         let style = Style::new().fg(Color::Rgb(r, g, b)).bg(self.bg);
         buffer.set_str_styled(line, &Vec2::new(pos.x + offset, pos.y), style);
     }
@@ -469,27 +484,23 @@ impl Grad {
 
     /// Gets height of the [`Grad`] when using word wrap
     fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut coords = Vec2::new(0, 0);
+        let mut chars = self.text.chars();
+        let mut parser = TextParser::new(&mut chars);
 
-        let words: Vec<&str> = self.text.split_whitespace().collect();
-        for word in words {
-            let len = word.len();
-            if coords.x + len + 1 > size.x {
-                coords.y += 1;
-                coords.x = 0;
+        let mut pos = Vec2::new(0, 0);
+        loop {
+            if parser.next_line(size.x).is_none() {
+                break;
             }
-
-            if coords.x != 0 {
-                coords.x += 1;
-            }
-            coords.x += len;
+            pos.y += 1;
         }
-        coords.y + 1
+        pos.y
     }
 
     /// Gets width of the [`Grad`] when using word wrap
     fn width_word_wrap(&self, size: &Vec2) -> usize {
-        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
+        let mut guess =
+            Vec2::new(self.size_letter_wrap(size.y).saturating_sub(1), 0);
 
         while self.height_word_wrap(&guess) > size.y {
             guess.x += 1;
@@ -497,9 +508,28 @@ impl Grad {
         guess.x
     }
 
+    /// Gets height of the [`Grad`] when using letter wrap
+    fn height_letter_wrap(&self, size: &Vec2) -> usize {
+        self.text
+            .lines()
+            .map(|l| {
+                (l.chars().count() as f32 / size.x as f32).ceil() as usize
+            })
+            .sum()
+    }
+
+    /// Gets width of the [`Grad`] when using letter wrap
+    fn width_letter_wrap(&self, size: &Vec2) -> usize {
+        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
+        while self.height_letter_wrap(&guess) > size.y {
+            guess.x += 1;
+        }
+        guess.x
+    }
+
     /// Gets size of the [`Grad`] when using letter wrap
     fn size_letter_wrap(&self, size: usize) -> usize {
-        (self.text.len() as f32 / size as f32).ceil() as usize
+        (self.text.chars().count() as f32 / size as f32).ceil() as usize
     }
 }
 
