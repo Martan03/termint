@@ -1,3 +1,5 @@
+use termal::raw::term_size;
+
 use crate::{
     buffer::Buffer,
     geometry::{Padding, Rect, Vec2},
@@ -127,6 +129,6 @@ impl Term {
 
     /// Gets size of the terminal
     pub fn get_size() -> Option<(usize, usize)> {
-        term_size::dimensions()
+        term_size().ok().map(|s| (s.char_width, s.char_height))
     }
 }
