@@ -14,7 +14,7 @@ exclude = ["src/main.rs", ".github"]
 
 [dependencies]
 serde = { version = "1.0.218", features = ["std", "derive"], optional = true }
-termal = { version = "2.0.0", features = ["raw"] }
+termal = { version = "2.1.1", features = ["raw"] }
 
 [dev-dependencies]
 criterion = "0.5.1"

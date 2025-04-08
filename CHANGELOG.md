@@ -8,6 +8,7 @@
 ### Changes:
 - Rename `StrSpanExtension` to `ToSpan`
 - Rework text rendering - add generic text parser
+- Use `termal` library for getting terminal size and some other useful things
 
 ### Fixes:
 - List widget width function prioritizes expanding list items to the width
