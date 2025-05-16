@@ -1,6 +1,10 @@
 use core::fmt;
 
-use crate::{buffer::Buffer, enums::Wrap, geometry::Vec2};
+use crate::{
+    buffer::Buffer,
+    enums::Wrap,
+    geometry::{Rect, Vec2},
+};
 
 /// Trait for text widgets to implement.
 ///
@@ -26,6 +30,7 @@ pub trait Text {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
+        rect: Rect,
         offset: usize,
         wrap: Option<Wrap>,
     ) -> Vec2;

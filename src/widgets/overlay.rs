@@ -1,4 +1,7 @@
-use crate::{buffer::Buffer, geometry::Vec2};
+use crate::{
+    buffer::Buffer,
+    geometry::{Rect, Vec2},
+};
 
 use super::{Element, Widget};
 
@@ -44,8 +47,8 @@ impl Overlay {
 }
 
 impl Widget for Overlay {
-    fn render(&self, buffer: &mut Buffer) {
-        self.children.iter().for_each(|c| c.render(buffer));
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        self.children.iter().for_each(|c| c.render(buffer, rect));
     }
 
     fn height(&self, size: &Vec2) -> usize {

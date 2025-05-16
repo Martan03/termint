@@ -93,33 +93,33 @@ impl Table {
 }
 
 impl Widget for Table {
-    fn render(&self, buffer: &mut Buffer) {
-        let mut pos = *buffer.pos();
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        let mut pos = *rect.pos();
         let header_height = self.header.is_some() as usize
             + self.header_separator.is_some() as usize;
         pos.y += header_height;
 
         let mut size = Vec2::new(
-            buffer.width(),
-            buffer.height().saturating_sub(header_height),
+            rect.width(),
+            rect.height().saturating_sub(header_height),
         );
 
         let mut widths = self.calc_widths(&size);
         if !self.fits(&size, &widths) {
             size.x = size.x.saturating_sub(1);
             widths = self.calc_widths(&size);
-            self.render_scrollbar(buffer, header_height);
+            self.render_scrollbar(buffer, &rect, header_height);
         }
 
-        self.render_header(buffer, &widths);
+        self.render_header(buffer, &rect, &widths);
 
         for i in self.state.borrow().offset..self.rows.len() {
-            if buffer.bottom() < pos.y {
+            if rect.bottom() < pos.y {
                 break;
             }
 
             let row_height =
-                Self::row_height(buffer.height(), &self.rows[i], &widths);
+                Self::row_height(rect.height(), &self.rows[i], &widths);
             if row_height == 0 {
                 continue;
             }
@@ -127,13 +127,12 @@ impl Widget for Table {
             let mut size = Vec2::new(0, row_height);
             for (j, child) in self.rows[i].iter().enumerate() {
                 size.x = widths.get(j).copied().unwrap_or_default();
-                let mut cbuffer = buffer.subset(Rect::from_coords(pos, size));
-                child.render(&mut cbuffer);
-                buffer.merge(cbuffer);
+                let crect = Rect::from_coords(pos, size);
+                child.render(buffer, crect);
                 pos.x += size.x + self.column_spacing;
             }
 
-            pos.x = buffer.x();
+            pos.x = rect.x();
             pos.y += row_height;
         }
     }
@@ -169,8 +168,13 @@ impl Widget for Table {
 
 impl Table {
     /// Renders [`Table`] scrollbar
-    fn render_scrollbar(&self, buffer: &mut Buffer, offset: usize) {
-        let height = buffer.height().saturating_sub(offset);
+    fn render_scrollbar(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        offset: usize,
+    ) {
+        let height = rect.height().saturating_sub(offset);
         let rat = self.rows.len() as f32 / height as f32;
         let thumb_size =
             std::cmp::min((height as f32 / rat).floor() as usize, height);
@@ -179,15 +183,14 @@ impl Table {
             height - thumb_size,
         );
 
-        let mut bar_pos = Vec2::new(buffer.right(), buffer.y() + offset);
+        let mut bar_pos = Vec2::new(rect.right(), rect.y() + offset);
         for _ in 0..height {
             buffer.set_val('│', &bar_pos);
             // buffer.set_fg(self.scrollbar_fg, &bar_pos);
             bar_pos.y += 1;
         }
 
-        bar_pos =
-            Vec2::new(buffer.right(), buffer.y() + offset + thumb_offset);
+        bar_pos = Vec2::new(rect.right(), rect.y() + offset + thumb_offset);
         for _ in 0..thumb_size {
             buffer.set_val('┃', &bar_pos);
             // buffer.set_fg(self.thumb_fg, &bar_pos);
@@ -231,31 +234,32 @@ impl Table {
         calc_widths
     }
 
-    fn render_header(&self, buffer: &mut Buffer, widths: &[usize]) {
+    fn render_header(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        widths: &[usize],
+    ) {
         let Some(header) = &self.header else {
             return;
         };
 
-        let mut pos = *buffer.pos();
+        let mut pos = *rect.pos();
         for (i, child) in header.iter().enumerate() {
             let width = widths.get(i).copied().unwrap_or_default();
             if width == 0 {
                 continue;
             }
 
-            let mut cbuffer =
-                buffer.subset(Rect::from_coords(pos, Vec2::new(width, 1)));
-            child.render_offset(&mut cbuffer, 0, None);
-            buffer.merge(cbuffer);
+            let crect = Rect::from_coords(pos, Vec2::new(width, 1));
+            child.render_offset(buffer, crect, 0, None);
             pos.x += width + self.column_spacing;
         }
 
         if let Some(separator) = &self.header_separator {
-            let line = separator
-                .get(Border::TOP)
-                .to_string()
-                .repeat(buffer.width());
-            buffer.set_str(line, &Vec2::new(buffer.x(), buffer.y() + 1));
+            let line =
+                separator.get(Border::TOP).to_string().repeat(rect.width());
+            buffer.set_str(line, &Vec2::new(rect.x(), rect.y() + 1));
         }
     }
 

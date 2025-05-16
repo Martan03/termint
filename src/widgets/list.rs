@@ -181,19 +181,19 @@ impl ListState {
 }
 
 impl Widget for List {
-    fn render(&self, buffer: &mut Buffer) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
         if self.auto_scroll {
-            self.scroll_offset(buffer.size());
+            self.scroll_offset(rect.size());
         }
 
         let mut text_pos =
-            Vec2::new(buffer.x() + self.highlight.len(), buffer.y());
+            Vec2::new(rect.x() + self.highlight.len(), rect.y());
         let mut text_size =
-            Vec2::new(buffer.width() - self.highlight.len(), buffer.height());
+            Vec2::new(rect.width() - self.highlight.len(), rect.height());
 
-        if !self.fits(buffer.size()) {
+        if !self.fits(rect.size()) {
             text_size.x -= 1;
-            self.render_scrollbar(buffer);
+            self.render_scrollbar(buffer, &rect);
         }
 
         let selected = self.state.borrow().selected;
@@ -202,24 +202,23 @@ impl Widget for List {
             if Some(i) == selected {
                 buffer.set_str_styled(
                     &self.highlight,
-                    &Vec2::new(buffer.x(), text_pos.y),
+                    &Vec2::new(rect.x(), text_pos.y),
                     self.highlight_style,
                 );
                 span = self.items[i].style(self.sel_style);
             }
 
-            let mut ibuffer =
-                buffer.subset(Rect::from_coords(text_pos, text_size));
-            let res_pos = span.render_offset(&mut ibuffer, 0, None);
-            buffer.merge(ibuffer);
+            let irect = Rect::from_coords(text_pos, text_size);
+            let res_pos = span.render_offset(buffer, irect, 0, None);
 
             text_size.y = text_size.y.saturating_sub(res_pos.y - text_pos.y);
             text_pos.y = res_pos.y + 1;
 
-            if buffer.y() + buffer.height() <= text_pos.y {
+            if rect.y() + rect.height() <= text_pos.y {
                 break;
             }
-            text_size.y = buffer.y() + buffer.height() - text_pos.y;
+            text_size.y = rect.y() + rect
+            .height() - text_pos.y;
         }
     }
 
@@ -242,26 +241,24 @@ impl Widget for List {
 
 impl List {
     /// Renders [`List`] scrollbar
-    fn render_scrollbar(&self, buffer: &mut Buffer) {
-        let rat = self.items.len() as f32 / buffer.height() as f32;
-        let thumb_size = min(
-            (buffer.height() as f32 / rat).floor() as usize,
-            buffer.height(),
-        );
+    fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
+        let rat = self.items.len() as f32 / rect.height() as f32;
+        let thumb_size =
+            min((rect.height() as f32 / rat).floor() as usize, rect.height());
         let thumb_offset = min(
             (self.state.borrow().offset as f32 / rat) as usize,
-            buffer.height() - thumb_size,
+            rect.height() - thumb_size,
         );
 
-        let x = (buffer.x() + buffer.width()).saturating_sub(1);
-        let mut bar_pos = Vec2::new(x, buffer.y());
-        for _ in 0..buffer.height() {
+        let x = (rect.x() + rect.width()).saturating_sub(1);
+        let mut bar_pos = Vec2::new(x, rect.y());
+        for _ in 0..rect.height() {
             buffer.set_val('│', &bar_pos);
             buffer.set_fg(self.scrollbar_fg, &bar_pos);
             bar_pos.y += 1;
         }
 
-        bar_pos = Vec2::new(x, buffer.y() + thumb_offset);
+        bar_pos = Vec2::new(x, rect.y() + thumb_offset);
         for _ in 0..thumb_size {
             buffer.set_val('┃', &bar_pos);
             buffer.set_fg(self.thumb_fg, &bar_pos);

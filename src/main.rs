@@ -55,9 +55,9 @@ fn test_block() {
     block.push(block2, 0..);
     block.push(block3, Constraint::Fill(1));
 
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
-    block.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
+    let mut buffer = Buffer::empty(rect);
+    block.render(&mut buffer, rect);
     buffer.render();
 
     // println!("\x1b[7B");
@@ -84,9 +84,9 @@ fn test_layout() {
     block2.push(span2, Constraint::Percent(100));
     main.push(block2, Constraint::Percent(50));
 
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8)));
-    main.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8));
+    let mut buffer = Buffer::empty(rect);
+    main.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -101,9 +101,9 @@ fn test_grad() {
     .align(TextAlign::Center);
     println!("\x1b[2J");
 
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(10, 5)));
-    grad.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(10, 5));
+    let mut buffer = Buffer::empty(rect);
+    grad.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -144,9 +144,9 @@ fn cool_example() {
 
     main.push(fill, Constraint::Fill(1));
 
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
-    main.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
+    let mut buffer = Buffer::empty(rect);
+    main.render(&mut buffer, rect);
 
     buffer.render();
 }
@@ -170,9 +170,9 @@ fn test_paragraph() {
     main.push(p, Constraint::Fill(1));
     main.push(block, Constraint::Fill(1));
 
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8)));
-    main.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8));
+    let mut buffer = Buffer::empty(rect);
+    main.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -199,9 +199,9 @@ fn readme_example() {
     main.push(block2, Constraint::Fill(1));
 
     // Renders the main block which renders all the children
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
-    main.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
+    let mut buffer = Buffer::empty(rect);
+    main.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -238,9 +238,9 @@ fn test_layout_centering() {
 
     let mut main = Block::vertical().center();
     main.push(block, Constraint::Length(4));
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 8)));
-    main.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 8));
+    let mut buffer = Buffer::empty(rect);
+    main.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -254,9 +254,9 @@ fn test_bg_grad() {
     layout.push(Block::vertical(), Constraint::Length(6));
     grad.push(layout, Constraint::Length(3));
 
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 9)));
-    grad.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(20, 9));
+    let mut buffer = Buffer::empty(rect);
+    grad.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -286,8 +286,9 @@ fn grid_test() {
     grid.push(Block::vertical(), 2, 1);
     grid.push("Grid", 1, 1);
 
-    let mut buffer = Buffer::empty(Rect::new(1, 1, 15, 6));
-    grid.render(&mut buffer);
+    let rect = Rect::new(1, 1, 15, 6);
+    let mut buffer = Buffer::empty(rect);
+    grid.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -312,9 +313,9 @@ fn diff_render_test() {
     main.push(block2, Constraint::Fill(1));
 
     // Renders the main block which renders all the children
-    let mut dbuffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
-    main.render(&mut dbuffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
+    let mut dbuffer = Buffer::empty(rect);
+    main.render(&mut dbuffer, rect);
     // dbuffer.render();
 
     let mut main = Block::horizontal()
@@ -336,9 +337,9 @@ fn diff_render_test() {
     main.push(block2, Constraint::Fill(1));
 
     // Renders the main block which renders all the children
-    let mut buffer =
-        Buffer::empty(Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9)));
-    main.render(&mut buffer);
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
+    let mut buffer = Buffer::empty(rect);
+    main.render(&mut buffer, rect);
     buffer.render_diff(&dbuffer);
 }
 
@@ -348,13 +349,15 @@ fn merge_test() {
 
     let mut block1 = Block::vertical();
     block1.push("This will be covered", Constraint::Min(0));
-    let mut buffer = Buffer::empty(Rect::new(1, 1, 8, 5));
-    block1.render(&mut buffer);
+    let rect = Rect::new(1, 1, 8, 5);
+    let mut buffer = Buffer::empty(rect);
+    block1.render(&mut buffer, rect);
 
     let mut block2 = Block::vertical();
     block2.push("This will go above", Constraint::Min(0));
-    let mut sbuffer = Buffer::empty(Rect::new(4, 3, 7, 5));
-    block2.render(&mut sbuffer);
+    let rect = Rect::new(4, 3, 7, 5);
+    let mut sbuffer = Buffer::empty(rect);
+    block2.render(&mut sbuffer, rect);
 
     buffer.merge(sbuffer);
     buffer.render();
@@ -376,8 +379,9 @@ fn scrollbar_test() {
     grid.push(vertical, 1, 0);
     grid.push(horizontal, 0, 1);
 
-    let mut buffer = Buffer::empty(Rect::new(1, 1, 12, 7));
-    grid.render(&mut buffer);
+    let rect = Rect::new(1, 1, 12, 7);
+    let mut buffer = Buffer::empty(rect);
+    grid.render(&mut buffer, rect);
     buffer.render();
 }
 
@@ -392,8 +396,9 @@ fn scrollable_test() {
     // Creates scrollable widget with vertical scrolling
     let scrollable = Scrollable::vertical(span, state);
     // Renders using the buffer
-    let mut buffer = Buffer::empty(Rect::new(1, 1, 9, 5));
-    scrollable.render(&mut buffer);
+    let rect = Rect::new(1, 1, 9, 5);
+    let mut buffer = Buffer::empty(rect);
+    scrollable.render(&mut buffer, rect);
     buffer.render();
 
     let mut layout = Layout::horizontal();
@@ -413,8 +418,9 @@ fn scrollable_test() {
     //     vstate.clone(),
     // );
 
-    let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 5));
-    scrollable.render(&mut buffer);
+    let rect = Rect::new(1, 1, 10, 5);
+    let mut buffer = Buffer::empty(rect);
+    scrollable.render(&mut buffer, rect);
     buffer.render();
 }
 

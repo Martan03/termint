@@ -79,12 +79,14 @@ impl<W> Widget for Scrollable<W>
 where
     W: Widget,
 {
-    fn render(&self, buffer: &mut Buffer) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
         match (self.vertical.as_ref(), self.horizontal.as_ref()) {
-            (None, None) => self.child.render(buffer),
-            (None, Some(hor)) => self.hor_render(buffer, hor),
-            (Some(ver), None) => self.ver_render(buffer, ver),
-            (Some(ver), Some(hor)) => self.both_render(buffer, ver, hor),
+            (None, None) => self.child.render(buffer, rect),
+            (None, Some(hor)) => self.hor_render(buffer, &rect, hor),
+            (Some(ver), None) => self.ver_render(buffer, &rect, ver),
+            (Some(ver), Some(hor)) => {
+                self.both_render(buffer, &rect, ver, hor)
+            }
         }
     }
 
@@ -138,78 +140,89 @@ where
     W: Widget,
 {
     /// Renders vertical scrollable
-    fn ver_render(&self, buffer: &mut Buffer, vertical: &Scrollbar) {
+    fn ver_render(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        vertical: &Scrollbar,
+    ) {
         let mut size =
-            Vec2::new(buffer.width().saturating_sub(1), buffer.height());
+            Vec2::new(rect.width().saturating_sub(1), rect.height());
         size.y = self.child.height(&size);
 
-        let rect = Rect::new(buffer.right(), buffer.y(), 1, buffer.height());
-        Self::scrollbar(buffer, vertical, rect, size.y);
+        let srect = Rect::new(rect.right(), rect.y(), 1, rect.height());
+        Self::scrollbar(buffer, vertical, srect, size.y);
 
-        let rect = Rect::new(
-            buffer.x(),
-            buffer.y() + vertical.get_state().offset,
+        let crect = Rect::new(
+            rect.x(),
+            rect.y() + vertical.get_state().offset,
             size.x,
-            buffer.height(),
+            rect.height(),
         );
-        self.render_content(buffer, size, rect);
+        self.render_content(buffer, size, crect);
     }
 
     /// Renders horizontal scrollable
-    fn hor_render(&self, buffer: &mut Buffer, horizontal: &Scrollbar) {
+    fn hor_render(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        horizontal: &Scrollbar,
+    ) {
         let mut size =
-            Vec2::new(buffer.width(), buffer.height().saturating_sub(1));
+            Vec2::new(rect.width(), rect.height().saturating_sub(1));
         size.x = self.child.width(&size);
 
-        let rect = Rect::new(buffer.x(), buffer.bottom(), buffer.width(), 1);
-        Self::scrollbar(buffer, horizontal, rect, size.x);
+        let srect = Rect::new(rect.x(), rect.bottom(), rect.width(), 1);
+        Self::scrollbar(buffer, horizontal, srect, size.x);
 
-        let rect = Rect::new(
-            buffer.x() + horizontal.get_state().offset,
-            buffer.y(),
-            buffer.width(),
+        let crect = Rect::new(
+            rect.x() + horizontal.get_state().offset,
+            rect.y(),
+            rect.width(),
             size.y,
         );
-        self.render_content(buffer, size, rect);
+        self.render_content(buffer, size, crect);
     }
 
     /// Renders the both directions scrollable
     fn both_render(
         &self,
         buffer: &mut Buffer,
+        rect: &Rect,
         vertical: &Scrollbar,
         horizontal: &Scrollbar,
     ) {
-        let mut size = buffer.size().saturating_sub((1, 1));
+        let mut size = rect.size().saturating_sub((1, 1));
         size.y = self.child.height(&size);
         size.x = self.child.width(&size);
 
-        let mut vis = buffer.height().saturating_sub(1);
-        let mut rect = Rect::new(buffer.right(), buffer.y(), 1, vis);
+        let mut vis = rect.height().saturating_sub(1);
+        let mut rect = Rect::new(rect.right(), rect.y(), 1, vis);
         Self::scrollbar(buffer, vertical, rect, size.y);
 
-        vis = buffer.width().saturating_sub(1);
-        rect = Rect::new(buffer.x(), buffer.bottom(), vis, 1);
+        vis = rect.width().saturating_sub(1);
+        rect = Rect::new(rect.x(), rect.bottom(), vis, 1);
         Self::scrollbar(buffer, horizontal, rect, size.x);
 
         let rect = Rect::new(
-            buffer.x() + horizontal.get_state().offset,
-            buffer.y() + vertical.get_state().offset,
-            buffer.width().saturating_sub(1),
-            buffer.height().saturating_sub(1),
+            rect.x() + horizontal.get_state().offset,
+            rect.y() + vertical.get_state().offset,
+            rect.width().saturating_sub(1),
+            rect.height().saturating_sub(1),
         );
         self.render_content(buffer, size, rect);
     }
 
     /// Renders the scrollable content
     fn render_content(&self, buffer: &mut Buffer, size: Vec2, mut rect: Rect) {
-        let mut cbuffer =
-            Buffer::empty(Rect::from_coords(*buffer.pos(), size));
-        self.child.render(&mut cbuffer);
+        let crect = Rect::from_coords(*buffer.pos(), size);
+        let mut cbuffer = Buffer::empty(crect);
+        self.child.render(&mut cbuffer, crect);
 
         rect = rect.intersection(cbuffer.rect());
         let mut cutout = cbuffer.subset(rect);
-        cutout.move_to(*buffer.pos());
+        cutout.move_to(*rect.pos());
         buffer.merge(cutout);
     }
 
@@ -220,10 +233,8 @@ where
         rect: Rect,
         size: usize,
     ) {
-        let mut sbuffer = buffer.subset(rect);
         scroll.content_len(size);
-        scroll.render(&mut sbuffer);
-        buffer.merge(sbuffer);
+        scroll.render(buffer, rect);
     }
 }
 

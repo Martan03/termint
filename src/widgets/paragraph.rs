@@ -105,31 +105,30 @@ impl Paragraph {
 }
 
 impl Widget for Paragraph {
-    fn render(&self, buffer: &mut Buffer) {
-        let mut pos = Vec2::new(buffer.x(), buffer.y());
-        let mut size = Vec2::new(buffer.width(), buffer.height());
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        let mut pos = Vec2::new(rect.x(), rect.y());
+        let mut size = Vec2::new(rect.width(), rect.height());
         let mut offset = 0;
 
         for child in self.children.iter() {
-            let mut cbuffer = buffer.subset(Rect::from_coords(pos, size));
+            let crect = Rect::from_coords(pos, size);
             let end =
-                child.render_offset(&mut cbuffer, offset, Some(self.wrap));
-            buffer.merge(cbuffer);
+                child.render_offset(buffer, crect, offset, Some(self.wrap));
 
             size.y = size.y.saturating_sub(end.y - pos.y);
             pos.y = end.y;
             offset = end.x + self.separator.len();
 
-            if end.y >= buffer.y() + buffer.height()
-                && end.x >= buffer.x() + buffer.width()
+            if end.y >= rect.y() + rect.height()
+                && end.x >= rect.x() + rect.width()
             {
                 break;
             }
 
-            if offset + self.separator.len() <= buffer.width() && offset != 0 {
+            if offset + self.separator.len() <= rect.width() && offset != 0 {
                 buffer.set_str(
                     &self.separator,
-                    &Vec2::new(buffer.x() + offset - 1, pos.y),
+                    &Vec2::new(rect.x() + offset - 1, pos.y),
                 );
             }
         }

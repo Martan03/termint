@@ -148,23 +148,18 @@ impl Layout {
 
 impl Widget for Layout {
     /// Renders [`Layout`] and its children inside of it
-    fn render(&self, buffer: &mut Buffer) {
-        let rect = buffer.rect().inner(self.padding);
-        if rect.width() == 0 || rect.height() == 0 {
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        self.render_base_style(buffer, &rect);
+
+        let rect = rect.inner(self.padding);
+        if rect.is_empty() || self.children.is_empty() {
             return;
         }
 
-        self.render_base_style(buffer);
-        if self.children.is_empty() {
-            return;
-        }
-
-        let mut cbuffer = buffer.subset(rect);
         match self.direction {
-            Direction::Vertical => self.ver_render(&mut cbuffer, rect),
-            Direction::Horizontal => self.hor_render(&mut cbuffer, rect),
+            Direction::Vertical => self.ver_render(buffer, rect),
+            Direction::Horizontal => self.hor_render(buffer, rect),
         }
-        buffer.merge(cbuffer);
     }
 
     /// Reverted to old implementation for now, which should work worse,
@@ -220,12 +215,9 @@ impl Layout {
         let (sizes, mut rect) = self.ver_sizes(rect);
         for (i, s) in sizes.iter().enumerate() {
             let csize = min(*s, rect.height());
-            let mut cbuffer = buffer.subset(Rect::from_coords(
-                *rect.pos(),
-                Vec2::new(rect.width(), csize),
-            ));
-            self.children[i].child.render(&mut cbuffer);
-            buffer.merge(cbuffer);
+            let crect =
+                Rect::from_coords(*rect.pos(), Vec2::new(rect.width(), csize));
+            self.children[i].child.render(buffer, crect);
             rect = rect.inner(Padding::top(csize));
         }
     }
@@ -235,12 +227,11 @@ impl Layout {
         let (sizes, mut rect) = self.hor_sizes(rect);
         for (i, s) in sizes.iter().enumerate() {
             let csize = min(*s, rect.width());
-            let mut cbuffer = buffer.subset(Rect::from_coords(
+            let crect = Rect::from_coords(
                 *rect.pos(),
                 Vec2::new(csize, rect.height()),
-            ));
-            self.children[i].child.render(&mut cbuffer);
-            buffer.merge(cbuffer);
+            );
+            self.children[i].child.render(buffer, crect);
             rect = rect.inner(Padding::left(csize));
         }
     }
@@ -325,8 +316,8 @@ impl Layout {
     }
 
     /// Renders [`Layout`] base style
-    fn render_base_style(&self, buffer: &mut Buffer) {
-        for pos in buffer.rect().into_iter() {
+    fn render_base_style(&self, buffer: &mut Buffer, rect: &Rect) {
+        for pos in rect.into_iter() {
             buffer.set_style(self.style, &pos);
             if self.style.bg.is_some() {
                 buffer.set_val(' ', &pos);
