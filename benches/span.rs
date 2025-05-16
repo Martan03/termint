@@ -6,7 +6,8 @@ use termint::{
 };
 
 fn benchmark_span(c: &mut Criterion) {
-    let buffer = Buffer::empty(Rect::new(1, 1, 100, 100));
+    let rect = Rect::new(1, 1, 100, 100);
+    let buffer = Buffer::empty(rect);
     let lorem = "Lorem ipsum odor amet, consectetuer adipiscing elit. Fames pretium felis ornare class accumsan. Orci molestie morbi suspendisse pellentesque magna aptent mus dignissim. Posuere vestibulum conubia luctus purus pharetra mattis ultricies. Auctor nibh tellus lectus sodales, nisi est facilisi ultrices. Maecenas sodales pretium dis aptent felis. Fames at habitasse natoque consectetur per aenean. Suscipit accumsan nascetur blandit ad urna. Elit senectus aenean eros; vestibulum libero euismod. Torquent sapien sociosqu adipiscing gravida, rutrum mi.
 Habitasse curabitur curae sollicitudin ullamcorper aliquet bibendum blandit. Nibh velit sodales porttitor mus sodales hac montes potenti. Arcu commodo risus massa luctus neque. Condimentum nullam dictum fermentum pharetra eros luctus pharetra. Rutrum tempus lobortis nam senectus ullamcorper. Ultrices odio ad etiam sollicitudin proin ultrices metus. Finibus nisi quam inceptos fames vehicula iaculis molestie nisl. Nisl parturient cubilia class habitant fringilla sollicitudin; laoreet curae dignissim. Orci quisque dolor dignissim enim sit aliquet elementum.
 Ullamcorper nunc aptent id dapibus luctus. Turpis et nullam aliquet montes accumsan volutpat. Senectus massa pellentesque maximus suspendisse urna neque nulla nascetur. Porta primis porttitor enim consectetur accumsan montes. Commodo cubilia sodales gravida finibus commodo conubia. Rhoncus at nullam dis ultricies commodo, himenaeos conubia dictum. Nibh bibendum odio sodales diam nunc!
@@ -30,7 +31,9 @@ Nostra quisque tellus orci natoque malesuada. Sed feugiat cubilia sed consequat 
         .to_span();
 
     c.bench_function("span_render", |b| {
-        b.iter(|| lorem.render(black_box(&mut buffer.clone())));
+        b.iter(|| {
+            lorem.render(black_box(&mut buffer.clone()), black_box(rect))
+        });
     });
 }
 

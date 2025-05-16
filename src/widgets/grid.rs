@@ -101,22 +101,21 @@ impl Grid {
 }
 
 impl Widget for Grid {
-    fn render(&self, buffer: &mut Buffer) {
-        if buffer.area() == 0 || self.children.is_empty() {
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        if rect.is_empty() || self.children.is_empty() {
             return;
         }
 
-        let (cols, rows) = self.get_sizes(buffer);
+        let (cols, rows) = self.get_sizes(&rect);
 
         for GridChild { child, row, col } in self.children.iter() {
-            let mut cbuffer = buffer.subset(Rect::new(
-                buffer.x() + cols[*col].y,
-                buffer.y() + rows[*row].y,
+            let crect = Rect::new(
+                rect.x() + cols[*col].y,
+                rect.y() + rows[*row].y,
                 cols[*col].x,
                 rows[*row].x,
-            ));
-            child.render(&mut cbuffer);
-            buffer.merge(cbuffer);
+            );
+            child.render(buffer, crect);
         }
     }
 
@@ -147,10 +146,10 @@ impl Widget for Grid {
 
 impl Grid {
     /// Gets sizes and starting positions of each row and column
-    fn get_sizes(&self, buffer: &mut Buffer) -> (Vec<Vec2>, Vec<Vec2>) {
+    fn get_sizes(&self, rect: &Rect) -> (Vec<Vec2>, Vec<Vec2>) {
         (
-            Self::get_size(&self.cols, buffer.width()),
-            Self::get_size(&self.rows, buffer.height()),
+            Self::get_size(&self.cols, rect.width()),
+            Self::get_size(&self.rows, rect.height()),
         )
     }
 

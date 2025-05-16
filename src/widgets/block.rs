@@ -219,24 +219,21 @@ where
     W: Widget,
 {
     /// Renders [`Block`] with selected borders and title
-    fn render(&self, buffer: &mut Buffer) {
-        let (t, r, b, l) = self.render_border(buffer);
-        let mut pos = Vec2::new(buffer.x() + l, buffer.y());
-        let mut size = Vec2::new(buffer.width().saturating_sub(l + r), 1);
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        let (t, r, b, l) = self.render_border(buffer, &rect);
+        let mut pos = Vec2::new(rect.x() + l, rect.y());
+        let mut size = Vec2::new(rect.width().saturating_sub(l + r), 1);
 
-        let mut tbuffer = buffer.subset(Rect::from_coords(pos, size));
-        _ = self.title.render_offset(&mut tbuffer, 0, None);
-        buffer.merge(tbuffer);
+        let trect = Rect::from_coords(pos, size);
+        _ = self.title.render_offset(buffer, trect, 0, None);
 
         pos.y += t;
-        size.y = buffer.height().saturating_sub(t + b);
-        let rect = Rect::from_coords(pos, size);
-        if !buffer.rect().contains(&rect) {
+        size.y = rect.height().saturating_sub(t + b);
+        let crect = Rect::from_coords(pos, size);
+        if !rect.contains(&crect) {
             return;
         }
-        let mut cbuffer = buffer.subset(rect);
-        self.child.render(&mut cbuffer);
-        buffer.merge(cbuffer);
+        self.child.render(buffer, crect);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -266,34 +263,44 @@ where
     fn render_border(
         &self,
         buffer: &mut Buffer,
+        rect: &Rect,
     ) -> (usize, usize, usize, usize) {
-        let l = self.ver_border(buffer, buffer.left(), Border::LEFT);
-        let r = self.ver_border(buffer, buffer.right(), Border::RIGHT);
-        let t = self.hor_border(buffer, buffer.top(), Border::TOP);
-        let b = self.hor_border(buffer, buffer.bottom(), Border::BOTTOM);
+        let l = self.ver_border(buffer, rect, rect.left(), Border::LEFT);
+        let r = self.ver_border(buffer, rect, rect.right(), Border::RIGHT);
+        let t = self.hor_border(buffer, rect, rect.top(), Border::TOP);
+        let b = self.hor_border(buffer, rect, rect.bottom(), Border::BOTTOM);
 
-        if buffer.width() <= 1 || buffer.height() <= 1 {
+        if rect.width() <= 1 || rect.height() <= 1 {
             return (t, r, b, l);
         }
 
-        let a = *buffer.rect();
-        self.render_corner(buffer, *a.pos(), borders!(TOP, LEFT));
-        self.render_corner(buffer, a.top_right(), borders!(TOP, RIGHT));
-        self.render_corner(buffer, a.bottom_left(), borders!(BOTTOM, LEFT));
-        self.render_corner(buffer, a.bottom_right(), borders!(BOTTOM, RIGHT));
+        self.render_corner(buffer, *rect.pos(), borders!(TOP, LEFT));
+        self.render_corner(buffer, rect.top_right(), borders!(TOP, RIGHT));
+        self.render_corner(buffer, rect.bottom_left(), borders!(BOTTOM, LEFT));
+        self.render_corner(
+            buffer,
+            rect.bottom_right(),
+            borders!(BOTTOM, RIGHT),
+        );
 
         (t, r, b, l)
     }
 
     /// Adds horizontal border to the buffer
-    fn hor_border(&self, buffer: &mut Buffer, y: usize, border: u8) -> usize {
+    fn hor_border(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        y: usize,
+        border: u8,
+    ) -> usize {
         if (self.borders & border) == 0 {
             return 0;
         }
 
         let c = self.border_type.get(border);
-        let mut pos = Vec2::new(buffer.x(), y);
-        while pos.x <= buffer.right() {
+        let mut pos = Vec2::new(rect.x(), y);
+        while pos.x <= rect.right() {
             buffer[pos] = buffer[pos].val(c).style(self.border_style);
             pos.x += 1;
         }
@@ -301,14 +308,20 @@ where
     }
 
     /// Adds vertical border to the buffer
-    fn ver_border(&self, buffer: &mut Buffer, x: usize, border: u8) -> usize {
+    fn ver_border(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        x: usize,
+        border: u8,
+    ) -> usize {
         if (self.borders & border) == 0 {
             return 0;
         }
 
         let c = self.border_type.get(border);
-        let mut pos = Vec2::new(x, buffer.y());
-        while pos.y <= buffer.bottom() {
+        let mut pos = Vec2::new(x, rect.y());
+        while pos.y <= rect.bottom() {
             buffer[pos] = buffer[pos].val(c).style(self.border_style);
             pos.y += 1;
         }

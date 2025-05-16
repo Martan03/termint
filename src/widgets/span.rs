@@ -3,7 +3,7 @@ use std::fmt;
 use crate::{
     buffer::Buffer,
     enums::{Color, Wrap},
-    geometry::{TextAlign, Vec2},
+    geometry::{Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
 };
@@ -253,8 +253,8 @@ impl Span {
 }
 
 impl Widget for Span {
-    fn render(&self, buffer: &mut Buffer) {
-        _ = self.render_offset(buffer, 0, None);
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        _ = self.render_offset(buffer, rect, 0, None);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -276,30 +276,32 @@ impl Text for Span {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
+        rect: Rect,
         offset: usize,
         wrap: Option<Wrap>,
     ) -> Vec2 {
-        if buffer.area() == 0 {
-            return Vec2::new(0, buffer.y());
+        if rect.is_empty() {
+            return Vec2::new(0, rect.y());
         }
 
         let wrap = wrap.unwrap_or(self.wrap);
         let mut chars = self.text.chars();
         let mut parser = TextParser::new(&mut chars).wrap(wrap);
 
-        let mut pos = Vec2::new(buffer.x() + offset, buffer.y());
+        let mut pos = Vec2::new(rect.x() + offset, rect.y());
         let mut fin_pos = pos;
 
-        let right_end = buffer.x() + buffer.width();
-        while pos.y <= buffer.bottom() {
+        let right_end = rect.x() + rect.width();
+        while pos.y <= rect.bottom() {
             let line_len = right_end.saturating_sub(pos.x);
             let Some((text, len)) = parser.next_line(line_len) else {
                 break;
             };
 
-            fin_pos.x = self.render_line(buffer, &parser, text, len, &pos);
+            fin_pos.x =
+                self.render_line(buffer, &rect, &parser, text, len, &pos);
             fin_pos.y = pos.y;
-            pos.x = buffer.x();
+            pos.x = rect.x();
             pos.y += 1;
         }
         fin_pos
@@ -341,16 +343,17 @@ impl Span {
     fn render_line(
         &self,
         buffer: &mut Buffer,
+        rect: &Rect,
         parser: &TextParser,
         mut line: String,
         mut len: usize,
         pos: &Vec2,
     ) -> usize {
-        if pos.y >= buffer.bottom() && !parser.is_end() {
+        if pos.y >= rect.bottom() && !parser.is_end() {
             len += self.ellipsis.len();
-            if len > buffer.width() {
-                len = buffer.width();
-                let end = buffer.width().saturating_sub(self.ellipsis.len());
+            if len > rect.width() {
+                len = rect.width();
+                let end = rect.width().saturating_sub(self.ellipsis.len());
                 line = line[..end].to_string();
             }
             line.push_str(&self.ellipsis);
@@ -358,8 +361,8 @@ impl Span {
 
         let x = match self.align {
             TextAlign::Left => 0,
-            TextAlign::Center => buffer.width().saturating_sub(len) >> 1,
-            TextAlign::Right => buffer.width().saturating_sub(len),
+            TextAlign::Center => rect.width().saturating_sub(len) >> 1,
+            TextAlign::Right => rect.width().saturating_sub(len),
         };
         buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
         len

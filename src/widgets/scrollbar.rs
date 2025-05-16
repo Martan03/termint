@@ -2,7 +2,7 @@ use std::{cell::Cell, rc::Rc};
 
 use crate::{
     buffer::Buffer,
-    geometry::{Direction, Vec2, Vec2Range},
+    geometry::{Direction, Rect, Vec2, Vec2Range},
     style::Style,
 };
 
@@ -167,10 +167,10 @@ impl ScrollbarState {
 }
 
 impl Widget for Scrollbar {
-    fn render(&self, buffer: &mut Buffer) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
         match self.direction {
-            Direction::Vertical => self.ver_render(buffer),
-            Direction::Horizontal => self.hor_render(buffer),
+            Direction::Vertical => self.ver_render(buffer, &rect),
+            Direction::Horizontal => self.hor_render(buffer, &rect),
         }
     }
 
@@ -191,38 +191,34 @@ impl Widget for Scrollbar {
 
 impl Scrollbar {
     /// Renders the vertical scrollbar
-    fn ver_render(&self, buffer: &mut Buffer) {
-        let Some((size, pos)) = self.calc_thumb(buffer.height()) else {
+    fn ver_render(&self, buffer: &mut Buffer, rect: &Rect) {
+        let Some((size, pos)) = self.calc_thumb(rect.height()) else {
             return;
         };
 
         self.render_track(
             buffer,
-            buffer
-                .pos()
-                .to(Vec2::new(buffer.x() + 1, buffer.bottom() + 1)),
+            rect.pos().to(Vec2::new(rect.x() + 1, rect.bottom() + 1)),
         );
 
-        let start = Vec2::new(buffer.x(), buffer.y() + pos);
-        let end = Vec2::new(buffer.x() + 1, buffer.y() + pos + size);
+        let start = Vec2::new(rect.x(), rect.y() + pos);
+        let end = Vec2::new(rect.x() + 1, rect.y() + pos + size);
         self.render_thumb(buffer, start.to(end));
     }
 
     /// Renders the horizontal scrollbar
-    fn hor_render(&self, buffer: &mut Buffer) {
-        let Some((size, pos)) = self.calc_thumb(buffer.width()) else {
+    fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
+        let Some((size, pos)) = self.calc_thumb(rect.width()) else {
             return;
         };
 
         self.render_track(
             buffer,
-            buffer
-                .pos()
-                .to(Vec2::new(buffer.right() + 1, buffer.y() + 1)),
+            rect.pos().to(Vec2::new(rect.right() + 1, rect.y() + 1)),
         );
 
-        let start = Vec2::new(buffer.x() + pos, buffer.y());
-        let end = Vec2::new(buffer.x() + pos + size, buffer.y() + 1);
+        let start = Vec2::new(rect.x() + pos, rect.y());
+        let end = Vec2::new(rect.x() + pos + size, rect.y() + 1);
         self.render_thumb(buffer, start.to(end));
     }
 

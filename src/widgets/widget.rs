@@ -1,11 +1,14 @@
 use std::fmt;
 
-use crate::{buffer::Buffer, geometry::Vec2};
+use crate::{
+    buffer::Buffer,
+    geometry::{Rect, Vec2},
+};
 
 /// Trait for widgets to implement
 pub trait Widget {
     /// Renders [`Widget`] on given position with given size
-    fn render(&self, buffer: &mut Buffer);
+    fn render(&self, buffer: &mut Buffer, rect: Rect);
 
     /// Gets height of the [`Widget`]
     fn height(&self, size: &Vec2) -> usize;
@@ -34,8 +37,8 @@ impl Element {
 }
 
 impl Widget for Element {
-    fn render(&self, buffer: &mut Buffer) {
-        self.0.render(buffer)
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        self.0.render(buffer, rect)
     }
 
     fn height(&self, size: &Vec2) -> usize {

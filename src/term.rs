@@ -72,14 +72,15 @@ impl Term {
             h.saturating_sub(self.padding.get_vertical()),
         );
 
-        let mut buffer = Buffer::empty(Rect::from_coords(pos, size));
+        let rect = Rect::from_coords(pos, size);
+        let mut buffer = Buffer::empty(rect);
         match &self.small {
             Some(small)
                 if w < widget.width(&size) || h < widget.height(&size) =>
             {
-                small.render(&mut buffer);
+                small.render(&mut buffer, rect);
             }
-            _ => widget.render(&mut buffer),
+            _ => widget.render(&mut buffer, rect),
         };
         self.prev_widget = Some(Box::new(widget));
 
@@ -108,14 +109,15 @@ impl Term {
             h.saturating_sub(self.padding.get_vertical()),
         );
 
-        let mut buffer = Buffer::empty(Rect::from_coords(pos, size));
+        let rect = Rect::from_coords(pos, size);
+        let mut buffer = Buffer::empty(rect);
         match &self.small {
             Some(small)
                 if w < widget.width(&size) || h < widget.height(&size) =>
             {
-                small.render(&mut buffer);
+                small.render(&mut buffer, rect);
             }
-            _ => widget.render(&mut buffer),
+            _ => widget.render(&mut buffer, rect),
         };
 
         match &self.prev {

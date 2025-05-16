@@ -1,4 +1,7 @@
-use crate::{buffer::Buffer, geometry::Vec2};
+use crate::{
+    buffer::Buffer,
+    geometry::{Rect, Vec2},
+};
 
 use super::{widget::Widget, Element};
 
@@ -32,7 +35,7 @@ impl Spacer {
 }
 
 impl Widget for Spacer {
-    fn render(&self, _buffer: &mut Buffer) {}
+    fn render(&self, _buffer: &mut Buffer, _rect: Rect) {}
 
     fn height(&self, _size: &Vec2) -> usize {
         0

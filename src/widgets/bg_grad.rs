@@ -1,7 +1,7 @@
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
-    geometry::{Constraint, Direction, Padding, Vec2},
+    geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
 };
 
@@ -167,19 +167,16 @@ impl<W> Widget for BgGrad<W>
 where
     W: Widget,
 {
-    fn render(&self, buffer: &mut Buffer) {
-        if buffer.width() == 0 || buffer.height() == 0 {
+    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        if rect.is_empty() {
             return;
         }
 
         match self.direction {
-            Direction::Vertical => self.ver_render(buffer),
-            Direction::Horizontal => self.hor_render(buffer),
+            Direction::Vertical => self.ver_render(buffer, &rect),
+            Direction::Horizontal => self.hor_render(buffer, &rect),
         };
-
-        let mut cbuffer = buffer.subset(buffer.rect().inner(self.padding));
-        self.child.render(&mut cbuffer);
-        buffer.merge(cbuffer);
+        self.child.render(buffer, rect.inner(self.padding));
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -204,32 +201,32 @@ where
     W: Widget,
 {
     /// Renders horizontal background gradient
-    fn hor_render(&self, buffer: &mut Buffer) {
-        let step = self.get_step(buffer.width() as i16);
+    fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
+        let step = self.get_step(rect.width() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
-        for x in buffer.x()..buffer.width() + buffer.x() {
+        for x in rect.x()..rect.width() + rect.x() {
             let bg = Color::Rgb(r, g, b);
             (r, g, b) = self.add_step((r, g, b), step);
 
-            for y in buffer.y()..buffer.height() + buffer.y() {
+            for y in rect.y()..rect.height() + rect.y() {
                 buffer.set_bg(bg, &Vec2::new(x, y));
             }
         }
     }
 
     /// Renders vertical background gradient
-    fn ver_render(&self, buffer: &mut Buffer) {
-        let step = self.get_step(buffer.height() as i16);
+    fn ver_render(&self, buffer: &mut Buffer, rect: &Rect) {
+        let step = self.get_step(rect.height() as i16);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
-        for y in buffer.y()..buffer.height() + buffer.y() {
+        for y in rect.y()..rect.height() + rect.y() {
             let bg = Color::Rgb(r, g, b);
             (r, g, b) = self.add_step((r, g, b), step);
 
-            for x in buffer.x()..buffer.width() + buffer.x() {
+            for x in rect.x()..rect.width() + rect.x() {
                 buffer.set_bg(bg, &Vec2::new(x, y));
             }
         }
