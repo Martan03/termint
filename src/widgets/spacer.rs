@@ -38,6 +38,7 @@ pub struct Spacer {}
 
 impl Spacer {
     /// Creates a new spacer widget.
+    #[must_use]
     pub fn new() -> Self {
         Self {}
     }

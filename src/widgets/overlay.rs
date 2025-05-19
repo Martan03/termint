@@ -5,9 +5,13 @@ use crate::{
 
 use super::{Element, Widget};
 
-/// Stacks children in layers, first child is at the bottom, last on top
+/// A widget that stacks its children in layers, from bottom to top.
 ///
-/// ## Example usage:
+/// The first child is rendered at the bottom, and each subsequent child is
+/// rendered on top of the previous one, making [`Overlay`] useful for building
+/// layered TUIs such as modal.
+///
+/// # Example
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,
@@ -25,19 +29,32 @@ use super::{Element, Widget};
 /// overlay.render(&mut buffer);
 /// buffer.render();
 /// ```
+///
+/// In this example, the second child (`get_top_child()`) is rendered on top of
+/// the first.
 pub struct Overlay {
     children: Vec<Element>,
 }
 
 impl Overlay {
-    /// Creates new [`Overlay`] with given children
+    /// Creates a new [`Overlay`] from a list of child widgets.
+    ///
+    /// The first widget will be at the bottom, and the last on top.
+    #[must_use]
     pub fn new(children: Vec<Element>) -> Self {
         Self {
             children: children.into_iter().map(|c| c.into()).collect(),
         }
     }
 
-    /// Pushes child to the [`Overlay`]
+    /// Creates an empty [`Overlay`] with no children.
+    #[must_use]
+    pub fn empty() -> Self {
+        Self { children: vec![] }
+    }
+
+    /// Adds a child to the [`Overlay`], playing it on top of the existing
+    /// children.
     pub fn push<W>(&mut self, child: W)
     where
         W: Into<Element>,
