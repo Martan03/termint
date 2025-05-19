@@ -14,7 +14,6 @@
 
 mod bg_grad;
 mod block;
-mod border;
 mod grad;
 mod grid;
 mod layout;
@@ -32,10 +31,6 @@ mod widget;
 pub use bg_grad::BgGrad;
 /// [`Layout`] widget with border around it
 pub use block::Block;
-/// Border sides definition
-pub use border::Border;
-/// Border type enum
-pub use border::BorderType;
 /// Text with gradient foreground
 pub use grad::Grad;
 /// Creates layout by specifying columns and rows

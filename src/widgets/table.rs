@@ -2,11 +2,12 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     buffer::Buffer,
+    enums::{Border, BorderType},
     geometry::{Rect, Unit, Vec2},
     text::Text,
 };
 
-use super::{Border, BorderType, Element, ListState, Widget};
+use super::{Element, ListState, Widget};
 
 #[derive(Debug)]
 pub struct Table {

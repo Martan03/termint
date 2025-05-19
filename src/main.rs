@@ -6,14 +6,13 @@ use std::{
 
 use termint::{
     buffer::Buffer,
-    enums::{Color, Modifier, Wrap},
+    enums::{Border, BorderType, Color, Modifier, Wrap},
     geometry::{Constraint, Rect, TextAlign, Unit, Vec2},
     style::Style,
     term::Term,
     widgets::{
-        BgGrad, Block, Border, BorderType, Grad, Grid, Layout, List,
-        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState, Table,
-        ToSpan, Widget,
+        BgGrad, Block, Grad, Grid, Layout, List, ListState, Paragraph,
+        Scrollable, Scrollbar, ScrollbarState, Table, ToSpan, Widget,
     },
 };
 

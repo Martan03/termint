@@ -1,3 +1,4 @@
+mod border;
 /// ANSI colors
 mod color;
 /// ANSI cursor manipulation
@@ -9,6 +10,7 @@ mod rgb;
 /// Indicates how text should be wrapped
 mod wrap;
 
+pub use border::*;
 /// ANSI colors
 pub use color::Color;
 /// ANSI cursor manipulation

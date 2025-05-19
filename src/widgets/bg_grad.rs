@@ -10,34 +10,37 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// A container widget that renders a gradient background behind its child
 /// widget.
 ///
-/// ## Example usage using [`Term`] (automatically renders on full screen):
-/// ```rust
-/// # use termint::{term::Term, widgets::{BgGrad, Spacer}};
-/// # fn get_child() -> Spacer { Spacer::new() }
-/// # fn example() -> Result<(), &'static str> {
-/// // Creates new background gradient with horizontal direction
-/// let grad = BgGrad::horizontal(get_child(), (0, 150, 255), (150, 255, 0));
+/// The [`BgGrad`] widget supports horizontal and vertical gradients. You can
+/// set the gradient direction by providing [`Direction`] directly using
+/// [`BgGrad::new`] method, or you can use methods like [`BgGrad::horizontal`]
+/// and [`BgGrad::vertical`].
 ///
-/// // Renders background gradient using Term struct
+/// By default BgGrad is empty, it doesn't have a child. To set the child
+/// widget, you can use [`BgGrad::child`] method.
+///
+/// # Examples
+///
+/// ## Full-screen rendering using [`Term`]
+/// ```rust
+/// # use termint::{term::Term, widgets::BgGrad};
+/// # fn example() -> Result<(), &'static str> {
+/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+///
 /// let mut term = Term::new();
 /// term.render(grad)?;
 /// # Ok(())
 /// # }
 /// ```
 ///
-/// ## Example usage without using [`Term`]:
+/// ## Manual rendering using [`Buffer`]
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,
 /// #     geometry::Rect,
 /// #     widgets::{BgGrad, Widget, Spacer},
 /// # };
-/// # fn get_child() -> Spacer { Spacer::new() }
-/// // Creates new background gradient with horizontal direction
-/// let grad = BgGrad::horizontal(get_child(), (0, 150, 255), (150, 255, 0));
+/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
-/// // Renders background gradient using [`Buffer`]
-/// // (position and size given by the Rect supplied to the Buffer)
 /// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
 /// grad.render(&mut buffer);
 /// buffer.render();
@@ -70,6 +73,7 @@ impl BgGrad<Spacer> {
     ///     (150, 255, 0)
     /// );
     /// ```
+    #[must_use]
     pub fn new<T1, T2>(dir: Direction, start: T1, end: T2) -> Self
     where
         T1: Into<RGB>,
@@ -91,6 +95,7 @@ impl BgGrad<Spacer> {
     /// # use termint::widgets::BgGrad;
     /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0));
     /// ```
+    #[must_use]
     pub fn vertical<T1, T2>(start: T1, end: T2) -> Self
     where
         T1: Into<RGB>,
@@ -118,6 +123,7 @@ impl BgGrad<Spacer> {
     /// # use termint::widgets::BgGrad;
     /// let widget = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
     /// ```
+    #[must_use]
     pub fn horizontal<T1, T2>(start: T1, end: T2) -> Self
     where
         T1: Into<RGB>,
@@ -142,6 +148,7 @@ impl<W> BgGrad<W> {
     /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
     ///     .child(SomeWidget::new());
     /// ```
+    #[must_use]
     pub fn child<CW>(self, child: CW) -> BgGrad<CW> {
         BgGrad {
             bg_start: self.bg_start,
@@ -167,6 +174,7 @@ where
     /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
     ///     .bg_dir(Direction::Horizontal);
     /// ```
+    #[must_use]
     pub fn bg_dir(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
@@ -183,6 +191,7 @@ where
     /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
     ///     .padding((1, 2));
     /// ```
+    #[must_use]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
         T: Into<Padding>,
@@ -206,12 +215,14 @@ impl BgGrad<Layout> {
     /// Sets the [`Direction`] of the inner [`Layout`] widget.
     ///
     /// This controls in which direction the layout arranges its children.
+    #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.child = self.child.direction(direction);
         self
     }
 
     /// Sets the base style of the [`Layout`]
+    #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -221,6 +232,7 @@ impl BgGrad<Layout> {
     }
 
     /// Sets base background color of the [`Layout`]
+    #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -230,6 +242,7 @@ impl BgGrad<Layout> {
     }
 
     /// Sets base foreground color of the [`Layout`]
+    #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -239,6 +252,7 @@ impl BgGrad<Layout> {
     }
 
     /// Makes [`Layout`] center its content in its direction
+    #[must_use]
     pub fn center(mut self) -> Self {
         self.child = self.child.center();
         self

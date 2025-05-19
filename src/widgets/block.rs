@@ -3,18 +3,14 @@ use std::cmp::max;
 use crate::{
     borders,
     buffer::Buffer,
-    enums::Color,
+    enums::{Border, BorderType, Color},
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
     text::Text,
     widgets::span::Span,
 };
 
-use super::{
-    border::{Border, BorderType},
-    widget::Widget,
-    Element, Layout, Spacer,
-};
+use super::{widget::Widget, Element, Layout, Spacer};
 
 /// Wraps widget and adds border to it
 ///
@@ -48,7 +44,7 @@ use super::{
 #[derive(Debug)]
 pub struct Block<W = Element> {
     title: Box<dyn Text>,
-    borders: u8,
+    borders: Border,
     border_type: BorderType,
     border_style: Style,
     child: W,
@@ -80,7 +76,7 @@ where
     }
 
     /// Sets which [`Block`] borders should be displayed
-    pub fn borders(mut self, borders: u8) -> Self {
+    pub fn borders(mut self, borders: Border) -> Self {
         self.borders = borders;
         self
     }
@@ -292,9 +288,9 @@ where
         buffer: &mut Buffer,
         rect: &Rect,
         y: usize,
-        border: u8,
+        border: Border,
     ) -> usize {
-        if (self.borders & border) == 0 {
+        if (self.borders & border) == Border::NONE {
             return 0;
         }
 
@@ -313,9 +309,9 @@ where
         buffer: &mut Buffer,
         rect: &Rect,
         x: usize,
-        border: u8,
+        border: Border,
     ) -> usize {
-        if (self.borders & border) == 0 {
+        if (self.borders & border) == Border::NONE {
             return 0;
         }
 
@@ -329,7 +325,7 @@ where
     }
 
     /// Adds corner of [`Block`] border to the string
-    fn render_corner(&self, buffer: &mut Buffer, pos: Vec2, border: u8) {
+    fn render_corner(&self, buffer: &mut Buffer, pos: Vec2, border: Border) {
         if (self.borders & border) == border {
             let c = self.border_type.get(border);
             buffer[pos] = buffer[pos].val(c).style(self.border_style);
@@ -343,14 +339,14 @@ where
 
     /// Gets horizontal border size
     fn hor_border_size(&self) -> usize {
-        (self.borders & Border::RIGHT != 0) as usize
-            + (self.borders & Border::LEFT != 0) as usize
+        (self.borders & Border::RIGHT != Border::NONE) as usize
+            + (self.borders & Border::LEFT != Border::NONE) as usize
     }
 
     /// Gets vertical border size and acounting title as well
     fn ver_border_size(&self) -> usize {
-        (self.borders & Border::TOP != 0) as usize
-            + (self.borders & Border::BOTTOM != 0) as usize
+        (self.borders & Border::TOP != Border::NONE) as usize
+            + (self.borders & Border::BOTTOM != Border::NONE) as usize
     }
 }
 

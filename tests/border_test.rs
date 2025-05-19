@@ -2,7 +2,7 @@
 mod tests {
     use termint::{
         borders,
-        widgets::{Border, BorderType},
+        enums::{Border, BorderType},
     };
 
     /// Test borders macro usage for combining border sides
