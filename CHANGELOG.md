@@ -2,10 +2,12 @@
 
 ## v0.6.0
 ### Features:
+- Add missing From traits to Overlay widget
 - Add Table widget
 - Optional `serde` trait implementation
 
 ### Changes:
+- Change `BgGrad` API
 - Rename `StrSpanExtension` to `ToSpan`
 - Rework text rendering - add generic text parser
 - Use `termal` library for getting terminal size and some other useful things
@@ -13,12 +15,6 @@
 ### Fixes:
 - List widget width function prioritizes expanding list items to the width
 instead of taking up as little width as possible
-
-## v0.5.3
-### Features:
-- Add missing From traits to Overlay widget
-
-### Fixes:
 - Layout not setting background properly
 
 ## v0.5.2

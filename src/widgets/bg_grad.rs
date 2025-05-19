@@ -5,9 +5,10 @@ use crate::{
     style::Style,
 };
 
-use super::{widget::Widget, Element, Layout};
+use super::{widget::Widget, Element, Layout, Spacer};
 
-/// Widget that renders gradient background and contains a children
+/// A container widget that renders a gradient background behind its child
+/// widget.
 ///
 /// ## Example usage using [`Term`] (automatically renders on full screen):
 /// ```rust
@@ -50,47 +51,138 @@ pub struct BgGrad<W = Element> {
     child: W,
 }
 
+impl BgGrad<Spacer> {
+    /// Creates a new empty [`BgGrad`] with the given gradient colors and
+    /// direction.
+    ///
+    /// For `start` and `end` you can provide any type that can be converted
+    /// into RGB, such as `u32`, `(u8 ,u8, u8)`.
+    ///
+    /// You can add child to be rendered on top of the gradient using
+    /// [`BgGrad::child`] method.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::{widgets::BgGrad, geometry::Direction};
+    /// let widget = BgGrad::new(
+    ///     Direction::Vertical,
+    ///     (0, 150, 255),
+    ///     (150, 255, 0)
+    /// );
+    /// ```
+    pub fn new<T1, T2>(dir: Direction, start: T1, end: T2) -> Self
+    where
+        T1: Into<RGB>,
+        T2: Into<RGB>,
+    {
+        Self::construct(start.into(), end.into(), dir, Spacer::new())
+    }
+
+    /// Creates a new empty vertical [`BgGrad`] with the given gradient colors.
+    ///
+    /// For `start` and `end` you can provide any type that can be converted
+    /// into RGB, such as `u32`, `(u8 ,u8, u8)`.
+    ///
+    /// You can add child to be rendered on top of the gradient using
+    /// [`BgGrad::child`] method.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::widgets::BgGrad;
+    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0));
+    /// ```
+    pub fn vertical<T1, T2>(start: T1, end: T2) -> Self
+    where
+        T1: Into<RGB>,
+        T2: Into<RGB>,
+    {
+        Self::construct(
+            start.into(),
+            end.into(),
+            Direction::Vertical,
+            Spacer::new(),
+        )
+    }
+
+    /// Creates a new empty horizontal [`BgGrad`] with the given gradient
+    /// colors.
+    ///
+    /// For `start` and `end` you can provide any type that can be converted
+    /// into RGB, such as `u32`, `(u8 ,u8, u8)`.
+    ///
+    /// You can add child to be rendered on top of the gradient using
+    /// [`BgGrad::child`] method.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::widgets::BgGrad;
+    /// let widget = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+    /// ```
+    pub fn horizontal<T1, T2>(start: T1, end: T2) -> Self
+    where
+        T1: Into<RGB>,
+        T2: Into<RGB>,
+    {
+        Self::construct(
+            start.into(),
+            end.into(),
+            Direction::Horizontal,
+            Spacer::new(),
+        )
+    }
+}
+
+impl<W> BgGrad<W> {
+    /// Sets the child widget to be displayed in front of the gradient.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::widgets::{BgGrad, Spacer};
+    /// # type SomeWidget = Spacer;
+    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
+    ///     .child(SomeWidget::new());
+    /// ```
+    pub fn child<CW>(self, child: CW) -> BgGrad<CW> {
+        BgGrad {
+            bg_start: self.bg_start,
+            bg_end: self.bg_end,
+            direction: self.direction,
+            padding: self.padding,
+            child,
+        }
+    }
+}
+
 impl<W> BgGrad<W>
 where
     W: Widget,
 {
-    /// Creates new vertical [`BgGrad`] with given gradient colors
-    pub fn vertical<T1, T2>(child: W, start: T1, end: T2) -> Self
-    where
-        T1: Into<RGB>,
-        T2: Into<RGB>,
-    {
-        Self {
-            bg_start: start.into(),
-            bg_end: end.into(),
-            direction: Direction::Vertical,
-            padding: Default::default(),
-            child,
-        }
-    }
-
-    /// Creates new horizontal [`BgGrad`] with given gradient colors
-    pub fn horizontal<T1, T2>(child: W, start: T1, end: T2) -> Self
-    where
-        T1: Into<RGB>,
-        T2: Into<RGB>,
-    {
-        Self {
-            bg_start: start.into(),
-            bg_end: end.into(),
-            direction: Direction::Horizontal,
-            padding: Default::default(),
-            child,
-        }
-    }
-
-    /// Sets gradient [`Direction`] of the [`BgGrad`]
+    /// Sets the gradient direction of the [`BgGrad`] background.
+    ///
+    /// The direction determines in which direction is the gradient drawn.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::{widgets::BgGrad, geometry::Direction};
+    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
+    ///     .bg_dir(Direction::Horizontal);
+    /// ```
     pub fn bg_dir(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
     }
 
-    /// Sets padding of the [`BgGrad`]
+    /// Sets padding around the child widget of the [`BgGrad`].
+    ///
+    /// You can provide any type that can be converted into [`Padding`], such
+    /// as `usize`, `(usize, usize)`, or `(usize, usize, usize, usize)`.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::widgets::BgGrad;
+    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
+    ///     .padding((1, 2));
+    /// ```
     pub fn padding<T>(mut self, padding: T) -> Self
     where
         T: Into<Padding>,
@@ -98,10 +190,22 @@ where
         self.padding = padding.into();
         self
     }
+
+    fn construct(start: RGB, end: RGB, dir: Direction, child: W) -> Self {
+        Self {
+            bg_start: start,
+            bg_end: end,
+            direction: dir,
+            padding: Default::default(),
+            child,
+        }
+    }
 }
 
 impl BgGrad<Layout> {
-    /// Sets [`Direction`] of the [`Layout`]
+    /// Sets the [`Direction`] of the inner [`Layout`] widget.
+    ///
+    /// This controls in which direction the layout arranges its children.
     pub fn direction(mut self, direction: Direction) -> Self {
         self.child = self.child.direction(direction);
         self

@@ -22,11 +22,11 @@ fn main() {
     // test_layout();
     // test_grad();
     // cool_example();
-    test_paragraph();
+    // test_paragraph();
     // readme_example();
     // test_list();
     // test_layout_centering();
-    // test_bg_grad();
+    test_bg_grad();
     // term_test();
     // grid_test();
     // diff_render_test();
@@ -247,9 +247,9 @@ fn test_layout_centering() {
 #[allow(unused)]
 fn test_bg_grad() {
     println!("\x1b[2J");
-    let mut grad =
-        BgGrad::horizontal(Layout::vertical(), 0x0096ff, (84.71, 1.0, 0.5))
-            .center();
+    let mut grad = BgGrad::horizontal(0x0096ff, (84.71, 1.0, 0.5))
+        .child(Layout::vertical())
+        .center();
     let mut layout = Layout::horizontal().center();
     layout.push(Block::vertical(), Constraint::Length(6));
     grad.push(layout, Constraint::Length(3));
@@ -404,8 +404,8 @@ fn scrollable_test() {
     let mut layout = Layout::horizontal();
     layout.push("Test", Constraint::Length(20));
 
-    let mut bg =
-        BgGrad::vertical(Layout::vertical(), (10, 250, 30), (200, 60, 120));
+    let mut bg = BgGrad::vertical((10, 250, 30), (200, 60, 120))
+        .child(Layout::vertical());
     bg.push(layout, Constraint::Length(10));
 
     let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
