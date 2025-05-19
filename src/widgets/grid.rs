@@ -61,7 +61,7 @@ impl Grid {
     /// #     widgets::{Grid, Widget},
     /// #     term::Term,
     /// # };
-    /// let mut grid = Grid::new([3, 5, Unit::Fill(1)], [Unit::Fill(1), 1, 1]);
+    /// let mut grid = Grid::new([3, 5, 3], [3, 1, 1]);
     /// ```
     #[must_use]
     pub fn new<T1, T2>(cols: T1, rows: T2) -> Self

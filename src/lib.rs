@@ -53,9 +53,9 @@
 //! ```rust
 //! # use termint::{
 //! #     buffer::Buffer,
-//! #     enums::Color,
+//! #     enums::{Color, Border, BorderType},
 //! #     geometry::{Constraint, Rect},
-//! #     widgets::{Border, BorderType, Block, ToSpan, Widget}
+//! #     widgets::{Block, ToSpan, Widget}
 //! # };
 //! // Creates main block and sets its properties
 //! let mut main = Block::horizontal()

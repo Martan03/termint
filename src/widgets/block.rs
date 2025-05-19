@@ -12,34 +12,34 @@ use crate::{
 
 use super::{widget::Widget, Element, Layout, Spacer};
 
-/// Wraps widget and adds border to it
+/// A widget that wrap another widget and adds border and title.
 ///
-/// ## Example usage:
+/// [`Block`] is typically used to visualize separation and organize sections.
+/// You can customize the border style, type of the border and so on.
+///
+/// # Example
 /// ```rust
 /// # use termint::{
-/// #     buffer::Buffer,
-/// #     enums::Color,
+/// #     term::Term,
+/// #     enums::{Color, BorderType},
 /// #     geometry::{Constraint, Rect},
-/// #     widgets::{Block, BorderType, ToSpan, Widget},
+/// #     widgets::{Block, ToSpan, Widget},
 /// # };
-/// // Creates block with title Termint in red
-/// // with double line border in lightgray
-/// // Block layout will be horizontal
+/// # fn example() -> Result<(), &'static str> {
 /// let mut main = Block::horizontal()
 ///     .title("Termint".fg(Color::Red))
 ///     .border_type(BorderType::Double)
 ///     .border_color(Color::LightGray);
 ///
-/// // Adds two block widgets as children for demonstration
 /// let block1 = Block::vertical().title("Sub block");
 /// main.add_child(block1, Constraint::Percent(50));
 /// let block2 = Block::vertical().title("Another");
 /// main.add_child(block2, Constraint::Percent(50));
 ///
-/// // Renders main block using buffer
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 30, 8));
-/// main.render(&mut buffer);
-/// buffer.render();
+/// let mut term = Term::new();
+/// term.render(main)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct Block<W = Element> {
@@ -54,8 +54,10 @@ impl<W> Block<W>
 where
     W: Widget,
 {
-    /// Creates new [`Block`] with no title and all borders, wrapping given
-    /// widget
+    /// Returns a new [`Block`] wrapping the given widget, with all borders
+    /// enabled and no title.
+    ///
+    /// You can provide any type implementing the [`Widget`] trait.
     pub fn new(child: W) -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -66,7 +68,14 @@ where
         }
     }
 
-    /// Sets [`Text`] as a title of the [`Block`]
+    /// Sets the [`Text`] title displayed at the top of the [`Block`].
+    ///
+    /// This is typically used for section labels in your TUI.
+    ///
+    /// # Example
+    /// ```rust
+    /// let block = Block::horizontal().title("Section title");
+    /// ```
     pub fn title<T>(mut self, title: T) -> Self
     where
         T: Into<Box<dyn Text>>,
@@ -75,19 +84,27 @@ where
         self
     }
 
-    /// Sets which [`Block`] borders should be displayed
+    /// Sets the visible borders of the [`Block`] using the given [`Border`]
+    /// flags.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::enums::Border;
+    /// let block = Block::horizontal().borders(Border::TOP | Border::BOTTOM);
+    /// ```
+
     pub fn borders(mut self, borders: Border) -> Self {
         self.borders = borders;
         self
     }
 
-    /// Sets type of the border of the [`Block`]
+    /// Sets the [`BorderType`] used to render the [`Block`] border.
     pub fn border_type(mut self, border_type: BorderType) -> Self {
         self.border_type = border_type;
         self
     }
 
-    /// Sets [`Block`] border style to the given style
+    /// Sets the style applied to [`Block`] borders.
     pub fn border_style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -96,7 +113,7 @@ where
         self
     }
 
-    /// Sets [`Block`] border color
+    /// Sets the foreground color of the [`Block`] borders.
     pub fn border_color(mut self, color: Color) -> Self {
         self.border_style = self.border_style.fg(color);
         self
@@ -104,7 +121,7 @@ where
 }
 
 impl Block<Spacer> {
-    /// Creates new empty [`Block`] with no title and all borders
+    /// Returns an empty [`Block`] with no title and all borders
     pub fn empty() -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -117,7 +134,17 @@ impl Block<Spacer> {
 }
 
 impl Block<Layout> {
-    /// Creates new [`Block`] with vertical [`Layout`] as a child
+    /// Returns a [`Block`] containing a vertical [`Layout`] as its child.
+    ///
+    /// Very often you want to have a layout inside of a [`Block`] widget. This
+    /// constructor makes it easier.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::widgets::block;
+    /// let block = Block::vertical();
+    /// assert_eq!(block, Block::new(Layout::vertical()));
+    /// ```
     pub fn vertical() -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -128,7 +155,17 @@ impl Block<Layout> {
         }
     }
 
-    /// Creates new [`Block`] with horizontal [`Layout`] as a child
+    /// Returns a [`Block`] containing a horizontal [`Layout`] as its child.
+    ///
+    /// Very often you want to have a layout inside of a [`Block`] widget. This
+    /// constructor makes it easier.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::widgets::block;
+    /// let block = Block::horizontal();
+    /// assert_eq!(block, Block::new(Layout::horizontal()));
+    /// ```
     pub fn horizontal() -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -139,13 +176,13 @@ impl Block<Layout> {
         }
     }
 
-    /// Sets [`Direction`] of the [`Layout`]
+    /// Sets flexing [`Direction`] of the [`Layout`].
     pub fn direction(mut self, direction: Direction) -> Self {
         self.child = self.child.direction(direction);
         self
     }
 
-    /// Sets the base style of the [`Layout`]
+    /// Sets the base style of the [`Layout`].
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -172,7 +209,7 @@ impl Block<Layout> {
         self
     }
 
-    /// Sets [`Padding`] of the [`Layout`]
+    /// Sets the [`Padding`] of the [`Layout`].
     pub fn padding<T>(mut self, padding: T) -> Self
     where
         T: Into<Padding>,
@@ -181,7 +218,10 @@ impl Block<Layout> {
         self
     }
 
-    /// Makes [`Layout`] center its content in its direction
+    /// Makes [`Layout`] center its content in the direction it flexes.
+    ///
+    /// If the layout is flexing its children horizontally, the content will
+    /// be centered horizontally. Otherwise it will be centered vertically.
     pub fn center(mut self) -> Self {
         self.child = self.child.center();
         self
@@ -200,7 +240,12 @@ impl Block<Layout> {
         self.child.push(child, constraint);
     }
 
-    /// Pushes child with its [`Constraint`] to the [`Layout`]
+    /// Adds a child widget with its contraint
+    ///
+    /// # Parameters
+    /// - `child`: The widget to add (any type convertible to [`Element`])
+    /// - `contraint`: Widget's contraint (any type convertible to
+    ///     [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
         T: Into<Element>,
@@ -214,7 +259,6 @@ impl<W> Widget for Block<W>
 where
     W: Widget,
 {
-    /// Renders [`Block`] with selected borders and title
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
         let (t, r, b, l) = self.render_border(buffer, &rect);
         let mut pos = Vec2::new(rect.x() + l, rect.y());

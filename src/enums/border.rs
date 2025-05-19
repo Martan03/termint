@@ -22,13 +22,13 @@ bitflags! {
     ///
     /// ## Using binary OR
     /// ```rust
-    /// # use termint::widgets::Border;
+    /// # use termint::enums::Border;
     /// let sides = Border::TOP | Border::LEFT;
     /// ```
     ///
     /// ## Using the `borders!` macro
     /// ```rust
-    /// # use termint::{borders, widgets::Border};
+    /// # use termint::borders;
     /// let sides = borders!(TOP, LEFT);
     /// ```
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

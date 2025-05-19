@@ -53,7 +53,7 @@ impl Element {
     /// ```
     /// # use termint::widgets::{Span, Element};
     /// let span = Span::new("Hello");
-    /// let element = Element::new(label);
+    /// let element = Element::new(span);
     /// ```
     pub fn new<W>(widget: W) -> Self
     where

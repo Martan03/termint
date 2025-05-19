@@ -2,7 +2,7 @@
 ///
 /// ## Usage:
 /// ```rust
-/// # use termint::{borders, widgets::Border};
+/// # use termint::{borders, enums::Border};
 /// // Without macro:
 /// let top_left_right = Border::TOP | Border::LEFT | Border::RIGHT;
 /// // With macro:
@@ -11,7 +11,7 @@
 #[macro_export]
 macro_rules! borders {
     ($($side:ident),* $(,)?) => {
-        Border::NONE $(| Border::$side)*
+        $crate::enums::Border::NONE $(| $crate::enums::Border::$side)*
     };
 }
 
