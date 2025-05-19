@@ -8,31 +8,31 @@ use crate::{
 
 use super::{Element, Widget};
 
-/// Scrollbar widget that can be either in vertical or horizontal direction
+/// A scrollbar widget that can be either vertical or horizontal.
 ///
-/// In general, the scrollbar should be used by another widget, since it needs
-/// the `content_len` to calculate the sizes by. But the `content_len` is known
-/// only while rendering. For example, `Scrollable` widget uses the scrollbar
-/// and sets the `content_len` before rendering the scrollbar.
+/// A [`Scrollbar`] is typically used in conjuction with another widget, such
+/// as [`Scrollable`], which determines the scroll state ([`ScrollbarState`])
+/// during rendering. The reason is the state contains content length, which is
+/// only known while rendering. The state is then used to compute the thumb
+/// size and position.
 ///
-/// ## Example usage:
+/// # Example:
 /// ```rust
 /// # use std::{cell::Cell, rc::Rc};
 /// # use termint::{
 /// #     buffer::Buffer,
 /// #     geometry::Rect,
-/// #     widgets::{Scrollbar, ScrollbarState, Widget}
+/// #     widgets::{Scrollbar, ScrollbarState, Widget},
+/// #     term::Term,
 /// # };
-/// // Scrollbar state, with content_len set to fixed value to demonstrate
+/// // Scrollbar state with fixed content length and offset
 /// let state = Rc::new(Cell::new(ScrollbarState::new(3).content_len(30)));
 ///
-/// // Creates new horizontal scrollbar
+/// // Creates new horizontal scrollbar with the shared state
 /// let scrollbar = Scrollbar::horizontal(state.clone());
 ///
-/// // Renders using the buffer
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 10, 1));
-/// scrollbar.render(&mut buffer);
-/// buffer.render();
+/// let mut term = Term::new();
+/// term.render(scrollbar);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scrollbar {
@@ -44,6 +44,22 @@ pub struct Scrollbar {
     state: Rc<Cell<ScrollbarState>>,
 }
 
+/// Represents the scroll state shared by a [`Scrollbar`] and the app itself.
+///
+///
+/// In the events handling of the app, you can handle key events and change the
+/// scroll offset.
+///
+/// Contains the current offset (scroll position) and total content length,
+/// which are used to calculate scrollbar thumb position and size.
+///
+/// # Example
+/// ```rust
+/// # use termint::widgets::ScrollbarState;
+/// let mut state = ScrollbarState::new(0).content_len(50);
+/// state.next();
+/// assert_eq!(state.offset, 1);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct ScrollbarState {
     pub content_len: usize,
@@ -51,7 +67,23 @@ pub struct ScrollbarState {
 }
 
 impl Scrollbar {
-    /// Creates new vertical [`Scrollbar`]
+    /// Creates a vertical [`Scrollbar`] with the given state.
+    ///
+    /// Uses `│` character for track and `┃` for thumb by default.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use std::{cell::Cell, rc::Rc};
+    /// # use termint::{
+    /// #     buffer::Buffer,
+    /// #     geometry::Rect,
+    /// #     widgets::{Scrollbar, ScrollbarState, Widget}
+    /// # };
+    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
+    /// #    .content_len(30)));
+    /// let scrollbar = Scrollbar::vertical(state);
+    /// ```
+    #[must_use]
     pub fn vertical(state: Rc<Cell<ScrollbarState>>) -> Self {
         Self {
             state,
@@ -59,7 +91,23 @@ impl Scrollbar {
         }
     }
 
-    /// Creates new horizontal [`Scrollbar`]
+    /// Creates a horizontal [`Scrollbar`] with the given state.
+    ///
+    /// Uses `─` character for track and `━` for thumb by default.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use std::{cell::Cell, rc::Rc};
+    /// # use termint::{
+    /// #     buffer::Buffer,
+    /// #     geometry::Rect,
+    /// #     widgets::{Scrollbar, ScrollbarState, Widget}
+    /// # };
+    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
+    /// #    .content_len(30)));
+    /// let scrollbar = Scrollbar::horizontal(state);
+    /// ```
+    #[must_use]
     pub fn horizontal(state: Rc<Cell<ScrollbarState>>) -> Self {
         Self {
             direction: Direction::Horizontal,
@@ -70,13 +118,44 @@ impl Scrollbar {
         }
     }
 
-    /// Sets the track character of the [`Scrollbar`]
+    /// Sets the character used to draw the [`Scrollbar`] track.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use std::{cell::Cell, rc::Rc};
+    /// # use termint::{
+    /// #     buffer::Buffer,
+    /// #     geometry::Rect,
+    /// #     widgets::{Scrollbar, ScrollbarState, Widget}
+    /// # };
+    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
+    /// #    .content_len(30)));
+    /// let scrollbar = Scrollbar::vertical(state).track_char('I');
+    /// ```
+    #[must_use]
     pub fn track_char(mut self, track_char: char) -> Self {
         self.track_char = track_char;
         self
     }
 
-    /// Sets [`Scrollbar`] track style to given value
+    /// Sets the style of the [`Scrollbar`] track.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use std::{cell::Cell, rc::Rc};
+    /// # use termint::{
+    /// #     buffer::Buffer,
+    /// #     geometry::Rect,
+    /// #     widgets::{Scrollbar, ScrollbarState, Widget},
+    /// #     enums::Color,
+    /// #     style::Style,
+    /// # };
+    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
+    /// #    .content_len(30)));
+    /// let scrollbar = Scrollbar::vertical(state)
+    ///     .track_style(Style::new().fg(Color::Red));
+    /// ```
+    #[must_use]
     pub fn track_style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -85,13 +164,45 @@ impl Scrollbar {
         self
     }
 
-    /// Sets the thumb character of the [`Scrollbar`]
+    /// Sets the character used to draw the [`Scrollbar`] thumb
+    /// (the moving part).
+    ///
+    /// # Example
+    /// ```rust
+    /// # use std::{cell::Cell, rc::Rc};
+    /// # use termint::{
+    /// #     buffer::Buffer,
+    /// #     geometry::Rect,
+    /// #     widgets::{Scrollbar, ScrollbarState, Widget}
+    /// # };
+    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
+    /// #    .content_len(30)));
+    /// let scrollbar = Scrollbar::vertical(state).thumb_char('#');
+    /// ```
+    #[must_use]
     pub fn thumb_char(mut self, thumb_char: char) -> Self {
         self.thumb_char = thumb_char;
         self
     }
 
-    /// Sets [`Scrollbar`] thumb style to given value
+    /// Sets the style of the [`Scrollbar`] thumb.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use std::{cell::Cell, rc::Rc};
+    /// # use termint::{
+    /// #     buffer::Buffer,
+    /// #     geometry::Rect,
+    /// #     widgets::{Scrollbar, ScrollbarState, Widget},
+    /// #     enums::Color,
+    /// #     style::Style,
+    /// # };
+    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
+    /// #    .content_len(30)));
+    /// let scrollbar = Scrollbar::vertical(state)
+    ///     .thumb_style(Style::new().fg(Color::Blue));
+    /// ```
+    #[must_use]
     pub fn thumb_style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -100,31 +211,34 @@ impl Scrollbar {
         self
     }
 
-    /// Sets the direction of the [`Scrollbar`]
+    /// Sets the [`Direction`] of the [`Scrollbar`].
+    #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
     }
 
-    /// Sets [`ScrollbarState`] offset to given value
+    /// Sets the scroll offset in the [`ScrollbarState`].
     pub fn offset(&self, offset: usize) {
         self.state.set(self.state.get().offset(offset));
     }
 
-    /// Sets [`ScrollbarState`] content length to given value
+    /// Sets the total content length in the [`ScrollbarState`].
     pub fn content_len(&self, content_len: usize) {
         self.state.set(self.state.get().content_len(content_len));
     }
 
-    /// Gets a copy of the [`ScrollbarState`]
+    /// Returns a copy of the current [`ScrollbarState`].
     pub fn get_state(&self) -> ScrollbarState {
         self.state.get()
     }
 }
 
 impl ScrollbarState {
-    /// Creates a new [`ScrollbarState`]. The `content_len` is most often set
-    /// by the widget using the scrollbar
+    /// Creates a new [`ScrollbarState`] with the given offset.
+    ///
+    /// The content length defaults to zero.
+    #[must_use]
     pub fn new(offset: usize) -> Self {
         Self {
             content_len: 0,
@@ -132,35 +246,37 @@ impl ScrollbarState {
         }
     }
 
-    /// Sets the offset of the [`ScrollbarState`]
+    /// Sets the scroll offset.
+    #[must_use]
     pub fn offset(mut self, offset: usize) -> Self {
         self.offset = offset;
         self
     }
 
-    /// Sets the content length of the [`ScrollbarState`]
+    /// Sets the total content length.
+    #[must_use]
     pub fn content_len(mut self, content_len: usize) -> Self {
         self.content_len = content_len;
         self
     }
 
-    /// Sets the scroll offset to the next position
+    /// Increments the scroll offset by one, up to the end of the content.
     pub fn next(&mut self) {
         self.offset =
             (self.offset + 1).min(self.content_len.saturating_sub(1));
     }
 
-    /// Sets the scroll offset to the previous position
+    /// Decrements the scroll offset by one, down to zero.
     pub fn prev(&mut self) {
         self.offset = self.offset.saturating_sub(1);
     }
 
-    /// Sets the scroll offset to the first position
+    /// Resets the scroll offset to the start (zero).
     pub fn first(&mut self) {
         self.offset = 0;
     }
 
-    /// Sets the scroll offset to the last position
+    /// Sets the scroll offset to the last valid position.
     pub fn last(&mut self) {
         self.offset = self.content_len.saturating_sub(1);
     }
