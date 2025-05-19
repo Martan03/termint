@@ -5,15 +5,27 @@ use crate::{
     geometry::{Rect, Vec2},
 };
 
-/// Trait for widgets to implement
+/// Trait implemented by all the widgets.
+///
+/// A widget is a visual component that can render itself to a [`Buffer`] and
+/// report its size requirements for layout purposes.
+///
+/// Use [`Element`] to store and manipulate widgets in a uniform way.
+///
+/// Users will use [`Widget`] trait directly only when implementing custom
+/// widget, otherwise they will use built-in widgets like [`Span`], [`List`]
+/// and so on.
 pub trait Widget {
-    /// Renders [`Widget`] on given position with given size
+    /// Renders the widget into the given [`Buffer`] within the provided
+    /// [`Rect`] bounds.
     fn render(&self, buffer: &mut Buffer, rect: Rect);
 
-    /// Gets height of the [`Widget`]
+    /// Return the height of the [`Widget`] based on the width of the given
+    /// size.
     fn height(&self, size: &Vec2) -> usize;
 
-    /// Gets width of the [`Widget`]
+    /// Returns the width of the [`Widget`] based on the height of the given
+    /// size.
     fn width(&self, size: &Vec2) -> usize;
 }
 
@@ -23,11 +35,26 @@ impl fmt::Debug for dyn Widget {
     }
 }
 
+/// A container for any widget implementing the [`Widget`] trait.
+///
+/// This is the primary type used to store and manipulate widgets in layout
+/// trees. `Element` wraps a widget in a dynamic trait object.
+///
+/// Use [`Element::new`] to convert a widget into an `Element`.
 #[derive(Debug)]
 pub struct Element(Box<dyn Widget>);
 
 impl Element {
-    /// Creates new element
+    /// Creates a new [`Element`] from a given widget.
+    ///
+    /// This is commonly used to wrap widgets when composing layouts.
+    ///
+    /// # Example
+    /// ```
+    /// # use termint::widgets::{Span, Element};
+    /// let span = Span::new("Hello");
+    /// let element = Element::new(label);
+    /// ```
     pub fn new<W>(widget: W) -> Self
     where
         W: Widget + 'static,
