@@ -77,8 +77,9 @@
 //! main.push(block2, Constraint::Fill(1));
 //!
 //! // Renders the main block which renders all the children using Buffer
-//! let mut buffer = Buffer::empty(Rect::new(1, 1, 30, 8));
-//! main.render(&mut buffer);
+//! let rect = Rect::new(1, 1, 30, 8);
+//! let mut buffer = Buffer::empty(rect);
+//! main.render(&mut buffer, rect);
 //! buffer.render();
 //! ```
 //! ![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)

@@ -6,26 +6,28 @@ use crate::{
     geometry::{Rect, Vec2},
 };
 
-/// Trait for text widgets to implement.
-///
-/// Makes work with more [`Text`] widgets easier.
+/// A trait implemented by all the widgets that render styled or formatted
+/// text.
 pub trait Text {
-    /// Renders [`Text`] to the buffer, starting at the given offset and using
-    /// the given wrap style.
+    /// Renders the [`Text`] into the given buffer within the provided [`Rect`]
+    /// bounds, starting at the given offset and applying the specified
+    /// wrapping strategy.
     ///
-    /// Returns position where rendered text ends.
+    /// Returns the final position where the rendering ends.
     ///
-    /// ### Example
+    /// # Example
     /// ```rust
-    /// use termint::{
-    ///     text::Text, widgets::ToSpan, enums::Wrap, buffer::Buffer
-    /// };
-    ///
+    /// # use termint::{
+    /// #     geometry::Rect, text::Text, widgets::ToSpan,
+    /// #     enums::Wrap, buffer::Buffer
+    /// # };
     /// let span = "Hello, Termint!".to_span();
-    /// let mut buffer = Buffer::empty((1, 1, 20, 1));
+    ///
+    /// let rect = Rect::new(1, 1, 20, 1);
+    /// let mut buffer = Buffer::empty(rect);
     ///
     /// // Renders text with offset of 3 with word wrapping
-    /// span.render_offset(&mut buffer, 3, Some(Wrap::Word));
+    /// span.render_offset(&mut buffer, rect, 3, Some(Wrap::Word));
     /// ```
     fn render_offset(
         &self,
@@ -35,13 +37,14 @@ pub trait Text {
         wrap: Option<Wrap>,
     ) -> Vec2;
 
-    /// Gets [`Text`] widget as string
+    /// Returns the formatted representation of the text as a `String`.
     fn get(&self) -> String;
 
-    /// Gets text of the [`Text`]
+    /// Returns the raw, unformatted string content.
     fn get_text(&self) -> &str;
 
-    /// Gets [`Text`] ansi codes (fg, bg, mods) in String
+    /// Returns ANSI escape sequences representing the current style
+    /// (e.g., foreground/background colors, modifiers).
     fn get_mods(&self) -> String;
 }
 

@@ -25,11 +25,12 @@ use super::cell::Cell;
 /// # };
 /// # fn get_your_widget() -> Block<Layout> { Block::vertical() }
 /// // Creates new buffer with desired position and size given by the [`Rect`]
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
+/// let rect = Rect::new(1, 1, 20, 9);
+/// let mut buffer = Buffer::empty(rect);
 ///
 /// // Gets widget and renders it to the [`Buffer`]
 /// let widget = get_your_widget();
-/// widget.render(&mut buffer);
+/// widget.render(&mut buffer, rect);
 ///
 /// // Renders [`Buffer`], which prints the result to the terminal
 /// buffer.render();

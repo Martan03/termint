@@ -9,9 +9,8 @@ use super::text_token::TextToken;
 /// # Examples
 /// Parsing text with word wrap:
 /// ```rust
-/// use termint::text::TextParser;
+/// # use termint::text::TextParser;
 /// # fn get_text() -> String { String::new() }
-///
 /// let text = get_text();
 /// let mut text_iter = text.chars();
 ///
@@ -27,9 +26,8 @@ use super::text_token::TextToken;
 /// You can also parse the text with letter wrap, which is mainly used for
 /// non-textual content, such as game board and similar:
 /// ```rust
-/// use termint::{text::TextParser, enums::Wrap};
+/// # use termint::{text::TextParser, enums::Wrap};
 /// # fn get_text() -> String { String::new() }
-///
 /// let text = get_text();
 /// let mut text_iter = text.chars();
 ///
@@ -49,10 +47,10 @@ pub struct TextParser<'a> {
 
 impl<'a> TextParser<'a> {
     /// Creates new text parser with given text.
-    /// ### Example
-    /// ```rust
-    /// use termint::text::TextParser;
     ///
+    /// # Example
+    /// ```rust
+    /// # use termint::text::TextParser;
     /// let mut text_iter = "This is a test of termint text parser".chars();
     /// let parser = TextParser::new(&mut text_iter);
     /// ```
@@ -74,10 +72,9 @@ impl<'a> TextParser<'a> {
     ///
     /// Default value is [`Wrap::Word`].
     ///
-    /// ### Example
+    /// # Example
     /// ```rust
-    /// use termint::{text::TextParser, enums::Wrap};
-    ///
+    /// # use termint::{text::TextParser, enums::Wrap};
     /// let mut text_iter = "This is a test of termint text parser".chars();
     /// let parser = TextParser::new(&mut text_iter).wrap(Wrap::Letter);
     /// ```
@@ -91,10 +88,9 @@ impl<'a> TextParser<'a> {
     /// Returns None when end of the text is reached, otherwise returns line
     /// and its length.
     ///
-    /// ### Example
+    /// # Example
     /// ```rust
-    /// use termint::{text::TextParser, enums::Wrap};
-    ///
+    /// # use termint::{text::TextParser, enums::Wrap};
     /// let mut text_iter = "This is a test of termint text parser".chars();
     /// let mut parser = TextParser::new(&mut text_iter).wrap(Wrap::Letter);
     ///
@@ -116,10 +112,9 @@ impl<'a> TextParser<'a> {
     /// Returns None when end of the text is reached, otherwise returns line
     /// and its length.
     ///
-    /// ### Example
+    /// # Example
     /// ```rust
-    /// use termint::text::TextParser;
-    ///
+    /// # use termint::text::TextParser;
     /// let mut text_iter = "This is a test of termint text parser".chars();
     /// let mut parser = TextParser::new(&mut text_iter);
     ///
@@ -166,10 +161,9 @@ impl<'a> TextParser<'a> {
     /// Returns None when end of the text is reached, otherwise returns line
     /// and its length.
     ///
-    /// ### Example
+    /// # Example
     /// ```rust
-    /// use termint::text::TextParser;
-    ///
+    /// # use termint::text::TextParser;
     /// let mut text_iter = "This is a test of termint text parser".chars();
     /// let mut parser = TextParser::new(&mut text_iter);
     ///
@@ -202,10 +196,9 @@ impl<'a> TextParser<'a> {
 
     /// Gets next word from the text, skips leading whitespaces.
     ///
-    /// ### Example
+    /// # Example
     /// ```rust
-    /// use termint::text::{TextParser, TextToken};
-    ///
+    /// # use termint::text::{TextParser, TextToken};
     /// let mut text_iter = "This is a test of termint text parser".chars();
     /// let mut parser = TextParser::new(&mut text_iter);
     ///

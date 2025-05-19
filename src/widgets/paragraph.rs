@@ -21,12 +21,13 @@ use super::{widget::Widget, Element};
 /// # use termint::{
 /// #     term::Term,
 /// #     paragraph,
+/// #     text::Text,
 /// #     enums::{Color, Modifier, Wrap},
 /// #     widgets::{Paragraph, ToSpan, Widget},
 /// # };
 /// # fn example() -> Result<(), &'static str> {
 /// // Creates a Paragraph from a list of spans
-/// let items = vec![
+/// let items: Vec<Box<dyn Text>> = vec![
 ///     Box::new("This is a text in".fg(Color::Yellow)),
 ///     Box::new("paragraph".modifier(Modifier::BOLD).fg(Color::Cyan)),
 ///     Box::new("and it adds".to_span()),
