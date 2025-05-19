@@ -12,7 +12,7 @@ use crate::{
 
 use super::{widget::Widget, Element, Layout, Spacer};
 
-/// A widget that wrap another widget and adds border and title.
+/// A widget that wraps another widget and adds border and title.
 ///
 /// [`Block`] is typically used to visualize separation and organize sections.
 /// You can customize the border style, type of the border and so on.

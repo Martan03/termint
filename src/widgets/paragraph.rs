@@ -9,46 +9,51 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// [`Paragraph`] allow to use multiple widgets implementing [`Text`] trait
-/// in one Widget, separating them with set separator. Spans are placed after
-/// each other, which you can't really achieve with Layout
+/// A [`Paragraph`] combines multiple widgets implementing the [`Text`] trait
+/// into single widget, displaying them sequantially with configurable
+/// separator.
 ///
-/// ## Example usage:
+/// Unlike layout-based widgets, [`Paragraph`] places spans directly next to
+/// each other, allowing for more natural inline text composition.
+///
+/// # Example
 /// ```
 /// # use termint::{
-/// #     buffer::Buffer,
+/// #     term::Term,
 /// #     paragraph,
-/// #     enums::{Color, Modifier},
-/// #     geometry::Rect,
-/// #     widgets::{
-/// #         Paragraph, ToSpan, Widget,
-/// #     },
+/// #     enums::{Color, Modifier, Wrap},
+/// #     widgets::{Paragraph, ToSpan, Widget},
 /// # };
-/// // Creates new Paragraph filled with spans
-/// let mut p = Paragraph::new(vec![
+/// # fn example() -> Result<(), &'static str> {
+/// // Creates a Paragraph from a list of spans
+/// let items = vec![
 ///     Box::new("This is a text in".fg(Color::Yellow)),
 ///     Box::new("paragraph".modifier(Modifier::BOLD).fg(Color::Cyan)),
 ///     Box::new("and it adds".to_span()),
 ///     Box::new("separator".modifier(Modifier::ITALIC)),
-/// ]);
+/// ];
+/// let mut p = Paragraph::new(items)
+///     .wrap(Wrap::Letter)
+///     .separator("-");
 ///
-/// // Creates new Paragraph filled with spans using macro
+/// // Alternatively, use the `paragraph!` macro for convenience
 /// let mut p = paragraph!(
 ///     "This is a text in".fg(Color::Yellow),
 ///     "paragraph".modifier(Modifier::BOLD).fg(Color::Cyan),
 ///     "and it adds".to_span(),
 ///     "separator".modifier(Modifier::ITALIC),
 /// );
-/// // You can also add child later
-/// p.add("between each span");
+/// // Add more text later if needed
+/// p.push("between each span");
 ///
-/// // Paragraph can be printed like this
+/// // Print the Paragraph as a string
 /// println!("{p}");
 ///
-/// // Or you can render it using the buffer
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 10));
-/// p.render(&mut buffer);
-/// buffer.render();
+/// // Or you can render it using `Term` (or manually using `Buffer`)
+/// let mut term = Term::new();
+/// term.render(p)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct Paragraph {
@@ -58,7 +63,8 @@ pub struct Paragraph {
 }
 
 impl Paragraph {
-    /// Creates new [`Paragraph`]
+    /// Creates a new [`Paragraph`] with the given child elements.
+    #[must_use]
     pub fn new(children: Vec<Box<dyn Text>>) -> Self {
         Self {
             children,
@@ -66,12 +72,16 @@ impl Paragraph {
         }
     }
 
-    /// Creates empty [`Paragraph`]
+    /// Creates an empty [`Paragraph`] with no children.
+    #[must_use]
     pub fn empty() -> Self {
         Default::default()
     }
 
-    /// Gets [`Paragraph`] as string
+    /// Gets the rendered content of the [`Paragraph`] as a [`String`], joining
+    /// all child elements with the configured separator.
+    ///
+    /// It ignores wrapping and any other position based settings.
     pub fn get(&self) -> String {
         let mut res = "".to_string();
         for child in self.children.iter() {
@@ -83,20 +93,37 @@ impl Paragraph {
         res
     }
 
-    /// Sets [`Paragraph`] separator to given string
+    /// Sets the separator used between child elements when rendering the
+    /// [`Paragraph`].
+    #[must_use]
     pub fn separator(mut self, sep: &str) -> Self {
         self.separator = sep.to_string();
         self
     }
 
-    /// Sets [`Paragraph`] wrapping to given option
+    /// Sets text wrapping style of the [`Paragraph`].
+    ///
+    /// Default value is [`Wrap::Word`].
+    #[must_use]
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
         self
     }
 
-    /// Adds child to [`Paragraph`]
+    /// Adds a child element to the [`Paragraph`]
+    #[deprecated(
+        since = "0.6.0",
+        note = "Kept for compatibility purposes; use `push` function instead"
+    )]
     pub fn add<T>(&mut self, child: T)
+    where
+        T: Into<Box<dyn Text>>,
+    {
+        self.children.push(child.into());
+    }
+
+    /// Adds a child element to the [`Paragraph`]
+    pub fn push<T>(&mut self, child: T)
     where
         T: Into<Box<dyn Text>>,
     {

@@ -10,7 +10,7 @@ use crate::{
 use super::{widget::Widget, Element};
 
 /// A container widget that arranges child widgets in a single direction
-/// (horizontal or vertical), flexing theirs izes based on given constraints.
+/// (horizontal or vertical), flexing their sizes based on given constraints.
 ///
 /// # Direction
 ///

@@ -1,16 +1,32 @@
-//! `widgets` is collection of types that implement `Widget` trait
+//! A collection of types that implement the [`Widget`] trait.
 //!
-//! Available widgets:
-//! - [`Block`]: [`Layout`] widget with addition of optional border, title
-//!     and styles
-//! - [`Center`]: widget for centering other widget
-//! - [`Grad`]: widget that draws text with gradient foreground
-//! - [`Layout`]: widget for creating layouts
-//! - [`List`]: widget creating list layout with scrollbar
-//! - [`Paragraph`]: widget rendering continous text using widgets implementing
-//!     `Text` trait
-//! - [`Spacer`]: widget for creating spaces between widgets (better layouting)
-//! - [`Span`]: widget for styling text
+//! This module provides a variety of TUI components (widgets) used for
+//! rendering.
+//!
+//! # Available widgets:
+//! - [`BgGrad`]: A container widget that renders a gradient background behind
+//! its child widget.
+//! - [`Block`]: A widget that wrap another widget and adds border and title.
+//! - [`Grad`]: A widget for rendering text with a gradient foreground color.
+//! - [`Grid`]: A layout widget that arranges children in a grid specified by
+//! rows and columns.
+//! - [`Layout`]: A container widget that arranges child widgets in a single
+//! direction, flexing their sizes based on given constraints.
+//! - [`List`]: A scrollable list widget with suuport for item selection and
+//! highlighting.
+//! - [`Overlay`]: A widget that stacks its children in layers, from bottom to
+//! top.
+//! - [`Paragraph`]: A widget combining multiple widgets implementing the
+//! [`Text`] trait into single widget.
+//! - [`Scrollable`]: A wrapper widget that adds scrollability to its child
+//! when content overflows.
+//! - [`Scrollbar`]: A scrollbar widget that can be either vertical or
+//! horizontal.
+//! - [`Spacer`]: A spacer widget used for layout spacing.
+//! - [`Span`]: A widget for styling text where all characters share the same
+//! style.
+//! - [`Table`]: A widget that displays a table with configurable column
+//! widths, optional header and scrollable row content.
 
 mod bg_grad;
 mod block;
@@ -27,35 +43,46 @@ mod span;
 mod table;
 mod widget;
 
-/// [`Layout`] widget with gradient background
+/// A container widget that renders a gradient background behind its child
+/// widget.
 pub use bg_grad::BgGrad;
-/// [`Layout`] widget with border around it
+/// A widget that wrap another widget and adds border and title.
 pub use block::Block;
-/// Text with gradient foreground
+/// A widget for rendering text with a gradient foreground color.
 pub use grad::Grad;
-/// Creates layout by specifying columns and rows
+/// A layout widget that arranges children in a grid specified by rows and
+/// columns.
 pub use grid::Grid;
-/// Creates layout flexing in one direction
+/// A container widget that arranges child widgets in a single direction,
+/// flexing their sizes based on given constraints.
 pub use layout::Layout;
-/// List widget with scrollbar, that displays vector of strings
+/// A scrollable list widget with suuport for item selection and highlighting.
 pub use list::List;
-/// State of the [`List`] widget
+/// State of the [`List`] widget, including scroll offset and selected index.
 pub use list::ListState;
-/// Widget that stack its children on top of each other
-pub use overlay::*;
-/// Chaining widgets implementing [`Text`] trait
+/// A widget that stacks its children in layers, from bottom to top.
+pub use overlay::Overlay;
+/// A widget combining multiple widgets implementing the [`Text`] trait into
+/// single widget.
 pub use paragraph::Paragraph;
-/// Widget that uses scrollbar for overflown content
-pub use scrollable::*;
-/// Scrollbar widget
-pub use scrollbar::*;
-/// Spacer widget for better layouting
+/// A wrapper widget that adds scrollability to its child when content
+/// overflows.
+pub use scrollable::Scrollable;
+/// A scrollbar widget that can be either vertical or horizontal.
+pub use scrollbar::Scrollbar;
+/// Represents the scroll state shared by a [`Scrollbar`] and the app itself.
+pub use scrollbar::ScrollbarState;
+/// A spacer widget used for layout spacing.
 pub use spacer::Spacer;
-/// Widget for styling text
+/// A widget for styling text where all characters share the same style.
 pub use span::Span;
-/// Enables better string conversion to [`Span`]
+/// Enables creating [`Span`] by calling one of the functions on type
+/// implementing this trait.
 pub use span::ToSpan;
-/// Table widget with scrollbar
+/// A widget that displays a table with configurable column idths, optional
+/// header and scrollable row content.
 pub use table::Table;
-/// Trait for widgets to implemen
-pub use widget::*;
+/// A container for any widget implementing the [`Widget`] trait.
+pub use widget::Element;
+/// Trait implemented by all the widgets.
+pub use widget::Widget;

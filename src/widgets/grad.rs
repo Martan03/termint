@@ -11,7 +11,7 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// Widget for rendering text with a gradient foreground color.
+/// A widget for rendering text with a gradient foreground color.
 ///
 /// # Example
 ///

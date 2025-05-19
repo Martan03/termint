@@ -10,7 +10,7 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// Widget for styling text where all characters share the same style.
+/// A widget for styling text where all characters share the same style.
 ///
 /// # Supported styles
 /// - `style`: style of text, set using [`Style`]
@@ -386,7 +386,7 @@ impl Span {
 /// implementing this trait.
 ///
 /// It's recommended to use `std::fmt::Display` trait. Types implementing this
-/// trait will containg `ToSpan` as well and can be converted to `Span`.
+/// trait will contain `ToSpan` as well and can be converted to `Span`.
 pub trait ToSpan {
     /// Creates [`Span`] from string and sets its style to given value
     fn style<T>(self, style: T) -> Span

@@ -49,7 +49,6 @@ pub struct Scrollbar {
 
 /// Represents the scroll state shared by a [`Scrollbar`] and the app itself.
 ///
-///
 /// In the events handling of the app, you can handle key events and change the
 /// scroll offset.
 ///
