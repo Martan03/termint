@@ -5,30 +5,39 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// Spacer widget for better layouting
+/// A spacer widget used for layout spacing.
 ///
-/// Can be used to add spaces to the layout, for example, between two widget.
+/// [`Spacer`] is useful for adding space between widgets in a [`Layout`] or
+/// any other widget. [`Spacer`] can also be used for widgets to be empty, such
+/// as in the [`BgGrad`] widget, where by default it contains [`Spacer`].
 ///
-/// ## Example usage:
+/// # Sizing
+///
+/// [`Spacer`] widget tries to be as small as possible. If you don't specify
+/// the minimum size in the [`Layout`] (or other widget you use it in), its
+/// size will be zero.
+///
+/// # Example
 /// ```rust
 /// # use termint::{
 /// #     geometry::Constraint,
 /// #     widgets::{Layout, Spacer, ToSpan},
 /// # };
 /// let mut layout = Layout::vertical();
-/// layout.push("Example of Spacer", Constraint::Min(0));
+/// layout.push("Top Widget", Constraint::Min(0));
 ///
-/// // Spacer creates one height space between spans
-/// // Spacer size is set using [`Constrain`] when adding it to [`Layout`]
+/// // Insert a spacer with fixed height of 1
 /// layout.push(Spacer::new(), Constraint::Length(1));
 ///
-/// layout.push("One space above", Constraint::Min(0));
+/// layout.push("Bottom Widget", Constraint::Min(0));
 /// ```
+///
+/// In this example, there will be one line of space between the two texts.
 #[derive(Debug, Default)]
 pub struct Spacer {}
 
 impl Spacer {
-    /// Creates new spacer
+    /// Creates a new spacer widget.
     pub fn new() -> Self {
         Self {}
     }
