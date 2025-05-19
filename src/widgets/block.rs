@@ -194,7 +194,7 @@ impl Block<Layout> {
     )]
     pub fn add_child<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
         C: Into<Constraint>,
     {
         self.child.push(child, constraint);
@@ -203,7 +203,7 @@ impl Block<Layout> {
     /// Pushes child with its [`Constraint`] to the [`Layout`]
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
         C: Into<Constraint>,
     {
         self.child.push(child, constraint);

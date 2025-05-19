@@ -20,7 +20,6 @@ use super::{widget::Widget, Element, Layout, Spacer};
 ///
 /// # Examples
 ///
-/// ## Full-screen rendering using [`Term`]
 /// ```rust
 /// # use termint::{term::Term, widgets::BgGrad};
 /// # fn example() -> Result<(), &'static str> {
@@ -30,20 +29,6 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// term.render(grad)?;
 /// # Ok(())
 /// # }
-/// ```
-///
-/// ## Manual rendering using [`Buffer`]
-/// ```rust
-/// # use termint::{
-/// #     buffer::Buffer,
-/// #     geometry::Rect,
-/// #     widgets::{BgGrad, Widget, Spacer},
-/// # };
-/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
-///
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 9));
-/// grad.render(&mut buffer);
-/// buffer.render();
 /// ```
 #[derive(Debug)]
 pub struct BgGrad<W = Element> {
@@ -167,13 +152,6 @@ where
     /// Sets the gradient direction of the [`BgGrad`] background.
     ///
     /// The direction determines in which direction is the gradient drawn.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use termint::{widgets::BgGrad, geometry::Direction};
-    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
-    ///     .bg_dir(Direction::Horizontal);
-    /// ```
     #[must_use]
     pub fn bg_dir(mut self, direction: Direction) -> Self {
         self.direction = direction;
@@ -184,13 +162,6 @@ where
     ///
     /// You can provide any type that can be converted into [`Padding`], such
     /// as `usize`, `(usize, usize)`, or `(usize, usize, usize, usize)`.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use termint::widgets::BgGrad;
-    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
-    ///     .padding((1, 2));
-    /// ```
     #[must_use]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
@@ -265,7 +236,7 @@ impl BgGrad<Layout> {
     )]
     pub fn add_child<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
         C: Into<Constraint>,
     {
         self.child.push(child, constraint);
@@ -274,7 +245,7 @@ impl BgGrad<Layout> {
     /// Pushes child with its [`Constraint`] to the [`Layout`]
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
         C: Into<Constraint>,
     {
         self.child.push(child, constraint);

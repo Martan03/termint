@@ -5,25 +5,33 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// Creates layout by specifying columns and rows
+/// A layout widget that arranges children in a grid specified by rows and
+/// columns.
 ///
-/// ## Example usage without using Term:
+/// Each row and column is defined by a [`Unit`], which you can read more about
+/// in its documentation.
+///
+/// Children can be placed by specifying their zero-based column and row
+/// indices.
+///
+/// # Example
 /// ```rust
 /// # use termint::{
-/// #     buffer::Buffer,
 /// #     geometry::{Rect, Unit},
 /// #     widgets::{Grid, Widget},
+/// #     term::Term,
 /// # };
+/// # fn example() -> Result<(), &'static str> {
 /// let mut grid = Grid::new(
 ///     vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],
 ///     vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
 /// );
+/// grid.push("Grid", 1, 1);
 ///
-/// grid.add_child("Grid", 1, 1);
-///
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 15, 6));
-/// grid.render(&mut buffer);
-/// buffer.render();
+/// let mut term = Term::new();
+/// term.render(grid)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Default)]
 pub struct Grid {
@@ -32,16 +40,30 @@ pub struct Grid {
     cols: Vec<Unit>,
 }
 
-/// Contains grid child and row and column in which it's located
+/// Internal struct representing a child widget in a specific grid cell.
 #[derive(Debug)]
 struct GridChild {
-    pub child: Box<dyn Widget>,
+    pub child: Element,
     pub row: usize,
     pub col: usize,
 }
 
 impl Grid {
-    /// Creates new [`Grid`] with given rows and columns
+    /// Creates a new [`Grid`] from columns and rows specifications.
+    ///
+    /// Both `cols` and `rows` accept any iterable of types convertible into
+    /// [`Unit`].
+    ///
+    /// # Example
+    /// ```rust
+    /// # use termint::{
+    /// #     geometry::{Rect, Unit},
+    /// #     widgets::{Grid, Widget},
+    /// #     term::Term,
+    /// # };
+    /// let mut grid = Grid::new([3, 5, Unit::Fill(1)], [Unit::Fill(1), 1, 1]);
+    /// ```
+    #[must_use]
     pub fn new<T1, T2>(cols: T1, rows: T2) -> Self
     where
         T1: IntoIterator,
@@ -56,12 +78,13 @@ impl Grid {
         }
     }
 
-    /// Creates new empty [`Grid`]
+    /// Creates an new empty [`Grid`] with no rows or columns.
+    #[must_use]
     pub fn empty() -> Self {
         Self::default()
     }
 
-    /// Adds given row to current rows
+    /// Adds a new row definition to the [`Grid`].
     pub fn row(&mut self, row: Unit) {
         self.rows.push(row);
     }
@@ -78,7 +101,7 @@ impl Grid {
     )]
     pub fn add_child<T>(&mut self, child: T, col: usize, row: usize)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
     {
         self.children.push(GridChild {
             child: child.into(),
@@ -87,10 +110,15 @@ impl Grid {
         })
     }
 
-    /// Adds child to the grid to given row and column
+    /// Adds a child widget at the specified column and row.
+    ///
+    /// # Parameters
+    /// - `child`: The widget to add (any type convertible to [`Element`])
+    /// - `col`: Zero-based column index (x)
+    /// - `row`: Zero-based row index (y)
     pub fn push<T>(&mut self, child: T, col: usize, row: usize)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
     {
         self.children.push(GridChild {
             child: child.into(),

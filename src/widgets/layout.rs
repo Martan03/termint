@@ -9,27 +9,39 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// Creates layout flexing in one direction
+/// A container widget that arranges child widgets in a single direction
+/// (horizontal or vertical), flexing theirs izes based on given constraints.
 ///
-/// ## Example usage:
+/// # Direction
+///
+/// The layout can be horizontal (left-to-right) or vertical (top-to-bottom).
+///
+/// # Constraints
+///
+/// Each child widget's size is controlled by a [`Constraint`] determining how
+/// space is allocated. You can learn more about [`Constraint`] in its
+/// documentation.
+///
+/// # Example
 /// ```rust
 /// # use termint::{
-/// #     buffer::Buffer,
+/// #     term::Term,
 /// #     geometry::{Constraint, Rect},
 /// #     widgets::{Block, Layout, ToSpan, Widget},
 /// # };
-/// // Creates horizontal layout containing two blocks each covering 50%
+/// # fn example() -> Result<(), &'static str> {
+/// // Creates new horizontal layout containing two blocks each covering 50%
 /// let block1 = Block::vertical().title("Block 1");
 /// let block2 = Block::vertical().title("Block 2");
 ///
 /// let mut layout = Layout::horizontal();
-/// layout.add_child(block1, Constraint::Percent(50));
-/// layout.add_child(block2, Constraint::Percent(50));
+/// layout.push(block1, Constraint::Percent(50));
+/// layout.push(block2, Constraint::Percent(50));
 ///
-/// // Renders layout using buffer
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 5));
-/// layout.render(&mut buffer);
-/// buffer.render();
+/// let mut term = Term::new();
+/// term.render(layout)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct Layout {
@@ -40,15 +52,15 @@ pub struct Layout {
     center: bool,
 }
 
-/// Contains layout child and constraint of its size
+/// Internal struct representing a child widget and its constraint.
 #[derive(Debug)]
 struct LayoutChild {
-    pub child: Box<dyn Widget>,
+    pub child: Element,
     pub constraint: Constraint,
 }
 
 impl Layout {
-    /// Creates new [`Layout`] that flexes in given [`Direction`]
+    /// Creates new [`Layout`] that flexes in given [`Direction`].
     pub fn new(direction: Direction) -> Self {
         Self {
             direction,
@@ -56,12 +68,12 @@ impl Layout {
         }
     }
 
-    /// Creates [`Layout`] with vertical [`Direction`]
+    /// Creates a [`Layout`] that flexes vertically.
     pub fn vertical() -> Self {
         Default::default()
     }
 
-    /// Creates [`Layout`] with horizontal [`Direction`]
+    /// Creates a [`Layout`] that flexes horizontally.
     pub fn horizontal() -> Self {
         Self {
             direction: Direction::Horizontal,
@@ -69,13 +81,13 @@ impl Layout {
         }
     }
 
-    /// Sets [`Direction`] of the [`Layout`]
+    /// Sets flexing [`Direction`] of the [`Layout`].
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
     }
 
-    /// Sets the base style of the [`Layout`]
+    /// Sets the base style of the [`Layout`].
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -84,7 +96,7 @@ impl Layout {
         self
     }
 
-    /// Sets base background color of the [`Layout`]
+    /// Sets base background color of the [`Layout`].
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -93,7 +105,7 @@ impl Layout {
         self
     }
 
-    /// Sets base foreground color of the [`Layout`]
+    /// Sets base foreground color of the [`Layout`].
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -102,7 +114,7 @@ impl Layout {
         self
     }
 
-    /// Sets [`Padding`] of the [`Layout`]
+    /// Sets the [`Padding`] of the [`Layout`].
     pub fn padding<T>(mut self, padding: T) -> Self
     where
         T: Into<Padding>,
@@ -111,7 +123,10 @@ impl Layout {
         self
     }
 
-    /// Makes [`Layout`] center its content in its direction
+    /// Makes [`Layout`] center its content in the direction it flexes.
+    ///
+    /// If the layout is flexing its children horizontally, the content will
+    /// be centered horizontally. Otherwise it will be centered vertically.
     pub fn center(mut self) -> Self {
         self.center = true;
         self
@@ -124,7 +139,7 @@ impl Layout {
     )]
     pub fn add_child<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
         C: Into<Constraint>,
     {
         self.children.push(LayoutChild {
@@ -133,10 +148,15 @@ impl Layout {
         });
     }
 
-    /// Pushes child with its [`Constraint`] to the [`Layout`]
+    /// Adds a child widget with its contraint
+    ///
+    /// # Parameters
+    /// - `child`: The widget to add (any type convertible to [`Element`])
+    /// - `contraint`: Widget's contraint (any type convertible to
+    ///     [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
         C: Into<Constraint>,
     {
         self.children.push(LayoutChild {
@@ -147,7 +167,6 @@ impl Layout {
 }
 
 impl Widget for Layout {
-    /// Renders [`Layout`] and its children inside of it
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
         self.render_base_style(buffer, &rect);
 
@@ -162,9 +181,6 @@ impl Widget for Layout {
         }
     }
 
-    /// Reverted to old implementation for now, which should work worse,
-    /// but somehow it ends up better (better for widgets, which don't have
-    /// fixed one of its side sizes, such as text)
     fn height(&self, size: &Vec2) -> usize {
         let size = Vec2::new(
             size.x.saturating_sub(self.padding.get_horizontal()),
@@ -179,9 +195,6 @@ impl Widget for Layout {
         height + self.padding.get_vertical()
     }
 
-    /// Reverted to old implementation for now, which should work worse,
-    /// but somehow it ends up better (better for widgets, which don't have
-    /// fixed one of its side sizes, such as text)
     fn width(&self, size: &Vec2) -> usize {
         let size = Vec2::new(
             size.x.saturating_sub(self.padding.get_horizontal()),
@@ -271,7 +284,7 @@ impl Layout {
         inner: F4,
     ) -> (Vec<usize>, Rect)
     where
-        F1: Fn(&Box<dyn Widget>, &Vec2) -> usize,
+        F1: Fn(&Element, &Vec2) -> usize,
         F2: Fn(&mut Vec2, usize),
         F3: Fn(Vec2) -> usize,
         F4: Fn(Rect, usize) -> Rect,
@@ -327,7 +340,7 @@ impl Layout {
 
     fn size_sd<F>(&self, size: &Vec2, prim: usize, csize: F) -> usize
     where
-        F: Fn(&Box<dyn Widget>, &Vec2) -> usize,
+        F: Fn(&Element, &Vec2) -> usize,
     {
         let mut total = 0;
         let mut fill = false;

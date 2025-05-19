@@ -25,6 +25,7 @@ use super::{Element, Widget};
 /// #     widgets::{Scrollbar, ScrollbarState, Widget},
 /// #     term::Term,
 /// # };
+/// # fn example() -> Result<(), &'static str> {
 /// // Scrollbar state with fixed content length and offset
 /// let state = Rc::new(Cell::new(ScrollbarState::new(3).content_len(30)));
 ///
@@ -32,7 +33,9 @@ use super::{Element, Widget};
 /// let scrollbar = Scrollbar::horizontal(state.clone());
 ///
 /// let mut term = Term::new();
-/// term.render(scrollbar);
+/// term.render(scrollbar)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scrollbar {
@@ -119,19 +122,6 @@ impl Scrollbar {
     }
 
     /// Sets the character used to draw the [`Scrollbar`] track.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use std::{cell::Cell, rc::Rc};
-    /// # use termint::{
-    /// #     buffer::Buffer,
-    /// #     geometry::Rect,
-    /// #     widgets::{Scrollbar, ScrollbarState, Widget}
-    /// # };
-    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
-    /// #    .content_len(30)));
-    /// let scrollbar = Scrollbar::vertical(state).track_char('I');
-    /// ```
     #[must_use]
     pub fn track_char(mut self, track_char: char) -> Self {
         self.track_char = track_char;
@@ -139,22 +129,6 @@ impl Scrollbar {
     }
 
     /// Sets the style of the [`Scrollbar`] track.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use std::{cell::Cell, rc::Rc};
-    /// # use termint::{
-    /// #     buffer::Buffer,
-    /// #     geometry::Rect,
-    /// #     widgets::{Scrollbar, ScrollbarState, Widget},
-    /// #     enums::Color,
-    /// #     style::Style,
-    /// # };
-    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
-    /// #    .content_len(30)));
-    /// let scrollbar = Scrollbar::vertical(state)
-    ///     .track_style(Style::new().fg(Color::Red));
-    /// ```
     #[must_use]
     pub fn track_style<T>(mut self, style: T) -> Self
     where
@@ -166,19 +140,6 @@ impl Scrollbar {
 
     /// Sets the character used to draw the [`Scrollbar`] thumb
     /// (the moving part).
-    ///
-    /// # Example
-    /// ```rust
-    /// # use std::{cell::Cell, rc::Rc};
-    /// # use termint::{
-    /// #     buffer::Buffer,
-    /// #     geometry::Rect,
-    /// #     widgets::{Scrollbar, ScrollbarState, Widget}
-    /// # };
-    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
-    /// #    .content_len(30)));
-    /// let scrollbar = Scrollbar::vertical(state).thumb_char('#');
-    /// ```
     #[must_use]
     pub fn thumb_char(mut self, thumb_char: char) -> Self {
         self.thumb_char = thumb_char;
@@ -186,22 +147,6 @@ impl Scrollbar {
     }
 
     /// Sets the style of the [`Scrollbar`] thumb.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use std::{cell::Cell, rc::Rc};
-    /// # use termint::{
-    /// #     buffer::Buffer,
-    /// #     geometry::Rect,
-    /// #     widgets::{Scrollbar, ScrollbarState, Widget},
-    /// #     enums::Color,
-    /// #     style::Style,
-    /// # };
-    /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
-    /// #    .content_len(30)));
-    /// let scrollbar = Scrollbar::vertical(state)
-    ///     .thumb_style(Style::new().fg(Color::Blue));
-    /// ```
     #[must_use]
     pub fn thumb_style<T>(mut self, style: T) -> Self
     where

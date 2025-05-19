@@ -14,20 +14,22 @@ use super::{Element, Widget};
 /// # Example
 /// ```rust
 /// # use termint::{
-/// #     buffer::Buffer,
+/// #     term::Term,
 /// #     geometry::Rect,
 /// #     widgets::{Element, Widget, Spacer, Overlay}
 /// # };
 /// # fn get_bottom_child() -> Element { Spacer::new().into() }
 /// # fn get_top_child() -> Element { Spacer::new().into() }
+/// # fn example() -> Result<(), &'static str> {
 /// let overlay = Overlay::new(vec![
 ///     get_bottom_child(),
 ///     get_top_child(),
 /// ]);
 ///
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 10));
-/// overlay.render(&mut buffer);
-/// buffer.render();
+/// let mut term = Term::new();
+/// term.render()?;
+/// # Ok(())
+/// # }
 /// ```
 ///
 /// In this example, the second child (`get_top_child()`) is rendered on top of
