@@ -85,6 +85,7 @@ impl Span {
     /// let span = Span::new(String::from("Hello, Termint!"));
     /// let span = Span::new(&String::from("Hello, All!"));
     /// ```
+    #[must_use]
     pub fn new<T>(text: T) -> Self
     where
         T: AsRef<str>,
@@ -105,6 +106,7 @@ impl Span {
     /// let span = Span::new("style").style(Style::new().bg(Color::Red));
     /// let span = Span::new("style").style(Color::Blue);
     /// ```
+    #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -116,6 +118,7 @@ impl Span {
     /// Sets the foreground color of the [`Span`].
     ///
     /// You can provide any type convertible to [`Color`].
+    #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -127,6 +130,7 @@ impl Span {
     /// Sets the background color of the [`Span`].
     ///
     /// You can provide any type convertible to [`Color`].
+    #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -147,6 +151,7 @@ impl Span {
     ///     .modifier(Modifier::ITALIC | Modifier::BOLD);
     /// let span = Span::new("modifier").modifier(modifiers!(BOLD, ITALIC));
     /// ```
+    #[must_use]
     pub fn modifier(mut self, modifier: u8) -> Self {
         self.style = self.style.modifier(modifier);
         self
@@ -159,6 +164,7 @@ impl Span {
     /// # use termint::{widgets::Span, enums::Modifier};
     /// let span = Span::new("add_modifier").add_modifier(Modifier::ITALIC);
     /// ```
+    #[must_use]
     pub fn add_modifier(mut self, flag: u8) -> Self {
         self.style = self.style.add_modifier(flag);
         self
@@ -172,6 +178,7 @@ impl Span {
     /// let span = Span::new("remove_modifier")
     ///     .remove_modifier(Modifier::ITALIC);
     /// ```
+    #[must_use]
     pub fn remove_modifier(mut self, flag: u8) -> Self {
         self.style = self.style.remove_modifier(flag);
         self
@@ -180,6 +187,7 @@ impl Span {
     /// Sets text alignment of the [`Span`].
     ///
     /// Default value is [`TextAlign::Left`].
+    #[must_use]
     pub fn align(mut self, align: TextAlign) -> Self {
         self.align = align;
         self
@@ -188,6 +196,7 @@ impl Span {
     /// Sets text wrapping style of the [`Span`].
     ///
     /// Default value is [`Wrap::Word`].
+    #[must_use]
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
         self
@@ -196,6 +205,7 @@ impl Span {
     /// Sets the ellipsis string to use when text overflows.
     ///
     /// The default is `"..."``. Any custom string may be used.
+    #[must_use]
     pub fn ellipsis<T>(mut self, ellipsis: T) -> Self
     where
         T: AsRef<str>,

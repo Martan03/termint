@@ -61,6 +61,7 @@ struct LayoutChild {
 
 impl Layout {
     /// Creates new [`Layout`] that flexes in given [`Direction`].
+    #[must_use]
     pub fn new(direction: Direction) -> Self {
         Self {
             direction,
@@ -69,11 +70,13 @@ impl Layout {
     }
 
     /// Creates a [`Layout`] that flexes vertically.
+    #[must_use]
     pub fn vertical() -> Self {
         Default::default()
     }
 
     /// Creates a [`Layout`] that flexes horizontally.
+    #[must_use]
     pub fn horizontal() -> Self {
         Self {
             direction: Direction::Horizontal,
@@ -82,12 +85,14 @@ impl Layout {
     }
 
     /// Sets flexing [`Direction`] of the [`Layout`].
+    #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
     }
 
     /// Sets the base style of the [`Layout`].
+    #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -97,6 +102,7 @@ impl Layout {
     }
 
     /// Sets base background color of the [`Layout`].
+    #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -106,6 +112,7 @@ impl Layout {
     }
 
     /// Sets base foreground color of the [`Layout`].
+    #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -115,6 +122,7 @@ impl Layout {
     }
 
     /// Sets the [`Padding`] of the [`Layout`].
+    #[must_use]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
         T: Into<Padding>,
@@ -127,6 +135,7 @@ impl Layout {
     ///
     /// If the layout is flexing its children horizontally, the content will
     /// be centered horizontally. Otherwise it will be centered vertically.
+    #[must_use]
     pub fn center(mut self) -> Self {
         self.center = true;
         self

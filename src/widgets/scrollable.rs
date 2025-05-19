@@ -2,34 +2,38 @@ use std::{cell::Cell, cmp::min, rc::Rc};
 
 use crate::{
     buffer::Buffer,
-    geometry::{Rect, Vec2},
+    geometry::{Direction, Rect, Vec2},
 };
 
 use super::{Element, Scrollbar, ScrollbarState, Widget};
 
-/// Wraps widget and allows overflown content to be accessed by scrolling
+/// A wrapper widget that adds scrollability to its child when content
+/// overflows.
 ///
-/// ## Example usage:
+/// Supports vertical, horizontal or bidirectional scrolling. It uses
+/// [`ScrollbarState`] for each scrollbar to save its state.
+///
+/// # Example
 /// ```rust
 /// # use std::{cell::Cell, rc::Rc};
 /// # use termint::{
-/// #     buffer::Buffer,
-/// #     geometry::Rect,
+/// #     term::Term,
 /// #     widgets::{ToSpan, Scrollable, Widget, ScrollbarState}
 /// # };
-/// // Widget to wrap scrollable around
+/// # fn example() -> Result<(), &'static str> {
+/// // Content that may overflow
 /// let span = "Long text that cannot fit so scrolling is needed".to_span();
 ///
-/// // Scrollable state containing offset
+/// // Shared scrollbar state for managing scroll offset
 /// let state = Rc::new(Cell::new(ScrollbarState::new(0)));
 ///
-/// // Creates scrollable widget with vertical scrolling
+/// // Creates vertical scrollable widget
 /// let scrollable = Scrollable::vertical(span, state);
 ///
-/// // Renders using the buffer
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 9, 5));
-/// scrollable.render(&mut buffer);
-/// buffer.render();
+/// let mut term = Term::new();
+/// term.render(scrollable)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scrollable<W = Element> {
@@ -42,7 +46,28 @@ impl<W> Scrollable<W>
 where
     W: Widget,
 {
-    /// Creates new vertical [`Scrollable`] with given widget as its content
+    /// Creates a [`Scrollable`] that scrolls in given direction.
+    ///
+    /// # Parameters
+    /// - `child`: The widget to wrap with scrolling
+    /// - `state`: Shared state holding the scroll offset
+    /// - `dir`: Scrolling direction
+    pub fn new(
+        child: W,
+        state: Rc<Cell<ScrollbarState>>,
+        dir: Direction,
+    ) -> Self {
+        match dir {
+            Direction::Vertical => Self::vertical(child, state),
+            Direction::Horizontal => Self::horizontal(child, state),
+        }
+    }
+
+    /// Creates a [`Scrollable`] that scrolls vertically.
+    ///
+    /// # Parameters
+    /// - `child`: The widget to wrap with vertical scrolling
+    /// - `state`: Shared state holding the vertical scroll offset
     pub fn vertical(child: W, state: Rc<Cell<ScrollbarState>>) -> Self {
         Self {
             vertical: Some(Scrollbar::vertical(state.clone())),
@@ -51,7 +76,11 @@ where
         }
     }
 
-    /// Creates new horizontal [`Scrollable`] with given widget as its content
+    /// Creates a [`Scrollable`] that scrolls horizontally.
+    ///
+    /// # Parameters
+    /// - `child`: The widget to wrap with horizontal scrolling
+    /// - `state`: Shared state holding the horizontal scroll offset
     pub fn horizontal(child: W, state: Rc<Cell<ScrollbarState>>) -> Self {
         Self {
             vertical: None,
@@ -60,8 +89,13 @@ where
         }
     }
 
-    /// Creates new [`Scrollable`] scrolling in both directions with given
-    /// widget as its content
+    /// Creates a [`Scrollable`] that supports both vertical and horizontal
+    /// scrolling.
+    ///
+    /// # Parameters
+    /// - `child`: The widget to wrap
+    /// - `ver_state`: Shared state holding the vertical scroll offset
+    /// - `hor_state`: Shared state holding the horizontal scroll offset
     pub fn both(
         child: W,
         ver_state: Rc<Cell<ScrollbarState>>,

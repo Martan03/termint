@@ -14,34 +14,33 @@ use crate::{
 
 use super::{span::ToSpan, widget::Widget, Element};
 
-/// List widget with scrollbar, that displays vector of strings
+/// A scrollable list widget with suuport for item selection and highlighting.
 ///
-/// ### Features:
-/// - Scrollbar (doesn't show when not necessary):
-///     - Scrollbar foreground
-///     - Scrollbar thumb color
-/// - Selected item:
-///     - Foreground
-///     - Background
-///     - Character in front
+/// The [`List`] widgets displays a list of strings with optional selection
+/// highlighting and vertical scrollbar. The scrollbar is only shown if needed.
 ///
-/// ## Example usage:
+/// # Features
+/// - **Scrollbar** (doesn't show when not necessary):
+///     - Custom scrollbar foreground color
+///     - Custom scrollbar thumb color
+/// - **Selected item styling**:
+///     - Highlight symbol
+///     - Custom style
+///
+/// # Example
 /// ```rust
-/// # use std::{
-/// #     cell::RefCell,
-/// #     rc::Rc,
-/// # };
+/// # use std::{cell::RefCell, rc::Rc};
 /// # use termint::{
-/// #     buffer::Buffer,
+/// #     term::Term,
 /// #     enums::Color,
 /// #     widgets::{List, ListState, Widget},
-/// #     geometry::Rect,
 /// # };
-/// // Creates list state with selected item on position 1 and scroll offset 0
+/// # fn example() -> Result<(), &'static str> {
+/// // Creates list state with offset 0 and with selected item at index 1
 /// let state = Rc::new(RefCell::new(ListState::selected(0, 1)));
 ///
-/// // Creates list, where selected item has yellow foreground and '*' in
-/// // front of it and automatically scrolls to selected item
+/// // Creates a list, highlight the selected item in yellow with '*' prefix,
+/// // and automatically scroll to keep the selected item in view
 /// let items = vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"];
 /// let list =
 ///     List::new(items, state.clone())
@@ -49,10 +48,10 @@ use super::{span::ToSpan, widget::Widget, Element};
 ///         .highlight_symbol("*")
 ///         .auto_scroll();
 ///
-/// // Renders using the buffer
-/// let mut buffer = Buffer::empty(Rect::new(1, 1, 20, 5));
-/// list.render(&mut buffer);
-/// buffer.render();
+/// let mut term = Term::new();
+/// term.render(list)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct List {
@@ -67,7 +66,7 @@ pub struct List {
     thumb_fg: Color,
 }
 
-/// State of the [`List`] widget
+/// State of the [`List`] widget, including scroll offset and selected index.
 #[derive(Debug)]
 pub struct ListState {
     pub offset: usize,
@@ -75,7 +74,8 @@ pub struct ListState {
 }
 
 impl List {
-    /// Creates new [`List`] with given items and given state
+    /// Creates a new [`List`] with given items and given state.
+    #[must_use]
     pub fn new<T>(items: T, state: Rc<RefCell<ListState>>) -> Self
     where
         T: IntoIterator,
@@ -97,7 +97,8 @@ impl List {
         }
     }
 
-    /// Sets selected item in [`List`]
+    /// Sets the currently selected item in the [`List`].
+    #[must_use]
     pub fn selected<T>(self, current: T) -> Self
     where
         T: Into<Option<usize>>,
@@ -106,13 +107,15 @@ impl List {
         self
     }
 
-    /// Automatically scrolls so the selected item is visible
+    /// Enables automatic scrolling to ensure the selected item is visible.
+    #[must_use]
     pub fn auto_scroll(mut self) -> Self {
         self.auto_scroll = true;
         self
     }
 
-    /// Sets style of the [`List`]
+    /// Sets the base [`Style`] of the [`List`].
+    #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -121,7 +124,8 @@ impl List {
         self
     }
 
-    /// Sets style of the selected item in the [`List`]
+    /// Sets the [`Style`] of the selected item in the [`List`].
+    #[must_use]
     pub fn selected_style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -130,7 +134,12 @@ impl List {
         self
     }
 
-    /// Sets highlight symbol of the selected item
+    /// Sets the highlight symbol of the selected item.
+    ///
+    /// This symbol appears before the selected item and can be set, for
+    /// example, to `"*"`, which would result to selected item being shown as
+    /// `* Item`.
+    #[must_use]
     pub fn highlight_symbol<T>(mut self, sel_char: T) -> Self
     where
         T: AsRef<str>,
@@ -139,8 +148,9 @@ impl List {
         self
     }
 
-    /// Sets style of the highlight symbol
-    /// (seperate from the selected item style)
+    /// Sets the [`Style`] of the highlight symbol
+    /// (separate from the selected item style)
+    #[must_use]
     pub fn highlight_style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -149,13 +159,15 @@ impl List {
         self
     }
 
-    /// Sets [`List`] scrollbar color
+    /// Sets the foreground color of the scrollbar.
+    #[must_use]
     pub fn scrollbar_fg(mut self, fg: Color) -> Self {
         self.scrollbar_fg = fg;
         self
     }
 
-    /// Sets [`List`] scrollbar thumb color
+    /// Sets the foreground color of the scrollbar's thumb (draggable part).
+    #[must_use]
     pub fn thumb_fg(mut self, fg: Color) -> Self {
         self.thumb_fg = fg;
         self
@@ -163,7 +175,9 @@ impl List {
 }
 
 impl ListState {
-    /// Creates new [`ListState`] with given offset and no item selected
+    /// Creates a new [`ListState`] with the given scroll offset and no
+    /// selected item.
+    #[must_use]
     pub fn new(offset: usize) -> Self {
         Self {
             offset,
@@ -171,7 +185,8 @@ impl ListState {
         }
     }
 
-    /// Creates new [`ListState`] with given offset and selected item
+    /// Creates a new [`ListState`] with given scroll offset and selected item.
+    #[must_use]
     pub fn selected(offset: usize, selected: usize) -> Self {
         Self {
             offset,
@@ -217,8 +232,7 @@ impl Widget for List {
             if rect.y() + rect.height() <= text_pos.y {
                 break;
             }
-            text_size.y = rect.y() + rect
-            .height() - text_pos.y;
+            text_size.y = rect.y() + rect.height() - text_pos.y;
         }
     }
 

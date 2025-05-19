@@ -58,6 +58,7 @@ where
     /// enabled and no title.
     ///
     /// You can provide any type implementing the [`Widget`] trait.
+    #[must_use]
     pub fn new(child: W) -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -71,11 +72,7 @@ where
     /// Sets the [`Text`] title displayed at the top of the [`Block`].
     ///
     /// This is typically used for section labels in your TUI.
-    ///
-    /// # Example
-    /// ```rust
-    /// let block = Block::horizontal().title("Section title");
-    /// ```
+    #[must_use]
     pub fn title<T>(mut self, title: T) -> Self
     where
         T: Into<Box<dyn Text>>,
@@ -89,22 +86,25 @@ where
     ///
     /// # Example
     /// ```rust
-    /// # use termint::enums::Border;
-    /// let block = Block::horizontal().borders(Border::TOP | Border::BOTTOM);
+    /// # use termint::{enums::Border, widgets::Block, borders};
+    /// let block1 = Block::horizontal().borders(Border::TOP | Border::BOTTOM);
+    /// let block2 = Block::horizontal().borders(borders!(TOP, BOTTOM));
     /// ```
-
+    #[must_use]
     pub fn borders(mut self, borders: Border) -> Self {
         self.borders = borders;
         self
     }
 
     /// Sets the [`BorderType`] used to render the [`Block`] border.
+    #[must_use]
     pub fn border_type(mut self, border_type: BorderType) -> Self {
         self.border_type = border_type;
         self
     }
 
     /// Sets the style applied to [`Block`] borders.
+    #[must_use]
     pub fn border_style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -114,6 +114,7 @@ where
     }
 
     /// Sets the foreground color of the [`Block`] borders.
+    #[must_use]
     pub fn border_color(mut self, color: Color) -> Self {
         self.border_style = self.border_style.fg(color);
         self
@@ -122,6 +123,7 @@ where
 
 impl Block<Spacer> {
     /// Returns an empty [`Block`] with no title and all borders
+    #[must_use]
     pub fn empty() -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -141,10 +143,13 @@ impl Block<Layout> {
     ///
     /// # Example
     /// ```rust
-    /// # use termint::widgets::block;
-    /// let block = Block::vertical();
-    /// assert_eq!(block, Block::new(Layout::vertical()));
+    /// # use termint::widgets::{Block, Layout};
+    /// // Creates block with vertical layout as its child
+    /// let block1 = Block::new(Layout::vertical());
+    /// // Does the same, but shorter
+    /// let block2 = Block::vertical();
     /// ```
+    #[must_use]
     pub fn vertical() -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -162,10 +167,13 @@ impl Block<Layout> {
     ///
     /// # Example
     /// ```rust
-    /// # use termint::widgets::block;
-    /// let block = Block::horizontal();
-    /// assert_eq!(block, Block::new(Layout::horizontal()));
+    /// # use termint::widgets::{Block, Layout};
+    /// // Creates block with horizontal layout as its child
+    /// let block1 = Block::new(Layout::horizontal());
+    /// // Does the same, but shorter
+    /// let block2 = Block::horizontal();
     /// ```
+    #[must_use]
     pub fn horizontal() -> Self {
         Self {
             title: Box::new(Span::new("")),
@@ -177,12 +185,14 @@ impl Block<Layout> {
     }
 
     /// Sets flexing [`Direction`] of the [`Layout`].
+    #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.child = self.child.direction(direction);
         self
     }
 
     /// Sets the base style of the [`Layout`].
+    #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
@@ -191,7 +201,8 @@ impl Block<Layout> {
         self
     }
 
-    /// Sets base background color of the [`Layout`]
+    /// Sets base background color of the [`Layout`].
+    #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -200,7 +211,8 @@ impl Block<Layout> {
         self
     }
 
-    /// Sets base foreground color of the [`Layout`]
+    /// Sets base foreground color of the [`Layout`].
+    #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -210,6 +222,7 @@ impl Block<Layout> {
     }
 
     /// Sets the [`Padding`] of the [`Layout`].
+    #[must_use]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
         T: Into<Padding>,
@@ -222,6 +235,7 @@ impl Block<Layout> {
     ///
     /// If the layout is flexing its children horizontally, the content will
     /// be centered horizontally. Otherwise it will be centered vertically.
+    #[must_use]
     pub fn center(mut self) -> Self {
         self.child = self.child.center();
         self

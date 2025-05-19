@@ -9,6 +9,36 @@ use crate::{
 
 use super::{Element, ListState, Widget};
 
+/// A widget that displays a table with configurable column widths, optional
+/// header and scrollable row content.
+///
+/// Each cell is represented by an [`Element`], so cell can be any widget.
+/// Layout of the cells is controlled by per-column widths and optional spacing
+/// between columns.
+///
+/// # Example
+/// ```rust
+/// # use std::{cell::RefCell, rc::Rc};
+/// # use termint::{
+/// #    term::Term, geometry::Unit, enums::BorderType,
+/// #    widgets::{Element, Table, ListState}
+/// # };
+/// # fn get_people() -> Vec<Vec<Element>> { return vec![] }
+/// # fn example() -> Result<(), &'static str> {
+/// let rows = get_people();
+/// let widths = [Unit::Fill(3), Unit::Fill(1), Unit::Fill(3)];
+/// let state = Rc::new(RefCell::new(ListState::selected(0, 1)));
+///
+/// let table = Table::new(rows, widths, state)
+///     .header(["Name", "Age", "Email"])
+///     .header_separator(BorderType::Double)
+///     .column_spacing(2);
+///
+/// let mut term = Term::new();
+/// term.render(table)?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug)]
 pub struct Table {
     header: Option<Vec<Box<dyn Text>>>,

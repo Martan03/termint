@@ -80,6 +80,7 @@ impl Grad {
     /// );
     /// let grad = Grad::new("Hello, Termint!", (0, 220, 255), 0xC83CFF);
     /// ```
+    #[must_use]
     pub fn new<T, R, S>(text: T, start: R, end: S) -> Self
     where
         T: Into<String>,
@@ -99,7 +100,8 @@ impl Grad {
         }
     }
 
-    /// Sets text gradient direction (horizontal by default)
+    /// Sets text gradient direction (horizontal by default).
+    #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
@@ -109,6 +111,7 @@ impl Grad {
     ///
     /// Accepts `None` for transparent background or any type convertible to
     /// `Option<Color>`.
+    #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -128,6 +131,7 @@ impl Grad {
     /// let grad = Grad::new("modifier", (0, 220, 255), 0xC83CFF)
     ///     .modifier(modifiers!(BOLD, ITALIC));
     /// ```
+    #[must_use]
     pub fn modifier(mut self, modifier: u8) -> Self {
         self.modifier.clear();
         self.modifier.add(modifier);
@@ -142,6 +146,7 @@ impl Grad {
     /// let grad = Grad::new("add_modifier", (0, 220, 255), 0xC83CFF)
     ///     .add_modifier(Modifier::ITALIC);
     /// ```
+    #[must_use]
     pub fn add_modifier(mut self, flag: u8) -> Self {
         self.modifier.add(flag);
         self
@@ -155,6 +160,7 @@ impl Grad {
     /// let grad = Grad::new("remove_modifier", (0, 220, 255), 0xC83CFF)
     ///     .remove_modifier(Modifier::ITALIC);
     /// ```
+    #[must_use]
     pub fn remove_modifier(mut self, flag: u8) -> Self {
         self.modifier.sub(flag);
         self
@@ -162,12 +168,14 @@ impl Grad {
 
     /// Sets the text alignment of the [`Grad`] (default is
     /// [`TextAlign::Left`]).
+    #[must_use]
     pub fn align(mut self, align: TextAlign) -> Self {
         self.align = align;
         self
     }
 
     /// Sets the wrapping strategy of the [`Grad`] (default is [`Wrap::Word`]).
+    #[must_use]
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
         self
@@ -176,6 +184,7 @@ impl Grad {
     /// Sets the ellipsis string to use when text overflows.
     ///
     /// The default is `"..."``. Any custom string may be used.
+    #[must_use]
     pub fn ellipsis(mut self, ellipsis: &str) -> Self {
         self.ellipsis = ellipsis.to_string();
         self
