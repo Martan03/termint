@@ -257,12 +257,19 @@ impl List {
     /// Renders [`List`] scrollbar
     fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
         let rat = self.items.len() as f32 / rect.height() as f32;
-        let thumb_size =
-            min((rect.height() as f32 / rat).floor() as usize, rect.height());
-        let thumb_offset = min(
+        let thumb_size = max(
+            1,
+            min((rect.height() as f32 / rat).round() as usize, rect.height()),
+        );
+        let mut thumb_offset = min(
             (self.state.borrow().offset as f32 / rat) as usize,
             rect.height() - thumb_size,
         );
+        if let Some(selected) = self.state.borrow().selected {
+            if selected + 1 == self.items.len() {
+                thumb_offset = rect.height() - thumb_size;
+            }
+        }
 
         let x = (rect.x() + rect.width()).saturating_sub(1);
         let mut bar_pos = Vec2::new(x, rect.y());
