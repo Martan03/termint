@@ -12,6 +12,7 @@ pub struct Style {
 
 impl Style {
     /// Creates a new [`Style`]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -24,6 +25,7 @@ impl Style {
     }
 
     /// Sets foreground color to given value
+    #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -33,6 +35,7 @@ impl Style {
     }
 
     /// Sets background color to given value
+    #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
@@ -42,6 +45,7 @@ impl Style {
     }
 
     /// Sets modifier to the given flag
+    #[must_use]
     pub fn modifier(mut self, flag: u8) -> Self {
         self.modifier.clear();
         self.modifier.add(flag);
@@ -49,14 +53,32 @@ impl Style {
     }
 
     /// Adds given modifier to the already set modifiers
+    #[must_use]
     pub fn add_modifier(mut self, flag: u8) -> Self {
         self.modifier.add(flag);
         self
     }
 
     /// Removes given modifier from the already set modifiers
+    #[must_use]
     pub fn remove_modifier(mut self, flag: u8) -> Self {
         self.modifier.sub(flag);
+        self
+    }
+
+    /// Combines two styles, equivalent to applying two styles after each
+    /// other. Only modifier gets overriden.
+    ///
+    /// You can provide any type convertible to [`Style`].
+    #[must_use]
+    pub fn combine<S>(mut self, other: S) -> Self
+    where
+        S: Into<Style>,
+    {
+        let other = other.into();
+        self.fg = other.fg.or(self.fg);
+        self.bg = other.bg.or(self.bg);
+        self.modifier = other.modifier;
         self
     }
 }

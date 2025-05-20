@@ -10,13 +10,14 @@ use termal::{
 };
 use termint::{
     enums::{BorderType, Color},
-    geometry::Constraint,
+    geometry::{Constraint, Unit},
     style::Style,
     term::Term,
-    widgets::{Block, List, ListState, ToSpan},
+    widgets::{Block, ListState, Row, Table, ToSpan},
 };
 
 const BG: Color = Color::Hex(0x02081e);
+const BGL: Color = Color::Hex(0x061038);
 const BORDER: Color = Color::Hex(0x535C91);
 const FG: Color = Color::Hex(0xc3c1f4);
 const SELECTED: Color = Color::Hex(0xea4bfc);
@@ -31,8 +32,8 @@ fn main() -> ExitCode {
 
 struct App {
     term: Term,
-    list_state: Rc<RefCell<ListState>>,
-    people: Vec<String>,
+    table_state: Rc<RefCell<ListState>>,
+    songs: Vec<Vec<&'static str>>,
 }
 
 impl App {
@@ -64,19 +65,24 @@ impl App {
     }
 
     fn render(&mut self) {
-        let list = List::new(&self.people, self.list_state.clone())
-            .auto_scroll()
-            .selected_style(SELECTED)
-            .scrollbar_fg(BORDER)
-            .thumb_fg(FG);
+        let table = Table::new(
+            get_rows(),
+            vec![Unit::Fill(1); 3],
+            self.table_state.clone(),
+        )
+        .header(vec!["Title", "Artist", "Album"])
+        .header_separator(BorderType::Normal)
+        .selected_row_style(SELECTED)
+        .auto_scroll();
+
         let help = "[↑]Move up [↓]Move down [Esc]Quit".fg(BORDER);
 
         let mut block = Block::vertical()
-            .title("Quest List")
+            .title("Songs List")
             .border_type(BorderType::Thicker)
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
-        block.push(list, Constraint::Fill(1));
+        block.push(table, Constraint::Fill(1));
         block.push(help, 1..);
 
         _ = self.term.render(block);
@@ -85,17 +91,17 @@ impl App {
     fn key_listener(&mut self, key: Key) -> bool {
         match key.code {
             KeyCode::Down => {
-                let mut state = self.list_state.borrow_mut();
+                let mut state = self.table_state.borrow_mut();
                 let Some(sel) = state.selected else {
                     return false;
                 };
 
-                if sel + 1 < self.people.len() {
+                if sel + 1 < self.songs.len() {
                     state.selected = Some(sel + 1);
                 }
             }
             KeyCode::Up => {
-                let mut state = self.list_state.borrow_mut();
+                let mut state = self.table_state.borrow_mut();
                 let Some(sel) = state.selected else {
                     return false;
                 };
@@ -114,23 +120,42 @@ impl Default for App {
     fn default() -> Self {
         Self {
             term: Term::new(),
-            list_state: Rc::new(RefCell::new(ListState::selected(0, 0))),
-            people: get_people(),
+            table_state: Rc::new(RefCell::new(ListState::selected(0, 0))),
+            songs: get_songs(),
         }
     }
 }
 
-fn get_people() -> Vec<String> {
+fn get_songs() -> Vec<Vec<&'static str>> {
     vec![
-        "Alice Johnson".to_string(),
-        "Bob Smith".to_string(),
-        "Carol Davis".to_string(),
-        "David Thompson".to_string(),
-        "Emma Wilson".to_string(),
-        "Frank Miller".to_string(),
-        "Grace Lee".to_string(),
-        "Henry Clark".to_string(),
-        "Isla Lewis".to_string(),
-        "Jack Martin".to_string(),
+        vec!["Emptiness Machine", "Linkin Park", "From Zero"],
+        vec!["Numb", "Linkin Park", "Meteora"],
+        vec!["Radioactive", "Imagine Dragons", "Night Visions"],
+        vec!["Believer", "Imagine Dragons", "Evolve"],
+        vec!["Stressed Out", "Twenty One Pilots", "Blurryface"],
+        vec!["Ride", "Twenty One Pilots", "Blurryface"],
+        vec!["Counting Stars", "OneRepublic", "Native"],
+        vec!["Secrets", "OneRepublic", "Waking Up"],
+        vec!["High Hopes", "Panic! At The Disco", "Pray for the Wicked"],
+        vec![
+            "I Write Sins Not Tragedies",
+            "Panic! At The Disco",
+            "A Fever You Can't Sweat Out",
+        ],
     ]
+}
+
+fn get_rows() -> Vec<Row> {
+    let rows = get_songs()
+        .iter()
+        .enumerate()
+        .map(|(i, s)| {
+            let mut row = Row::new(s);
+            if i % 2 == 0 {
+                row = row.style(Style::new().bg(BGL));
+            }
+            row
+        })
+        .collect();
+    rows
 }

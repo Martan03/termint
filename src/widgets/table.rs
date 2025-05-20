@@ -1,13 +1,20 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    cmp::{max, min},
+    rc::Rc,
+};
 
 use crate::{
     buffer::Buffer,
     enums::{Border, BorderType},
     geometry::{Rect, Unit, Vec2},
-    text::Text,
+    style::Style,
 };
 
 use super::{Element, ListState, Widget};
+
+mod row;
+pub use row::Row;
 
 /// A widget that displays a table with configurable column widths, optional
 /// header and scrollable row content.
@@ -41,58 +48,57 @@ use super::{Element, ListState, Widget};
 /// ```
 #[derive(Debug)]
 pub struct Table {
-    header: Option<Vec<Box<dyn Text>>>,
+    header: Option<Row>,
     header_separator: Option<BorderType>,
-    rows: Vec<Vec<Element>>,
+    rows: Vec<Row>,
+    selected_row_style: Style,
     widths: Vec<Unit>,
     column_spacing: usize,
     state: Rc<RefCell<ListState>>,
+    auto_scroll: bool,
 }
 
 impl Table {
     /// Creates new [`Table`] with given rows and columns widths
-    pub fn new<R, C, W>(
-        rows: R,
-        widths: W,
-        state: Rc<RefCell<ListState>>,
-    ) -> Self
+    #[must_use]
+    pub fn new<R, W>(rows: R, widths: W, state: Rc<RefCell<ListState>>) -> Self
     where
         R: IntoIterator,
-        R::Item: IntoIterator<Item = C>,
-        C: Into<Element>,
+        R::Item: Into<Row>,
         W: IntoIterator,
         W::Item: Into<Unit>,
     {
         Self {
             header: None,
             header_separator: None,
-            rows: rows
-                .into_iter()
-                .map(|r| r.into_iter().map(|i| i.into()).collect())
-                .collect(),
+            rows: rows.into_iter().map(Into::into).collect(),
+            selected_row_style: Style::default(),
             widths: widths.into_iter().map(|c| c.into()).collect(),
             column_spacing: 1,
             state,
+            auto_scroll: false,
         }
     }
 
     /// Adds given header to the [`Table`]
+    #[must_use]
     pub fn header<H>(mut self, header: H) -> Self
     where
-        H: IntoIterator,
-        H::Item: Into<Box<dyn Text>>,
+        H: Into<Row>,
     {
-        self.header = Some(header.into_iter().map(|h| h.into()).collect());
+        self.header = Some(header.into());
         self
     }
 
     /// Sets the header separator of the [`Table`]
+    #[must_use]
     pub fn header_separator(mut self, separator: BorderType) -> Self {
         self.header_separator = Some(separator);
         self
     }
 
     /// Sets [`Table`] rows to the given value
+    #[must_use]
     pub fn rows<R, C>(mut self, rows: R) -> Self
     where
         R: IntoIterator,
@@ -106,7 +112,18 @@ impl Table {
         self
     }
 
+    /// Sets the selected row style
+    #[must_use]
+    pub fn selected_row_style<S>(mut self, style: S) -> Self
+    where
+        S: Into<Style>,
+    {
+        self.selected_row_style = style.into();
+        self
+    }
+
     /// Sets columns widths of the [`Table`]
+    #[must_use]
     pub fn widths<W>(mut self, widths: W) -> Self
     where
         W: IntoIterator,
@@ -117,8 +134,16 @@ impl Table {
     }
 
     /// Sets the column spacing of the [`Table`]
+    #[must_use]
     pub fn column_spacing(mut self, space: usize) -> Self {
         self.column_spacing = space;
+        self
+    }
+
+    /// Enables automatic scrolling to ensure the selected item is visible.
+    #[must_use]
+    pub fn auto_scroll(mut self) -> Self {
+        self.auto_scroll = true;
         self
     }
 }
@@ -139,11 +164,18 @@ impl Widget for Table {
         if !self.fits(&size, &widths) {
             size.x = size.x.saturating_sub(1);
             widths = self.calc_widths(&size);
-            self.render_scrollbar(buffer, &rect, header_height);
+            let srect = Rect::new(rect.right(), pos.y, 1, size.y);
+            self.render_scrollbar(buffer, &srect);
         }
 
         self.render_header(buffer, &rect, &widths);
 
+        if self.auto_scroll {
+            self.scroll_offset(&size, &widths);
+        }
+
+        let selected = self.state.borrow().selected;
+        let width = size.x;
         for i in self.state.borrow().offset..self.rows.len() {
             if rect.bottom() < pos.y {
                 break;
@@ -155,8 +187,16 @@ impl Widget for Table {
                 continue;
             }
 
-            let mut size = Vec2::new(0, row_height);
-            for (j, child) in self.rows[i].iter().enumerate() {
+            let mut size = Vec2::new(width, row_height);
+            let mut style = self.rows[i].style;
+            if let Some(id) = selected {
+                if id == i {
+                    style = style.combine(self.selected_row_style);
+                }
+            }
+            buffer.set_area_style(style, Rect::from_coords(pos, size));
+
+            for (j, child) in self.rows[i].cells.iter().enumerate() {
                 size.x = widths.get(j).copied().unwrap_or_default();
                 let crect = Rect::from_coords(pos, size);
                 child.render(buffer, crect);
@@ -199,29 +239,25 @@ impl Widget for Table {
 
 impl Table {
     /// Renders [`Table`] scrollbar
-    fn render_scrollbar(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        offset: usize,
-    ) {
-        let height = rect.height().saturating_sub(offset);
-        let rat = self.rows.len() as f32 / height as f32;
-        let thumb_size =
-            std::cmp::min((height as f32 / rat).floor() as usize, height);
-        let thumb_offset = std::cmp::min(
+    fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
+        let rat = self.rows.len() as f32 / rect.height() as f32;
+        let thumb_size = max(
+            1,
+            min((rect.height() as f32 / rat).round() as usize, rect.height()),
+        );
+        let thumb_offset = min(
             (self.state.borrow().offset as f32 / rat) as usize,
-            height - thumb_size,
+            rect.height() - thumb_size,
         );
 
-        let mut bar_pos = Vec2::new(rect.right(), rect.y() + offset);
-        for _ in 0..height {
+        let mut bar_pos = Vec2::new(rect.right(), rect.y());
+        for _ in 0..rect.height() {
             buffer.set_val('│', &bar_pos);
             // buffer.set_fg(self.scrollbar_fg, &bar_pos);
             bar_pos.y += 1;
         }
 
-        bar_pos = Vec2::new(rect.right(), rect.y() + offset + thumb_offset);
+        bar_pos = Vec2::new(rect.right(), rect.y() + thumb_offset);
         for _ in 0..thumb_size {
             buffer.set_val('┃', &bar_pos);
             // buffer.set_fg(self.thumb_fg, &bar_pos);
@@ -276,14 +312,14 @@ impl Table {
         };
 
         let mut pos = *rect.pos();
-        for (i, child) in header.iter().enumerate() {
+        for (i, child) in header.cells.iter().enumerate() {
             let width = widths.get(i).copied().unwrap_or_default();
             if width == 0 {
                 continue;
             }
 
             let crect = Rect::from_coords(pos, Vec2::new(width, 1));
-            child.render_offset(buffer, crect, 0, None);
+            child.render(buffer, crect);
             pos.x += width + self.column_spacing;
         }
 
@@ -294,9 +330,9 @@ impl Table {
         }
     }
 
-    fn row_height(height: usize, row: &[Element], widths: &[usize]) -> usize {
+    fn row_height(height: usize, row: &Row, widths: &[usize]) -> usize {
         let mut row_height = 0;
-        for (i, child) in row.iter().enumerate() {
+        for (i, child) in row.cells.iter().enumerate() {
             let width = widths.get(i).copied().unwrap_or_default();
             if width == 0 {
                 continue;
@@ -306,6 +342,27 @@ impl Table {
             row_height = row_height.max(height);
         }
         row_height
+    }
+
+    /// Automatically scrolls so the selected item is visible
+    fn scroll_offset(&self, size: &Vec2, widths: &[usize]) {
+        let Some(selected) = self.state.borrow().selected else {
+            return;
+        };
+
+        if selected < self.state.borrow().offset {
+            self.state.borrow_mut().offset = selected;
+            return;
+        }
+
+        while !self.is_visible(
+            selected,
+            self.state.borrow().offset,
+            size,
+            widths,
+        ) {
+            self.state.borrow_mut().offset += 1;
+        }
     }
 
     /// Checks if item is visible with given offset

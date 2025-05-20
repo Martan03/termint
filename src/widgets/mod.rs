@@ -79,6 +79,7 @@ pub use span::Span;
 /// Enables creating [`Span`] by calling one of the functions on type
 /// implementing this trait.
 pub use span::ToSpan;
+pub use table::Row;
 /// A widget that displays a table with configurable column idths, optional
 /// header and scrollable row content.
 pub use table::Table;

@@ -25,14 +25,14 @@ fn main() {
     // readme_example();
     // test_list();
     // test_layout_centering();
-    test_bg_grad();
+    // test_bg_grad();
     // term_test();
     // grid_test();
     // diff_render_test();
     // merge_test();
     // scrollbar_test();
     // scrollable_test();
-    // test_table();
+    test_table();
 }
 
 #[allow(unused)]
@@ -445,7 +445,8 @@ fn test_table() {
     let mut table =
         Table::new(content, [Unit::Fill(1), Unit::Fill(1)], offset.clone())
             .header(header)
-            .header_separator(BorderType::Double);
+            .header_separator(BorderType::Double)
+            .selected_row_style(Style::new().fg(Color::Red));
 
     let mut term = Term::new();
     term.render(table);

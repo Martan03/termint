@@ -291,6 +291,15 @@ impl Buffer {
         self.content[id] = self.content[id].modifier(modifier);
     }
 
+    /// Sets the style of each [`Cell`] in the given area of the buffer.
+    pub fn set_area_style(&mut self, style: Style, area: Rect) {
+        for pos in area {
+            if let Some(id) = self.index_of_opt(&pos) {
+                self.content[id] = self.content[id].style(style);
+            }
+        }
+    }
+
     /// Gets reference to [`Rect`] of the [`Buffer`]
     pub fn rect(&self) -> &Rect {
         &self.rect
