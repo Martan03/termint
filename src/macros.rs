@@ -128,7 +128,7 @@ macro_rules! modifiers {
 #[macro_export]
 macro_rules! paragraph {
     ($($text:expr),* $(,)?) => {
-        Paragraph::new(vec![
+        $crate::widgets::Paragraph::new(vec![
             $(Box::new($text)),*
         ])
     };

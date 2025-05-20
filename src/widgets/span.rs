@@ -328,7 +328,7 @@ impl Span {
             TextAlign::Right => rect.width().saturating_sub(len),
         };
         buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
-        len
+        pos.x + x + len - 1
     }
 
     /// Gets height of the [`Span`] when using word wrap

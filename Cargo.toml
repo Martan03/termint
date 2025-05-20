@@ -15,7 +15,7 @@ exclude = ["src/main.rs", ".github"]
 [dependencies]
 bitflags = "2.9.1"
 serde = { version = "1.0.218", features = ["std", "derive"], optional = true }
-termal = { version = "2.1.1", features = ["raw"] }
+termal = { version = "2.1.2", features = ["raw", "events"] }
 
 [dev-dependencies]
 criterion = "0.5.1"
