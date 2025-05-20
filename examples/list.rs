@@ -69,7 +69,7 @@ impl App {
             .selected_style(SELECTED)
             .scrollbar_fg(BORDER)
             .thumb_fg(FG);
-        let help = "[↑]Move up [↓]Move down [Esc]Quit".fg(BORDER);
+        let help = "[↑]Move up [↓]Move down [Esc|q]Quit".fg(BORDER);
 
         let mut block = Block::vertical()
             .title("Quest List")
@@ -102,7 +102,7 @@ impl App {
 
                 state.selected = Some(sel.saturating_sub(1));
             }
-            KeyCode::Esc => return true,
+            KeyCode::Esc | KeyCode::Char('q') => return true,
             _ => return false,
         }
         _ = self.term.rerender();

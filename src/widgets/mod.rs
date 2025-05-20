@@ -83,6 +83,9 @@ pub use table::Row;
 /// A widget that displays a table with configurable column idths, optional
 /// header and scrollable row content.
 pub use table::Table;
+/// State of the [`Table`] widget, including scroll offset, selected index and
+/// selected column.
+pub use table::TableState;
 /// A container for any widget implementing the [`Widget`] trait.
 pub use widget::Element;
 /// Trait implemented by all the widgets.

@@ -12,7 +12,8 @@ use termint::{
     term::Term,
     widgets::{
         BgGrad, Block, Grad, Grid, Layout, List, ListState, Paragraph,
-        Scrollable, Scrollbar, ScrollbarState, Table, ToSpan, Widget,
+        Scrollable, Scrollbar, ScrollbarState, Table, TableState, ToSpan,
+        Widget,
     },
 };
 
@@ -441,7 +442,7 @@ fn test_table() {
         vec!["Donald", "Duck"],
     ];
 
-    let mut offset = Rc::new(RefCell::new(ListState::selected(0, 2)));
+    let mut offset = Rc::new(RefCell::new(TableState::new(0).selected(2)));
     let mut table =
         Table::new(content, [Unit::Fill(1), Unit::Fill(1)], offset.clone())
             .header(header)

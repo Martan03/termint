@@ -13,14 +13,15 @@ use termint::{
     geometry::{Constraint, Unit},
     style::Style,
     term::Term,
-    widgets::{Block, ListState, Row, Table, ToSpan},
+    widgets::{Block, Row, Table, TableState, ToSpan},
 };
 
 const BG: Color = Color::Hex(0x02081e);
 const BGL: Color = Color::Hex(0x061038);
 const BORDER: Color = Color::Hex(0x535C91);
 const FG: Color = Color::Hex(0xc3c1f4);
-const SELECTED: Color = Color::Hex(0xea4bfc);
+const SELL: Color = Color::Hex(0xf3a6fc);
+const SEL: Color = Color::Hex(0xea4bfc);
 
 fn main() -> ExitCode {
     if let Err(e) = App::run() {
@@ -32,7 +33,7 @@ fn main() -> ExitCode {
 
 struct App {
     term: Term,
-    table_state: Rc<RefCell<ListState>>,
+    table_state: Rc<RefCell<TableState>>,
     songs: Vec<Vec<&'static str>>,
 }
 
@@ -72,10 +73,14 @@ impl App {
         )
         .header(vec!["Title", "Artist", "Album"])
         .header_separator(BorderType::Normal)
-        .selected_row_style(SELECTED)
+        .selected_row_style(SELL)
+        .selected_column_style(SELL)
+        .selected_cell_style(SEL)
         .auto_scroll();
 
-        let help = "[↑]Move up [↓]Move down [Esc]Quit".fg(BORDER);
+        let help =
+            "[↑]Move up [↓]Move down [←]Move left [→]Move right [Esc|q]Quit"
+                .fg(BORDER);
 
         let mut block = Block::vertical()
             .title("Songs List")
@@ -108,7 +113,25 @@ impl App {
 
                 state.selected = Some(sel.saturating_sub(1));
             }
-            KeyCode::Esc => return true,
+            KeyCode::Left => {
+                let mut state = self.table_state.borrow_mut();
+                let Some(sel) = state.selected_column else {
+                    return false;
+                };
+
+                state.selected_column = Some(sel.saturating_sub(1));
+            }
+            KeyCode::Right => {
+                let mut state = self.table_state.borrow_mut();
+                let Some(sel) = state.selected_column else {
+                    return false;
+                };
+
+                if sel + 1 < 3 {
+                    state.selected_column = Some(sel + 1);
+                }
+            }
+            KeyCode::Esc | KeyCode::Char('q') => return true,
             _ => return false,
         }
         _ = self.term.rerender();
@@ -120,7 +143,9 @@ impl Default for App {
     fn default() -> Self {
         Self {
             term: Term::new(),
-            table_state: Rc::new(RefCell::new(ListState::selected(0, 0))),
+            table_state: Rc::new(RefCell::new(
+                TableState::new(0).selected(0).selected_column(0),
+            )),
             songs: get_songs(),
         }
     }

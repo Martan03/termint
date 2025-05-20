@@ -7,14 +7,17 @@ use std::{
 use crate::{
     buffer::Buffer,
     enums::{Border, BorderType},
-    geometry::{Rect, Unit, Vec2},
+    geometry::{Padding, Rect, Unit, Vec2},
     style::Style,
 };
 
-use super::{Element, ListState, Widget};
+use super::{Element, Widget};
 
 mod row;
 pub use row::Row;
+
+mod table_state;
+pub use table_state::TableState;
 
 /// A widget that displays a table with configurable column widths, optional
 /// header and scrollable row content.
@@ -37,7 +40,7 @@ pub use row::Row;
 /// let state = Rc::new(RefCell::new(ListState::selected(0, 1)));
 ///
 /// let table = Table::new(rows, widths, state)
-///     .header(["Name", "Age", "Email"])
+///     .header(vec!["Name", "Age", "Email"])
 ///     .header_separator(BorderType::Double)
 ///     .column_spacing(2);
 ///
@@ -52,16 +55,22 @@ pub struct Table {
     header_separator: Option<BorderType>,
     rows: Vec<Row>,
     selected_row_style: Style,
+    selected_column_style: Style,
+    selected_cell_style: Style,
     widths: Vec<Unit>,
     column_spacing: usize,
-    state: Rc<RefCell<ListState>>,
+    state: Rc<RefCell<TableState>>,
     auto_scroll: bool,
 }
 
 impl Table {
     /// Creates new [`Table`] with given rows and columns widths
     #[must_use]
-    pub fn new<R, W>(rows: R, widths: W, state: Rc<RefCell<ListState>>) -> Self
+    pub fn new<R, W>(
+        rows: R,
+        widths: W,
+        state: Rc<RefCell<TableState>>,
+    ) -> Self
     where
         R: IntoIterator,
         R::Item: Into<Row>,
@@ -73,6 +82,8 @@ impl Table {
             header_separator: None,
             rows: rows.into_iter().map(Into::into).collect(),
             selected_row_style: Style::default(),
+            selected_column_style: Style::default(),
+            selected_cell_style: Style::default(),
             widths: widths.into_iter().map(|c| c.into()).collect(),
             column_spacing: 1,
             state,
@@ -122,6 +133,26 @@ impl Table {
         self
     }
 
+    /// Sets the selected column style
+    #[must_use]
+    pub fn selected_column_style<S>(mut self, style: S) -> Self
+    where
+        S: Into<Style>,
+    {
+        self.selected_column_style = style.into();
+        self
+    }
+
+    /// Sets the selected cell style
+    #[must_use]
+    pub fn selected_cell_style<S>(mut self, style: S) -> Self
+    where
+        S: Into<Style>,
+    {
+        self.selected_cell_style = style.into();
+        self
+    }
+
     /// Sets columns widths of the [`Table`]
     #[must_use]
     pub fn widths<W>(mut self, widths: W) -> Self
@@ -150,32 +181,29 @@ impl Table {
 
 impl Widget for Table {
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
-        let mut pos = *rect.pos();
-        let header_height = self.header.is_some() as usize
-            + self.header_separator.is_some() as usize;
-        pos.y += header_height;
+        let mut widths = self.calc_widths(rect.width());
+        let header_height = self.calc_header_height(&rect, &widths);
 
-        let mut size = Vec2::new(
-            rect.width(),
-            rect.height().saturating_sub(header_height),
-        );
-
-        let mut widths = self.calc_widths(&size);
-        if !self.fits(&size, &widths) {
-            size.x = size.x.saturating_sub(1);
-            widths = self.calc_widths(&size);
-            let srect = Rect::new(rect.right(), pos.y, 1, size.y);
+        let mut crect = rect.clone();
+        crect = crect.inner(Padding::top(header_height));
+        if !self.fits(crect.size(), &widths) {
+            // TODO: recalculate header height
+            crect = crect.inner(Padding::right(1));
+            widths = self.calc_widths(crect.width());
+            let srect = Rect::new(rect.right(), crect.y(), 1, crect.height());
             self.render_scrollbar(buffer, &srect);
         }
 
-        self.render_header(buffer, &rect, &widths);
+        self.render_header(buffer, &rect, header_height, &widths);
 
         if self.auto_scroll {
-            self.scroll_offset(&size, &widths);
+            self.scroll_offset(crect.size(), &widths);
         }
 
         let selected = self.state.borrow().selected;
-        let width = size.x;
+
+        let mut pos = *crect.pos();
+        let mut row_rect = None;
         for i in self.state.borrow().offset..self.rows.len() {
             if rect.bottom() < pos.y {
                 break;
@@ -187,14 +215,14 @@ impl Widget for Table {
                 continue;
             }
 
-            let mut size = Vec2::new(width, row_height);
-            let mut style = self.rows[i].style;
+            let mut size = Vec2::new(crect.width(), row_height);
+            let rrect = Rect::from_coords(pos, size);
             if let Some(id) = selected {
                 if id == i {
-                    style = style.combine(self.selected_row_style);
+                    row_rect = Some(rrect);
                 }
             }
-            buffer.set_area_style(style, Rect::from_coords(pos, size));
+            buffer.set_area_style(self.rows[i].style, rrect);
 
             for (j, child) in self.rows[i].cells.iter().enumerate() {
                 size.x = widths.get(j).copied().unwrap_or_default();
@@ -206,10 +234,17 @@ impl Widget for Table {
             pos.x = rect.x();
             pos.y += row_height;
         }
+
+        if let Some(row_rect) = row_rect {
+            buffer.set_area_style(self.selected_row_style, row_rect);
+        }
+
+        let crect = rect.inner(Padding::top(header_height));
+        self.set_sel_style(buffer, &crect, &widths, row_rect);
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        let widths = self.calc_widths(size);
+        let widths = self.calc_widths(size.x);
         let height: usize = self
             .rows
             .iter()
@@ -238,6 +273,50 @@ impl Widget for Table {
 }
 
 impl Table {
+    fn calc_header_height(&self, rect: &Rect, widths: &[usize]) -> usize {
+        let mut header_height = self.header_separator.is_some() as usize;
+        if let Some(header) = &self.header {
+            header_height += Self::row_height(rect.height(), header, &widths);
+        }
+        header_height
+    }
+
+    /// Gets calculated column widths based on the given size
+    fn calc_widths(&self, width: usize) -> Vec<usize> {
+        let mut calc_widths = Vec::new();
+        let mut total = 0;
+
+        let mut total_fills = 0;
+        let mut fills = Vec::new();
+
+        for w in self.widths.iter() {
+            let csize = match w {
+                Unit::Length(len) => *len,
+                Unit::Percent(p) => width * p / 100,
+                Unit::Fill(f) => {
+                    total_fills += f;
+                    fills.push(calc_widths.len());
+                    calc_widths.push(*f);
+                    continue;
+                }
+            };
+            total += csize;
+            calc_widths.push(csize);
+        }
+
+        total = total
+            .saturating_sub(self.column_spacing * (calc_widths.len() - 1));
+        let mut left = width.saturating_sub(total);
+        for f in fills {
+            let fill = calc_widths[f];
+            calc_widths[f] = left / total_fills * fill;
+            left -= calc_widths[f];
+            total_fills -= fill;
+        }
+
+        calc_widths
+    }
+
     /// Renders [`Table`] scrollbar
     fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
         let rat = self.rows.len() as f32 / rect.height() as f32;
@@ -265,52 +344,48 @@ impl Table {
         }
     }
 
-    /// Gets calculated column widths based on the given size
-    fn calc_widths(&self, size: &Vec2) -> Vec<usize> {
-        let mut calc_widths = Vec::new();
-        let mut total = 0;
+    fn set_sel_style(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        widths: &[usize],
+        rrect: Option<Rect>,
+    ) {
+        let Some(selected) = self.state.borrow().selected_column else {
+            return;
+        };
 
-        let mut total_fills = 0;
-        let mut fills = Vec::new();
-
-        for width in self.widths.iter() {
-            let csize = match width {
-                Unit::Length(len) => *len,
-                Unit::Percent(p) => size.x * p / 100,
-                Unit::Fill(f) => {
-                    total_fills += f;
-                    fills.push(calc_widths.len());
-                    calc_widths.push(*f);
-                    continue;
+        let mut x = rect.x();
+        for (i, width) in widths.iter().enumerate() {
+            if i == selected {
+                let crect = Rect::new(x, rect.y(), *width, rect.height());
+                buffer.set_area_style(self.selected_column_style, crect);
+                if let Some(rrect) = rrect {
+                    buffer.set_area_style(self.selected_row_style, rrect);
+                    buffer.set_area_style(
+                        self.selected_cell_style,
+                        rrect.intersection(rect),
+                    )
                 }
-            };
-            total += csize;
-            calc_widths.push(csize);
+                return;
+            }
+            x += width;
         }
-
-        total = total
-            .saturating_sub(self.column_spacing * (calc_widths.len() - 1));
-        let mut left = size.x.saturating_sub(total);
-        for f in fills {
-            let fill = calc_widths[f];
-            calc_widths[f] = left / total_fills * fill;
-            left -= calc_widths[f];
-            total_fills -= fill;
-        }
-
-        calc_widths
     }
 
     fn render_header(
         &self,
         buffer: &mut Buffer,
         rect: &Rect,
+        height: usize,
         widths: &[usize],
     ) {
         let Some(header) = &self.header else {
             return;
         };
 
+        let height =
+            height.saturating_sub(self.header_separator.is_some() as usize);
         let mut pos = *rect.pos();
         for (i, child) in header.cells.iter().enumerate() {
             let width = widths.get(i).copied().unwrap_or_default();
@@ -318,7 +393,7 @@ impl Table {
                 continue;
             }
 
-            let crect = Rect::from_coords(pos, Vec2::new(width, 1));
+            let crect = Rect::from_coords(pos, Vec2::new(width, height));
             child.render(buffer, crect);
             pos.x += width + self.column_spacing;
         }
@@ -326,7 +401,7 @@ impl Table {
         if let Some(separator) = &self.header_separator {
             let line =
                 separator.get(Border::TOP).to_string().repeat(rect.width());
-            buffer.set_str(line, &Vec2::new(rect.x(), rect.y() + 1));
+            buffer.set_str(line, &Vec2::new(rect.x(), rect.y() + height));
         }
     }
 
