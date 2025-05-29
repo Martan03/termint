@@ -364,7 +364,7 @@ impl Table {
                     buffer.set_area_style(self.selected_row_style, rrect);
                     buffer.set_area_style(
                         self.selected_cell_style,
-                        rrect.intersection(rect),
+                        rrect.intersection(&crect),
                     )
                 }
                 return;
