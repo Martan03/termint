@@ -36,6 +36,7 @@ mod layout;
 mod list;
 mod overlay;
 mod paragraph;
+mod progress_bar;
 mod scrollable;
 mod scrollbar;
 mod spacer;
@@ -65,6 +66,8 @@ pub use overlay::Overlay;
 /// A widget combining multiple widgets implementing the [`Text`] trait into
 /// single widget.
 pub use paragraph::Paragraph;
+/// A widget visualizing progress
+pub use progress_bar::ProgressBar;
 /// A wrapper widget that adds scrollability to its child when content
 /// overflows.
 pub use scrollable::Scrollable;

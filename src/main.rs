@@ -12,8 +12,7 @@ use termint::{
     term::Term,
     widgets::{
         BgGrad, Block, Grad, Grid, Layout, List, ListState, Paragraph,
-        Scrollable, Scrollbar, ScrollbarState, Table, TableState, ToSpan,
-        Widget,
+        Scrollable, Scrollbar, ScrollbarState, ToSpan, Widget,
     },
 };
 
@@ -33,7 +32,6 @@ fn main() {
     // merge_test();
     // scrollbar_test();
     // scrollable_test();
-    test_table();
 }
 
 #[allow(unused)]
@@ -422,33 +420,4 @@ fn scrollable_test() {
     let mut buffer = Buffer::empty(rect);
     scrollable.render(&mut buffer, rect);
     buffer.render();
-}
-
-#[allow(unused)]
-fn test_table() {
-    println!("\x1b[2J");
-
-    let header = vec!["Name", "Surname"];
-    let content = vec![
-        vec!["Peppa", "Pig"],
-        vec!["Winnie", "Pooh"],
-        vec!["Mickey", "Mouse"],
-        vec!["Donald", "Duck"],
-        vec!["Donald", "Duck"],
-        vec!["Donald", "Duck"],
-        vec!["Donald", "Duck"],
-        vec!["Donald", "Duck"],
-        vec!["Donald", "Duck"],
-        vec!["Donald", "Duck"],
-    ];
-
-    let mut offset = Rc::new(RefCell::new(TableState::new(0).selected(2)));
-    let mut table =
-        Table::new(content, [Unit::Fill(1), Unit::Fill(1)], offset.clone())
-            .header(header)
-            .header_separator(BorderType::Double)
-            .selected_row_style(Style::new().fg(Color::Red));
-
-    let mut term = Term::new();
-    term.render(table);
 }
