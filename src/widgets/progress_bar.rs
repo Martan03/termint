@@ -8,7 +8,29 @@ use crate::{
 
 use super::{Element, Widget};
 
-/// A widget visualizing progress
+/// A widget that displays a horizontal progress bar.
+///
+/// The [`ProgressBar`] visually represents a percentage value in the range
+/// `0.0` to `100.0`. It can be styled and configured to use custom characters.
+///
+/// # Example
+/// ```rust
+/// # use std::{cell::Cell, rc::Rc};
+/// # use termint::{widgets::ProgressBar, enums::Color, term::Term};
+/// # fn example() -> Result<(), &'static str> {
+/// let state = Rc::new(Cell::new(69.0));
+/// let pb = ProgressBar::new(state.clone())
+///     .thumb_chars(['▎', '▌', '▊', '█'])
+///     .thumb_style(Color::Blue)
+///     .track_char('=')
+///     .style(Color::White);
+///
+/// // You can then render it using Term
+/// let mut term = Term::new();
+/// term.render(pb)?;
+/// # Ok(())
+/// # }
+/// ```
 pub struct ProgressBar {
     state: Rc<Cell<f64>>,
     thumb_chars: Vec<char>,
@@ -49,7 +71,7 @@ impl ProgressBar {
     /// # use termint::widgets::ProgressBar;
     /// # let state = Rc::new(Cell::new(69.0));
     /// let pb = ProgressBar::new(state.clone())
-    ///     .thumb_chars(['▎', '▌', '▊',, '█']);
+    ///     .thumb_chars(['▎', '▌', '▊', '█']);
     /// ```
     #[must_use]
     pub fn thumb_chars<C>(mut self, chars: C) -> Self
@@ -94,35 +116,26 @@ impl ProgressBar {
 
 impl Widget for ProgressBar {
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
-        let chars_len = self.thumb_chars.len();
-        if rect.is_empty() || chars_len == 0 {
+        if rect.is_empty() || self.thumb_chars.is_empty() {
             return;
         }
 
-        let progress = (self.state.get() / 100.0).clamp(0.0, 1.0);
-        let len = rect.width() as f64 * progress;
-        let full_cells = len.floor() as usize;
-
-        let fraction = len - full_cells as f64;
-        let head_id = (fraction * (chars_len - 1) as f64).round() as usize;
-
+        let (full_cells, head_id) = self.calc_size(&rect);
         let mut rest_len = rect.width().saturating_sub(full_cells);
+
+        let mut track_pos = Vec2::new(rect.x() + full_cells, rect.y());
         if head_id > 0 {
             rest_len = rest_len.saturating_sub(1);
+            buffer.set_val(self.thumb_chars[head_id], &track_pos);
+            track_pos.x += 1;
         }
 
-        let thumb = self.thumb_chars[chars_len - 1];
+        let thumb = self.thumb_chars[self.thumb_chars.len() - 1];
         buffer.set_str_styled(
             thumb.to_string().repeat(full_cells),
             rect.pos(),
             self.thumb_style,
         );
-
-        let mut track_pos = Vec2::new(rect.x() + full_cells, rect.y());
-        if head_id > 0 {
-            buffer.set_val(self.thumb_chars[head_id], &track_pos);
-            track_pos.x += 1;
-        }
 
         buffer.set_str_styled(
             self.track_char.to_string().repeat(rest_len),
@@ -137,6 +150,20 @@ impl Widget for ProgressBar {
 
     fn width(&self, size: &Vec2) -> usize {
         size.x
+    }
+}
+
+impl ProgressBar {
+    /// Calculates the size of full cells and head ID to get corresponding
+    /// progress character with.
+    fn calc_size(&self, rect: &Rect) -> (usize, usize) {
+        let progress = (self.state.get() / 100.0).clamp(0.0, 1.0);
+        let len = rect.width() as f64 * progress;
+        let full_cells = len.floor() as usize;
+
+        let frac = len - full_cells as f64;
+        let head_id = (frac * (self.thumb_chars.len() - 1) as f64).round();
+        (full_cells, head_id as usize)
     }
 }
 

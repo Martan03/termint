@@ -18,6 +18,7 @@
 //! top.
 //! - [`Paragraph`]: A widget combining multiple widgets implementing the
 //! [`Text`] trait into single widget.
+//! - [`ProgressBar`]: A widget that displays a horizontal progress bar.
 //! - [`Scrollable`]: A wrapper widget that adds scrollability to its child
 //! when content overflows.
 //! - [`Scrollbar`]: A scrollbar widget that can be either vertical or
@@ -66,7 +67,7 @@ pub use overlay::Overlay;
 /// A widget combining multiple widgets implementing the [`Text`] trait into
 /// single widget.
 pub use paragraph::Paragraph;
-/// A widget visualizing progress
+/// A widget that displays a horizontal progress bar.
 pub use progress_bar::ProgressBar;
 /// A wrapper widget that adds scrollability to its child when content
 /// overflows.
