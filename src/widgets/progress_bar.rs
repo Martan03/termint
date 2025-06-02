@@ -94,31 +94,36 @@ impl ProgressBar {
 
 impl Widget for ProgressBar {
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
-        if rect.is_empty() {
+        let chars_len = self.thumb_chars.len();
+        if rect.is_empty() || chars_len == 0 {
             return;
         }
 
-        let progress = (self.state.get() / 100.).min(1.).max(0.);
+        let progress = (self.state.get() / 100.0).clamp(0.0, 1.0);
         let len = rect.width() as f64 * progress;
-        let thumb_len = len.ceil() as usize;
-        let head = (thumb_len as f64 - len).max(0.);
-        let rest_len = rect.width().saturating_sub(thumb_len);
+        let full_cells = len.floor() as usize;
 
-        let chars_len = self.thumb_chars.len().saturating_sub(1);
+        let fraction = len - full_cells as f64;
+        let head_id = (fraction * (chars_len - 1) as f64).round() as usize;
+
+        let mut rest_len = rect.width().saturating_sub(full_cells);
+        if head_id > 0 {
+            rest_len = rest_len.saturating_sub(1);
+        }
+
+        let thumb = self.thumb_chars[chars_len - 1];
         buffer.set_str_styled(
-            self.thumb_chars[chars_len].to_string().repeat(thumb_len),
+            thumb.to_string().repeat(full_cells),
             rect.pos(),
             self.thumb_style,
         );
 
-        let mut track_pos =
-            Vec2::new((rect.x() + thumb_len).saturating_sub(1), rect.y());
-        let head_id = (head * (chars_len + 1) as f64).round() as usize;
-        if head_id != 0 {
-            buffer.set_val(self.thumb_chars[head_id - 1], &track_pos);
+        let mut track_pos = Vec2::new(rect.x() + full_cells, rect.y());
+        if head_id > 0 {
+            buffer.set_val(self.thumb_chars[head_id], &track_pos);
+            track_pos.x += 1;
         }
 
-        track_pos.x += 1;
         buffer.set_str_styled(
             self.track_char.to_string().repeat(rest_len),
             &track_pos,
