@@ -19,7 +19,6 @@ use termint::{
 const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
 const FG: Color = Color::Hex(0xc3c1f4);
-const SELECTED: Color = Color::Hex(0xea4bfc);
 
 fn main() -> ExitCode {
     if let Err(e) = App::run() {
@@ -31,7 +30,7 @@ fn main() -> ExitCode {
 
 struct App {
     term: Term,
-    state: Rc<Cell<f64>>,
+    states: Vec<Rc<Cell<f64>>>,
 }
 
 impl App {
@@ -56,11 +55,9 @@ impl App {
                 }
             }
 
-            let mut state = app.state.get() + 1.;
-            if state > 120. {
-                state = 0.;
+            if app.increase_states() {
+                app.reset_states();
             }
-            app.state.set(state);
             _ = app.term.rerender();
         }
 
@@ -70,17 +67,20 @@ impl App {
     }
 
     fn render(&mut self) {
-        let bar = ProgressBar::new(self.state.clone());
-        let help = "[Esc|q]Quit".fg(BORDER);
-
         let mut block = Block::vertical()
             .title("Progress Bar")
             .border_type(BorderType::Thicker)
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
 
-        block.push(bar, Constraint::Min(0));
+        for state in self.states.iter() {
+            let bar = ProgressBar::new(state.clone());
+            block.push(bar, Constraint::Min(0));
+            block.push(Spacer::new(), 1);
+        }
+
         block.push(Spacer::new(), Constraint::Fill(1));
+        let help = "[Esc|q]Quit".fg(BORDER);
         block.push(help, 1..);
 
         _ = self.term.render(block);
@@ -92,13 +92,34 @@ impl App {
             _ => return false,
         }
     }
+
+    fn increase_states(&mut self) -> bool {
+        let len = self.states.len() as f64;
+
+        let mut complete = true;
+        for (i, state) in self.states.iter().enumerate() {
+            let speed = (len - i as f64) / len;
+            let val = state.get() + speed * 3.;
+            state.set(val);
+            if val < 120. {
+                complete = false;
+            }
+        }
+        complete
+    }
+
+    fn reset_states(&mut self) {
+        for state in self.states.iter() {
+            state.set(0.);
+        }
+    }
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             term: Term::new(),
-            state: Rc::new(Cell::new(50.)),
+            states: (0..5).map(|_| Rc::new(Cell::new(0.))).collect(),
         }
     }
 }

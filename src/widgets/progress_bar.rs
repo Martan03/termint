@@ -27,6 +27,7 @@ impl ProgressBar {
     /// let state = Rc::new(Cell::new(69.0));
     /// let pb = ProgressBar::new(state.clone());
     /// ```
+    #[must_use]
     pub fn new(state: Rc<Cell<f64>>) -> Self {
         Self {
             state,
@@ -35,6 +36,28 @@ impl ProgressBar {
             track_char: ' ',
             style: Default::default(),
         }
+    }
+
+    /// Sets the thumb characters used for rendering the progress.
+    ///
+    /// It can contain any number of character, but the iterator should start
+    /// with the least progress character and end with most progress character.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use std::{cell::Cell, rc::Rc};
+    /// # use termint::widgets::ProgressBar;
+    /// # let state = Rc::new(Cell::new(69.0));
+    /// let pb = ProgressBar::new(state.clone())
+    ///     .thumb_chars(['▎', '▌', '▊',, '█']);
+    /// ```
+    #[must_use]
+    pub fn thumb_chars<C>(mut self, chars: C) -> Self
+    where
+        C: IntoIterator<Item = char>,
+    {
+        self.thumb_chars = chars.into_iter().collect();
+        self
     }
 
     /// Sets the style of the [`ProgressBar`]'s thumb.
@@ -46,6 +69,13 @@ impl ProgressBar {
         S: Into<Style>,
     {
         self.thumb_style = style.into();
+        self
+    }
+
+    /// Sets the character used for the track of the [`ProgressBar`].§
+    #[must_use]
+    pub fn track_char(mut self, track: char) -> Self {
+        self.track_char = track;
         self
     }
 
@@ -64,6 +94,10 @@ impl ProgressBar {
 
 impl Widget for ProgressBar {
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
+        if rect.is_empty() {
+            return;
+        }
+
         let progress = (self.state.get() / 100.).min(1.).max(0.);
         let len = rect.width() as f64 * progress;
         let thumb_len = len.ceil() as usize;

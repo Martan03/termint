@@ -3,13 +3,13 @@
 ## v0.6.0
 ### Features:
 - Add missing From traits to Overlay widget
+- Add ProgressBar widget
 - Add Table widget
 - Optional `serde` trait implementation
 
 ### Changes:
 - Change `BgGrad` API
 - Change `Border` to work as separate type using bitflags
-- Edit docs
 - Rename `StrSpanExtension` to `ToSpan`
 - Rework text rendering - add generic text parser
 - Use `termal` library for getting terminal size and some other useful things
