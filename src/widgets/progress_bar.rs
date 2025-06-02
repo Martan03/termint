@@ -11,7 +11,9 @@ use super::{Element, Widget};
 /// A widget visualizing progress
 pub struct ProgressBar {
     state: Rc<Cell<f64>>,
+    thumb_chars: Vec<char>,
     thumb_style: Style,
+    track_char: char,
     style: Style,
 }
 
@@ -29,6 +31,8 @@ impl ProgressBar {
         Self {
             state,
             thumb_style: Default::default(),
+            thumb_chars: vec!['▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'],
+            track_char: ' ',
             style: Default::default(),
         }
     }
@@ -61,16 +65,31 @@ impl ProgressBar {
 impl Widget for ProgressBar {
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
         let progress = (self.state.get() / 100.).min(1.).max(0.);
-        let thumb_len = (rect.width() as f64 * progress) as usize;
+        let len = rect.width() as f64 * progress;
+        let thumb_len = len.ceil() as usize;
+        let head = (thumb_len as f64 - len).max(0.);
         let rest_len = rect.width().saturating_sub(thumb_len);
+
+        let chars_len = self.thumb_chars.len().saturating_sub(1);
         buffer.set_str_styled(
-            "█".repeat(thumb_len),
+            self.thumb_chars[chars_len].to_string().repeat(thumb_len),
             rect.pos(),
             self.thumb_style,
         );
-        let rrect =
-            Rect::new(rect.x() + thumb_len, rect.y(), rest_len, rect.height());
-        buffer.set_area_style(self.style, rrect);
+
+        let mut track_pos =
+            Vec2::new((rect.x() + thumb_len).saturating_sub(1), rect.y());
+        let head_id = (head * (chars_len + 1) as f64).round() as usize;
+        if head_id != 0 {
+            buffer.set_val(self.thumb_chars[head_id - 1], &track_pos);
+        }
+
+        track_pos.x += 1;
+        buffer.set_str_styled(
+            self.track_char.to_string().repeat(rest_len),
+            &track_pos,
+            self.style,
+        );
     }
 
     fn height(&self, _size: &Vec2) -> usize {
