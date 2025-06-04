@@ -85,6 +85,10 @@ impl Widget for Overlay {
             .max()
             .unwrap_or(0)
     }
+
+    fn children(&self) -> Vec<&Element> {
+        self.children.iter().collect()
+    }
 }
 
 impl From<Overlay> for Element {

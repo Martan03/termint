@@ -217,6 +217,10 @@ impl Widget for Layout {
         };
         width + self.padding.get_horizontal()
     }
+
+    fn children(&self) -> Vec<&Element> {
+        self.children.iter().map(|c| &c.child).collect()
+    }
 }
 
 impl Default for Layout {

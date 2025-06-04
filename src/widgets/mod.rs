@@ -45,6 +45,8 @@ mod span;
 mod table;
 mod widget;
 
+pub mod cache;
+
 /// A container widget that renders a gradient background behind its child
 /// widget.
 pub use bg_grad::BgGrad;

@@ -170,6 +170,10 @@ impl Widget for Grid {
         }
         width
     }
+
+    fn children(&self) -> Vec<&Element> {
+        self.children.iter().map(|c| &c.child).collect()
+    }
 }
 
 impl Grid {

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{any::TypeId, fmt};
 
 use crate::{
     buffer::Buffer,
@@ -20,13 +20,18 @@ pub trait Widget {
     /// [`Rect`] bounds.
     fn render(&self, buffer: &mut Buffer, rect: Rect);
 
-    /// Return the height of the [`Widget`] based on the width of the given
+    /// Returns the height of the [`Widget`] based on the width of the given
     /// size.
     fn height(&self, size: &Vec2) -> usize;
 
     /// Returns the width of the [`Widget`] based on the height of the given
     /// size.
     fn width(&self, size: &Vec2) -> usize;
+
+    /// Gets widget's children
+    fn children(&self) -> Vec<&Element> {
+        vec![]
+    }
 }
 
 impl fmt::Debug for dyn Widget {
@@ -42,7 +47,10 @@ impl fmt::Debug for dyn Widget {
 ///
 /// Use [`Element::new`] to convert a widget into an `Element`.
 #[derive(Debug)]
-pub struct Element(Box<dyn Widget>);
+pub struct Element {
+    pub type_id: TypeId,
+    pub widget: Box<dyn Widget>,
+}
 
 impl Element {
     /// Creates a new [`Element`] from a given widget.
@@ -59,20 +67,23 @@ impl Element {
     where
         W: Widget + 'static,
     {
-        Element(Box::new(widget))
+        Self {
+            type_id: TypeId::of::<W>(),
+            widget: Box::new(widget),
+        }
     }
 }
 
 impl Widget for Element {
     fn render(&self, buffer: &mut Buffer, rect: Rect) {
-        self.0.render(buffer, rect)
+        self.widget.render(buffer, rect)
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        self.0.height(size)
+        self.widget.height(size)
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        self.0.width(size)
+        self.widget.width(size)
     }
 }
