@@ -190,6 +190,7 @@ where
         }
     }
 
+    /// TODO: add scrollbars
     fn children(&self) -> Vec<&Element> {
         vec![&self.child]
     }
@@ -212,7 +213,8 @@ where
         size.y = self.child.height(&size);
 
         let srect = Rect::new(rect.right(), rect.y(), 1, rect.height());
-        Self::scrollbar(buffer, vertical, srect, size.y);
+        let ccache = &mut cache.children[1];
+        Self::scrollbar(buffer, ccache, vertical, srect, size.y);
 
         let crect = Rect::new(
             rect.x(),
@@ -236,7 +238,8 @@ where
         size.x = self.child.width(&size);
 
         let srect = Rect::new(rect.x(), rect.bottom(), rect.width(), 1);
-        Self::scrollbar(buffer, horizontal, srect, size.x);
+        let ccache = &mut cache.children[1];
+        Self::scrollbar(buffer, ccache, horizontal, srect, size.x);
 
         let crect = Rect::new(
             rect.x() + horizontal.get_state().offset,
@@ -262,11 +265,13 @@ where
 
         let mut vis = rect.height().saturating_sub(1);
         let mut rect = Rect::new(rect.right(), rect.y(), 1, vis);
-        Self::scrollbar(buffer, vertical, rect, size.y);
+        let ccache = &mut cache.children[1];
+        Self::scrollbar(buffer, ccache, vertical, rect, size.y);
 
         vis = rect.width().saturating_sub(1);
         rect = Rect::new(rect.x(), rect.bottom(), vis, 1);
-        Self::scrollbar(buffer, horizontal, rect, size.x);
+        let ccache = &mut cache.children[2];
+        Self::scrollbar(buffer, ccache, horizontal, rect, size.x);
 
         let rect = Rect::new(
             rect.x() + horizontal.get_state().offset,
@@ -298,12 +303,13 @@ where
     /// Renders the scrollbar
     fn scrollbar(
         buffer: &mut Buffer,
+        cache: &mut Cache,
         scroll: &Scrollbar,
         rect: Rect,
         size: usize,
     ) {
         scroll.content_len(size);
-        scroll.render(buffer, rect);
+        scroll.render(buffer, rect, cache);
     }
 }
 

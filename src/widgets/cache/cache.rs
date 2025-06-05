@@ -2,6 +2,7 @@ use std::any::{Any, TypeId};
 
 use crate::widgets::{Element, Widget};
 
+#[derive(Debug, Default)]
 pub struct Cache {
     pub widget_type: Option<TypeId>,
     pub local: Option<Box<dyn Any>>,
