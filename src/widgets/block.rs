@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::{cmp::max, marker::PhantomData};
 
 use crate::{
     borders,
@@ -7,7 +7,7 @@ use crate::{
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
     text::Text,
-    widgets::span::Span,
+    widgets::{cache::Cache, span::Span},
 };
 
 use super::{widget::Widget, Element, Layout, Spacer};
@@ -47,7 +47,8 @@ pub struct Block<W = Element> {
     borders: Border,
     border_type: BorderType,
     border_style: Style,
-    child: W,
+    child: Element,
+    child_type: PhantomData<W>,
 }
 
 impl<W> Block<W>
@@ -59,13 +60,17 @@ where
     ///
     /// You can provide any type implementing the [`Widget`] trait.
     #[must_use]
-    pub fn new(child: W) -> Self {
+    pub fn new<T>(child: T) -> Self
+    where
+        T: Into<Element>,
+    {
         Self {
             title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
-            child,
+            child: child.into(),
+            child_type: PhantomData,
         }
     }
 
@@ -130,7 +135,8 @@ impl Block<Spacer> {
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
-            child: Spacer::new(),
+            child: Spacer::new().into(),
+            child_type: PhantomData,
         }
     }
 }
@@ -156,7 +162,8 @@ impl Block<Layout> {
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),
-            child: Layout::vertical(),
+            child: Layout::vertical().into(),
+            child_type: PhantomData,
         }
     }
 
@@ -180,14 +187,15 @@ impl Block<Layout> {
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),
-            child: Layout::horizontal(),
+            child: Layout::horizontal().into(),
+            child_type: PhantomData,
         }
     }
 
     /// Sets flexing [`Direction`] of the [`Layout`].
     #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
-        self.child = self.child.direction(direction);
+        self.child = self.child.map::<Layout, _>(|l| l.direction(direction));
         self
     }
 
@@ -197,7 +205,7 @@ impl Block<Layout> {
     where
         T: Into<Style>,
     {
-        self.child = self.child.style(style);
+        self.child = self.child.map::<Layout, _>(|l| l.style(style));
         self
     }
 
@@ -207,7 +215,7 @@ impl Block<Layout> {
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.bg(bg);
+        self.child = self.child.map::<Layout, _>(|l| l.bg(bg));
         self
     }
 
@@ -217,7 +225,7 @@ impl Block<Layout> {
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.fg(fg);
+        self.child = self.child.map::<Layout, _>(|l| l.fg(fg));
         self
     }
 
@@ -227,7 +235,7 @@ impl Block<Layout> {
     where
         T: Into<Padding>,
     {
-        self.child = self.child.padding(padding);
+        self.child = self.child.map::<Layout, _>(|l| l.padding(padding));
         self
     }
 
@@ -237,7 +245,7 @@ impl Block<Layout> {
     /// be centered horizontally. Otherwise it will be centered vertically.
     #[must_use]
     pub fn center(mut self) -> Self {
-        self.child = self.child.center();
+        self.child = self.child.map::<Layout, _>(|l| l.center());
         self
     }
 
@@ -251,7 +259,9 @@ impl Block<Layout> {
         T: Into<Element>,
         C: Into<Constraint>,
     {
-        self.child.push(child, constraint);
+        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+            layout.push(child, constraint);
+        }
     }
 
     /// Adds a child widget with its contraint
@@ -265,7 +275,9 @@ impl Block<Layout> {
         T: Into<Element>,
         C: Into<Constraint>,
     {
-        self.child.push(child, constraint);
+        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+            layout.push(child, constraint);
+        }
     }
 }
 
@@ -273,7 +285,7 @@ impl<W> Widget for Block<W>
 where
     W: Widget,
 {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         let (t, r, b, l) = self.render_border(buffer, &rect);
         let mut pos = Vec2::new(rect.x() + l, rect.y());
         let mut size = Vec2::new(rect.width().saturating_sub(l + r), 1);
@@ -287,7 +299,7 @@ where
         if !rect.contains(&crect) {
             return;
         }
-        self.child.render(buffer, crect);
+        self.child.render(buffer, crect, &mut cache.children[0]);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -306,6 +318,10 @@ where
             size.y.saturating_sub(height),
         );
         max(self.child.width(&size), self.title.get_text().len()) + width
+    }
+
+    fn children(&self) -> Vec<&Element> {
+        vec![&self.child]
     }
 }
 

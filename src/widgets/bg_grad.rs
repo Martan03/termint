@@ -1,8 +1,11 @@
+use std::marker::PhantomData;
+
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
+    widgets::cache::Cache,
 };
 
 use super::{widget::Widget, Element, Layout, Spacer};
@@ -36,7 +39,8 @@ pub struct BgGrad<W = Element> {
     bg_end: RGB,
     direction: Direction,
     padding: Padding,
-    child: W,
+    child: Element,
+    child_type: PhantomData<W>,
 }
 
 impl BgGrad<Spacer> {
@@ -134,13 +138,17 @@ impl<W> BgGrad<W> {
     ///     .child(SomeWidget::new());
     /// ```
     #[must_use]
-    pub fn child<CW>(self, child: CW) -> BgGrad<CW> {
+    pub fn child<CW>(self, child: CW) -> BgGrad<CW>
+    where
+        CW: Into<Element>,
+    {
         BgGrad {
             bg_start: self.bg_start,
             bg_end: self.bg_end,
             direction: self.direction,
             padding: self.padding,
-            child,
+            child: child.into(),
+            child_type: PhantomData,
         }
     }
 }
@@ -177,55 +185,57 @@ where
             bg_end: end,
             direction: dir,
             padding: Default::default(),
-            child,
+            child: Element::new(child),
+            child_type: PhantomData,
         }
     }
 }
 
 impl BgGrad<Layout> {
-    /// Sets the [`Direction`] of the inner [`Layout`] widget.
-    ///
-    /// This controls in which direction the layout arranges its children.
+    /// Sets flexing [`Direction`] of the [`Layout`].
     #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
-        self.child = self.child.direction(direction);
+        self.child = self.child.map::<Layout, _>(|l| l.direction(direction));
         self
     }
 
-    /// Sets the base style of the [`Layout`]
+    /// Sets the base style of the [`Layout`].
     #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
         T: Into<Style>,
     {
-        self.child = self.child.style(style);
+        self.child = self.child.map::<Layout, _>(|l| l.style(style));
         self
     }
 
-    /// Sets base background color of the [`Layout`]
+    /// Sets base background color of the [`Layout`].
     #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.bg(bg);
+        self.child = self.child.map::<Layout, _>(|l| l.bg(bg));
         self
     }
 
-    /// Sets base foreground color of the [`Layout`]
+    /// Sets base foreground color of the [`Layout`].
     #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.fg(fg);
+        self.child = self.child.map::<Layout, _>(|l| l.fg(fg));
         self
     }
 
-    /// Makes [`Layout`] center its content in its direction
+    /// Makes [`Layout`] center its content in the direction it flexes.
+    ///
+    /// If the layout is flexing its children horizontally, the content will
+    /// be centered horizontally. Otherwise it will be centered vertically.
     #[must_use]
     pub fn center(mut self) -> Self {
-        self.child = self.child.center();
+        self.child = self.child.map::<Layout, _>(|l| l.center());
         self
     }
 
@@ -239,16 +249,25 @@ impl BgGrad<Layout> {
         T: Into<Element>,
         C: Into<Constraint>,
     {
-        self.child.push(child, constraint);
+        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+            layout.push(child, constraint);
+        }
     }
 
-    /// Pushes child with its [`Constraint`] to the [`Layout`]
+    /// Adds a child widget with its contraint
+    ///
+    /// # Parameters
+    /// - `child`: The widget to add (any type convertible to [`Element`])
+    /// - `contraint`: Widget's contraint (any type convertible to
+    ///     [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
         T: Into<Element>,
         C: Into<Constraint>,
     {
-        self.child.push(child, constraint);
+        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+            layout.push(child, constraint);
+        }
     }
 }
 
@@ -256,7 +275,7 @@ impl<W> Widget for BgGrad<W>
 where
     W: Widget,
 {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() {
             return;
         }
@@ -265,7 +284,11 @@ where
             Direction::Vertical => self.ver_render(buffer, &rect),
             Direction::Horizontal => self.hor_render(buffer, &rect),
         };
-        self.child.render(buffer, rect.inner(self.padding));
+        self.child.render(
+            buffer,
+            rect.inner(self.padding),
+            &mut cache.children[0],
+        );
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -282,6 +305,10 @@ where
             size.y.saturating_sub(self.padding.get_vertical()),
         );
         self.child.width(&size) + self.padding.get_horizontal()
+    }
+
+    fn children(&self) -> Vec<&Element> {
+        vec![&self.child]
     }
 }
 

@@ -6,6 +6,7 @@ use crate::{
     geometry::{Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
+    widgets::cache::Cache,
 };
 
 use super::{widget::Widget, Element};
@@ -216,7 +217,7 @@ impl Span {
 }
 
 impl Widget for Span {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
     }
 

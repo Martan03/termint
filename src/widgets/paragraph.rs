@@ -5,6 +5,7 @@ use crate::{
     enums::Wrap,
     geometry::{Rect, Vec2},
     text::Text,
+    widgets::cache::Cache,
 };
 
 use super::{widget::Widget, Element};
@@ -133,7 +134,7 @@ impl Paragraph {
 }
 
 impl Widget for Paragraph {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         let mut pos = Vec2::new(rect.x(), rect.y());
         let mut size = Vec2::new(rect.width(), rect.height());
         let mut offset = 0;

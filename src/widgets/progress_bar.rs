@@ -4,6 +4,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
     style::Style,
+    widgets::cache::Cache,
 };
 
 use super::{Element, Widget};
@@ -115,7 +116,7 @@ impl ProgressBar {
 }
 
 impl Widget for ProgressBar {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         if rect.is_empty() || self.thumb_chars.is_empty() {
             return;
         }

@@ -5,6 +5,7 @@ use crate::{
     enums::Color,
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
+    widgets::cache::Cache,
 };
 
 use super::{widget::Widget, Element};
@@ -176,7 +177,7 @@ impl Layout {
 }
 
 impl Widget for Layout {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.render_base_style(buffer, &rect);
 
         let rect = rect.inner(self.padding);
@@ -185,8 +186,8 @@ impl Widget for Layout {
         }
 
         match self.direction {
-            Direction::Vertical => self.ver_render(buffer, rect),
-            Direction::Horizontal => self.hor_render(buffer, rect),
+            Direction::Vertical => self.ver_render(buffer, rect, cache),
+            Direction::Horizontal => self.hor_render(buffer, rect, cache),
         }
     }
 
@@ -237,19 +238,23 @@ impl Default for Layout {
 
 impl Layout {
     /// Renders layout
-    fn ver_render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn ver_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         let (sizes, mut rect) = self.ver_sizes(rect);
         for (i, s) in sizes.iter().enumerate() {
             let csize = min(*s, rect.height());
             let crect =
                 Rect::from_coords(*rect.pos(), Vec2::new(rect.width(), csize));
-            self.children[i].child.render(buffer, crect);
+            self.children[i].child.render(
+                buffer,
+                crect,
+                &mut cache.children[i],
+            );
             rect = rect.inner(Padding::top(csize));
         }
     }
 
     /// Renders layout
-    fn hor_render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn hor_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         let (sizes, mut rect) = self.hor_sizes(rect);
         for (i, s) in sizes.iter().enumerate() {
             let csize = min(*s, rect.width());
@@ -257,7 +262,11 @@ impl Layout {
                 *rect.pos(),
                 Vec2::new(csize, rect.height()),
             );
-            self.children[i].child.render(buffer, crect);
+            self.children[i].child.render(
+                buffer,
+                crect,
+                &mut cache.children[i],
+            );
             rect = rect.inner(Padding::left(csize));
         }
     }

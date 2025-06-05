@@ -1,6 +1,7 @@
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Unit, Vec2},
+    widgets::cache::Cache,
 };
 
 use super::{widget::Widget, Element};
@@ -129,21 +130,23 @@ impl Grid {
 }
 
 impl Widget for Grid {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() || self.children.is_empty() {
             return;
         }
 
         let (cols, rows) = self.get_sizes(&rect);
 
-        for GridChild { child, row, col } in self.children.iter() {
+        for (i, GridChild { child, row, col }) in
+            self.children.iter().enumerate()
+        {
             let crect = Rect::new(
                 rect.x() + cols[*col].y,
                 rect.y() + rows[*row].y,
                 cols[*col].x,
                 rows[*row].x,
             );
-            child.render(buffer, crect);
+            child.render(buffer, crect, &mut cache.children[i]);
         }
     }
 

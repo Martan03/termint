@@ -10,6 +10,7 @@ use crate::{
     geometry::{Rect, Vec2},
     style::Style,
     text::Text,
+    widgets::cache::Cache,
 };
 
 use super::{span::ToSpan, widget::Widget, Element};
@@ -196,7 +197,7 @@ impl ListState {
 }
 
 impl Widget for List {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         if self.auto_scroll {
             self.scroll_offset(rect.size());
         }

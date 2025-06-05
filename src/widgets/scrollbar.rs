@@ -4,6 +4,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Direction, Rect, Vec2, Vec2Range},
     style::Style,
+    widgets::cache::Cache,
 };
 
 use super::{Element, Widget};
@@ -227,7 +228,7 @@ impl ScrollbarState {
 }
 
 impl Widget for Scrollbar {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         match self.direction {
             Direction::Vertical => self.ver_render(buffer, &rect),
             Direction::Horizontal => self.hor_render(buffer, &rect),

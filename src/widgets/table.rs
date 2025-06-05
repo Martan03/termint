@@ -9,6 +9,7 @@ use crate::{
     enums::{Border, BorderType},
     geometry::{Padding, Rect, Unit, Vec2},
     style::Style,
+    widgets::cache::Cache,
 };
 
 use super::{Element, Widget};
@@ -180,7 +181,7 @@ impl Table {
 }
 
 impl Widget for Table {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         let mut widths = self.calc_widths(rect.width());
         let header_height = self.calc_header_height(&rect, &widths);
 
@@ -269,6 +270,10 @@ impl Widget for Table {
             return total.max(size.x);
         }
         total + self.column_spacing * (self.widths.len() - 1)
+    }
+
+    fn children(&self) -> Vec<&Element> {
+        self.rows.iter().flat_map(|row| row.cells.iter()).collect()
     }
 }
 
