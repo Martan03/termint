@@ -11,13 +11,14 @@ use termint::{
     style::Style,
     term::Term,
     widgets::{
-        BgGrad, Block, Grad, Grid, Layout, List, ListState, Paragraph,
-        Scrollable, Scrollbar, ScrollbarState, ToSpan, Widget,
+        cache::Cache, BgGrad, Block, Element, Grad, Grid, Layout, List,
+        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState, ToSpan,
+        Widget,
     },
 };
 
 fn main() {
-    // test_block();
+    test_block();
     // test_layout();
     // test_grad();
     // cool_example();
@@ -34,59 +35,67 @@ fn main() {
     // scrollable_test();
 }
 
-// #[allow(unused)]
-// fn test_block() {
-//     let mut block = Block::horizontal().title("Not easy");
+#[allow(unused)]
+fn test_block() {
+    let mut block = Block::horizontal().title("Not easy");
 
-//     let block1 = Block::vertical().title("Test");
-//     let mut block2 = Block::vertical();
-//     let grad =
-//         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
-//     block2.push(grad, Constraint::Percent(100));
-//     let block3 = Block::vertical().title(Grad::new(
-//         "Test",
-//         (100, 200, 100),
-//         (20, 160, 255),
-//     ));
+    let block1 = Block::vertical().title("Test");
+    let mut block2 = Block::vertical();
+    let grad =
+        Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
+    block2.push(grad, Constraint::Percent(100));
+    let block3 = Block::vertical().title(Grad::new(
+        "Test",
+        (100, 200, 100),
+        (20, 160, 255),
+    ));
 
-//     block.push(block1, 0..);
-//     block.push(block2, 0..);
-//     block.push(block3, Constraint::Fill(1));
+    block.push(block1, 0..);
+    block.push(block2, 0..);
+    block.push(block3, Constraint::Fill(1));
 
-//     let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
-//     let mut buffer = Buffer::empty(rect);
-//     block.render(&mut buffer, rect);
-//     buffer.render();
+    let block: Element = block.into();
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
+    let mut buffer = Buffer::empty(rect);
 
-//     // println!("\x1b[7B");
-// }
+    let mut cache = Cache::new();
+    cache.diff(&block);
+    block.render(&mut buffer, rect, &mut cache);
+    buffer.render();
 
-// #[allow(unused)]
-// fn test_layout() {
-//     println!("\x1b[2J");
-//     let mut main = Block::horizontal()
-//         .title("Termite".fg(Color::Red))
-//         .border_type(BorderType::Double)
-//         .border_color(Color::LightGray)
-//         .padding((0, 1));
+    // println!("\x1b[7B");
+}
 
-//     let mut block1 = Block::vertical().title("Sub block");
-//     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-//     block1.push(span1, Constraint::Percent(100));
-//     main.push(block1, Constraint::Percent(50));
+#[allow(unused)]
+fn test_layout() {
+    println!("\x1b[2J");
+    let mut main = Block::horizontal()
+        .title("Termite".fg(Color::Red))
+        .border_type(BorderType::Double)
+        .border_color(Color::LightGray)
+        .padding((0, 1));
 
-//     let mut block2 = Block::vertical().title("Another");
-//     let span2 =
-//         "This is really cool, right? This is the best place for testing"
-//             .fg(Color::Blue);
-//     block2.push(span2, Constraint::Percent(100));
-//     main.push(block2, Constraint::Percent(50));
+    let mut block1 = Block::vertical().title("Sub block");
+    let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
+    block1.push(span1, Constraint::Percent(100));
+    main.push(block1, Constraint::Percent(50));
 
-//     let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8));
-//     let mut buffer = Buffer::empty(rect);
-//     main.render(&mut buffer, rect);
-//     buffer.render();
-// }
+    let mut block2 = Block::vertical().title("Another");
+    let span2 =
+        "This is really cool, right? This is the best place for testing"
+            .fg(Color::Blue);
+    block2.push(span2, Constraint::Percent(100));
+    main.push(block2, Constraint::Percent(50));
+
+    let main: Element = main.into();
+    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8));
+    let mut buffer = Buffer::empty(rect);
+
+    let mut cache = Cache::new();
+    cache.diff(&main);
+    main.render(&mut buffer, rect, &mut cache);
+    buffer.render();
+}
 
 // #[allow(unused)]
 // fn test_grad() {
