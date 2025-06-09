@@ -1,12 +1,12 @@
 use termint::{
     buffer::Buffer,
     enums::{BorderType, Color},
-    geometry::{Constraint, Rect, Vec2},
-    widgets::{cache::Cache, Block, Element, Grad, ToSpan, Widget},
+    geometry::{Constraint, Rect, Unit, Vec2},
+    widgets::{cache::Cache, Block, Element, Grad, Grid, ToSpan, Widget},
 };
 
 fn main() {
-    test_block();
+    // test_block();
     // test_layout();
     // test_grad();
     // cool_example();
@@ -16,7 +16,7 @@ fn main() {
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
-    // grid_test();
+    grid_test();
     // diff_render_test();
     // merge_test();
     // scrollbar_test();
@@ -268,24 +268,28 @@ fn test_layout() {
 //     term.render(layout);
 // }
 
-// #[allow(unused)]
-// fn grid_test() {
-//     let mut grid = Grid::new(
-//         vec![Unit::Length(3), Unit::Length(4), Unit::Fill(1)],
-//         vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
-//     );
+#[allow(unused)]
+fn grid_test() {
+    let mut grid = Grid::new(
+        vec![Unit::Length(3), Unit::Length(4), Unit::Fill(1)],
+        vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
+    );
 
-//     grid.push(Block::vertical(), 1, 0);
-//     grid.push(Block::vertical(), 0, 1);
-//     grid.push(Block::vertical(), 1, 2);
-//     grid.push(Block::vertical(), 2, 1);
-//     grid.push("Grid", 1, 1);
+    grid.push(Block::vertical(), 1, 0);
+    grid.push(Block::vertical(), 0, 1);
+    grid.push(Block::vertical(), 1, 2);
+    grid.push(Block::vertical(), 2, 1);
+    grid.push("Grid", 1, 1);
 
-//     let rect = Rect::new(1, 1, 15, 6);
-//     let mut buffer = Buffer::empty(rect);
-//     grid.render(&mut buffer, rect);
-//     buffer.render();
-// }
+    let rect = Rect::new(1, 1, 15, 6);
+    let mut buffer = Buffer::empty(rect);
+    let grid = grid.into();
+
+    let mut cache = Cache::new();
+    cache.diff(&grid);
+    grid.render(&mut buffer, rect, &mut cache);
+    buffer.render();
+}
 
 // #[allow(unused)]
 // fn diff_render_test() {
