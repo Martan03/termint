@@ -237,9 +237,9 @@ impl Layout {
                 (sizes, rect)
             }
             None => {
-                let (sizes, rect) = self.ver_sizes(rect);
-                self.create_cache(&rect, cache, &sizes);
-                (sizes, rect)
+                let (sizes, crect) = self.ver_sizes(rect.clone());
+                self.create_cache(rect, cache, &sizes);
+                (sizes, crect)
             }
         };
 
@@ -261,9 +261,9 @@ impl Layout {
                 (sizes, rect)
             }
             None => {
-                let (sizes, rect) = self.hor_sizes(rect);
-                self.create_cache(&rect, cache, &sizes);
-                (sizes, rect)
+                let (sizes, crect) = self.hor_sizes(rect.clone());
+                self.create_cache(rect, cache, &sizes);
+                (sizes, crect)
             }
         };
 
@@ -479,7 +479,7 @@ impl Layout {
 
     fn create_cache<'a>(
         &self,
-        rect: &Rect,
+        rect: Rect,
         cache: &'a mut Cache,
         sizes: &Vec<usize>,
     ) {

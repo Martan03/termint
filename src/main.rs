@@ -1,20 +1,8 @@
-use std::{
-    cell::{Cell, RefCell},
-    rc::Rc,
-    vec,
-};
-
 use termint::{
     buffer::Buffer,
-    enums::{Border, BorderType, Color, Modifier, Wrap},
-    geometry::{Constraint, Rect, TextAlign, Unit, Vec2},
-    style::Style,
-    term::Term,
-    widgets::{
-        cache::Cache, BgGrad, Block, Element, Grad, Grid, Layout, List,
-        ListState, Paragraph, Scrollable, Scrollbar, ScrollbarState, ToSpan,
-        Widget,
-    },
+    enums::{BorderType, Color},
+    geometry::{Constraint, Rect, Vec2},
+    widgets::{cache::Cache, Block, Element, Grad, ToSpan, Widget},
 };
 
 fn main() {
