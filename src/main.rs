@@ -5,8 +5,8 @@ use termint::{
     enums::{BorderType, Color},
     geometry::{Constraint, Rect, Unit, Vec2},
     widgets::{
-        cache::Cache, Block, Element, Grad, Grid, Scrollbar, ScrollbarState,
-        ToSpan, Widget,
+        cache::Cache, Block, Element, Grad, Grid, Layout, Scrollbar,
+        ScrollbarState, ToSpan, Widget,
     },
 };
 
@@ -24,8 +24,30 @@ fn main() {
     // grid_test();
     // diff_render_test();
     // merge_test();
-    scrollbar_test();
+    // scrollbar_test();
     // scrollable_test();
+
+    let mut vlayout = Layout::horizontal();
+    let mut hlayout = Layout::vertical();
+    for i in 0..50 {
+        let state =
+            Rc::new(Cell::new(ScrollbarState::new(i * 20).content_len(1000)));
+        vlayout.push(Scrollbar::vertical(state.clone()), 1);
+        hlayout.push(Scrollbar::horizontal(state), 1);
+    }
+
+    let rect = Rect::new(1, 1, 100, 50);
+    let mut buffer = Buffer::empty(rect);
+    let mut cache = Cache::new();
+
+    let mut layout = Layout::horizontal();
+    layout.push(vlayout, Constraint::Fill(1));
+    layout.push(hlayout, Constraint::Fill(1));
+
+    let layout: Element = layout.into();
+    cache.diff(&layout);
+    layout.render(&mut buffer, rect, &mut cache);
+    buffer.render();
 }
 
 #[allow(unused)]
