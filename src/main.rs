@@ -1,8 +1,13 @@
+use std::{cell::Cell, rc::Rc};
+
 use termint::{
     buffer::Buffer,
     enums::{BorderType, Color},
     geometry::{Constraint, Rect, Unit, Vec2},
-    widgets::{cache::Cache, Block, Element, Grad, Grid, ToSpan, Widget},
+    widgets::{
+        cache::Cache, Block, Element, Grad, Grid, Scrollbar, ScrollbarState,
+        ToSpan, Widget,
+    },
 };
 
 fn main() {
@@ -16,10 +21,10 @@ fn main() {
     // test_layout_centering();
     // test_bg_grad();
     // term_test();
-    grid_test();
+    // grid_test();
     // diff_render_test();
     // merge_test();
-    // scrollbar_test();
+    scrollbar_test();
     // scrollable_test();
 }
 
@@ -362,27 +367,31 @@ fn grid_test() {
 //     buffer.render();
 // }
 
-// #[allow(unused)]
-// fn scrollbar_test() {
-//     println!("\x1b[2J");
+#[allow(unused)]
+fn scrollbar_test() {
+    println!("\x1b[2J");
 
-//     let state = Rc::new(Cell::new(ScrollbarState::new(3).content_len(30)));
+    let state = Rc::new(Cell::new(ScrollbarState::new(5).content_len(30)));
 
-//     let vertical = Scrollbar::vertical(state.clone());
-//     let horizontal = Scrollbar::horizontal(state.clone());
+    let vertical = Scrollbar::vertical(state.clone());
+    let horizontal = Scrollbar::horizontal(state.clone());
 
-//     let mut grid = Grid::new(
-//         vec![Unit::Fill(1), Unit::Length(1)],
-//         vec![Unit::Fill(1), Unit::Length(1)],
-//     );
-//     grid.push(vertical, 1, 0);
-//     grid.push(horizontal, 0, 1);
+    let mut grid = Grid::new(
+        vec![Unit::Fill(1), Unit::Length(1)],
+        vec![Unit::Fill(1), Unit::Length(1)],
+    );
+    grid.push(vertical, 1, 0);
+    grid.push(horizontal, 0, 1);
 
-//     let rect = Rect::new(1, 1, 12, 7);
-//     let mut buffer = Buffer::empty(rect);
-//     grid.render(&mut buffer, rect);
-//     buffer.render();
-// }
+    let rect = Rect::new(1, 1, 12, 7);
+    let mut buffer = Buffer::empty(rect);
+    let grid = grid.into();
+
+    let mut cache = Cache::new();
+    cache.diff(&grid);
+    grid.render(&mut buffer, rect, &mut cache);
+    buffer.render();
+}
 
 // #[allow(unused)]
 // fn scrollable_test() {

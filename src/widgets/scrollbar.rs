@@ -4,7 +4,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Direction, Rect, Vec2, Vec2Range},
     style::Style,
-    widgets::cache::Cache,
+    widgets::cache::{Cache, ScrollbarCache},
 };
 
 use super::{Element, Widget};
@@ -228,10 +228,10 @@ impl ScrollbarState {
 }
 
 impl Widget for Scrollbar {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         match self.direction {
-            Direction::Vertical => self.ver_render(buffer, &rect),
-            Direction::Horizontal => self.hor_render(buffer, &rect),
+            Direction::Vertical => self.ver_render(buffer, &rect, cache),
+            Direction::Horizontal => self.hor_render(buffer, &rect, cache),
         }
     }
 
@@ -252,8 +252,8 @@ impl Widget for Scrollbar {
 
 impl Scrollbar {
     /// Renders the vertical scrollbar
-    fn ver_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let Some((size, pos)) = self.calc_thumb(rect.height()) else {
+    fn ver_render(&self, buffer: &mut Buffer, rect: &Rect, cache: &mut Cache) {
+        let Some((size, pos)) = self.get_thumb(rect.height(), cache) else {
             return;
         };
 
@@ -268,8 +268,8 @@ impl Scrollbar {
     }
 
     /// Renders the horizontal scrollbar
-    fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let Some((size, pos)) = self.calc_thumb(rect.width()) else {
+    fn hor_render(&self, buffer: &mut Buffer, rect: &Rect, cache: &mut Cache) {
+        let Some((size, pos)) = self.get_thumb(rect.width(), cache) else {
             return;
         };
 
@@ -281,6 +281,21 @@ impl Scrollbar {
         let start = Vec2::new(rect.x() + pos, rect.y());
         let end = Vec2::new(rect.x() + pos + size, rect.y() + 1);
         self.render_thumb(buffer, start.to(end));
+    }
+
+    /// Gets size of the thumb and its position from cache or calculates it
+    fn get_thumb(
+        &self,
+        size: usize,
+        cache: &mut Cache,
+    ) -> Option<(usize, usize)> {
+        if let Some(thumb) = self.get_cache(size, cache) {
+            return Some(thumb);
+        };
+
+        let (size, offset) = self.calc_thumb(size)?;
+        self.create_cache(size, cache, size, offset);
+        Some((size, offset))
     }
 
     /// Gets size of the thumb and its position
@@ -321,6 +336,31 @@ impl Scrollbar {
             buffer[pos] =
                 buffer[pos].val(self.thumb_char).style(self.thumb_style);
         }
+    }
+
+    fn get_cache<'a>(
+        &self,
+        size: usize,
+        cache: &'a mut Cache,
+    ) -> Option<(usize, usize)> {
+        let lcache = cache.local::<ScrollbarCache>()?;
+        if !lcache.same_key(&size, &self.direction) {
+            return None;
+        }
+        Some((lcache.thumb_size, lcache.thumb_offset))
+    }
+
+    fn create_cache<'a>(
+        &self,
+        size: usize,
+        cache: &'a mut Cache,
+        thumb_size: usize,
+        thumb_offset: usize,
+    ) {
+        let lcache = ScrollbarCache::new(size, self.direction)
+            .thumb_offset(thumb_offset)
+            .thumb_size(thumb_size);
+        cache.local = Some(Box::new(lcache));
     }
 }
 
