@@ -15,6 +15,7 @@ Rust library for colored printing and Terminal User Interfaces
 - [Examples](#examples)
     - [Printing colored text](#printing-colored-text)
     - [Terminal User Interface (TUI)](#terminal-user-interface-tui)
+    - [TUI examples](#tui-examples)
 - [Usage](#usage)
 - [Links](#links)
 
@@ -89,6 +90,14 @@ term.render(main)?;
 ```
 
 ![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)
+
+### TUI examples
+
+![image](https://github.com/user-attachments/assets/1e81fad9-dc56-4715-b49b-fbe9153f1b42)
+
+![image](https://github.com/user-attachments/assets/660a3794-723a-494f-b28b-83377d5ebe49)
+
+![image](https://github.com/user-attachments/assets/5c239669-1182-4962-8449-b76107fd574f)
 
 ## Usage
 
