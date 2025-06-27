@@ -1,6 +1,7 @@
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Unit, Vec2},
+    widgets::cache::{Cache, GridCache},
 };
 
 use super::{widget::Widget, Element};
@@ -129,21 +130,23 @@ impl Grid {
 }
 
 impl Widget for Grid {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() || self.children.is_empty() {
             return;
         }
 
-        let (cols, rows) = self.get_sizes(&rect);
+        let (cols, rows) = self.get_sizes(&rect, cache);
 
-        for GridChild { child, row, col } in self.children.iter() {
+        for (i, GridChild { child, row, col }) in
+            self.children.iter().enumerate()
+        {
             let crect = Rect::new(
-                rect.x() + cols[*col].y,
-                rect.y() + rows[*row].y,
-                cols[*col].x,
-                rows[*row].x,
+                rect.x() + cols.1[*col],
+                rect.y() + rows.1[*row],
+                cols.0[*col],
+                rows.0[*row],
             );
-            child.render(buffer, crect);
+            child.render(buffer, crect, &mut cache.children[i]);
         }
     }
 
@@ -170,23 +173,41 @@ impl Widget for Grid {
         }
         width
     }
+
+    fn children(&self) -> Vec<&Element> {
+        self.children.iter().map(|c| &c.child).collect()
+    }
 }
 
 impl Grid {
     /// Gets sizes and starting positions of each row and column
-    fn get_sizes(&self, rect: &Rect) -> (Vec<Vec2>, Vec<Vec2>) {
-        (
-            Self::get_size(&self.cols, rect.width()),
-            Self::get_size(&self.rows, rect.height()),
-        )
+    fn get_sizes(
+        &self,
+        rect: &Rect,
+        cache: &mut Cache,
+    ) -> ((Vec<usize>, Vec<usize>), (Vec<usize>, Vec<usize>)) {
+        match self.get_cache(&rect, cache) {
+            Some((cols, rows)) => {
+                let cols_pos = Self::get_positions(&cols);
+                let rows_pos = Self::get_positions(&rows);
+                ((cols, cols_pos), (rows, rows_pos))
+            }
+            None => {
+                let cols = Self::get_size(&self.cols, rect.width());
+                let rows = Self::get_size(&self.rows, rect.height());
+                self.create_cache(rect, cache, &cols.0, &rows.0);
+                (cols, rows)
+            }
+        }
     }
 
     /// Gets sizes and positions of given units
-    fn get_size(units: &[Unit], size: usize) -> Vec<Vec2> {
+    fn get_size(units: &[Unit], size: usize) -> (Vec<usize>, Vec<usize>) {
         let mut total = 0;
         let mut fills_total = 0;
 
         let mut sizes = Vec::new();
+        let mut positions = Vec::new();
         let mut fills = Vec::new();
         for unit in units {
             let len = match unit {
@@ -198,12 +219,13 @@ impl Grid {
                     *f
                 }
             };
-            sizes.push(Vec2::new(len, total));
+            sizes.push(len);
+            positions.push(total);
             total += len;
         }
 
         if fills_total == 0 {
-            return sizes;
+            return (sizes, positions);
         }
 
         let mut pos = 0;
@@ -211,18 +233,53 @@ impl Grid {
         for (i, row) in units.iter().enumerate() {
             match row {
                 Unit::Fill(f) => {
-                    sizes[i].x = remain * f / fills_total;
-                    sizes[i].y = pos;
-                    pos += sizes[i].x;
+                    sizes[i] = remain * f / fills_total;
+                    positions[i] = pos;
+                    pos += sizes[i];
                 }
                 _ => {
-                    sizes[i].y = pos;
-                    pos += sizes[i].x;
+                    positions[i] = pos;
+                    pos += sizes[i];
                 }
             }
         }
 
-        sizes
+        (sizes, positions)
+    }
+
+    fn get_positions(sizes: &[usize]) -> Vec<usize> {
+        let mut total = 0;
+        let mut pos = vec![];
+        for size in sizes {
+            pos.push(total);
+            total += size;
+        }
+        pos
+    }
+
+    fn get_cache<'a>(
+        &self,
+        rect: &Rect,
+        cache: &'a mut Cache,
+    ) -> Option<(Vec<usize>, Vec<usize>)> {
+        let lcache = cache.local::<GridCache>()?;
+        if !lcache.same_key(rect.size(), &self.cols, &self.rows) {
+            return None;
+        }
+        Some((lcache.col_sizes.clone(), lcache.row_sizes.clone()))
+    }
+
+    fn create_cache<'a>(
+        &self,
+        rect: &Rect,
+        cache: &'a mut Cache,
+        cols: &Vec<usize>,
+        rows: &Vec<usize>,
+    ) {
+        let lcache =
+            GridCache::new(*rect.size(), self.cols.clone(), self.rows.clone())
+                .sizes(cols.clone(), rows.clone());
+        cache.local = Some(Box::new(lcache));
     }
 }
 

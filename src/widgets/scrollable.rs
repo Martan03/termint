@@ -1,8 +1,9 @@
-use std::{cell::Cell, cmp::min, rc::Rc};
+use std::{cell::Cell, cmp::min, marker::PhantomData, rc::Rc};
 
 use crate::{
     buffer::Buffer,
     geometry::{Direction, Rect, Vec2},
+    widgets::cache::Cache,
 };
 
 use super::{Element, Scrollbar, ScrollbarState, Widget};
@@ -18,7 +19,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// # use std::{cell::Cell, rc::Rc};
 /// # use termint::{
 /// #     term::Term,
-/// #     widgets::{ToSpan, Scrollable, Widget, ScrollbarState}
+/// #     widgets::{ToSpan, Span, Scrollable, Widget, ScrollbarState}
 /// # };
 /// # fn example() -> Result<(), &'static str> {
 /// // Content that may overflow
@@ -28,18 +29,19 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// let state = Rc::new(Cell::new(ScrollbarState::new(0)));
 ///
 /// // Creates vertical scrollable widget
-/// let scrollable = Scrollable::vertical(span, state);
+/// let scrollable: Scrollable<Span> = Scrollable::vertical(span, state);
 ///
 /// let mut term = Term::new();
 /// term.render(scrollable)?;
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug)]
 pub struct Scrollable<W = Element> {
     horizontal: Option<Scrollbar>,
     vertical: Option<Scrollbar>,
-    child: W,
+    child: Element,
+    child_type: PhantomData<W>,
 }
 
 impl<W> Scrollable<W>
@@ -52,11 +54,14 @@ where
     /// - `child`: The widget to wrap with scrolling
     /// - `state`: Shared state holding the scroll offset
     /// - `dir`: Scrolling direction
-    pub fn new(
-        child: W,
+    pub fn new<T>(
+        child: T,
         state: Rc<Cell<ScrollbarState>>,
         dir: Direction,
-    ) -> Self {
+    ) -> Self
+    where
+        T: Into<Element>,
+    {
         match dir {
             Direction::Vertical => Self::vertical(child, state),
             Direction::Horizontal => Self::horizontal(child, state),
@@ -68,11 +73,15 @@ where
     /// # Parameters
     /// - `child`: The widget to wrap with vertical scrolling
     /// - `state`: Shared state holding the vertical scroll offset
-    pub fn vertical(child: W, state: Rc<Cell<ScrollbarState>>) -> Self {
+    pub fn vertical<T>(child: T, state: Rc<Cell<ScrollbarState>>) -> Self
+    where
+        T: Into<Element>,
+    {
         Self {
             vertical: Some(Scrollbar::vertical(state.clone())),
             horizontal: None,
-            child,
+            child: child.into(),
+            child_type: PhantomData,
         }
     }
 
@@ -81,11 +90,15 @@ where
     /// # Parameters
     /// - `child`: The widget to wrap with horizontal scrolling
     /// - `state`: Shared state holding the horizontal scroll offset
-    pub fn horizontal(child: W, state: Rc<Cell<ScrollbarState>>) -> Self {
+    pub fn horizontal<T>(child: T, state: Rc<Cell<ScrollbarState>>) -> Self
+    where
+        T: Into<Element>,
+    {
         Self {
             vertical: None,
             horizontal: Some(Scrollbar::horizontal(state)),
-            child,
+            child: child.into(),
+            child_type: PhantomData,
         }
     }
 
@@ -96,15 +109,19 @@ where
     /// - `child`: The widget to wrap
     /// - `ver_state`: Shared state holding the vertical scroll offset
     /// - `hor_state`: Shared state holding the horizontal scroll offset
-    pub fn both(
-        child: W,
+    pub fn both<T>(
+        child: T,
         ver_state: Rc<Cell<ScrollbarState>>,
         hor_state: Rc<Cell<ScrollbarState>>,
-    ) -> Self {
+    ) -> Self
+    where
+        T: Into<Element>,
+    {
         Self {
             vertical: Some(Scrollbar::vertical(ver_state)),
             horizontal: Some(Scrollbar::horizontal(hor_state)),
-            child,
+            child: child.into(),
+            child_type: PhantomData,
         }
     }
 }
@@ -113,13 +130,18 @@ impl<W> Widget for Scrollable<W>
 where
     W: Widget,
 {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
+        let child_cache = &mut cache.children[0];
         match (self.vertical.as_ref(), self.horizontal.as_ref()) {
-            (None, None) => self.child.render(buffer, rect),
-            (None, Some(hor)) => self.hor_render(buffer, &rect, hor),
-            (Some(ver), None) => self.ver_render(buffer, &rect, ver),
+            (None, None) => self.child.render(buffer, rect, child_cache),
+            (None, Some(hor)) => {
+                self.hor_render(buffer, &rect, child_cache, hor)
+            }
+            (Some(ver), None) => {
+                self.ver_render(buffer, &rect, child_cache, ver)
+            }
             (Some(ver), Some(hor)) => {
-                self.both_render(buffer, &rect, ver, hor)
+                self.both_render(buffer, &rect, child_cache, ver, hor)
             }
         }
     }
@@ -167,6 +189,11 @@ where
             (false, false) => self.child.width(size),
         }
     }
+
+    /// TODO: add scrollbars
+    fn children(&self) -> Vec<&Element> {
+        vec![&self.child]
+    }
 }
 
 impl<W> Scrollable<W>
@@ -178,6 +205,7 @@ where
         &self,
         buffer: &mut Buffer,
         rect: &Rect,
+        cache: &mut Cache,
         vertical: &Scrollbar,
     ) {
         let mut size =
@@ -185,7 +213,8 @@ where
         size.y = self.child.height(&size);
 
         let srect = Rect::new(rect.right(), rect.y(), 1, rect.height());
-        Self::scrollbar(buffer, vertical, srect, size.y);
+        let ccache = &mut cache.children[1];
+        Self::scrollbar(buffer, ccache, vertical, srect, size.y);
 
         let crect = Rect::new(
             rect.x(),
@@ -193,7 +222,7 @@ where
             size.x,
             rect.height(),
         );
-        self.render_content(buffer, size, crect);
+        self.render_content(buffer, cache, size, crect);
     }
 
     /// Renders horizontal scrollable
@@ -201,6 +230,7 @@ where
         &self,
         buffer: &mut Buffer,
         rect: &Rect,
+        cache: &mut Cache,
         horizontal: &Scrollbar,
     ) {
         let mut size =
@@ -208,7 +238,8 @@ where
         size.x = self.child.width(&size);
 
         let srect = Rect::new(rect.x(), rect.bottom(), rect.width(), 1);
-        Self::scrollbar(buffer, horizontal, srect, size.x);
+        let ccache = &mut cache.children[1];
+        Self::scrollbar(buffer, ccache, horizontal, srect, size.x);
 
         let crect = Rect::new(
             rect.x() + horizontal.get_state().offset,
@@ -216,7 +247,7 @@ where
             rect.width(),
             size.y,
         );
-        self.render_content(buffer, size, crect);
+        self.render_content(buffer, cache, size, crect);
     }
 
     /// Renders the both directions scrollable
@@ -224,6 +255,7 @@ where
         &self,
         buffer: &mut Buffer,
         rect: &Rect,
+        cache: &mut Cache,
         vertical: &Scrollbar,
         horizontal: &Scrollbar,
     ) {
@@ -233,11 +265,13 @@ where
 
         let mut vis = rect.height().saturating_sub(1);
         let mut rect = Rect::new(rect.right(), rect.y(), 1, vis);
-        Self::scrollbar(buffer, vertical, rect, size.y);
+        let ccache = &mut cache.children[1];
+        Self::scrollbar(buffer, ccache, vertical, rect, size.y);
 
         vis = rect.width().saturating_sub(1);
         rect = Rect::new(rect.x(), rect.bottom(), vis, 1);
-        Self::scrollbar(buffer, horizontal, rect, size.x);
+        let ccache = &mut cache.children[2];
+        Self::scrollbar(buffer, ccache, horizontal, rect, size.x);
 
         let rect = Rect::new(
             rect.x() + horizontal.get_state().offset,
@@ -245,14 +279,20 @@ where
             rect.width().saturating_sub(1),
             rect.height().saturating_sub(1),
         );
-        self.render_content(buffer, size, rect);
+        self.render_content(buffer, cache, size, rect);
     }
 
     /// Renders the scrollable content
-    fn render_content(&self, buffer: &mut Buffer, size: Vec2, mut rect: Rect) {
+    fn render_content(
+        &self,
+        buffer: &mut Buffer,
+        cache: &mut Cache,
+        size: Vec2,
+        mut rect: Rect,
+    ) {
         let crect = Rect::from_coords(*buffer.pos(), size);
         let mut cbuffer = Buffer::empty(crect);
-        self.child.render(&mut cbuffer, crect);
+        self.child.render(&mut cbuffer, crect, cache);
 
         rect = rect.intersection(cbuffer.rect());
         let mut cutout = cbuffer.subset(rect);
@@ -263,12 +303,13 @@ where
     /// Renders the scrollbar
     fn scrollbar(
         buffer: &mut Buffer,
+        cache: &mut Cache,
         scroll: &Scrollbar,
         rect: Rect,
         size: usize,
     ) {
         scroll.content_len(size);
-        scroll.render(buffer, rect);
+        scroll.render(buffer, rect, cache);
     }
 }
 

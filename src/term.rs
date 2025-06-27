@@ -3,7 +3,7 @@ use termal::raw::term_size;
 use crate::{
     buffer::Buffer,
     geometry::{Padding, Rect, Vec2},
-    widgets::{Element, Widget},
+    widgets::{cache::Cache, Element, Widget},
 };
 
 /// [`Term`] implements full screen rendering with option to set padding
@@ -28,8 +28,9 @@ use crate::{
 #[derive(Debug, Default)]
 pub struct Term {
     prev: Option<Buffer>,
-    prev_widget: Option<Box<dyn Widget>>,
-    small: Option<Box<dyn Widget>>,
+    prev_widget: Option<Element>,
+    small: Option<Element>,
+    cache: Cache,
     padding: Padding,
 }
 
@@ -49,7 +50,7 @@ impl Term {
     /// cannot fit
     pub fn small_screen<T>(mut self, small_screen: T) -> Self
     where
-        T: Into<Box<dyn Widget>>,
+        T: Into<Element>,
     {
         self.small = Some(small_screen.into());
         self
@@ -78,11 +79,15 @@ impl Term {
             Some(small)
                 if w < widget.width(&size) || h < widget.height(&size) =>
             {
-                small.render(&mut buffer, rect);
+                self.cache.diff(&small);
+                small.render(&mut buffer, rect, &mut self.cache);
             }
-            _ => widget.render(&mut buffer, rect),
+            _ => {
+                self.cache.diff(&widget);
+                widget.render(&mut buffer, rect, &mut self.cache);
+            }
         };
-        self.prev_widget = Some(Box::new(widget));
+        self.prev_widget = Some(widget);
 
         match &self.prev {
             Some(prev) => buffer.render_diff(prev),
@@ -115,9 +120,13 @@ impl Term {
             Some(small)
                 if w < widget.width(&size) || h < widget.height(&size) =>
             {
-                small.render(&mut buffer, rect);
+                self.cache.diff(&small);
+                small.render(&mut buffer, rect, &mut self.cache);
             }
-            _ => widget.render(&mut buffer, rect),
+            _ => {
+                self.cache.diff(&widget);
+                widget.render(&mut buffer, rect, &mut self.cache);
+            }
         };
 
         match &self.prev {

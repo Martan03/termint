@@ -4,6 +4,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Direction, Rect, Vec2, Vec2Range},
     style::Style,
+    widgets::cache::Cache,
 };
 
 use super::{Element, Widget};
@@ -227,7 +228,7 @@ impl ScrollbarState {
 }
 
 impl Widget for Scrollbar {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         match self.direction {
             Direction::Vertical => self.ver_render(buffer, &rect),
             Direction::Horizontal => self.hor_render(buffer, &rect),
@@ -235,15 +236,17 @@ impl Widget for Scrollbar {
     }
 
     fn height(&self, size: &Vec2) -> usize {
+        let total = self.state.get().content_len;
         match self.direction {
             Direction::Vertical => size.y,
-            Direction::Horizontal => 1,
+            Direction::Horizontal => (total > size.y) as usize,
         }
     }
 
     fn width(&self, size: &Vec2) -> usize {
+        let total = self.state.get().content_len;
         match self.direction {
-            Direction::Vertical => 1,
+            Direction::Vertical => (total > size.x) as usize,
             Direction::Horizontal => size.x,
         }
     }
@@ -268,7 +271,7 @@ impl Scrollbar {
 
     /// Renders the horizontal scrollbar
     fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let Some((size, pos)) = self.calc_thumb(rect.width()) else {
+        let Some((size, pos)) = self.calc_thumb(rect.height()) else {
             return;
         };
 

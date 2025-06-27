@@ -7,6 +7,7 @@ use crate::{
     geometry::{Direction, Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
+    widgets::cache::Cache,
 };
 
 use super::{widget::Widget, Element};
@@ -192,7 +193,7 @@ impl Grad {
 }
 
 impl Widget for Grad {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
     }
 

@@ -9,6 +9,7 @@ use crate::{
     enums::{Border, BorderType},
     geometry::{Padding, Rect, Unit, Vec2},
     style::Style,
+    widgets::cache::Cache,
 };
 
 use super::{Element, Widget};
@@ -180,7 +181,7 @@ impl Table {
 }
 
 impl Widget for Table {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         let mut widths = self.calc_widths(rect.width());
         let header_height = self.calc_header_height(&rect, &widths);
 
@@ -194,7 +195,7 @@ impl Widget for Table {
             self.render_scrollbar(buffer, &srect);
         }
 
-        self.render_header(buffer, &rect, header_height, &widths);
+        self.render_header(buffer, &rect, cache, header_height, &widths);
 
         if self.auto_scroll {
             self.scroll_offset(crect.size(), &widths);
@@ -204,6 +205,11 @@ impl Widget for Table {
 
         let mut pos = *crect.pos();
         let mut row_rect = None;
+
+        let mut id = 0;
+        if self.header.is_some() {
+            id += self.widths.len();
+        }
         for i in self.state.borrow().offset..self.rows.len() {
             if rect.bottom() < pos.y {
                 break;
@@ -227,8 +233,9 @@ impl Widget for Table {
             for (j, child) in self.rows[i].cells.iter().enumerate() {
                 size.x = widths.get(j).copied().unwrap_or_default();
                 let crect = Rect::from_coords(pos, size);
-                child.render(buffer, crect);
+                child.render(buffer, crect, &mut cache.children[id]);
                 pos.x += size.x + self.column_spacing;
+                id += 1;
             }
 
             pos.x = rect.x();
@@ -269,6 +276,20 @@ impl Widget for Table {
             return total.max(size.x);
         }
         total + self.column_spacing * (self.widths.len() - 1)
+    }
+
+    fn children(&self) -> Vec<&Element> {
+        let mut result = Vec::new();
+
+        if let Some(header) = &self.header {
+            result.extend(header.cells.iter());
+        }
+
+        for row in &self.rows {
+            result.extend(row.cells.iter());
+        }
+
+        result
     }
 }
 
@@ -377,6 +398,7 @@ impl Table {
         &self,
         buffer: &mut Buffer,
         rect: &Rect,
+        cache: &mut Cache,
         height: usize,
         widths: &[usize],
     ) {
@@ -394,7 +416,7 @@ impl Table {
             }
 
             let crect = Rect::from_coords(pos, Vec2::new(width, height));
-            child.render(buffer, crect);
+            child.render(buffer, crect, &mut cache.children[i]);
             pos.x += width + self.column_spacing;
         }
 

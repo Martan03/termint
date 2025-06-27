@@ -7,56 +7,78 @@
 //! Rust library for colored printing and Terminal User Interfaces
 //!
 //! ## Table of Contents
-//! - [Installation](#installation)
+//! - [How to get it](#how-to-get-it)
+//!     - [With cargo](#with-cargo)
+//!     - [In Cargo.toml](#in-cargotoml)
+//!     - [Features](#features)
 //! - [Examples](#examples)
 //!     - [Printing colored text](#printing-colored-text)
-//!     - [More complex layout](#more-complex-layout)
+//!     - [Terminal User Interface (TUI)](#terminal-user-interface-tui)
 //! - [Usage](#usage)
-//! - [Technologies](#technologies)
 //! - [Links](#links)
 //!
-//! ## Installation:
+//! ## How to get it
 //!
-//! This library is available on [crates.io](https://crates.io/crates/termint).
-//! You can add it to your projects using cargo:
+//! This crate is available on [crates.io](https://crates.io/crates/termint).
+//! 
+//! ### With cargo
 //! ```terminal
 //! cargo add termint
 //! ```
 //!
+//! ### In Cargo.toml
+//! ```toml
+//! [dependencies]
+//! termint = "0.6.0"
+//! ```
+//! 
+//! ### Features
+//! 
+//! - `serde`: Enables serialization and deserialization of some structs.
+//! - `all`: Enables all features.
+//! 
 //! ## Examples
 //!
 //! ### Printing colored text
 //!
-//! Printing colored text is really easy, you can do it like this:
+//! Printing colored text is really easy, you can do it by using any `Text` 
+//! widget. Here is an example of using `Span` widget:
 //!
 //! ```rust
 //! # use termint::{
 //! #     enums::{Modifier, Color},
 //! #     widgets::ToSpan
 //! # };
-//! // Using Span widget
 //! println!("{}", "Cyan text".fg(Color::Cyan));
 //! println!("{}", "Cyan text on white".fg(Color::Cyan).bg(Color::White));
 //! println!("{}", "Bold red text".fg(Color::Red).modifier(Modifier::BOLD));
 //! println!("{}", "Text with RGB value".fg(Color::Rgb(0, 249, 210)));
 //! ```
 //! ![image](https://github.com/Martan03/termint/assets/46300167/c906a565-69b5-4664-9db0-ad89ff457cbb)
+//! 
+//! You can also use re-exported `termal` crate to print colored text:
+//! ```rust
+//! # use termint::termal::printcln;
+//! printcln!("{'yellow italic}Yellow Italic text{'reset}");
+//! printcln!("{'y i}{}{'_}", "Yellow Italic text");
+//! printcln!("{'#dd0 i}{}{'_}", "Custom Yellow Italic text");
+//! ```
 //!
-//! You can see all the colors and modifiers in the
-//! [documentation](https://docs.rs/termint/latest/termint/).
+//! ### Terminal User Interface (TUI)
 //!
-//! ### More complex layout
-//!
-//! You can also create TUIs using this library. This example shows how you can
-//! use Block widget and add children to it and creating Layout:
+//! The main purpose of this crate is to create Terminal User Interfaces (TUIs).
+//! Example below shows minimal example of creating a TUI using `Block` widget
+//! and rendering it using `Term`. You can find more examples in the `examples`
+//! directory of this repository.
 //!
 //! ```rust
 //! # use termint::{
-//! #     buffer::Buffer,
+//! #     term::Term,
 //! #     enums::{Color, Border, BorderType},
 //! #     geometry::{Constraint, Rect},
 //! #     widgets::{Block, ToSpan, Widget}
 //! # };
+//! # fn example() -> Result<(), &'static str> {
 //! // Creates main block and sets its properties
 //! let mut main = Block::horizontal()
 //!     .title("Termint")
@@ -77,10 +99,10 @@
 //! main.push(block2, Constraint::Fill(1));
 //!
 //! // Renders the main block which renders all the children using Buffer
-//! let rect = Rect::new(1, 1, 30, 8);
-//! let mut buffer = Buffer::empty(rect);
-//! main.render(&mut buffer, rect);
-//! buffer.render();
+//! let mut term = Term::new();
+//! term.render(main)?;
+//! # Ok(())
+//! # }
 //! ```
 //! ![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)
 //!
@@ -89,16 +111,9 @@
 //! Code blocks above are just examples of the usage. To see more about functions,
 //! Widgets and more, please visit the
 //! [documentation](https://docs.rs/termint/latest/termint/).
-//! ## Usage:
-//!
-//! Code blocks above are just examples of the usage. To see more about functions,
-//! Widgets and more, please visit the
-//! [documentation](https://docs.rs/termint/latest/termint/).
-//!
-//! ## Technologies
-//!
-//! Obviously this library was created in Rust, but I also used library called
-//! [term-size](https://docs.rs/term_size/latest/term_size/) to get terminal size.
+//! 
+//! You can also check the `examples` directory of this repository for more
+//! examples of how to use this crate for creating TUIs.
 //!
 //! ## Links
 //!
@@ -121,3 +136,5 @@ pub mod term;
 pub mod text;
 /// Contains widgets (Layout, Block, Span)
 pub mod widgets;
+
+pub use termal;

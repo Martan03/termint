@@ -5,6 +5,7 @@ use crate::{
     enums::Color,
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     style::Style,
+    widgets::cache::{Cache, LayoutCache},
 };
 
 use super::{widget::Widget, Element};
@@ -46,17 +47,11 @@ use super::{widget::Widget, Element};
 #[derive(Debug)]
 pub struct Layout {
     direction: Direction,
-    children: Vec<LayoutChild>,
+    children: Vec<Element>,
+    constraints: Vec<Constraint>,
     style: Style,
     padding: Padding,
     center: bool,
-}
-
-/// Internal struct representing a child widget and its constraint.
-#[derive(Debug)]
-struct LayoutChild {
-    pub child: Element,
-    pub constraint: Constraint,
 }
 
 impl Layout {
@@ -151,10 +146,8 @@ impl Layout {
         T: Into<Element>,
         C: Into<Constraint>,
     {
-        self.children.push(LayoutChild {
-            child: child.into(),
-            constraint: constraint.into(),
-        });
+        self.children.push(child.into());
+        self.constraints.push(constraint.into());
     }
 
     /// Adds a child widget with its contraint
@@ -168,15 +161,13 @@ impl Layout {
         T: Into<Element>,
         C: Into<Constraint>,
     {
-        self.children.push(LayoutChild {
-            child: child.into(),
-            constraint: constraint.into(),
-        });
+        self.children.push(child.into());
+        self.constraints.push(constraint.into());
     }
 }
 
 impl Widget for Layout {
-    fn render(&self, buffer: &mut Buffer, rect: Rect) {
+    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.render_base_style(buffer, &rect);
 
         let rect = rect.inner(self.padding);
@@ -185,8 +176,8 @@ impl Widget for Layout {
         }
 
         match self.direction {
-            Direction::Vertical => self.ver_render(buffer, rect),
-            Direction::Horizontal => self.hor_render(buffer, rect),
+            Direction::Vertical => self.ver_render(buffer, rect, cache),
+            Direction::Horizontal => self.hor_render(buffer, rect, cache),
         }
     }
 
@@ -217,6 +208,10 @@ impl Widget for Layout {
         };
         width + self.padding.get_horizontal()
     }
+
+    fn children(&self) -> Vec<&Element> {
+        self.children.iter().collect()
+    }
 }
 
 impl Default for Layout {
@@ -224,6 +219,7 @@ impl Default for Layout {
         Self {
             direction: Direction::Vertical,
             children: Vec::new(),
+            constraints: Vec::new(),
             style: Style::new(),
             padding: Default::default(),
             center: false,
@@ -233,27 +229,51 @@ impl Default for Layout {
 
 impl Layout {
     /// Renders layout
-    fn ver_render(&self, buffer: &mut Buffer, rect: Rect) {
-        let (sizes, mut rect) = self.ver_sizes(rect);
+    fn ver_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
+        let (sizes, mut rect) = match self.get_cache(&rect, cache) {
+            Some(sizes) => {
+                let rect =
+                    self.content_rect(rect, &sizes, |r, v| r.inner((v, 0)));
+                (sizes, rect)
+            }
+            None => {
+                let (sizes, crect) = self.ver_sizes(rect.clone());
+                self.create_cache(rect, cache, &sizes);
+                (sizes, crect)
+            }
+        };
+
         for (i, s) in sizes.iter().enumerate() {
             let csize = min(*s, rect.height());
             let crect =
                 Rect::from_coords(*rect.pos(), Vec2::new(rect.width(), csize));
-            self.children[i].child.render(buffer, crect);
+            self.children[i].render(buffer, crect, &mut cache.children[i]);
             rect = rect.inner(Padding::top(csize));
         }
     }
 
     /// Renders layout
-    fn hor_render(&self, buffer: &mut Buffer, rect: Rect) {
-        let (sizes, mut rect) = self.hor_sizes(rect);
+    fn hor_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
+        let (sizes, mut rect) = match self.get_cache(&rect, cache) {
+            Some(sizes) => {
+                let rect =
+                    self.content_rect(rect, &sizes, |r, v| r.inner((0, v)));
+                (sizes, rect)
+            }
+            None => {
+                let (sizes, crect) = self.hor_sizes(rect.clone());
+                self.create_cache(rect, cache, &sizes);
+                (sizes, crect)
+            }
+        };
+
         for (i, s) in sizes.iter().enumerate() {
             let csize = min(*s, rect.width());
             let crect = Rect::from_coords(
                 *rect.pos(),
                 Vec2::new(csize, rect.height()),
             );
-            self.children[i].child.render(buffer, crect);
+            self.children[i].render(buffer, crect, &mut cache.children[i]);
             rect = rect.inner(Padding::left(csize));
         }
     }
@@ -303,14 +323,14 @@ impl Layout {
         let mut sizes = Vec::new();
         let mut size = *rect.size();
 
-        for LayoutChild { child, constraint } in self.children.iter() {
+        for (i, constraint) in self.constraints.iter().enumerate() {
             let csize = match constraint {
                 Constraint::Length(len) => *len,
                 Constraint::Percent(p) => percent * p / 100,
-                Constraint::Min(l) => max(csize(child, &size), *l),
-                Constraint::Max(h) => min(csize(child, &size), *h),
+                Constraint::Min(l) => max(csize(&self.children[i], &size), *l),
+                Constraint::Max(h) => min(csize(&self.children[i], &size), *h),
                 Constraint::MinMax(l, h) => {
-                    min(max(csize(child, &size), *l), *h)
+                    min(max(csize(&self.children[i], &size), *l), *h)
                 }
                 Constraint::Fill(val) => {
                     fill_ids.push(sizes.len());
@@ -353,14 +373,18 @@ impl Layout {
     {
         let mut total = 0;
         let mut fill = false;
-        for LayoutChild { child, constraint } in self.children.iter() {
+        for (i, constraint) in self.constraints.iter().enumerate() {
             match constraint {
                 Constraint::Length(len) => total += len,
                 Constraint::Percent(p) => total += prim * p / 100,
-                Constraint::Min(l) => total += max(*l, csize(child, size)),
-                Constraint::Max(h) => total += min(*h, csize(child, size)),
+                Constraint::Min(l) => {
+                    total += max(*l, csize(&self.children[i], size))
+                }
+                Constraint::Max(h) => {
+                    total += min(*h, csize(&self.children[i], size))
+                }
                 Constraint::MinMax(l, h) => {
-                    total += min(*h, max(*l, csize(child, size)))
+                    total += min(*h, max(*l, csize(&self.children[i], size)))
                 }
                 Constraint::Fill(_) => fill = true,
             }
@@ -376,23 +400,24 @@ impl Layout {
         let mut total = 0;
         let mut total_fills = 0;
         let mut fills = Vec::new();
-        for LayoutChild { child, constraint } in self.children.iter() {
+        for (i, constraint) in self.constraints.iter().enumerate() {
             let csize = match constraint {
                 Constraint::Length(len) => *len,
                 Constraint::Percent(p) => size.y * p / 100,
-                Constraint::Min(l) => max(*l, child.height(size)),
-                Constraint::Max(h) => min(*h, child.height(size)),
+                Constraint::Min(l) => max(*l, self.children[i].height(size)),
+                Constraint::Max(h) => min(*h, self.children[i].height(size)),
                 Constraint::MinMax(l, h) => {
-                    min(*h, max(*l, child.height(size)))
+                    min(*h, max(*l, self.children[i].height(size)))
                 }
                 Constraint::Fill(f) => {
                     total_fills += f;
-                    fills.push((child, f));
+                    fills.push((&self.children[i], f));
                     continue;
                 }
             };
             total += csize;
-            width = width.max(child.width(&Vec2::new(size.x, csize)));
+            width =
+                width.max(self.children[i].width(&Vec2::new(size.x, csize)));
         }
 
         let mut left = Vec2::new(size.x, size.y.saturating_sub(total));
@@ -410,23 +435,24 @@ impl Layout {
         let mut total = 0;
         let mut total_fills = 0;
         let mut fills = Vec::new();
-        for LayoutChild { child, constraint } in self.children.iter() {
+        for (i, constraint) in self.constraints.iter().enumerate() {
             let csize = match constraint {
                 Constraint::Length(len) => *len,
                 Constraint::Percent(p) => size.y * p / 100,
-                Constraint::Min(l) => max(*l, child.width(size)),
-                Constraint::Max(h) => min(*h, child.width(size)),
+                Constraint::Min(l) => max(*l, self.children[i].width(size)),
+                Constraint::Max(h) => min(*h, self.children[i].width(size)),
                 Constraint::MinMax(l, h) => {
-                    min(*h, max(*l, child.width(size)))
+                    min(*h, max(*l, self.children[i].width(size)))
                 }
                 Constraint::Fill(f) => {
                     total_fills += f;
-                    fills.push((child, f));
+                    fills.push((&self.children[i], f));
                     continue;
                 }
             };
             total += csize;
-            height = height.max(child.height(&Vec2::new(csize, size.y)));
+            height =
+                height.max(self.children[i].height(&Vec2::new(csize, size.y)));
         }
 
         let mut left = Vec2::new(size.x, size.y.saturating_sub(total));
@@ -437,6 +463,44 @@ impl Layout {
             total_fills -= f;
         }
         height
+    }
+
+    fn get_cache<'a>(
+        &self,
+        rect: &Rect,
+        cache: &'a mut Cache,
+    ) -> Option<Vec<usize>> {
+        let lcache = cache.local::<LayoutCache>()?;
+        if !lcache.same_key(rect.size(), &self.direction, &self.constraints) {
+            return None;
+        }
+        Some(lcache.sizes.clone())
+    }
+
+    fn create_cache<'a>(
+        &self,
+        rect: Rect,
+        cache: &'a mut Cache,
+        sizes: &Vec<usize>,
+    ) {
+        let lcache = LayoutCache::new(
+            *rect.size(),
+            self.direction,
+            self.constraints.clone(),
+        )
+        .sizes(sizes.clone());
+        cache.local = Some(Box::new(lcache));
+    }
+
+    fn content_rect<F>(&self, rect: Rect, sizes: &Vec<usize>, inner: F) -> Rect
+    where
+        F: Fn(Rect, usize) -> Rect,
+    {
+        if !self.center {
+            return rect;
+        }
+        let total: usize = sizes.iter().sum();
+        inner(rect, total / 2)
     }
 }
 
