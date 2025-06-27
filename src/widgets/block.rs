@@ -151,9 +151,9 @@ impl Block<Layout> {
     /// ```rust
     /// # use termint::widgets::{Block, Layout};
     /// // Creates block with vertical layout as its child
-    /// let block1 = Block::new(Layout::vertical());
+    /// let block1: Block<Layout> = Block::new(Layout::vertical());
     /// // Does the same, but shorter
-    /// let block2 = Block::vertical();
+    /// let block2: Block<Layout> = Block::vertical();
     /// ```
     #[must_use]
     pub fn vertical() -> Self {
@@ -176,9 +176,9 @@ impl Block<Layout> {
     /// ```rust
     /// # use termint::widgets::{Block, Layout};
     /// // Creates block with horizontal layout as its child
-    /// let block1 = Block::new(Layout::horizontal());
+    /// let block1: Block<Layout> = Block::new(Layout::horizontal());
     /// // Does the same, but shorter
-    /// let block2 = Block::horizontal();
+    /// let block2: Block<Layout> = Block::horizontal();
     /// ```
     #[must_use]
     pub fn horizontal() -> Self {

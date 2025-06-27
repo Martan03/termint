@@ -19,7 +19,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// # use std::{cell::Cell, rc::Rc};
 /// # use termint::{
 /// #     term::Term,
-/// #     widgets::{ToSpan, Scrollable, Widget, ScrollbarState}
+/// #     widgets::{ToSpan, Span, Scrollable, Widget, ScrollbarState}
 /// # };
 /// # fn example() -> Result<(), &'static str> {
 /// // Content that may overflow
@@ -29,7 +29,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// let state = Rc::new(Cell::new(ScrollbarState::new(0)));
 ///
 /// // Creates vertical scrollable widget
-/// let scrollable = Scrollable::vertical(span, state);
+/// let scrollable: Scrollable<Span> = Scrollable::vertical(span, state);
 ///
 /// let mut term = Term::new();
 /// term.render(scrollable)?;

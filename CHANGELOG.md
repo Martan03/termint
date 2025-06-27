@@ -5,6 +5,7 @@
 - Add missing From traits to Overlay widget
 - Add ProgressBar widget
 - Add Table widget
+- Add Widget Cache
 - Optional `serde` trait implementation
 
 ### Changes:

@@ -20,7 +20,7 @@ use super::cell::Cell;
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,
-/// #     widgets::{Block, Widget, Layout},
+/// #     widgets::{Block, Widget, Layout, cache::Cache},
 /// #     geometry::Rect,
 /// # };
 /// # fn get_your_widget() -> Block<Layout> { Block::vertical() }
@@ -29,8 +29,12 @@ use super::cell::Cell;
 /// let mut buffer = Buffer::empty(rect);
 ///
 /// // Gets widget and renders it to the [`Buffer`]
-/// let widget = get_your_widget();
-/// widget.render(&mut buffer, rect);
+/// let widget = get_your_widget().into();
+/// 
+/// let mut cache = Cache::new();
+/// cache.diff(&widget);
+/// 
+/// widget.render(&mut buffer, rect, &mut cache);
 ///
 /// // Renders [`Buffer`], which prints the result to the terminal
 /// buffer.render();
