@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{
     buffer::Buffer,
-    enums::{Color, Wrap},
+    enums::{Color, Modifier, Wrap},
     geometry::{Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
@@ -153,7 +153,7 @@ impl Span {
     /// let span = Span::new("modifier").modifier(modifiers!(BOLD, ITALIC));
     /// ```
     #[must_use]
-    pub fn modifier(mut self, modifier: u8) -> Self {
+    pub fn modifier(mut self, modifier: Modifier) -> Self {
         self.style = self.style.modifier(modifier);
         self
     }
@@ -166,7 +166,7 @@ impl Span {
     /// let span = Span::new("add_modifier").add_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
-    pub fn add_modifier(mut self, flag: u8) -> Self {
+    pub fn add_modifier(mut self, flag: Modifier) -> Self {
         self.style = self.style.add_modifier(flag);
         self
     }
@@ -180,7 +180,7 @@ impl Span {
     ///     .remove_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
-    pub fn remove_modifier(mut self, flag: u8) -> Self {
+    pub fn remove_modifier(mut self, flag: Modifier) -> Self {
         self.style = self.style.remove_modifier(flag);
         self
     }
@@ -405,10 +405,10 @@ pub trait ToSpan {
         T: Into<Option<Color>>;
 
     /// Creates [`Span`] from string and sets its modifier to given value
-    fn modifier(self, modifier: u8) -> Span;
+    fn modifier(self, modifier: Modifier) -> Span;
 
     /// Creates [`Span`] from string and add given modifier to it
-    fn add_modifier(self, flag: u8) -> Span;
+    fn add_modifier(self, flag: Modifier) -> Span;
 
     /// Creates [`Span`] from string and sets its alignment to given value
     fn align(self, align: TextAlign) -> Span;
@@ -450,11 +450,11 @@ where
         Span::new(self.to_string()).bg(bg)
     }
 
-    fn modifier(self, modifier: u8) -> Span {
+    fn modifier(self, modifier: Modifier) -> Span {
         Span::new(self.to_string()).modifier(modifier)
     }
 
-    fn add_modifier(self, flag: u8) -> Span {
+    fn add_modifier(self, flag: Modifier) -> Span {
         Span::new(self.to_string()).add_modifier(flag)
     }
 

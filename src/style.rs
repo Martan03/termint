@@ -21,7 +21,7 @@ impl Style {
     pub fn reset(&mut self) {
         self.fg = None;
         self.bg = None;
-        self.modifier.clear();
+        self.modifier = Modifier::empty();
     }
 
     /// Sets foreground color to given value
@@ -46,23 +46,23 @@ impl Style {
 
     /// Sets modifier to the given flag
     #[must_use]
-    pub fn modifier(mut self, flag: u8) -> Self {
-        self.modifier.clear();
-        self.modifier.add(flag);
+    pub fn modifier(mut self, flag: Modifier) -> Self {
+        self.modifier = Modifier::empty();
+        self.modifier.insert(flag);
         self
     }
 
     /// Adds given modifier to the already set modifiers
     #[must_use]
-    pub fn add_modifier(mut self, flag: u8) -> Self {
-        self.modifier.add(flag);
+    pub fn add_modifier(mut self, flag: Modifier) -> Self {
+        self.modifier.insert(flag);
         self
     }
 
     /// Removes given modifier from the already set modifiers
     #[must_use]
-    pub fn remove_modifier(mut self, flag: u8) -> Self {
-        self.modifier.sub(flag);
+    pub fn remove_modifier(mut self, flag: Modifier) -> Self {
+        self.modifier.remove(flag);
         self
     }
 
@@ -123,7 +123,7 @@ impl From<(Color, Color)> for Style {
 impl From<Modifier> for Style {
     /// Creates a new [`Style`] with given modifier
     fn from(value: Modifier) -> Self {
-        Self::new().modifier(value.val())
+        Self::new().modifier(value)
     }
 }
 
@@ -131,6 +131,6 @@ impl From<(Color, Color, Modifier)> for Style {
     /// Creates a new [`Style`] with given foreground and background color and
     /// with given modifier
     fn from((fg, bg, modifier): (Color, Color, Modifier)) -> Self {
-        Self::new().fg(fg).bg(bg).modifier(modifier.val())
+        Self::new().fg(fg).bg(bg).modifier(modifier)
     }
 }

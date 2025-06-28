@@ -133,9 +133,9 @@ impl Grad {
     ///     .modifier(modifiers!(BOLD, ITALIC));
     /// ```
     #[must_use]
-    pub fn modifier(mut self, modifier: u8) -> Self {
-        self.modifier.clear();
-        self.modifier.add(modifier);
+    pub fn modifier(mut self, modifier: Modifier) -> Self {
+        self.modifier = Modifier::empty();
+        self.modifier.insert(modifier);
         self
     }
 
@@ -148,8 +148,8 @@ impl Grad {
     ///     .add_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
-    pub fn add_modifier(mut self, flag: u8) -> Self {
-        self.modifier.add(flag);
+    pub fn add_modifier(mut self, flag: Modifier) -> Self {
+        self.modifier.insert(flag);
         self
     }
 
@@ -162,8 +162,8 @@ impl Grad {
     ///     .remove_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
-    pub fn remove_modifier(mut self, flag: u8) -> Self {
-        self.modifier.sub(flag);
+    pub fn remove_modifier(mut self, flag: Modifier) -> Self {
+        self.modifier.remove(flag);
         self
     }
 
@@ -395,7 +395,7 @@ impl Grad {
         let mut style = Style::new()
             .fg(Color::Rgb(r, g, b))
             .bg(self.bg)
-            .modifier(self.modifier.val());
+            .modifier(self.modifier);
 
         let mut coords = Vec2::new(pos.x + offset, pos.y);
         for c in line.chars() {

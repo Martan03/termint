@@ -10,7 +10,7 @@
 
 ### Changes:
 - Change `BgGrad` API
-- Change `Border` to work as separate type using bitflags
+- Change `Border` and `Modifier` to use bitflags macro
 - Rename `StrSpanExtension` to `ToSpan`
 - Rework text rendering - add generic text parser
 - Use `termal` library for getting terminal size and some other useful things

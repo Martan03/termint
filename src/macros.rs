@@ -55,7 +55,10 @@ macro_rules! borders {
 macro_rules! help {
     // Rule for parsing header
     ($header:literal: $($rest:tt)*) => {
-        println!("{}:", $header.fg(Color::Green));
+        println!(
+            "{}:",
+            $crate::widgets::Span::new($header).fg($crate::enums::Color::Green)
+        );
         help!($($rest)*);
     };
 
@@ -64,7 +67,10 @@ macro_rules! help {
         $cmd:literal $([$param:literal])* => $description:literal
         $($rest:tt)*
     ) => {
-        print!("  {}", $cmd.fg(Color::Yellow));
+        print!(
+            "  {}",
+            $crate::widgets::Span::new($cmd).fg($crate::enums::Color::Yellow)
+        );
         $(print!(" [{}]", $param);)*
         println!();
         println!("    {}", $description);
@@ -78,7 +84,10 @@ macro_rules! help {
         }
         $($rest:tt)*
     ) => {
-        print!("  {}", $cmd.fg(Color::Yellow));
+        print!(
+            "  {}",
+            $crate::widgets::Span::new($cmd).fg($crate::enums::Color::Yellow)
+        );
         $(print!(" [{}]", $param);)*
         println!();
         $(println!("    {}", $description);)*
@@ -100,8 +109,8 @@ macro_rules! help {
 /// ```
 #[macro_export]
 macro_rules! modifiers {
-    ($($mod:ident),*) => {
-        $(Modifier::$mod |)* 0
+    ($($mod:ident),* $(,)?) => {
+        $crate::enums::Modifier::NONE $(| $crate::enums::Modifier::$mod)*
     };
 }
 

@@ -2,12 +2,7 @@ extern crate termint;
 
 #[cfg(test)]
 mod tests {
-    use termint::{
-        enums::{Color, Modifier},
-        modifiers,
-        text::Text,
-        widgets::Grad,
-    };
+    use termint::{enums::Color, modifiers, text::Text, widgets::Grad};
 
     /// Tests creating new grad
     #[test]

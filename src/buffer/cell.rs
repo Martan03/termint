@@ -48,9 +48,9 @@ impl Cell {
     }
 
     /// Sets [`Cell`] modifier to the given flag
-    pub fn modifier(mut self, flag: u8) -> Self {
-        self.modifier.clear();
-        self.modifier.add(flag);
+    pub fn modifier(mut self, flag: Modifier) -> Self {
+        self.modifier = Modifier::empty();
+        self.modifier.insert(flag);
         self
     }
 

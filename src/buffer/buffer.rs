@@ -290,7 +290,7 @@ impl Buffer {
     ///
     /// # Panics
     /// Panics if the given position is outside of the buffer
-    pub fn set_modifier(&mut self, modifier: u8, pos: &Vec2) {
+    pub fn set_modifier(&mut self, modifier: Modifier, pos: &Vec2) {
         let id = self.index_of(pos);
         self.content[id] = self.content[id].modifier(modifier);
     }
