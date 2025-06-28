@@ -20,7 +20,7 @@
 //! ## How to get it
 //!
 //! This crate is available on [crates.io](https://crates.io/crates/termint).
-//! 
+//!
 //! ### With cargo
 //! ```terminal
 //! cargo add termint
@@ -31,17 +31,17 @@
 //! [dependencies]
 //! termint = "0.6.0"
 //! ```
-//! 
+//!
 //! ### Features
-//! 
+//!
 //! - `serde`: Enables serialization and deserialization of some structs.
 //! - `all`: Enables all features.
-//! 
+//!
 //! ## Examples
 //!
 //! ### Printing colored text
 //!
-//! Printing colored text is really easy, you can do it by using any `Text` 
+//! Printing colored text is really easy, you can do it by using any `Text`
 //! widget. Here is an example of using `Span` widget:
 //!
 //! ```rust
@@ -55,7 +55,7 @@
 //! println!("{}", "Text with RGB value".fg(Color::Rgb(0, 249, 210)));
 //! ```
 //! ![image](https://github.com/Martan03/termint/assets/46300167/c906a565-69b5-4664-9db0-ad89ff457cbb)
-//! 
+//!
 //! You can also use re-exported `termal` crate to print colored text:
 //! ```rust
 //! # use termint::termal::printcln;
@@ -106,14 +106,33 @@
 //! ```
 //! ![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)
 //!
+//! ### TUI examples
+//!
+//! ![image](https://github.com/user-attachments/assets/1e81fad9-dc56-4715-b49b-fbe9153f1b42)
+//!
+//! ![image](https://github.com/user-attachments/assets/660a3794-723a-494f-b28b-83377d5ebe49)
+//!
+//! ![image](https://github.com/user-attachments/assets/5c239669-1182-4962-8449-b76107fd574f)
+//!
 //! ## Usage
 //!
 //! Code blocks above are just examples of the usage. To see more about functions,
 //! Widgets and more, please visit the
 //! [documentation](https://docs.rs/termint/latest/termint/).
-//! 
+//!
 //! You can also check the `examples` directory of this repository for more
 //! examples of how to use this crate for creating TUIs.
+//!
+//! ## Projects
+//!
+//! Here is a list of some projects using termint:
+//!
+//! - [2048](https://github.com/Martan03/2048)
+//! - [futoshiki](https://github.com/Martan03/futoshiki)
+//! - [loopover](https://github.com/Martan03/loopover)
+//! - [minesweeper](https://github.com/Martan03/minesweeper)
+//! - [rsTimer](https://github.com/Martan03/rsTimer)
+//! - [tictactoe](https://github.com/Martan03/tictactoe)
 //!
 //! ## Links
 //!

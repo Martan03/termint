@@ -108,6 +108,17 @@ Widgets and more, please visit the
 You can also check the `examples` directory of this repository for more
 examples of how to use this crate for creating TUIs.
 
+## Projects
+
+Here is a list of some projects using termint:
+
+- [2048](https://github.com/Martan03/2048)
+- [futoshiki](https://github.com/Martan03/futoshiki)
+- [loopover](https://github.com/Martan03/loopover)
+- [minesweeper](https://github.com/Martan03/minesweeper)
+- [rsTimer](https://github.com/Martan03/rsTimer)
+- [tictactoe](https://github.com/Martan03/tictactoe)
+
 ## Links
 - **Author:** [Martan03](https://github.com/Martan03)
 - **GitHub repository:** [termint](https://github.com/Martan03/termint)
