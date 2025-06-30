@@ -9,7 +9,7 @@ use crate::{
     enums::{Border, BorderType},
     geometry::{Padding, Rect, Unit, Vec2},
     style::Style,
-    widgets::cache::Cache,
+    widgets::cache::{Cache, TableCache},
 };
 
 use super::{Element, Widget};
@@ -182,6 +182,10 @@ impl Table {
 
 impl Widget for Table {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
+        if rect.is_empty() || self.rows.is_empty() {
+            return;
+        }
+
         let mut widths = self.calc_widths(rect.width());
         let header_height = self.calc_header_height(&rect, &widths);
 
@@ -338,6 +342,40 @@ impl Table {
         calc_widths
     }
 
+    fn calc_heights(&self, widths: &[usize]) -> Vec<usize> {
+        let mut heights = vec![];
+        for child in self.rows.iter() {
+            heights.push(Self::row_height(1, child, widths));
+        }
+        heights
+    }
+
+    /// Gets sizes of each row and column and whether scrollbar is needed.
+    fn get_sizes(
+        &self,
+        rect: &Rect,
+        cache: &mut Cache,
+    ) -> (Vec<usize>, Vec<usize>, bool) {
+        if let Some(sizes) = self.get_cache(&rect, cache) {
+            return sizes;
+        };
+
+        let mut widths = self.calc_widths(rect.width());
+        let header_height = self.calc_header_height(&rect, &widths);
+
+        let mut crect = rect.clone();
+        crect = crect.inner(Padding::top(header_height));
+        let scrollbar = !self.fits(crect.size(), &widths);
+        if scrollbar {
+            // TODO: recalculate header height
+            crect = crect.inner(Padding::right(1));
+            widths = self.calc_widths(crect.width());
+        }
+
+        let heights = self.calc_heights(&widths);
+        (widths, heights, scrollbar)
+    }
+
     /// Renders [`Table`] scrollbar
     fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
         let rat = self.rows.len() as f32 / rect.height() as f32;
@@ -487,6 +525,36 @@ impl Table {
     /// Checks if list fits to the visible area
     fn fits(&self, size: &Vec2, widths: &[usize]) -> bool {
         self.is_visible(self.rows.len() - 1, 0, size, widths)
+    }
+
+    fn get_cache<'a>(
+        &self,
+        rect: &Rect,
+        cache: &'a mut Cache,
+    ) -> Option<(Vec<usize>, Vec<usize>, bool)> {
+        let lcache = cache.local::<TableCache>()?;
+        if !lcache.same_key(rect.size(), &self.widths) {
+            return None;
+        }
+        Some((
+            lcache.col_sizes.clone(),
+            lcache.row_sizes.clone(),
+            lcache.scrollbar,
+        ))
+    }
+
+    fn create_cache<'a>(
+        &self,
+        rect: &Rect,
+        cache: &'a mut Cache,
+        cols: &Vec<usize>,
+        rows: &Vec<usize>,
+        scrollbar: bool,
+    ) {
+        let lcache = TableCache::new(*rect.size(), self.widths.clone())
+            .sizes(cols.clone(), rows.clone())
+            .scrollbar(scrollbar);
+        cache.local = Some(Box::new(lcache));
     }
 }
 
