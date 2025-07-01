@@ -6,6 +6,7 @@ pub struct TableCache {
     pub cols: Vec<Unit>,
     pub row_sizes: Vec<usize>,
     pub col_sizes: Vec<usize>,
+    pub header_height: usize,
     pub scrollbar: bool,
 }
 
@@ -16,6 +17,7 @@ impl TableCache {
             cols,
             row_sizes: vec![],
             col_sizes: vec![],
+            header_height: 0,
             scrollbar: false,
         }
     }
@@ -23,6 +25,11 @@ impl TableCache {
     pub fn sizes(mut self, cols: Vec<usize>, rows: Vec<usize>) -> Self {
         self.row_sizes = rows;
         self.col_sizes = cols;
+        self
+    }
+
+    pub fn header_height(mut self, height: usize) -> Self {
+        self.header_height = height;
         self
     }
 

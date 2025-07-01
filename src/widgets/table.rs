@@ -186,23 +186,18 @@ impl Widget for Table {
             return;
         }
 
-        let mut widths = self.calc_widths(rect.width());
-        let header_height = self.calc_header_height(&rect, &widths);
-
-        let mut crect = rect.clone();
-        crect = crect.inner(Padding::top(header_height));
-        if !self.fits(crect.size(), &widths) {
-            // TODO: recalculate header height
+        let (widths, heights, header_height, scrollbar) =
+            self.get_sizes(&rect, cache);
+        let mut crect = rect.clone().inner(Padding::top(header_height));
+        if scrollbar {
             crect = crect.inner(Padding::right(1));
-            widths = self.calc_widths(crect.width());
             let srect = Rect::new(rect.right(), crect.y(), 1, crect.height());
             self.render_scrollbar(buffer, &srect);
         }
 
         self.render_header(buffer, &rect, cache, header_height, &widths);
-
         if self.auto_scroll {
-            self.scroll_offset(crect.size(), &widths);
+            self.scroll_offset(crect.size(), &heights);
         }
 
         let selected = self.state.borrow().selected;
@@ -342,12 +337,15 @@ impl Table {
         calc_widths
     }
 
-    fn calc_heights(&self, widths: &[usize]) -> Vec<usize> {
+    fn calc_heights(&self, widths: &[usize]) -> (Vec<usize>, usize) {
+        let mut total = 0;
         let mut heights = vec![];
         for child in self.rows.iter() {
-            heights.push(Self::row_height(1, child, widths));
+            let height = Self::row_height(1, child, widths);
+            total += height;
+            heights.push(height);
         }
-        heights
+        (heights, total)
     }
 
     /// Gets sizes of each row and column and whether scrollbar is needed.
@@ -355,25 +353,26 @@ impl Table {
         &self,
         rect: &Rect,
         cache: &mut Cache,
-    ) -> (Vec<usize>, Vec<usize>, bool) {
+    ) -> (Vec<usize>, Vec<usize>, usize, bool) {
         if let Some(sizes) = self.get_cache(&rect, cache) {
             return sizes;
         };
 
-        let mut widths = self.calc_widths(rect.width());
-        let header_height = self.calc_header_height(&rect, &widths);
+        let mut w = self.calc_widths(rect.width());
+        let mut header = self.calc_header_height(&rect, &w);
 
-        let mut crect = rect.clone();
-        crect = crect.inner(Padding::top(header_height));
-        let scrollbar = !self.fits(crect.size(), &widths);
+        let mut crect = rect.clone().inner(Padding::top(header));
+        let (mut h, total) = self.calc_heights(&w);
+        let scrollbar = crect.height() < total;
         if scrollbar {
-            // TODO: recalculate header height
-            crect = crect.inner(Padding::right(1));
-            widths = self.calc_widths(crect.width());
+            crect = rect.clone().inner(Padding::right(1));
+            w = self.calc_widths(crect.width());
+            header = self.calc_header_height(&crect, &w);
+            (h, _) = self.calc_heights(&w);
         }
 
-        let heights = self.calc_heights(&widths);
-        (widths, heights, scrollbar)
+        self.create_cache(&rect, cache, &w, &h, header, scrollbar);
+        (w, h, header, scrollbar)
     }
 
     /// Renders [`Table`] scrollbar
@@ -480,58 +479,32 @@ impl Table {
     }
 
     /// Automatically scrolls so the selected item is visible
-    fn scroll_offset(&self, size: &Vec2, widths: &[usize]) {
+    fn scroll_offset(&self, size: &Vec2, heights: &[usize]) {
         let Some(selected) = self.state.borrow().selected else {
             return;
         };
 
-        if selected < self.state.borrow().offset {
+        let offset = self.state.borrow().offset;
+        if selected < offset {
             self.state.borrow_mut().offset = selected;
             return;
         }
 
-        while !self.is_visible(
-            selected,
-            self.state.borrow().offset,
-            size,
-            widths,
-        ) {
-            self.state.borrow_mut().offset += 1;
-        }
-    }
-
-    /// Checks if item is visible with given offset
-    fn is_visible(
-        &self,
-        item: usize,
-        offset: usize,
-        size: &Vec2,
-        widths: &[usize],
-    ) -> bool {
-        let mut height = 0;
-        for i in offset..self.rows.len() {
-            height += Self::row_height(size.y, &self.rows[i], widths);
+        let mut height = heights[selected];
+        for i in (offset..selected).rev() {
+            height += heights[i];
             if height > size.y {
-                return false;
-            }
-
-            if i == item {
-                return true;
+                self.state.borrow_mut().offset = i + 1;
+                break;
             }
         }
-        false
-    }
-
-    /// Checks if list fits to the visible area
-    fn fits(&self, size: &Vec2, widths: &[usize]) -> bool {
-        self.is_visible(self.rows.len() - 1, 0, size, widths)
     }
 
     fn get_cache<'a>(
         &self,
         rect: &Rect,
         cache: &'a mut Cache,
-    ) -> Option<(Vec<usize>, Vec<usize>, bool)> {
+    ) -> Option<(Vec<usize>, Vec<usize>, usize, bool)> {
         let lcache = cache.local::<TableCache>()?;
         if !lcache.same_key(rect.size(), &self.widths) {
             return None;
@@ -539,6 +512,7 @@ impl Table {
         Some((
             lcache.col_sizes.clone(),
             lcache.row_sizes.clone(),
+            lcache.header_height,
             lcache.scrollbar,
         ))
     }
@@ -549,11 +523,13 @@ impl Table {
         cache: &'a mut Cache,
         cols: &Vec<usize>,
         rows: &Vec<usize>,
+        header_height: usize,
         scrollbar: bool,
     ) {
         let lcache = TableCache::new(*rect.size(), self.widths.clone())
             .sizes(cols.clone(), rows.clone())
-            .scrollbar(scrollbar);
+            .scrollbar(scrollbar)
+            .header_height(header_height);
         cache.local = Some(Box::new(lcache));
     }
 }
