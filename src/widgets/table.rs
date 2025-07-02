@@ -214,12 +214,12 @@ impl Widget for Table {
                 break;
             }
 
-            let row_height =
-                Self::row_height(rect.height(), &self.rows[i], &widths);
+            let row_height = heights[i];
             if row_height == 0 {
                 continue;
             }
 
+            // TODO: handle last row not fitting (widget cutout)
             let mut size = Vec2::new(crect.width(), row_height);
             let rrect = Rect::from_coords(pos, size);
             if let Some(id) = selected {
