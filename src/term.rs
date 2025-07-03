@@ -138,6 +138,15 @@ impl Term {
         Ok(())
     }
 
+    /// Clears the cache of the [`Term`].
+    ///
+    /// This is useful when a widget's state changes, but the cache doesn't
+    /// automatically update. After clearing the cache, the next rendering will
+    /// recalculate the sizes and positions of widgets.
+    pub fn clear_cache(&mut self) {
+        self.cache = Cache::default();
+    }
+
     /// Gets size of the terminal
     pub fn get_size() -> Option<(usize, usize)> {
         term_size().ok().map(|s| (s.char_width, s.char_height))

@@ -10,4 +10,5 @@ criterion_main!(
     render::layout::benches,
     render::grid::benches,
     render::scrollbar::benches,
+    render::table::benches,
 );
