@@ -30,10 +30,10 @@ use super::cell::Cell;
 ///
 /// // Gets widget and renders it to the [`Buffer`]
 /// let widget = get_your_widget().into();
-/// 
+///
 /// let mut cache = Cache::new();
 /// cache.diff(&widget);
-/// 
+///
 /// widget.render(&mut buffer, rect, &mut cache);
 ///
 /// // Renders [`Buffer`], which prints the result to the terminal
@@ -453,7 +453,7 @@ where
     fn index(&self, index: P) -> &Self::Output {
         let pos = index.into();
         self.cell(&pos).unwrap_or_else(|| {
-            panic!("position {} is outside of the buffer", pos)
+            panic!("position {pos} is outside of the buffer")
         })
     }
 }
@@ -465,7 +465,7 @@ where
     fn index_mut(&mut self, index: P) -> &mut Self::Output {
         let pos = index.into();
         self.cell_mut(&pos).unwrap_or_else(|| {
-            panic!("position {} is outside of the buffer", pos)
+            panic!("position {pos} is outside of the buffer")
         })
     }
 }

@@ -9,8 +9,8 @@ use super::{vec2::Vec2, Padding, Vec2Range};
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Rect {
-    pos: Vec2,
-    size: Vec2,
+    pub pos: Vec2,
+    pub size: Vec2,
 }
 
 impl Rect {

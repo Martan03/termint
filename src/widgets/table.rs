@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    buffer::Buffer,
+    buffer::{Buffer, Cell},
     enums::{Border, BorderType},
     geometry::{Padding, Rect, Unit, Vec2},
     style::Style,
@@ -219,26 +219,23 @@ impl Widget for Table {
                 continue;
             }
 
-            // TODO: handle last row not fitting (widget cutout)
-            let mut size = Vec2::new(crect.width(), row_height);
-            let rrect = Rect::from_coords(pos, size);
+            let row = &self.rows[i];
+            let rrect = Rect::new(pos.x, pos.y, crect.width(), row_height);
+
+            if pos.y + row_height > rect.bottom() + 1 {
+                self.render_last(buffer, rrect, cache, &mut id, row, &widths);
+            } else {
+                buffer.set_area_style(row.style, rrect);
+                self.render_row(buffer, &rrect, cache, &mut id, row, &widths);
+            }
+
+            pos.x = rect.x();
+            pos.y += row_height;
             if let Some(id) = selected {
                 if id == i {
                     row_rect = Some(rrect);
                 }
             }
-            buffer.set_area_style(self.rows[i].style, rrect);
-
-            for (j, child) in self.rows[i].cells.iter().enumerate() {
-                size.x = widths.get(j).copied().unwrap_or_default();
-                let crect = Rect::from_coords(pos, size);
-                child.render(buffer, crect, &mut cache.children[id]);
-                pos.x += size.x + self.column_spacing;
-                id += 1;
-            }
-
-            pos.x = rect.x();
-            pos.y += row_height;
         }
 
         if let Some(row_rect) = row_rect {
@@ -296,7 +293,7 @@ impl Table {
     fn calc_header_height(&self, rect: &Rect, widths: &[usize]) -> usize {
         let mut header_height = self.header_separator.is_some() as usize;
         if let Some(header) = &self.header {
-            header_height += Self::row_height(rect.height(), header, &widths);
+            header_height += Self::row_height(rect.height(), header, widths);
         }
         header_height
     }
@@ -354,24 +351,24 @@ impl Table {
         rect: &Rect,
         cache: &mut Cache,
     ) -> (Vec<usize>, Vec<usize>, usize, bool) {
-        if let Some(sizes) = self.get_cache(&rect, cache) {
+        if let Some(sizes) = self.get_cache(rect, cache) {
             return sizes;
         };
 
         let mut w = self.calc_widths(rect.width());
-        let mut header = self.calc_header_height(&rect, &w);
+        let mut header = self.calc_header_height(rect, &w);
 
-        let mut crect = rect.clone().inner(Padding::top(header));
+        let mut crect = rect.inner(Padding::top(header));
         let (mut h, total) = self.calc_heights(&w);
         let scrollbar = crect.height() < total;
         if scrollbar {
-            crect = rect.clone().inner(Padding::right(1));
+            crect = rect.inner(Padding::right(1));
             w = self.calc_widths(crect.width());
             header = self.calc_header_height(&crect, &w);
             (h, _) = self.calc_heights(&w);
         }
 
-        self.create_cache(&rect, cache, &w, &h, header, scrollbar);
+        self.create_cache(rect, cache, &w, &h, header, scrollbar);
         (w, h, header, scrollbar)
     }
 
@@ -400,6 +397,51 @@ impl Table {
             // buffer.set_fg(self.thumb_fg, &bar_pos);
             bar_pos.y += 1;
         }
+    }
+
+    fn render_row(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        cache: &mut Cache,
+        id: &mut usize,
+        row: &Row,
+        widths: &[usize],
+    ) {
+        let mut pos = *rect.pos();
+        let mut size = *rect.size();
+        for (i, child) in row.cells.iter().enumerate() {
+            size.x = widths.get(i).copied().unwrap_or_default();
+            if size.x != 0 {
+                let crect = Rect::from_coords(pos, size);
+                child.render(buffer, crect, &mut cache.children[*id]);
+                pos.x += size.x;
+            }
+
+            pos.x += self.column_spacing;
+            *id += 1;
+        }
+    }
+
+    fn render_last(
+        &self,
+        buffer: &mut Buffer,
+        mut rect: Rect,
+        cache: &mut Cache,
+        id: &mut usize,
+        row: &Row,
+        widths: &[usize],
+    ) {
+        let mut rb = Buffer::filled(rect, Cell::empty().style(row.style));
+        let height = rect.height() - (rect.bottom() - rect.bottom());
+        rb.merge(buffer.subset(Rect::from_coords(
+            *rect.pos(),
+            Vec2::new(rect.width(), height),
+        )));
+        self.render_row(&mut rb, &rect, cache, id, row, &widths);
+        rect.size.y = height;
+        rb = rb.subset(rect);
+        buffer.merge(rb);
     }
 
     fn set_sel_style(
@@ -500,10 +542,10 @@ impl Table {
         }
     }
 
-    fn get_cache<'a>(
+    fn get_cache(
         &self,
         rect: &Rect,
-        cache: &'a mut Cache,
+        cache: &mut Cache,
     ) -> Option<(Vec<usize>, Vec<usize>, usize, bool)> {
         let lcache = cache.local::<TableCache>()?;
         if !lcache.same_key(rect.size(), &self.widths) {
@@ -517,17 +559,17 @@ impl Table {
         ))
     }
 
-    fn create_cache<'a>(
+    fn create_cache(
         &self,
         rect: &Rect,
-        cache: &'a mut Cache,
-        cols: &Vec<usize>,
-        rows: &Vec<usize>,
+        cache: &mut Cache,
+        cols: &[usize],
+        rows: &[usize],
         header_height: usize,
         scrollbar: bool,
     ) {
         let lcache = TableCache::new(*rect.size(), self.widths.clone())
-            .sizes(cols.clone(), rows.clone())
+            .sizes(cols.to_owned(), rows.to_owned())
             .scrollbar(scrollbar)
             .header_height(header_height);
         cache.local = Some(Box::new(lcache));

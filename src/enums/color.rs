@@ -69,8 +69,8 @@ impl Color {
             Color::Magenta => "\x1b[95m".to_string(),
             Color::Cyan => "\x1b[96m".to_string(),
             Color::White => "\x1b[97m".to_string(),
-            Color::Indexed(i) => format!("\x1b[38;5;{}m", i),
-            Color::Rgb(r, g, b) => format!("\x1b[38;2;{};{};{}m", r, g, b),
+            Color::Indexed(i) => format!("\x1b[38;5;{i}m"),
+            Color::Rgb(r, g, b) => format!("\x1b[38;2;{r};{g};{b}m"),
             Color::Hsl(h, s, l) => {
                 let rgb = RGB::from_hsl(*h, *s, *l);
                 format!("\x1b[38;2;{};{};{}m", rgb.r, rgb.g, rgb.b)
@@ -102,8 +102,8 @@ impl Color {
             Color::Magenta => "\x1b[105m".to_string(),
             Color::Cyan => "\x1b[106m".to_string(),
             Color::White => "\x1b[107m".to_string(),
-            Color::Indexed(i) => format!("\x1b[48;5;{}m", i),
-            Color::Rgb(r, g, b) => format!("\x1b[48;2;{};{};{}m", r, g, b),
+            Color::Indexed(i) => format!("\x1b[48;5;{i}m"),
+            Color::Rgb(r, g, b) => format!("\x1b[48;2;{r};{g};{b}m"),
             Color::Hsl(h, s, l) => {
                 let rgb = RGB::from_hsl(*h, *s, *l);
                 format!("\x1b[48;2;{};{};{}m", rgb.r, rgb.g, rgb.b)
