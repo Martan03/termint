@@ -353,7 +353,10 @@ impl Span {
             Vec2::new(self.size_letter_wrap(size.y).saturating_sub(1), 0);
 
         while self.height_word_wrap(&guess) > size.y {
-            guess.x += 1;
+            let Some(val) = guess.x.checked_add(1) else {
+                break;
+            };
+            guess.x = val;
         }
         guess.x
     }

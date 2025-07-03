@@ -206,24 +206,28 @@ impl ScrollbarState {
     }
 
     /// Increments the scroll offset by one, up to the end of the content.
-    pub fn next(&mut self) {
+    pub fn next(mut self) -> Self {
         self.offset =
             (self.offset + 1).min(self.content_len.saturating_sub(1));
+        self
     }
 
     /// Decrements the scroll offset by one, down to zero.
-    pub fn prev(&mut self) {
+    pub fn prev(mut self) -> Self {
         self.offset = self.offset.saturating_sub(1);
+        self
     }
 
     /// Resets the scroll offset to the start (zero).
-    pub fn first(&mut self) {
+    pub fn first(mut self) -> Self {
         self.offset = 0;
+        self
     }
 
     /// Sets the scroll offset to the last valid position.
-    pub fn last(&mut self) {
+    pub fn last(mut self) -> Self {
         self.offset = self.content_len.saturating_sub(1);
+        self
     }
 }
 
