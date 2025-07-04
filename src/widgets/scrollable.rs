@@ -211,7 +211,7 @@ where
 
         let mut size =
             Vec2::new(rect.width().saturating_sub(1), rect.height());
-        size.y = self.child.height(&size);
+        size.y = self.child.height(&Vec2::new(size.x, usize::MAX));
 
         let srect = Rect::new(rect.right(), rect.y(), 1, rect.height());
         let ccache = &mut cache.children[1];
@@ -223,8 +223,7 @@ where
             size.x,
             rect.height(),
         );
-        let rect = Rect::from_coords(*rect.pos(), size);
-        self.render_content(buffer, cache, rect, crect);
+        self.render_content(buffer, rect, cache, size, crect);
     }
 
     /// Renders horizontal scrollable
@@ -241,7 +240,7 @@ where
 
         let mut size =
             Vec2::new(rect.width(), rect.height().saturating_sub(1));
-        size.x = self.child.width(&size);
+        size.x = self.child.width(&Vec2::new(usize::MAX, size.y));
 
         let srect = Rect::new(rect.x(), rect.bottom(), rect.width(), 1);
         let ccache = &mut cache.children[1];
@@ -253,8 +252,7 @@ where
             rect.width(),
             size.y,
         );
-        let rect = Rect::from_coords(*rect.pos(), size);
-        self.render_content(buffer, cache, rect, crect);
+        self.render_content(buffer, rect, cache, size, crect);
     }
 
     /// Renders the both directions scrollable
@@ -274,40 +272,46 @@ where
         };
 
         let mut size = rect.size().saturating_sub((1, 1));
-        size.y = self.child.height(&size);
-        size.x = self.child.width(&size);
+        size.x = self.child.width(&Vec2::new(usize::MAX, size.y));
+        size.y = self.child.height(&Vec2::new(size.x, usize::MAX));
 
-        let mut vis = rect.height().saturating_sub(1);
-        let mut crect = Rect::new(rect.right(), rect.y(), 1, vis);
+        let height = rect.height().saturating_sub(1);
+        let mut crect = Rect::new(rect.right(), rect.y(), 1, height);
         let ccache = &mut cache.children[1];
         Self::scrollbar(buffer, ccache, vertical, crect, size.y);
 
-        vis = crect.width().saturating_sub(1);
-        crect = Rect::new(crect.x(), crect.bottom(), vis, 1);
+        let width = rect.width().saturating_sub(1);
+        crect = Rect::new(rect.x(), rect.bottom(), width, 1);
         let ccache = &mut cache.children[2];
         Self::scrollbar(buffer, ccache, horizontal, crect, size.x);
 
         let mask = Rect::new(
-            crect.x() + horizontal.get_state().offset,
-            crect.y() + vertical.get_state().offset,
-            crect.width().saturating_sub(1),
-            crect.height().saturating_sub(1),
+            rect.x() + horizontal.get_state().offset,
+            rect.y() + vertical.get_state().offset,
+            width,
+            height,
         );
-        let rect = Rect::from_coords(*rect.pos(), size);
-        self.render_content(buffer, cache, rect, mask);
+        self.render_content(buffer, rect, cache, size, mask);
     }
 
     /// Renders the scrollable content
     fn render_content(
         &self,
         buffer: &mut Buffer,
+        rect: &Rect,
         cache: &mut Cache,
-        rect: Rect,
+        size: Vec2,
         mut mask: Rect,
     ) {
-        let mut cbuffer = Buffer::empty(rect);
+        let crect = Rect::from_coords(*rect.pos(), size);
+        let mut cbuffer = Buffer::empty(crect);
+
+        let mut cutout = buffer.subset(*rect);
+        cutout.move_to(*mask.pos());
+        cbuffer.merge(cutout);
+
         self.child
-            .render(&mut cbuffer, rect, &mut cache.children[0]);
+            .render(&mut cbuffer, crect, &mut cache.children[0]);
 
         mask = mask.intersection(cbuffer.rect());
         let mut cutout = cbuffer.subset(mask);

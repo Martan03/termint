@@ -19,6 +19,7 @@ use termint::{
 const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
 const FG: Color = Color::Hex(0xc3c1f4);
+const SEL: Color = Color::Hex(0xea4bfc);
 
 fn main() -> ExitCode {
     if let Err(e) = App::run() {
@@ -30,7 +31,8 @@ fn main() -> ExitCode {
 
 struct App {
     term: Term,
-    state: Rc<Cell<ScrollbarState>>,
+    ver_state: Rc<Cell<ScrollbarState>>,
+    hor_state: Rc<Cell<ScrollbarState>>,
 }
 
 impl App {
@@ -63,18 +65,21 @@ impl App {
 
     fn render(&mut self) {
         let mut layout = Layout::vertical();
-        for i in 0..5 {
+        for i in 0..20 {
             layout.push(
-                format!("Title {i}").modifier(Modifier::UNDERLINED),
+                format!("Title {i}").modifier(Modifier::UNDERLINED).fg(SEL),
                 0..,
             );
             let block: Block<Span> =
                 Block::new(get_lorem()).borders(Border::LEFT);
-            layout.push(block, 0..);
+            layout.push(block, 2..);
         }
 
-        let scrollable =
-            Scrollable::<Layout>::vertical(layout, self.state.clone());
+        let scrollable = Scrollable::<Layout>::both(
+            layout,
+            self.ver_state.clone(),
+            self.hor_state.clone(),
+        );
         let help = "[↑]Move up [↓]Move down [Esc|q]Quit".fg(BORDER);
 
         let mut block = Block::vertical()
@@ -90,8 +95,10 @@ impl App {
 
     fn key_listener(&mut self, key: Key) -> bool {
         match key.code {
-            KeyCode::Down => self.state.set(self.state.get().next()),
-            KeyCode::Up => self.state.set(self.state.get().prev()),
+            KeyCode::Down => self.ver_state.set(self.ver_state.get().next()),
+            KeyCode::Up => self.ver_state.set(self.ver_state.get().prev()),
+            KeyCode::Right => self.hor_state.set(self.hor_state.get().next()),
+            KeyCode::Left => self.hor_state.set(self.hor_state.get().prev()),
             KeyCode::Esc | KeyCode::Char('q') => return true,
             _ => return false,
         }
@@ -104,7 +111,8 @@ impl Default for App {
     fn default() -> Self {
         Self {
             term: Term::new(),
-            state: Rc::new(Cell::new(ScrollbarState::new(0))),
+            ver_state: Rc::new(Cell::new(ScrollbarState::new(0))),
+            hor_state: Rc::new(Cell::new(ScrollbarState::new(0))),
         }
     }
 }

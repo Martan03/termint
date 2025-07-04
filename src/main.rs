@@ -2,11 +2,12 @@ use std::{cell::Cell, rc::Rc};
 
 use termint::{
     buffer::Buffer,
-    enums::{BorderType, Color},
+    enums::{Border, BorderType, Color},
     geometry::{Constraint, Rect, Unit, Vec2},
+    term::Term,
     widgets::{
         cache::Cache, Block, Element, Grad, Grid, Layout, Scrollable,
-        Scrollbar, ScrollbarState, ToSpan, Widget,
+        Scrollbar, ScrollbarState, Span, ToSpan, Widget,
     },
 };
 
@@ -25,7 +26,42 @@ fn main() {
     // diff_render_test();
     // merge_test();
     // scrollbar_test();
-    scrollable_test();
+    // scrollable_test();
+    let mut layout = Layout::vertical();
+    for i in 0..5 {
+        layout.push(format!("Title {i}"), 0..);
+        let block: Block<Span> = Block::new(get_lorem()).borders(Border::LEFT);
+        layout.push(block, 0..);
+    }
+
+    let ver_state = Rc::new(Cell::new(ScrollbarState::new(0)));
+    let hor_state = Rc::new(Cell::new(ScrollbarState::new(0)));
+    let scrollable = Scrollable::<Layout>::both(
+        layout,
+        ver_state.clone(),
+        hor_state.clone(),
+    );
+    let help = "[↑]Move up [↓]Move down [Esc|q]Quit";
+
+    let mut block = Block::vertical()
+        .title("Scrollable Example")
+        .border_type(BorderType::Thicker);
+    block.push(scrollable, Constraint::Fill(1));
+    block.push(help, 1..);
+
+    let mut term = Term::new();
+    _ = term.render(block);
+}
+
+fn get_lorem() -> String {
+    "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus \
+    ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus \
+    duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar \
+    vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl \
+    malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class \
+    aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos \
+    himenaeos."
+        .to_string()
 }
 
 #[allow(unused)]

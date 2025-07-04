@@ -269,7 +269,7 @@ impl List {
         if let Some(selected) = self.state.borrow().selected {
             if selected + 1 == self.items.len() {
                 thumb_offset = rect.height() - thumb_size;
-            }
+            };
         }
 
         let x = (rect.x() + rect.width()).saturating_sub(1);

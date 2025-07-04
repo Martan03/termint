@@ -206,15 +206,26 @@ impl ScrollbarState {
     }
 
     /// Increments the scroll offset by one, up to the end of the content.
-    pub fn next(mut self) -> Self {
+    pub fn next(self) -> Self {
+        self.advance(1)
+    }
+
+    /// Increments the scroll offset by the given number, up to the end of the
+    /// content.
+    pub fn advance(mut self, n: usize) -> Self {
         self.offset =
-            (self.offset + 1).min(self.content_len.saturating_sub(1));
+            (self.offset + n).min(self.content_len.saturating_sub(1));
         self
     }
 
     /// Decrements the scroll offset by one, down to zero.
-    pub fn prev(mut self) -> Self {
-        self.offset = self.offset.saturating_sub(1);
+    pub fn prev(self) -> Self {
+        self.retreat(1)
+    }
+
+    /// Decrements the scroll offset by the given number, down to zero.
+    pub fn retreat(mut self, n: usize) -> Self {
+        self.offset = self.offset.saturating_sub(n);
         self
     }
 
@@ -275,7 +286,7 @@ impl Scrollbar {
 
     /// Renders the horizontal scrollbar
     fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let Some((size, pos)) = self.calc_thumb(rect.height()) else {
+        let Some((size, pos)) = self.calc_thumb(rect.width()) else {
             return;
         };
 
@@ -292,13 +303,15 @@ impl Scrollbar {
     /// Gets size of the thumb and its position
     fn calc_thumb(&self, visible: usize) -> Option<(usize, usize)> {
         let total = self.state.get().content_len;
-        if total <= visible {
+        if total <= visible || visible == 0 {
+            self.state.set(self.state.get().offset(0));
             return None;
         }
 
-        let thumb_size =
+        let mut thumb_size =
             ((visible * visible) as f64 / total as f64).round() as usize;
-        let max_offset = total.saturating_sub(visible);
+        thumb_size = thumb_size.max(1);
+        let max_offset = total - visible;
 
         let mut state = self.state.get();
         if state.offset > max_offset {
