@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     io::{stdout, Write},
     ops::{Index, IndexMut},
 };
@@ -90,7 +91,7 @@ impl Buffer {
             print!("{}", Cursor::Pos(self.x(), self.y() + y));
             for _ in 0..self.width() {
                 let child = self.content[id];
-                style = self.render_cell(&child, style);
+                style = Self::render_cell(&child, style);
                 id += 1;
             }
         }
@@ -127,7 +128,7 @@ impl Buffer {
                 if !prev {
                     print!("{}", Cursor::Pos(self.x() + x, self.y() + y))
                 }
-                style = self.render_cell(&child, style);
+                style = Self::render_cell(&child, style);
                 prev = true;
             }
         }
@@ -405,13 +406,15 @@ impl Buffer {
 impl Buffer {
     /// Renders given cell and returns current style
     fn render_cell(
-        &self,
         cell: &Cell,
         mut style: (Color, Color, Modifier),
     ) -> (Color, Color, Modifier) {
         if cell.modifier != style.2 {
+            if !style.2.is_empty() {
+                print!("\x1b[0m");
+            }
+            print!("{}", cell.modifier);
             style = (Color::Default, Color::Default, cell.modifier);
-            print!("\x1b[0m{}", cell.modifier);
         }
         if cell.fg != style.0 {
             style.0 = cell.fg;
@@ -423,6 +426,48 @@ impl Buffer {
         }
         print!("{}", cell.val);
         style
+    }
+
+    fn write_cell(
+        f: &mut std::fmt::Formatter<'_>,
+        cell: &Cell,
+        style: &mut (Color, Color, Modifier),
+    ) -> std::fmt::Result {
+        if cell.modifier != style.2 {
+            if !style.2.is_empty() {
+                write!(f, "\x1b[0m")?;
+            }
+            write!(f, "{}", cell.modifier)?;
+            *style = (Color::Default, Color::Default, cell.modifier);
+        }
+        if cell.fg != style.0 {
+            style.0 = cell.fg;
+            write!(f, "{}", cell.fg.to_fg())?;
+        }
+        if cell.bg != style.1 {
+            style.1 = cell.bg;
+            write!(f, "{}", cell.bg.to_bg())?;
+        }
+        write!(f, "{}", cell.val)
+    }
+}
+
+impl Display for Buffer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut id = 0;
+        let mut style = (Color::Default, Color::Default, Modifier::empty());
+
+        for y in 0..self.height() {
+            if y != 0 {
+                write!(f, "\n")?;
+            }
+            for _x in 0..self.width() {
+                let child = self.content[id];
+                Self::write_cell(f, &child, &mut style)?;
+                id += 1;
+            }
+        }
+        write!(f, "\x1b[0m")
     }
 }
 

@@ -318,7 +318,7 @@ where
 {
     /// Renders horizontal background gradient
     fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let step = self.get_step(rect.width() as i16);
+        let step = self.get_step(rect.width() as i16 - 1);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
@@ -334,7 +334,7 @@ where
 
     /// Renders vertical background gradient
     fn ver_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let step = self.get_step(rect.height() as i16);
+        let step = self.get_step(rect.height() as i16 - 1);
         let (mut r, mut g, mut b) =
             (self.bg_start.r, self.bg_start.g, self.bg_start.b);
 
@@ -350,6 +350,9 @@ where
 
     /// Gets step per character based on start and eng background color
     fn get_step(&self, len: i16) -> (i16, i16, i16) {
+        if len <= 0 {
+            return (0, 0, 0);
+        }
         (
             (self.bg_end.r as i16 - self.bg_start.r as i16) / len,
             (self.bg_end.g as i16 - self.bg_start.g as i16) / len,
