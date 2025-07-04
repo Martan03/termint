@@ -188,7 +188,7 @@ impl Widget for Table {
 
         let (widths, heights, header_height, scrollbar) =
             self.get_sizes(&rect, cache);
-        let mut crect = rect.clone().inner(Padding::top(header_height));
+        let mut crect = rect.inner(Padding::top(header_height));
         if scrollbar {
             crect = crect.inner(Padding::right(1));
             let srect = Rect::new(rect.right(), crect.y(), 1, crect.height());
@@ -209,12 +209,15 @@ impl Widget for Table {
         if self.header.is_some() {
             id += self.widths.len();
         }
-        for i in self.state.borrow().offset..self.rows.len() {
+
+        for (i, height) in
+            heights.iter().enumerate().skip(self.state.borrow().offset)
+        {
             if rect.bottom() < pos.y {
                 break;
             }
 
-            let row_height = heights[i];
+            let row_height = *height;
             if row_height == 0 {
                 continue;
             }
@@ -438,7 +441,7 @@ impl Table {
             *rect.pos(),
             Vec2::new(rect.width(), height),
         )));
-        self.render_row(&mut rb, &rect, cache, id, row, &widths);
+        self.render_row(&mut rb, &rect, cache, id, row, widths);
         rect.size.y = height;
         rb = rb.subset(rect);
         buffer.merge(rb);

@@ -135,16 +135,16 @@ impl Widget for Grid {
             return;
         }
 
-        let (cols, rows) = self.get_sizes(&rect, cache);
+        let (cols, cols_pos, rows, rows_pos) = self.get_sizes(&rect, cache);
 
         for (i, GridChild { child, row, col }) in
             self.children.iter().enumerate()
         {
             let crect = Rect::new(
-                rect.x() + cols.1[*col],
-                rect.y() + rows.1[*row],
-                cols.0[*col],
-                rows.0[*row],
+                rect.x() + cols_pos[*col],
+                rect.y() + rows_pos[*row],
+                cols[*col],
+                rows[*row],
             );
             child.render(buffer, crect, &mut cache.children[i]);
         }
@@ -185,18 +185,18 @@ impl Grid {
         &self,
         rect: &Rect,
         cache: &mut Cache,
-    ) -> ((Vec<usize>, Vec<usize>), (Vec<usize>, Vec<usize>)) {
-        match self.get_cache(&rect, cache) {
+    ) -> (Vec<usize>, Vec<usize>, Vec<usize>, Vec<usize>) {
+        match self.get_cache(rect, cache) {
             Some((cols, rows)) => {
                 let cols_pos = Self::get_positions(&cols);
                 let rows_pos = Self::get_positions(&rows);
-                ((cols, cols_pos), (rows, rows_pos))
+                (cols, cols_pos, rows, rows_pos)
             }
             None => {
                 let cols = Self::get_size(&self.cols, rect.width());
                 let rows = Self::get_size(&self.rows, rect.height());
                 self.create_cache(rect, cache, &cols.0, &rows.0);
-                (cols, rows)
+                (cols.0, cols.1, rows.0, rows.1)
             }
         }
     }
@@ -257,10 +257,10 @@ impl Grid {
         pos
     }
 
-    fn get_cache<'a>(
+    fn get_cache(
         &self,
         rect: &Rect,
-        cache: &'a mut Cache,
+        cache: &mut Cache,
     ) -> Option<(Vec<usize>, Vec<usize>)> {
         let lcache = cache.local::<GridCache>()?;
         if !lcache.same_key(rect.size(), &self.cols, &self.rows) {
@@ -269,16 +269,16 @@ impl Grid {
         Some((lcache.col_sizes.clone(), lcache.row_sizes.clone()))
     }
 
-    fn create_cache<'a>(
+    fn create_cache(
         &self,
         rect: &Rect,
-        cache: &'a mut Cache,
-        cols: &Vec<usize>,
-        rows: &Vec<usize>,
+        cache: &mut Cache,
+        cols: &[usize],
+        rows: &[usize],
     ) {
         let lcache =
             GridCache::new(*rect.size(), self.cols.clone(), self.rows.clone())
-                .sizes(cols.clone(), rows.clone());
+                .sizes(cols.to_owned(), rows.to_owned());
         cache.local = Some(Box::new(lcache));
     }
 }

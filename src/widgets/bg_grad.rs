@@ -259,7 +259,7 @@ impl BgGrad<Layout> {
     /// # Parameters
     /// - `child`: The widget to add (any type convertible to [`Element`])
     /// - `contraint`: Widget's contraint (any type convertible to
-    ///     [`Constraint`])
+    ///   [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
         T: Into<Element>,

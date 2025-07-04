@@ -79,7 +79,7 @@ impl Term {
             Some(small)
                 if w < widget.width(&size) || h < widget.height(&size) =>
             {
-                self.cache.diff(&small);
+                self.cache.diff(small);
                 small.render(&mut buffer, rect, &mut self.cache);
             }
             _ => {
@@ -120,11 +120,11 @@ impl Term {
             Some(small)
                 if w < widget.width(&size) || h < widget.height(&size) =>
             {
-                self.cache.diff(&small);
+                self.cache.diff(small);
                 small.render(&mut buffer, rect, &mut self.cache);
             }
             _ => {
-                self.cache.diff(&widget);
+                self.cache.diff(widget);
                 widget.render(&mut buffer, rect, &mut self.cache);
             }
         };

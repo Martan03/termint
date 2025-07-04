@@ -11,15 +11,15 @@ bitflags! {
     /// ```rust
     /// # use termint::{enums::Modifier, modifiers};
     /// // Combines using binary or
-    /// let modifiers: u8 = Modifier::BOLD | Modifier::ITALIC;
+    /// let modifiers = Modifier::BOLD | Modifier::ITALIC;
     ///
     /// // Combines using the Modifier struct
     /// let mut modifiers: Modifier = Modifier::empty();
-    /// modifiers.add(Modifier::BOLD);
-    /// modifiers.add(Modifier::ITALIC);
+    /// modifiers.insert(Modifier::BOLD);
+    /// modifiers.insert(Modifier::ITALIC);
     ///
     /// // Uses macro (does the same as binary or in shorter way)
-    /// let modifiers: u8 = modifiers!(BOLD, ITALIC);
+    /// let modifiers = modifiers!(BOLD, ITALIC);
     /// ```
     #[derive(Debug, PartialEq, Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

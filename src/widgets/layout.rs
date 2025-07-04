@@ -155,7 +155,7 @@ impl Layout {
     /// # Parameters
     /// - `child`: The widget to add (any type convertible to [`Element`])
     /// - `contraint`: Widget's contraint (any type convertible to
-    ///     [`Constraint`])
+    ///   [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
         T: Into<Element>,
@@ -237,7 +237,7 @@ impl Layout {
                 (sizes, rect)
             }
             None => {
-                let (sizes, crect) = self.ver_sizes(rect.clone());
+                let (sizes, crect) = self.ver_sizes(rect);
                 self.create_cache(rect, cache, &sizes);
                 (sizes, crect)
             }
@@ -261,7 +261,7 @@ impl Layout {
                 (sizes, rect)
             }
             None => {
-                let (sizes, crect) = self.hor_sizes(rect.clone());
+                let (sizes, crect) = self.hor_sizes(rect);
                 self.create_cache(rect, cache, &sizes);
                 (sizes, crect)
             }
@@ -465,11 +465,7 @@ impl Layout {
         height
     }
 
-    fn get_cache<'a>(
-        &self,
-        rect: &Rect,
-        cache: &'a mut Cache,
-    ) -> Option<Vec<usize>> {
+    fn get_cache(&self, rect: &Rect, cache: &mut Cache) -> Option<Vec<usize>> {
         let lcache = cache.local::<LayoutCache>()?;
         if !lcache.same_key(rect.size(), &self.direction, &self.constraints) {
             return None;
@@ -477,22 +473,17 @@ impl Layout {
         Some(lcache.sizes.clone())
     }
 
-    fn create_cache<'a>(
-        &self,
-        rect: Rect,
-        cache: &'a mut Cache,
-        sizes: &Vec<usize>,
-    ) {
+    fn create_cache(&self, rect: Rect, cache: &mut Cache, sizes: &[usize]) {
         let lcache = LayoutCache::new(
             *rect.size(),
             self.direction,
             self.constraints.clone(),
         )
-        .sizes(sizes.clone());
+        .sizes(sizes.to_owned());
         cache.local = Some(Box::new(lcache));
     }
 
-    fn content_rect<F>(&self, rect: Rect, sizes: &Vec<usize>, inner: F) -> Rect
+    fn content_rect<F>(&self, rect: Rect, sizes: &[usize], inner: F) -> Rect
     where
         F: Fn(Rect, usize) -> Rect,
     {

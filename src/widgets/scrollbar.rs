@@ -60,8 +60,18 @@ pub struct Scrollbar {
 /// ```rust
 /// # use termint::widgets::ScrollbarState;
 /// let mut state = ScrollbarState::new(0).content_len(50);
-/// state.next();
+///
+/// state = state.next();
 /// assert_eq!(state.offset, 1);
+///
+/// state = state.advance(5);
+/// assert_eq!(state.offset, 6);
+///
+/// state = state.prev();
+/// assert_eq!(state.offset, 5);
+///
+/// state = state.retreat(3);
+/// assert_eq!(state.offset, 2);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct ScrollbarState {

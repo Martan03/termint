@@ -45,9 +45,7 @@ impl Overlay {
     /// The first widget will be at the bottom, and the last on top.
     #[must_use]
     pub fn new(children: Vec<Element>) -> Self {
-        Self {
-            children: children.into_iter().map(|c| c.into()).collect(),
-        }
+        Self { children }
     }
 
     /// Creates an empty [`Overlay`] with no children.

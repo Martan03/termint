@@ -29,7 +29,7 @@ impl fmt::Display for Cursor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Cursor::Home => write!(f, "\x1b[H"),
-            Cursor::Pos(x, y) => write!(f, "\x1b[{};{}H", y, x),
+            Cursor::Pos(x, y) => write!(f, "\x1b[{y};{x}H"),
             Cursor::Up(n) => write!(f, "\x1b[{n}A"),
             Cursor::Down(n) => write!(f, "\x1b[{n}B"),
             Cursor::Right(n) => write!(f, "\x1b[{n}C"),

@@ -118,7 +118,7 @@ impl Color {
 
     fn str_to_hex(value: &str) -> Option<u32> {
         let value = value.trim_start_matches('#');
-        let Ok(radix) = u32::from_str_radix(&value, 16) else {
+        let Ok(radix) = u32::from_str_radix(value, 16) else {
             return None;
         };
 

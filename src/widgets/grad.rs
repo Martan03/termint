@@ -315,6 +315,7 @@ impl Grad {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn _render<F>(
         &self,
         buffer: &mut Buffer,
@@ -377,6 +378,7 @@ impl Grad {
     }
 
     /// Renders line with horizontal gradient
+    #[allow(clippy::too_many_arguments)]
     fn render_hor_line(
         &self,
         buffer: &mut Buffer,
@@ -409,6 +411,7 @@ impl Grad {
     }
 
     /// Renders line with vertical gradient
+    #[allow(clippy::too_many_arguments)]
     fn render_ver_line(
         &self,
         buffer: &mut Buffer,
