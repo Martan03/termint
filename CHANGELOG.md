@@ -1,7 +1,15 @@
 # Termint changelog
 
+## v0.6.1
+
+### Fixes:
+
+- Incorrect layout cache usage
+
 ## v0.6.0
+
 ### Features:
+
 - Add missing From traits to Overlay widget
 - Add ProgressBar widget
 - Add Table widget
@@ -9,6 +17,7 @@
 - Optional `serde` trait implementation
 
 ### Changes:
+
 - Change `BgGrad` API
 - Change `Border` and `Modifier` to use bitflags macro
 - Rename `StrSpanExtension` to `ToSpan`
@@ -16,18 +25,23 @@
 - Use `termal` library for getting terminal size and some other useful things
 
 ### Fixes:
+
 - List widget width function prioritizes expanding list items to the width
-instead of taking up as little width as possible
+  instead of taking up as little width as possible
 - Layout not setting background properly
 
 ## v0.5.2
+
 ### Features:
+
 - Optimise Buffer merge function
 - Add more useful trait implementations
 - Edit docs
 
 ## v0.5.1
+
 ### Features:
+
 - Rename Coords to Vec2
 - Add trait implementations and new features:
     - Buffer
@@ -39,7 +53,9 @@ instead of taking up as little width as possible
 - Overlay widget
 
 ## v0.5.0
+
 ### Features:
+
 - Add Grid widget
 - Add rendering Buffer (edit all rendering functions)
 - Add rerendering and rendering only changed characters to Term
@@ -49,26 +65,35 @@ instead of taking up as little width as possible
 - Edit Modifier to work as bitflag rather then enum
 
 ### Fixes:
+
 - Fix Layout width & height functions
 - Fix List to have proper state
 
 ## v0.4.2
+
 ### Features:
+
 - Add option to get String representation of Widget and Text
 
 ### Fixes:
+
 - Fix Span and Grad ellipsis (when ellipsis couldn't fit)
 
 ## v0.4.1
+
 ### Features:
+
 - Add option to get List offset
 - Add selected background and character to List
 
 ### Fixes:
+
 - Remove all `println` printing (could cause overflow)
 
 ## v0.4.0
+
 ### Features:
+
 - Add BgGrad widget that renders background gradient
 - Add centering to the Layout widget
 - Add hex and HSL color code support
@@ -79,6 +104,7 @@ instead of taking up as little width as possible
 - List doesn't show scrollbar when not necessary
 
 ### Fixes:
+
 - Fix Block border taking space even when not used
 - Fix Grad and Span showing ellipsis when not necessary
 - Fix Grad letter wrap rendering (was shifted down)
@@ -86,12 +112,16 @@ instead of taking up as little width as possible
 - Make Grad with Letter Wrap render all spaces
 
 ## v0.3.1
+
 ### Fixes:
+
 - Grad widget with vertical gradient and letter wrap
 - Make Span with Letter Wrap render all spaces
 
 ## v0.3.0
+
 ### Features:
+
 - Add padding to Block, Layout and Term
 - Add List widget with scrollbar
 - Add Term for full screen rendering
@@ -100,23 +130,31 @@ instead of taking up as little width as possible
 - Paragraph supports Grad widget as well
 
 ### Fixes:
+
 - Fix block overflow when rendering on full screen
 
 ## v0.2.0
+
 ### Features:
+
 - Add new Layout constrains (Min, Fill)
 - Grad widget (text with gradient background)
 - Paragraph widget (text build from Spans)
 
 ### Fixes:
+
 - Fix block span ellipsis underflow
 
 ## v0.1.1
+
 ### Fixes:
+
 - Fix readme and docs not containing correct links
 
 ## v0.1.0
+
 ### Features:
+
 - Block widget
 - Enums for better work with ANSI codes
 - Layout widget

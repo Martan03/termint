@@ -233,7 +233,9 @@ impl Layout {
         let (sizes, mut rect) = match self.get_cache(&rect, cache) {
             Some(sizes) => {
                 let rect =
-                    self.content_rect(rect, &sizes, |r, v| r.inner((v, 0)));
+                    self.content_rect(rect, &sizes, rect.height(), |r, v| {
+                        r.inner((v, 0))
+                    });
                 (sizes, rect)
             }
             None => {
@@ -257,7 +259,9 @@ impl Layout {
         let (sizes, mut rect) = match self.get_cache(&rect, cache) {
             Some(sizes) => {
                 let rect =
-                    self.content_rect(rect, &sizes, |r, v| r.inner((0, v)));
+                    self.content_rect(rect, &sizes, rect.width(), |r, v| {
+                        r.inner((0, v))
+                    });
                 (sizes, rect)
             }
             None => {
@@ -483,15 +487,22 @@ impl Layout {
         cache.local = Some(Box::new(lcache));
     }
 
-    fn content_rect<F>(&self, rect: Rect, sizes: &[usize], inner: F) -> Rect
+    fn content_rect<F>(
+        &self,
+        rect: Rect,
+        sizes: &[usize],
+        size: usize,
+        inner: F,
+    ) -> Rect
     where
         F: Fn(Rect, usize) -> Rect,
     {
         if !self.center {
             return rect;
         }
-        let total: usize = sizes.iter().sum();
-        inner(rect, total / 2)
+        let sum: usize = sizes.iter().sum();
+        let rest = size - sum;
+        inner(rect, rest / 2)
     }
 }
 
