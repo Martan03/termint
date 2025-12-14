@@ -447,6 +447,10 @@ impl Buffer {
         cell: &Cell,
         mut style: (Color, Color, Modifier),
     ) -> (Color, Color, Modifier) {
+        if cell.val == "\0" {
+            return style;
+        }
+
         if cell.modifier != style.2 {
             if !style.2.is_empty() {
                 print!("\x1b[0m");
