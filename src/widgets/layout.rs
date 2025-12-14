@@ -366,7 +366,7 @@ impl Layout {
         for pos in rect.into_iter() {
             buffer.set_style(self.style, &pos);
             if self.style.bg.is_some() {
-                buffer.set_val(' ', &pos);
+                buffer.set_char(' ', &pos);
             }
         }
     }

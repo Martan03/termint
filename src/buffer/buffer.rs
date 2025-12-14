@@ -289,6 +289,15 @@ impl Buffer {
         self.content[id].val(val);
     }
 
+    /// Sets char value of the [`Cell`] on given position in the buffer
+    ///
+    /// # Panics
+    /// Panics if the given position is outside of the buffer
+    pub fn set_char(&mut self, c: char, pos: &Vec2) {
+        let id = self.index_of(pos);
+        self.content[id].char(c);
+    }
+
     /// Sets style of the [`Cell`] on given position in the buffer
     ///
     /// # Panics

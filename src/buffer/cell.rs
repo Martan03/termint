@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use compact_str::CompactString;
+use compact_str::{CompactString, ToCompactString};
 
 use crate::{
     enums::{Color, Modifier},
@@ -34,6 +34,12 @@ impl Cell {
     /// Sets value of the [`Cell`]
     pub fn val(&mut self, val: &str) -> &mut Self {
         self.val = CompactString::new(val);
+        self
+    }
+
+    /// Sets value of the [`Cell`] to given char
+    pub fn char(&mut self, c: char) -> &mut Self {
+        self.val = c.to_compact_string();
         self
     }
 

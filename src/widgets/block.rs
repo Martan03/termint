@@ -371,7 +371,7 @@ where
         let c = self.border_type.get(border);
         let mut pos = Vec2::new(rect.x(), y);
         while pos.x <= rect.right() {
-            buffer[pos] = buffer[pos].val(c).style(self.border_style);
+            buffer[pos].char(c).style(self.border_style);
             pos.x += 1;
         }
         1
@@ -392,7 +392,7 @@ where
         let c = self.border_type.get(border);
         let mut pos = Vec2::new(x, rect.y());
         while pos.y <= rect.bottom() {
-            buffer[pos] = buffer[pos].val(c).style(self.border_style);
+            buffer[pos].char(c).style(self.border_style);
             pos.y += 1;
         }
         1
@@ -402,7 +402,7 @@ where
     fn render_corner(&self, buffer: &mut Buffer, pos: Vec2, border: Border) {
         if (self.borders & border) == border {
             let c = self.border_type.get(border);
-            buffer[pos] = buffer[pos].val(c).style(self.border_style);
+            buffer[pos].char(c).style(self.border_style);
         }
     }
 

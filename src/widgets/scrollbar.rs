@@ -339,16 +339,14 @@ impl Scrollbar {
     /// Renders the scrollbar track
     fn render_track(&self, buffer: &mut Buffer, pos_range: Vec2Range) {
         for pos in pos_range {
-            buffer[pos] =
-                buffer[pos].val(self.track_char).style(self.track_style);
+            buffer[pos].char(self.track_char).style(self.track_style);
         }
     }
 
     /// Renders the scrollbar thumb
     fn render_thumb(&self, buffer: &mut Buffer, pos_range: Vec2Range) {
         for pos in pos_range {
-            buffer[pos] =
-                buffer[pos].val(self.thumb_char).style(self.thumb_style);
+            buffer[pos].char(self.thumb_char).style(self.thumb_style);
         }
     }
 }
