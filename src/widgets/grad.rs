@@ -401,8 +401,7 @@ impl Grad {
 
         let mut coords = Vec2::new(pos.x + offset, pos.y);
         for c in line.chars() {
-            buffer.set_val(c, &coords);
-            buffer.set_style(style, &coords);
+            buffer[coords].char(c).style(style);
 
             coords.x += 1;
             (r, g, b) = self.add_step((r, g, b), step);

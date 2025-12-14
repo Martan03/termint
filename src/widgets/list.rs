@@ -275,15 +275,13 @@ impl List {
         let x = (rect.x() + rect.width()).saturating_sub(1);
         let mut bar_pos = Vec2::new(x, rect.y());
         for _ in 0..rect.height() {
-            buffer.set_val('│', &bar_pos);
-            buffer.set_fg(self.scrollbar_fg, &bar_pos);
+            buffer[bar_pos].char('│').fg(self.scrollbar_fg);
             bar_pos.y += 1;
         }
 
         bar_pos = Vec2::new(x, rect.y() + thumb_offset);
         for _ in 0..thumb_size {
-            buffer.set_val('┃', &bar_pos);
-            buffer.set_fg(self.thumb_fg, &bar_pos);
+            buffer[bar_pos].char('┃').fg(self.thumb_fg);
             bar_pos.y += 1;
         }
     }

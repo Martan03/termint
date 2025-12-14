@@ -389,14 +389,14 @@ impl Table {
 
         let mut bar_pos = Vec2::new(rect.right(), rect.y());
         for _ in 0..rect.height() {
-            buffer.set_val('│', &bar_pos);
+            buffer.set_char('│', &bar_pos);
             // buffer.set_fg(self.scrollbar_fg, &bar_pos);
             bar_pos.y += 1;
         }
 
         bar_pos = Vec2::new(rect.right(), rect.y() + thumb_offset);
         for _ in 0..thumb_size {
-            buffer.set_val('┃', &bar_pos);
+            buffer.set_char('┃', &bar_pos);
             // buffer.set_fg(self.thumb_fg, &bar_pos);
             bar_pos.y += 1;
         }
@@ -435,7 +435,9 @@ impl Table {
         row: &Row,
         widths: &[usize],
     ) {
-        let mut rb = Buffer::filled(rect, Cell::empty().style(row.style));
+        let mut cell = Cell::empty();
+        cell.style(row.style);
+        let mut rb = Buffer::filled(rect, cell);
         let height = rect.height() - (rect.bottom() - rect.bottom());
         rb.merge(buffer.subset(Rect::from_coords(
             *rect.pos(),

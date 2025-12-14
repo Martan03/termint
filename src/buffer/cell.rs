@@ -1,25 +1,27 @@
 use std::fmt::Display;
 
+use compact_str::{CompactString, ToCompactString};
+
 use crate::{
     enums::{Color, Modifier},
     style::Style,
 };
 
 /// A buffer cell containing foreground, background, modifiers and symbol.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Cell {
     pub fg: Color,
     pub bg: Color,
     pub modifier: Modifier,
-    pub val: char,
+    pub val: CompactString,
 }
 
 impl Cell {
     /// Creates new [`Cell`] with given value
-    pub fn new(val: char) -> Self {
+    pub fn new(val: &'static str) -> Self {
         Self {
-            val,
+            val: CompactString::const_new(val),
             ..Default::default()
         }
     }
@@ -30,25 +32,31 @@ impl Cell {
     }
 
     /// Sets value of the [`Cell`]
-    pub fn val(mut self, val: char) -> Self {
-        self.val = val;
+    pub fn val(&mut self, val: &str) -> &mut Self {
+        self.val = CompactString::new(val);
+        self
+    }
+
+    /// Sets value of the [`Cell`] to given char
+    pub fn char(&mut self, c: char) -> &mut Self {
+        self.val = c.to_compact_string();
         self
     }
 
     /// Sets [`Cell`] foreground color to given value
-    pub fn fg(mut self, fg: Color) -> Self {
+    pub fn fg(&mut self, fg: Color) -> &mut Self {
         self.fg = fg;
         self
     }
 
     /// Sets [`Cell`] background color to given value
-    pub fn bg(mut self, bg: Color) -> Self {
+    pub fn bg(&mut self, bg: Color) -> &mut Self {
         self.bg = bg;
         self
     }
 
     /// Sets [`Cell`] modifier to the given flag
-    pub fn modifier(mut self, flag: Modifier) -> Self {
+    pub fn modifier(&mut self, flag: Modifier) -> &mut Self {
         self.modifier = Modifier::empty();
         self.modifier.insert(flag);
         self
@@ -56,7 +64,7 @@ impl Cell {
 
     /// Sets style of the [`Cell`] to the given value. If `fg` or `bg` are
     /// none, it keeps the original value.
-    pub fn style<T>(mut self, style: T) -> Self
+    pub fn style<T>(&mut self, style: T) -> &mut Self
     where
         T: Into<Style>,
     {
@@ -76,7 +84,7 @@ impl Cell {
         self.fg = Color::Default;
         self.bg = Color::Default;
         self.modifier = Modifier::empty();
-        self.val = ' ';
+        self.val = CompactString::const_new(" ");
     }
 }
 
@@ -99,7 +107,7 @@ impl Default for Cell {
             fg: Color::Default,
             bg: Color::Default,
             modifier: Modifier::empty(),
-            val: ' ',
+            val: CompactString::const_new(" "),
         }
     }
 }

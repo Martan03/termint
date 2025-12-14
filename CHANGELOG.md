@@ -2,9 +2,13 @@
 
 ## v0.6.1
 
+### Features:
+
+- Add buffer grapheme handling
+
 ### Fixes:
 
-- Incorrect layout cache usage
+- Laoyut using cache incorrectly
 
 ## v0.6.0
 

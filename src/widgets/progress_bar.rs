@@ -127,7 +127,7 @@ impl Widget for ProgressBar {
         let mut track_pos = Vec2::new(rect.x() + full_cells, rect.y());
         if head_id > 0 {
             rest_len = rest_len.saturating_sub(1);
-            buffer.set_val(self.thumb_chars[head_id], &track_pos);
+            buffer.set_char(self.thumb_chars[head_id], &track_pos);
             track_pos.x += 1;
         }
 
