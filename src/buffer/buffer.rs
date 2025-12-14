@@ -4,6 +4,9 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
+
 use crate::{
     enums::{Color, Cursor, Modifier},
     geometry::{Rect, Vec2},
@@ -90,7 +93,7 @@ impl Buffer {
         for y in 0..self.height() {
             print!("{}", Cursor::Pos(self.x(), self.y() + y));
             for _ in 0..self.width() {
-                let child = self.content[id];
+                let child = &self.content[id];
                 style = Self::render_cell(&child, style);
                 id += 1;
             }
@@ -116,8 +119,8 @@ impl Buffer {
         for y in 0..self.height() {
             let mut prev = false;
             for x in 0..self.width() {
-                let child = self.content[id];
-                let dchild = diff.content[id];
+                let child = &self.content[id];
+                let dchild = &diff.content[id];
 
                 id += 1;
                 if child == dchild {
@@ -146,7 +149,7 @@ impl Buffer {
         let mut buffer = Buffer::empty(rect);
 
         for pos in rect.into_iter() {
-            buffer.set(self[self.index_of(&pos)], &pos);
+            buffer.set(self[self.index_of(&pos)].clone(), &pos);
         }
         buffer
     }
@@ -168,10 +171,10 @@ impl Buffer {
 
         let mut merged = Buffer::empty(rect);
         for (i, pos) in self.rect().into_iter().enumerate() {
-            merged.set(self.content[i], &pos);
+            merged.set(self.content[i].clone(), &pos);
         }
         for (i, pos) in buffer.rect().into_iter().enumerate() {
-            merged.set(buffer.content[i], &pos);
+            merged.set(buffer.content[i].clone(), &pos);
         }
 
         self.rect = merged.rect;
@@ -221,11 +224,24 @@ impl Buffer {
         T: AsRef<str>,
     {
         let mut id = self.index_of(pos);
-        let left = self.content.len().saturating_sub(id);
+        let mut left = self.content.len().saturating_sub(id);
 
-        for c in str.as_ref().chars().take(left) {
-            self.content[id] = self.content[id].val(c);
+        let graphemes = UnicodeSegmentation::graphemes(str.as_ref(), true)
+            .map(|t| (t, t.width()))
+            .filter(|(_, w)| *w > 0)
+            .map_while(|(t, w)| {
+                left = left.checked_sub(w)?;
+                Some((t, w))
+            });
+        for (grapheme, width) in graphemes {
+            self.content[id].val(grapheme);
+
+            let next = id + width;
             id += 1;
+            while id < next {
+                self.content[id].val("\0");
+                id += 1;
+            }
         }
     }
 
@@ -242,12 +258,25 @@ impl Buffer {
         S: Into<Style>,
     {
         let mut id = self.index_of(pos);
-        let left = self.content.len().saturating_sub(id);
+        let mut left = self.content.len().saturating_sub(id);
 
         let style = style.into();
-        for c in str.as_ref().chars().take(left) {
-            self.content[id] = self.content[id].val(c).style(style);
+        let graphemes = UnicodeSegmentation::graphemes(str.as_ref(), true)
+            .map(|t| (t, t.width()))
+            .filter(|(_, w)| *w > 0)
+            .map_while(|(t, w)| {
+                left = left.checked_sub(w)?;
+                Some((t, w))
+            });
+        for (grapheme, width) in graphemes {
+            self.content[id].val(grapheme).style(style);
+
+            let next = id + width;
             id += 1;
+            while id < next {
+                self.content[id].val("\0");
+                id += 1;
+            }
         }
     }
 
@@ -255,9 +284,9 @@ impl Buffer {
     ///
     /// # Panics
     /// Panics if the given position is outside of the buffer
-    pub fn set_val(&mut self, val: char, pos: &Vec2) {
+    pub fn set_val(&mut self, val: &str, pos: &Vec2) {
         let id = self.index_of(pos);
-        self.content[id] = self.content[id].val(val);
+        self.content[id].val(val);
     }
 
     /// Sets style of the [`Cell`] on given position in the buffer
@@ -266,7 +295,7 @@ impl Buffer {
     /// Panics if the given position is outside of the buffer
     pub fn set_style(&mut self, style: Style, pos: &Vec2) {
         let id = self.index_of(pos);
-        self.content[id] = self.content[id].style(style);
+        self.content[id].style(style);
     }
 
     /// Sets foreground of the [`Cell`] on given position in the buffer
@@ -275,7 +304,7 @@ impl Buffer {
     /// Panics if the given position is outside of the buffer
     pub fn set_fg(&mut self, fg: Color, pos: &Vec2) {
         let id = self.index_of(pos);
-        self.content[id] = self.content[id].fg(fg);
+        self.content[id].fg(fg);
     }
 
     /// Sets background of the [`Cell`] on given position in the buffer
@@ -284,7 +313,7 @@ impl Buffer {
     /// Panics if the given position is outside of the buffer
     pub fn set_bg(&mut self, bg: Color, pos: &Vec2) {
         let id = self.index_of(pos);
-        self.content[id] = self.content[id].bg(bg);
+        self.content[id].bg(bg);
     }
 
     /// Sets modifier of the [`Cell`] on given position in the buffer
@@ -293,14 +322,14 @@ impl Buffer {
     /// Panics if the given position is outside of the buffer
     pub fn set_modifier(&mut self, modifier: Modifier, pos: &Vec2) {
         let id = self.index_of(pos);
-        self.content[id] = self.content[id].modifier(modifier);
+        self.content[id].modifier(modifier);
     }
 
     /// Sets the style of each [`Cell`] in the given area of the buffer.
     pub fn set_area_style(&mut self, style: Style, area: Rect) {
         for pos in area {
             if let Some(id) = self.index_of_opt(&pos) {
-                self.content[id] = self.content[id].style(style);
+                self.content[id].style(style);
             }
         }
     }
@@ -462,7 +491,7 @@ impl Display for Buffer {
                 write!(f, "\n")?;
             }
             for _x in 0..self.width() {
-                let child = self.content[id];
+                let child = &self.content[id];
                 Self::write_cell(f, &child, &mut style)?;
                 id += 1;
             }
