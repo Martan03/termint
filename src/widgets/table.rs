@@ -62,6 +62,7 @@ pub struct Table {
     column_spacing: usize,
     state: Rc<RefCell<TableState>>,
     auto_scroll: bool,
+    force_scrollbar: bool,
 }
 
 impl Table {
@@ -89,6 +90,7 @@ impl Table {
             column_spacing: 1,
             state,
             auto_scroll: false,
+            force_scrollbar: false,
         }
     }
 
@@ -176,6 +178,14 @@ impl Table {
     #[must_use]
     pub fn auto_scroll(mut self) -> Self {
         self.auto_scroll = true;
+        self
+    }
+
+    /// Forces scrollbar to be always visible. By default the scrollbar hides
+    /// when the content doesn't overflow.
+    #[must_use]
+    pub fn force_scrollbar(mut self) -> Self {
+        self.force_scrollbar = true;
         self
     }
 }
@@ -363,7 +373,7 @@ impl Table {
 
         let mut crect = rect.inner(Padding::top(header));
         let (mut h, total) = self.calc_heights(&w);
-        let scrollbar = crect.height() < total;
+        let scrollbar = self.force_scrollbar || crect.height() < total;
         if scrollbar {
             crect = rect.inner(Padding::right(1));
             w = self.calc_widths(crect.width());

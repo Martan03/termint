@@ -63,6 +63,7 @@ pub struct List {
     sel_style: Style,
     highlight: String,
     highlight_style: Style,
+    force_scrollbar: bool,
     scrollbar_fg: Color,
     thumb_fg: Color,
 }
@@ -93,6 +94,7 @@ impl List {
             sel_style: Default::default(),
             highlight: String::new(),
             highlight_style: Default::default(),
+            force_scrollbar: false,
             scrollbar_fg: Color::Default,
             thumb_fg: Color::Default,
         }
@@ -160,6 +162,14 @@ impl List {
         self
     }
 
+    /// Forces scrollbar to be always visible. By default the scrollbar hides
+    /// when the content doesn't overflow.
+    #[must_use]
+    pub fn force_scrollbar(mut self) -> Self {
+        self.force_scrollbar = true;
+        self
+    }
+
     /// Sets the foreground color of the scrollbar.
     #[must_use]
     pub fn scrollbar_fg(mut self, fg: Color) -> Self {
@@ -207,7 +217,7 @@ impl Widget for List {
         let mut text_size =
             Vec2::new(rect.width() - self.highlight.len(), rect.height());
 
-        if !self.fits(rect.size()) {
+        if self.force_scrollbar || !self.fits(rect.size()) {
             text_size.x -= 1;
             self.render_scrollbar(buffer, &rect);
         }

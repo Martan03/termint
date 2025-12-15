@@ -1,5 +1,11 @@
 # Termint changelog
 
+## v0.6.2
+
+### Features:
+
+- Add option to force scrollbar visibility to List and Table
+
 ## v0.6.1
 
 ### Features:
