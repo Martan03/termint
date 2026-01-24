@@ -6,6 +6,11 @@
 
 - Add option to force scrollbar visibility to List and Table
 
+### Fixes:
+
+- Modifier was coloring text blue
+- Progress bar not styling thumb
+
 ## v0.6.1
 
 ### Features:
