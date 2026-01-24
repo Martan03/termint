@@ -78,7 +78,7 @@ impl fmt::Display for Modifier {
         if codes.is_empty() {
             Ok(())
         } else {
-            write!(f, "\x1b[1;34;{}m", codes.join(";"))
+            write!(f, "\x1b[{}m", codes.join(";"))
         }
     }
 }
