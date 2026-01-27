@@ -3,6 +3,7 @@ use termal::raw::term_size;
 use crate::{
     buffer::Buffer,
     geometry::{Padding, Rect, Vec2},
+    term::Frame,
     widgets::{cache::Cache, Element, Widget},
 };
 
@@ -62,80 +63,29 @@ impl Term {
     where
         T: Into<Element>,
     {
-        let Some((w, h)) = Term::get_size() else {
-            return Err("Cannot determine terminal size");
-        };
-
         let widget = widget.into();
-        let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
-        let size = Vec2::new(
-            w.saturating_sub(self.padding.get_horizontal()),
-            h.saturating_sub(self.padding.get_vertical()),
-        );
+        let rect = self.get_rect()?;
+        self.render_widget(widget, rect)
+    }
 
-        let rect = Rect::from_coords(pos, size);
-        let mut buffer = Buffer::empty(rect);
-        match &self.small {
-            Some(small)
-                if w < widget.width(&size) || h < widget.height(&size) =>
-            {
-                self.cache.diff(small);
-                small.render(&mut buffer, rect, &mut self.cache);
-            }
-            _ => {
-                self.cache.diff(&widget);
-                widget.render(&mut buffer, rect, &mut self.cache);
-            }
-        };
-        self.prev_widget = Some(widget);
-
-        match &self.prev {
-            Some(prev) => buffer.render_diff(prev),
-            None => buffer.render(),
-        }
-        self.prev = Some(buffer);
-
-        Ok(())
+    pub fn draw<F>(&mut self, get_widget: F) -> Result<(), &'static str>
+    where
+        F: FnOnce(&Frame) -> Element,
+    {
+        let rect = self.get_rect()?;
+        let frame = Frame::new(rect);
+        let widget = get_widget(&frame);
+        self.render_widget(widget, rect)
     }
 
     /// Rerenders the lastly rendered widget
     pub fn rerender(&mut self) -> Result<(), &'static str> {
-        let Some(widget) = &self.prev_widget else {
+        let Some(widget) = self.prev_widget.take() else {
             return Err("Cannot rerender: no previous rendering");
         };
 
-        let Some((w, h)) = Term::get_size() else {
-            return Err("Cannot determine terminal size");
-        };
-
-        let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
-        let size = Vec2::new(
-            w.saturating_sub(self.padding.get_horizontal()),
-            h.saturating_sub(self.padding.get_vertical()),
-        );
-
-        let rect = Rect::from_coords(pos, size);
-        let mut buffer = Buffer::empty(rect);
-        match &self.small {
-            Some(small)
-                if w < widget.width(&size) || h < widget.height(&size) =>
-            {
-                self.cache.diff(small);
-                small.render(&mut buffer, rect, &mut self.cache);
-            }
-            _ => {
-                self.cache.diff(widget);
-                widget.render(&mut buffer, rect, &mut self.cache);
-            }
-        };
-
-        match &self.prev {
-            Some(prev) => buffer.render_diff(prev),
-            None => buffer.render(),
-        }
-        self.prev = Some(buffer);
-
-        Ok(())
+        let rect = self.get_rect()?;
+        self.render_widget(widget, rect)
     }
 
     /// Clears the cache of the [`Term`].
@@ -150,5 +100,51 @@ impl Term {
     /// Gets size of the terminal
     pub fn get_size() -> Option<(usize, usize)> {
         term_size().ok().map(|s| (s.char_width, s.char_height))
+    }
+}
+
+impl Term {
+    fn render_widget(
+        &mut self,
+        widget: Element,
+        rect: Rect,
+    ) -> Result<(), &'static str> {
+        let mut buffer = Buffer::empty(rect);
+        match &self.small {
+            Some(small)
+                if rect.width() < widget.width(rect.size())
+                    || rect.height() < widget.height(rect.size()) =>
+            {
+                self.cache.diff(small);
+                small.render(&mut buffer, rect, &mut self.cache);
+            }
+            _ => {
+                self.cache.diff(&widget);
+                widget.render(&mut buffer, rect, &mut self.cache);
+            }
+        };
+
+        self.prev_widget = Some(widget);
+        match &self.prev {
+            Some(prev) => buffer.render_diff(prev),
+            None => buffer.render(),
+        }
+        self.prev = Some(buffer);
+
+        Ok(())
+    }
+
+    fn get_rect(&self) -> Result<Rect, &'static str> {
+        let Some((w, h)) = Term::get_size() else {
+            return Err("Cannot determine terminal size");
+        };
+
+        let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
+        let size = Vec2::new(
+            w.saturating_sub(self.padding.get_horizontal()),
+            h.saturating_sub(self.padding.get_vertical()),
+        );
+        let rect = Rect::from_coords(pos, size);
+        Ok(rect)
     }
 }
