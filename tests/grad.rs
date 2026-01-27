@@ -29,7 +29,7 @@ mod tests {
             .modifier(modifiers!(BOLD, UNDERLINED))
             .bg(Color::White);
         let assert_val = format!(
-            "\x1b[1;34;1;4m{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
+            "\x1b[1;4m{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
             Color::White.to_bg(),
             Color::Rgb(0, 220, 255).to_fg(),
             Color::Rgb(25, 200, 255).to_fg(),

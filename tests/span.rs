@@ -80,17 +80,17 @@ mod tests {
                 | Modifier::ITALIC
                 | Modifier::INVERSED,
         );
-        assert_eq!(span.get(), "\x1b[1;34;1;3;5;7mSpan modifier\x1b[0m");
+        assert_eq!(span.get(), "\x1b[1;3;5;7mSpan modifier\x1b[0m");
 
         // Creates span from &str
         let span = "Span modifier"
             .modifier(modifiers!(BOLD, BLINK, ITALIC, INVERSED));
-        assert_eq!(span.get(), "\x1b[1;34;1;3;5;7mSpan modifier\x1b[0m");
+        assert_eq!(span.get(), "\x1b[1;3;5;7mSpan modifier\x1b[0m");
 
         // Using modifiers macro
         let span = "Span modifier"
             .modifier(modifiers!(BOLD, BLINK, ITALIC, INVERSED));
-        assert_eq!(span.get(), "\x1b[1;34;1;3;5;7mSpan modifier\x1b[0m");
+        assert_eq!(span.get(), "\x1b[1;3;5;7mSpan modifier\x1b[0m");
     }
 
     /// Tests setting both fg and bg with RGB values

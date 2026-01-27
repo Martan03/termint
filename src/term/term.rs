@@ -68,6 +68,9 @@ impl Term {
         self.render_widget(widget, rect)
     }
 
+    /// Renders widget given by the `get_widget` function on full screen with
+    /// set padding. Displays small screen when cannot fit (only when
+    /// `small_screen` is set)
     pub fn draw<F>(&mut self, get_widget: F) -> Result<(), &'static str>
     where
         F: FnOnce(&Frame) -> Element,
