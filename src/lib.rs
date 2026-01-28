@@ -78,7 +78,7 @@
 //! #     geometry::{Constraint, Rect},
 //! #     widgets::{Block, ToSpan, Widget}
 //! # };
-//! # fn example() -> Result<(), &'static str> {
+//! # fn example() -> Result<(), termint::Error> {
 //! // Creates main block and sets its properties
 //! let mut main = Block::horizontal()
 //!     .title("Termint")
@@ -145,6 +145,7 @@
 pub mod buffer;
 /// Contains enums for foreground, background and more
 pub mod enums;
+mod error;
 /// Contains structs for geometry, such as Coords
 pub mod geometry;
 /// Contains useful macros
@@ -156,4 +157,5 @@ pub mod text;
 /// Contains widgets (Layout, Block, Span)
 pub mod widgets;
 
+pub use error::Error;
 pub use termal;

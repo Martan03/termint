@@ -36,7 +36,7 @@ use super::{span::ToSpan, widget::Widget, Element};
 /// #     enums::Color,
 /// #     widgets::{List, ListState, Widget},
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// // Creates list state with offset 0 and with selected item at index 1
 /// let state = Rc::new(RefCell::new(ListState::selected(0, 1)));
 ///

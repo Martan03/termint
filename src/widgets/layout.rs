@@ -30,7 +30,7 @@ use super::{widget::Widget, Element};
 /// #     geometry::{Constraint, Rect},
 /// #     widgets::{Block, Layout, ToSpan, Widget},
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// // Creates new horizontal layout containing two blocks each covering 50%
 /// let block1 = Block::vertical().title("Block 1");
 /// let block2 = Block::vertical().title("Block 2");

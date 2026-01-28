@@ -26,7 +26,7 @@ use super::{widget::Widget, Element};
 /// #     enums::{Color, Modifier, Wrap},
 /// #     widgets::{Paragraph, ToSpan, Widget},
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// // Creates a Paragraph from a list of spans
 /// let items: Vec<Box<dyn Text>> = vec![
 ///     Box::new("This is a text in".fg(Color::Yellow)),

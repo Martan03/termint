@@ -18,7 +18,7 @@ use super::{Element, Widget};
 /// ```rust
 /// # use std::{cell::Cell, rc::Rc};
 /// # use termint::{widgets::ProgressBar, enums::Color, term::Term};
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// let state = Rc::new(Cell::new(69.0));
 /// let pb = ProgressBar::new(state.clone())
 ///     .thumb_chars(['▎', '▌', '▊', '█'])

@@ -26,7 +26,7 @@ use super::{Element, Widget};
 /// #     widgets::{Scrollbar, ScrollbarState, Widget},
 /// #     term::Term,
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// // Scrollbar state with fixed content length and offset
 /// let state = Rc::new(Cell::new(ScrollbarState::new(3).content_len(30)));
 ///
