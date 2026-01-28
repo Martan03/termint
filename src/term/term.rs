@@ -5,14 +5,16 @@ use termal::{
         DISABLE_ALTERNATIVE_BUFFER, ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN,
         HIDE_CURSOR, SHOW_CURSOR,
     },
-    raw::{disable_raw_mode, enable_raw_mode, term_size},
+    raw::{
+        disable_raw_mode, enable_raw_mode, term_size, StdioProvider, Terminal,
+    },
 };
 
 use crate::{
     buffer::Buffer,
     error::Error,
     geometry::{Padding, Rect, Vec2},
-    term::Frame,
+    term::{Action, Application, Frame},
     widgets::{cache::Cache, Element, Widget},
 };
 
@@ -116,6 +118,32 @@ impl Term {
 
         let rect = self.get_rect()?;
         self.render_widget(wid, rect);
+        Ok(())
+    }
+
+    pub fn run<A: Application>(&mut self, app: &mut A) -> Result<(), Error> {
+        self.setup()?;
+        let mut term = Terminal::<StdioProvider>::default();
+        self.draw(|f| app.view(f))?;
+
+        let timeout = app.poll_timeout();
+        loop {
+            let mut action = Action::NONE;
+            if let Some(event) = term.read_timeout(timeout)? {
+                action |= app.event(event);
+            }
+
+            action |= app.update();
+
+            if action.contains(Action::QUIT) {
+                break;
+            } else if action.contains(Action::RENDER) {
+                self.draw(|f| app.view(f))?;
+            } else if action.contains(Action::RERENDER) {
+                self.rerender()?;
+            }
+        }
+
         Ok(())
     }
 

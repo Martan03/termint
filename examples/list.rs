@@ -1,18 +1,15 @@
-use std::{cell::RefCell, process::ExitCode, rc::Rc, time::Duration};
+use std::{cell::RefCell, process::ExitCode, rc::Rc};
 
 use termal::{
     eprintcln,
-    raw::{
-        events::{Event, Key, KeyCode},
-        StdioProvider, Terminal,
-    },
+    raw::events::{Event, Key, KeyCode},
 };
 use termint::{
     enums::{BorderType, Color},
     geometry::Constraint,
     style::Style,
-    term::Term,
-    widgets::{Block, List, ListState, ToSpan},
+    term::{Action, Application, Frame, Term},
+    widgets::{Block, Element, List, ListState, ToSpan},
     Error,
 };
 
@@ -22,44 +19,26 @@ const FG: Color = Color::Hex(0xc3c1f4);
 const SELECTED: Color = Color::Hex(0xea4bfc);
 
 fn main() -> ExitCode {
-    if let Err(e) = App::run() {
+    if let Err(e) = run() {
         eprintcln!("{'r}Error:{'_} {e}");
         return ExitCode::FAILURE;
     }
     ExitCode::SUCCESS
 }
 
+fn run() -> Result<(), Error> {
+    let mut term = Term::new();
+    let mut app = App::default();
+    term.run(&mut app)
+}
+
 struct App {
-    term: Term,
     list_state: Rc<RefCell<ListState>>,
     people: Vec<String>,
 }
 
-impl App {
-    pub fn run() -> Result<(), Error> {
-        let mut app = App::default();
-        app.term.setup()?;
-
-        let mut term = Terminal::<StdioProvider>::default();
-        app.render();
-
-        let timeout = Duration::from_millis(100);
-        loop {
-            if let Some(event) = term.read_timeout(timeout)? {
-                match event {
-                    Event::KeyPress(key) => {
-                        if app.key_listener(key) {
-                            break;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn render(&mut self) {
+impl Application for App {
+    fn view(&self, _frame: &Frame) -> Element {
         let list = List::new(&self.people, self.list_state.clone())
             .auto_scroll()
             .selected_style(SELECTED)
@@ -74,16 +53,24 @@ impl App {
             .style(Style::new().bg(BG).fg(FG));
         block.push(list, Constraint::Fill(1));
         block.push(help, 1..);
-
-        _ = self.term.render(block);
+        block.into()
     }
 
-    fn key_listener(&mut self, key: Key) -> bool {
+    fn event(&mut self, event: Event) -> Action {
+        match event {
+            Event::KeyPress(key) => self.key_listener(key),
+            _ => Action::NONE,
+        }
+    }
+}
+
+impl App {
+    fn key_listener(&mut self, key: Key) -> Action {
         match key.code {
             KeyCode::Down => {
                 let mut state = self.list_state.borrow_mut();
                 let Some(sel) = state.selected else {
-                    return false;
+                    return Action::NONE;
                 };
 
                 if sel + 1 < self.people.len() {
@@ -93,23 +80,21 @@ impl App {
             KeyCode::Up => {
                 let mut state = self.list_state.borrow_mut();
                 let Some(sel) = state.selected else {
-                    return false;
+                    return Action::NONE;
                 };
 
                 state.selected = Some(sel.saturating_sub(1));
             }
-            KeyCode::Esc | KeyCode::Char('q') => return true,
-            _ => return false,
+            KeyCode::Esc | KeyCode::Char('q') => return Action::QUIT,
+            _ => return Action::NONE,
         }
-        _ = self.term.rerender();
-        return false;
+        Action::RERENDER
     }
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
-            term: Term::new(),
             list_state: Rc::new(RefCell::new(ListState::selected(0, 0))),
             people: get_people(),
         }

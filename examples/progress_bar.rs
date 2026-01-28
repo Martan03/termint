@@ -2,17 +2,14 @@ use std::{cell::Cell, process::ExitCode, rc::Rc, time::Duration};
 
 use termal::{
     eprintcln,
-    raw::{
-        events::{Event, Key, KeyCode},
-        StdioProvider, Terminal,
-    },
+    raw::events::{Event, Key, KeyCode},
 };
 use termint::{
     enums::{BorderType, Color},
     geometry::Constraint,
     style::Style,
-    term::Term,
-    widgets::{Block, ProgressBar, Spacer, ToSpan},
+    term::{Action, Application, Frame, Term},
+    widgets::{Block, Element, ProgressBar, Spacer, ToSpan},
     Error,
 };
 
@@ -21,48 +18,25 @@ const BORDER: Color = Color::Hex(0x535C91);
 const FG: Color = Color::Hex(0xc3c1f4);
 
 fn main() -> ExitCode {
-    if let Err(e) = App::run() {
+    if let Err(e) = run() {
         eprintcln!("{'r}Error:{'_} {e}");
         return ExitCode::FAILURE;
     }
     ExitCode::SUCCESS
 }
 
+fn run() -> Result<(), Error> {
+    let mut term = Term::new();
+    let mut app = App::default();
+    term.run(&mut app)
+}
+
 struct App {
-    term: Term,
     states: Vec<Rc<Cell<f64>>>,
 }
 
-impl App {
-    pub fn run() -> Result<(), Error> {
-        let mut app = App::default();
-        app.term.setup()?;
-
-        let mut term = Terminal::<StdioProvider>::default();
-        app.render();
-
-        let timeout = Duration::from_millis(50);
-        loop {
-            if let Some(event) = term.read_timeout(timeout)? {
-                match event {
-                    Event::KeyPress(key) => {
-                        if app.key_listener(key) {
-                            break;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-
-            if app.increase_states() {
-                app.reset_states();
-            }
-            _ = app.term.rerender();
-        }
-        Ok(())
-    }
-
-    fn render(&mut self) {
+impl Application for App {
+    fn view(&self, _frame: &Frame) -> Element {
         let mut block = Block::vertical()
             .title("Progress Bar")
             .border_type(BorderType::Thicker)
@@ -78,14 +52,33 @@ impl App {
         block.push(Spacer::new(), Constraint::Fill(1));
         let help = "[Esc|q]Quit".fg(BORDER);
         block.push(help, 1..);
-
-        _ = self.term.render(block);
+        block.into()
     }
 
-    fn key_listener(&mut self, key: Key) -> bool {
+    fn event(&mut self, event: Event) -> Action {
+        match event {
+            Event::KeyPress(key) => self.key_listener(key),
+            _ => Action::NONE,
+        }
+    }
+
+    fn update(&mut self) -> Action {
+        if self.increase_states() {
+            self.reset_states();
+        }
+        Action::RERENDER
+    }
+
+    fn poll_timeout(&self) -> Duration {
+        Duration::from_millis(50)
+    }
+}
+
+impl App {
+    fn key_listener(&mut self, key: Key) -> Action {
         match key.code {
-            KeyCode::Esc | KeyCode::Char('q') => return true,
-            _ => return false,
+            KeyCode::Esc | KeyCode::Char('q') => Action::QUIT,
+            _ => Action::NONE,
         }
     }
 
@@ -114,7 +107,6 @@ impl App {
 impl Default for App {
     fn default() -> Self {
         Self {
-            term: Term::new(),
             states: (0..5).map(|_| Rc::new(Cell::new(0.))).collect(),
         }
     }

@@ -1,18 +1,15 @@
-use std::{process::ExitCode, time::Duration};
+use std::process::ExitCode;
 
 use termal::{
     eprintcln,
-    raw::{
-        events::{Event, Key, KeyCode},
-        StdioProvider, Terminal,
-    },
+    raw::events::{Event, Key, KeyCode},
 };
 use termint::{
     enums::{BorderType, Color},
     geometry::{Constraint, Direction},
     style::Style,
-    term::Term,
-    widgets::{BgGrad, Block, Layout, Spacer, ToSpan},
+    term::{Action, Application, Frame, Term},
+    widgets::{BgGrad, Block, Element, Layout, Spacer, ToSpan},
     Error,
 };
 
@@ -27,44 +24,26 @@ const COLORS: [((u8, u8, u8), (u8, u8, u8)); 3] = [
 ];
 
 fn main() -> ExitCode {
-    if let Err(e) = App::run() {
+    if let Err(e) = run() {
         eprintcln!("{'r}Error:{'_} {e}");
         return ExitCode::FAILURE;
     }
     ExitCode::SUCCESS
 }
 
+fn run() -> Result<(), Error> {
+    let mut term = Term::new();
+    let mut app = App::default();
+    term.run(&mut app)
+}
+
 struct App {
-    term: Term,
     dir: Direction,
     cur: usize,
 }
 
-impl App {
-    pub fn run() -> Result<(), Error> {
-        let mut app = App::default();
-        app.term.setup()?;
-
-        let mut term = Terminal::<StdioProvider>::default();
-        app.render();
-
-        let timeout = Duration::from_millis(50);
-        loop {
-            if let Some(event) = term.read_timeout(timeout)? {
-                match event {
-                    Event::KeyPress(key) => {
-                        if app.key_listener(key) {
-                            break;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn render(&mut self) {
+impl Application for App {
+    fn view(&self, _frame: &Frame) -> Element {
         let mut block = Block::vertical()
             .title("Centering")
             .border_type(BorderType::Thicker)
@@ -81,22 +60,29 @@ impl App {
         let help = "[←]Prev. grad. [→]Next grad. [r]Rotate grad. [Esc|q]Quit"
             .fg(BORDER);
         block.push(help, 1..);
-
-        _ = self.term.render(block);
+        block.into()
     }
 
-    fn key_listener(&mut self, key: Key) -> bool {
+    fn event(&mut self, event: Event) -> Action {
+        match event {
+            Event::KeyPress(key) => self.key_listener(key),
+            _ => Action::NONE,
+        }
+    }
+}
+
+impl App {
+    fn key_listener(&mut self, key: Key) -> Action {
         match key.code {
-            KeyCode::Esc | KeyCode::Char('q') => return true,
+            KeyCode::Esc | KeyCode::Char('q') => return Action::QUIT,
             KeyCode::Left => {
                 self.cur = self.cur.checked_sub(1).unwrap_or(COLORS.len() - 1)
             }
             KeyCode::Right => self.cur = (self.cur + 1) % COLORS.len(),
             KeyCode::Char('r') => self.toggle_dir(),
-            _ => return false,
+            _ => return Action::NONE,
         }
-        self.render();
-        false
+        Action::RENDER
     }
 
     fn toggle_dir(&mut self) {
@@ -110,7 +96,6 @@ impl App {
 impl Default for App {
     fn default() -> Self {
         Self {
-            term: Term::new(),
             dir: Direction::Horizontal,
             cur: 0,
         }
