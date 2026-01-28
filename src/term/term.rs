@@ -18,24 +18,50 @@ use crate::{
     widgets::{cache::Cache, Element, Widget},
 };
 
-/// [`Term`] implements full screen rendering with option to set padding
+/// The main entry points for terminal management and rendering.
 ///
-/// ## Usage:
+/// [`Term`] provides two ways to build the TUI:
+/// 1. **Framework mode**: using [`Term::run`] with [`Application`] trait
+///     (recommended).
+/// 2. **Manual mode**: manually managing the application lifetime.
+///
+/// # Example (framework mode):
+///
+/// Simple app definition and usage without any event handling (results in
+/// static app).
+///
+/// ```rust
+/// # use termint::{
+/// #     term::{Term, Application, Frame},
+/// #     widgets::Element
+/// # };
+/// struct MyApp;
+/// impl Application for MyApp {
+///     fn view(&self, _frame: &Frame) -> Element {
+///         "Your UI here".into()
+///     }
+/// }
+/// # fn example() -> Result<(), termint::Error> {
+/// let mut app = MyApp;
+/// Term::new().run(&mut app)?;
+/// # Ok(())
+/// # }
 /// ```
+///
+/// # Example (manual mode):
+///
+/// ```rust
 /// # use termint::{
 /// #    term::Term, widgets::{Block, ToSpan}
 /// # };
 ///
+/// # fn example() -> Result<(), termint::Error> {
 /// let main = Block::vertical().title("Example".to_span());
 /// // Creates new Term with padding 1 on every side
 /// let mut term = Term::new().padding(1);
-/// // Renders block over full screen
-/// term.render(main);
-///
-/// // Term with zero padding on top and bottom and one on right and left
-/// term = term.padding((0, 1));
-/// // Term with padding 0 on top, 1 on right, 2 on bottom, 3 on left
-/// term = term.padding((0, 1, 2, 3));
+/// term.render(main)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Default)]
 pub struct Term {
@@ -48,13 +74,16 @@ pub struct Term {
 }
 
 impl Term {
-    /// Creates new [`Term`]
+    /// Creates new [`Term`] with default settings.
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Prepares the terminal: enables the alternate buffer, clears screen,
     /// hides cursor and enable raw mode.
+    ///
+    /// When using manualy rendering ([`Term::render`] or [`Term::draw`]), you
+    /// should call this once at the start of your program.
     ///
     /// The terminal is restored automatically when [`Term`] is dropped.
     pub fn setup(&mut self) -> Result<(), Error> {
@@ -70,14 +99,14 @@ impl Term {
         Ok(())
     }
 
-    /// Sets [`Padding`] of the [`Term`] to given value
+    /// Sets [`Padding`] of the [`Term`] to given value.
     pub fn padding<T: Into<Padding>>(mut self, padding: T) -> Self {
         self.padding = padding.into();
         self
     }
 
     /// Sets small screen of the [`Term`], which is displayed if rendering
-    /// cannot fit
+    /// cannot fit.
     pub fn small_screen<T>(mut self, small_screen: T) -> Self
     where
         T: Into<Element>,
@@ -87,7 +116,7 @@ impl Term {
     }
 
     /// Renders given widget on full screen with set padding. Displays small
-    /// screen when cannot fit (only when `small_screen` is set)
+    /// screen when cannot fit (only when `small_screen` is set).
     pub fn render<T>(&mut self, widget: T) -> Result<(), Error>
     where
         T: Into<Element>,
@@ -100,7 +129,34 @@ impl Term {
 
     /// Renders widget given by the `get_widget` function on full screen with
     /// set padding. Displays small screen when cannot fit (only when
-    /// `small_screen` is set)
+    /// `small_screen` is set).
+    ///
+    /// Same as [`Term::render`], but the widget is provided by given closure,
+    /// which also accepts [`Frame`], which contains context about currently
+    /// rendering frame. This allows different layouts based on terminal size
+    /// for example.
+    ///
+    /// # Example:
+    ///
+    /// ```rust
+    /// # use termint::{
+    /// #    term::Term, widgets::{Block, ToSpan}
+    /// # };
+    ///
+    /// # fn example() -> Result<(), termint::Error> {
+    /// let main = Block::vertical().title("Example".to_span());
+    /// // Creates new Term with padding 1 on every side
+    /// let mut term = Term::new().padding(1);
+    /// term.draw(|frame| {
+    ///     if frame.area().width() < 100 {
+    ///         "Width is smaller then 100.".into()
+    ///     } else {
+    ///         "Width is larger then 100.".into()
+    ///     }
+    /// })?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn draw<F>(&mut self, get_widget: F) -> Result<(), Error>
     where
         F: FnOnce(&Frame) -> Element,
@@ -112,7 +168,11 @@ impl Term {
         Ok(())
     }
 
-    /// Rerenders the lastly rendered widget
+    /// Re-renders the last rendered widget tree.
+    ///
+    /// This is efficient way of updating UI, when you only update states of
+    /// widgets that don't change the layout structure (such as [`List`]
+    /// selected item).
     pub fn rerender(&mut self) -> Result<(), Error> {
         let wid = self.prev_widget.take().ok_or(Error::NoPreviousWidget)?;
 
@@ -123,7 +183,7 @@ impl Term {
 
     /// Starts the application main loop and handles the terminal state.
     ///
-    /// This methods does the following:
+    /// This method does the following:
     /// 1. Calls [`Term::setup`] to setup terminal and does the initial render
     /// 2. Main loop: polls for events and updates the state:
     ///     - Calls [`Application::event`] on event

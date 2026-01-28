@@ -32,9 +32,8 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), Error> {
-    let mut term = Term::new();
     let mut app = App::default();
-    term.run(&mut app)
+    Term::new().run(&mut app)
 }
 
 struct App {

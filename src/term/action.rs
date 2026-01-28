@@ -1,6 +1,9 @@
 use bitflags::bitflags;
 
 bitflags! {
+    /// Used by [`Application`] to signal required action to the [`Term`].
+    /// This, for example, allows rendering only when needed or a clean way to
+    /// quit the [`Term`] main loop in the [`Term::run`].
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Action: u8 {
         /// Do nothing
