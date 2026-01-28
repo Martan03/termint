@@ -6,4 +6,6 @@ pub enum Error {
     NoPreviousWidget,
     #[error("Cannot determine terminal size.")]
     UnknownTerminalSize,
+    #[error(transparent)]
+    Termal(#[from] termal::error::Error),
 }

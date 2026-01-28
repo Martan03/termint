@@ -1,4 +1,12 @@
-use termal::raw::term_size;
+use std::io::{stdout, Write};
+
+use termal::{
+    codes::{
+        DISABLE_ALTERNATIVE_BUFFER, ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN,
+        HIDE_CURSOR, SHOW_CURSOR,
+    },
+    raw::{disable_raw_mode, enable_raw_mode, term_size},
+};
 
 use crate::{
     buffer::Buffer,
@@ -34,12 +42,30 @@ pub struct Term {
     small: Option<Element>,
     cache: Cache,
     padding: Padding,
+    setuped: bool,
 }
 
 impl Term {
     /// Creates new [`Term`]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Prepares the terminal: enables the alternate buffer, clears screen,
+    /// hides cursor and enable raw mode.
+    ///
+    /// The terminal is restored automatically when [`Term`] is dropped.
+    pub fn setup(&mut self) -> Result<(), Error> {
+        if !self.setuped {
+            enable_raw_mode()?;
+            print!(
+                "{}{}{}",
+                ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN, HIDE_CURSOR
+            );
+            _ = stdout().flush();
+            self.setuped = true;
+        }
+        Ok(())
     }
 
     /// Sets [`Padding`] of the [`Term`] to given value
@@ -143,5 +169,15 @@ impl Term {
         );
         let rect = Rect::from_coords(pos, size);
         Ok(rect)
+    }
+}
+
+impl Drop for Term {
+    fn drop(&mut self) {
+        if self.setuped {
+            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
+            _ = stdout().flush();
+            _ = disable_raw_mode();
+        }
     }
 }

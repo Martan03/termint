@@ -3,7 +3,6 @@ use std::{cell::Cell, process::ExitCode, rc::Rc, time::Duration};
 use termal::{
     eprintcln,
     raw::{
-        disable_raw_mode, enable_raw_mode,
         events::{Event, Key, KeyCode},
         StdioProvider, Terminal,
     },
@@ -14,6 +13,7 @@ use termint::{
     style::Style,
     term::Term,
     widgets::{Block, Layout, Scrollable, ScrollbarState, Span, ToSpan},
+    Error,
 };
 
 const BG: Color = Color::Hex(0x02081e);
@@ -36,11 +36,10 @@ struct App {
 }
 
 impl App {
-    pub fn run() -> termal::error::Result<()> {
-        print!("\x1b[?1049h\x1b[2J\x1b[?25l");
-        _ = enable_raw_mode();
-
+    pub fn run() -> Result<(), Error> {
         let mut app = App::default();
+        app.term.setup()?;
+
         let mut term = Terminal::<StdioProvider>::default();
         app.render();
 
@@ -57,9 +56,6 @@ impl App {
                 }
             }
         }
-
-        _ = disable_raw_mode();
-        print!("\x1b[?1049l\x1b[?25h");
         Ok(())
     }
 
