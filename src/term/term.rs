@@ -121,6 +121,37 @@ impl Term {
         Ok(())
     }
 
+    /// Starts the application main loop and handles the terminal state.
+    ///
+    /// This methods does the following:
+    /// 1. Calls [`Term::setup`] to setup terminal and does the initial render
+    /// 2. Main loop: polls for events and updates the state:
+    ///     - Calls [`Application::event`] on event
+    ///     - Calls [`Application::update`] each tick
+    ///     - Runs corresponding merged action from previous calls
+    /// 3. Ends the main loop when [`Action::QUIT`] is received
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use termint::{
+    /// #     term::{Term, Application, Frame},
+    /// #     widgets::{Spacer, Element}
+    /// # };
+    /// # #[derive(Default)]
+    /// # struct MyApp;
+    /// # impl Application for MyApp {
+    /// #     fn view(&self, _frame: &Frame) -> Element {
+    /// #         Spacer::new().into()
+    /// #     }
+    /// # }
+    /// # fn example() -> Result<(), termint::Error> {
+    /// let mut term = Term::new();
+    /// let mut app = MyApp::default();
+    /// term.run(&mut app)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn run<A: Application>(&mut self, app: &mut A) -> Result<(), Error> {
         self.setup()?;
         let mut term = Terminal::<StdioProvider>::default();
