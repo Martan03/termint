@@ -71,6 +71,7 @@ pub struct Term {
     cache: Cache,
     padding: Padding,
     setuped: bool,
+    last_size: Vec2,
 }
 
 impl Term {
@@ -79,10 +80,19 @@ impl Term {
         Self::default()
     }
 
+    /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
+    ///
+    /// The terminal is restored automatically when [`Term`] is dropped.
+    pub fn init() -> Result<Self, Error> {
+        let mut term = Term::new();
+        term.setup()?;
+        Ok(term)
+    }
+
     /// Prepares the terminal: enables the alternate buffer, clears screen,
     /// hides cursor and enable raw mode.
     ///
-    /// When using manualy rendering ([`Term::render`] or [`Term::draw`]), you
+    /// When using manual rendering ([`Term::render`] or [`Term::draw`]), you
     /// should call this once at the start of your program.
     ///
     /// The terminal is restored automatically when [`Term`] is dropped.
@@ -278,7 +288,7 @@ impl Term {
         self.prev = Some(buffer);
     }
 
-    fn get_rect(&self) -> Result<Rect, Error> {
+    fn get_rect(&mut self) -> Result<Rect, Error> {
         let (w, h) = Term::get_size().ok_or(Error::UnknownTerminalSize)?;
 
         let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
@@ -286,9 +296,14 @@ impl Term {
             w.saturating_sub(self.padding.get_horizontal()),
             h.saturating_sub(self.padding.get_vertical()),
         );
-        let rect = Rect::from_coords(pos, size);
-        Ok(rect)
-    }
+
+        if size != self.last_size {
+            self.clear_cache();
+            self.last_size = size;
+        }
+
+        Ok(Rect::from_coords(pos, size))
+   }
 }
 
 impl Drop for Term {
