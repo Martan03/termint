@@ -94,7 +94,7 @@ impl Buffer {
             print!("{}", Cursor::Pos(self.x(), self.y() + y));
             for _ in 0..self.width() {
                 let child = &self.content[id];
-                style = Self::render_cell(&child, style);
+                style = Self::render_cell(child, style);
                 id += 1;
             }
         }
@@ -131,7 +131,7 @@ impl Buffer {
                 if !prev {
                     print!("{}", Cursor::Pos(self.x() + x, self.y() + y))
                 }
-                style = Self::render_cell(&child, style);
+                style = Self::render_cell(child, style);
                 prev = true;
             }
         }
@@ -501,11 +501,11 @@ impl Display for Buffer {
 
         for y in 0..self.height() {
             if y != 0 {
-                write!(f, "\n")?;
+                writeln!(f)?;
             }
             for _x in 0..self.width() {
                 let child = &self.content[id];
-                Self::write_cell(f, &child, &mut style)?;
+                Self::write_cell(f, child, &mut style)?;
                 id += 1;
             }
         }

@@ -21,7 +21,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// #     term::Term,
 /// #     widgets::{ToSpan, Span, Scrollable, Widget, ScrollbarState}
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// // Content that may overflow
 /// let span = "Long text that cannot fit so scrolling is needed".to_span();
 ///

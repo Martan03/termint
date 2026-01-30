@@ -21,7 +21,7 @@ use super::{Element, Widget};
 /// # };
 /// # fn get_bottom_child() -> Element { Spacer::new().into() }
 /// # fn get_top_child() -> Element { Spacer::new().into() }
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// let overlay = Overlay::new(vec![
 ///     get_bottom_child(),
 ///     get_top_child(),

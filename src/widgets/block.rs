@@ -25,7 +25,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// #     geometry::{Constraint, Rect},
 /// #     widgets::{Block, ToSpan, Widget},
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// let mut main = Block::horizontal()
 ///     .title("Termint".fg(Color::Red))
 ///     .border_type(BorderType::Double)

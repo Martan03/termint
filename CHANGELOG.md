@@ -1,33 +1,36 @@
 # Termint changelog
 
-## v0.6.2
+## v0.7.0
 
 ### Features:
 
+- Add `Application` trait and `Term::run` for managed main loop
+- Add `Term::draw` for size-aware rendering using `Frame` context
 - Add option to force scrollbar visibility to List and Table
+- Add automatic terminal restoration on crash or when `Term` dropped
 
 ### Fixes:
 
-- Modifier was coloring text blue
-- Progress bar not styling thumb
+- Fix `Modifier` incorrectly coloring text blue
+- Fix `ProgressBar` thumb styling issues
 
 ## v0.6.1
 
 ### Features:
 
-- Add buffer grapheme handling
+- Add `Buffer` grapheme handling
 
 ### Fixes:
 
-- Laoyut using cache incorrectly
+- `Layout` using cache incorrectly
 
 ## v0.6.0
 
 ### Features:
 
 - Add missing From traits to Overlay widget
-- Add ProgressBar widget
-- Add Table widget
+- Add `ProgressBar` widget
+- Add `Table` widget
 - Add Widget Cache
 - Optional `serde` trait implementation
 

@@ -25,7 +25,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 ///
 /// ```rust
 /// # use termint::{term::Term, widgets::BgGrad};
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
 /// let mut term = Term::new();

@@ -35,7 +35,7 @@ pub use table_state::TableState;
 /// #    widgets::{Element, Table, TableState}
 /// # };
 /// # fn get_people() -> Vec<Vec<Element>> { return vec![] }
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// let rows = get_people();
 /// let widths = [Unit::Fill(3), Unit::Fill(1), Unit::Fill(3)];
 /// let state = Rc::new(RefCell::new(TableState::new(0).selected(1)));

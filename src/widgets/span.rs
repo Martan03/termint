@@ -59,7 +59,7 @@ use super::{widget::Widget, Element};
 /// #     widgets::{ToSpan, Widget},
 /// #     term::Term,
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// # let span = "test".to_span();
 ///
 /// let mut term = Term::new();

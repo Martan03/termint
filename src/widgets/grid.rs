@@ -22,7 +22,7 @@ use super::{widget::Widget, Element};
 /// #     widgets::{Grid, Widget},
 /// #     term::Term,
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// let mut grid = Grid::new(
 ///     vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],
 ///     vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],

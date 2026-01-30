@@ -25,7 +25,7 @@ use super::{widget::Widget, Element};
 /// #     widgets::{Grad, Widget},
 /// #     term::Term,
 /// # };
-/// # fn example() -> Result<(), &'static str> {
+/// # fn example() -> Result<(), termint::Error> {
 /// let grad = Grad::new("Hello Termint", (0, 220, 255), (200, 60, 255))
 ///     .bg(Some(Color::White))
 ///     .align(TextAlign::Center)
