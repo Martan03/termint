@@ -1,4 +1,8 @@
-use std::io::{stdout, Write};
+use std::{
+    io::{stdout, Write},
+    panic::{set_hook, take_hook},
+    sync::Once,
+};
 
 use termal::{
     codes::{
@@ -6,7 +10,8 @@ use termal::{
         HIDE_CURSOR, SHOW_CURSOR,
     },
     raw::{
-        disable_raw_mode, enable_raw_mode, term_size, StdioProvider, Terminal,
+        disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size,
+        StdioProvider, Terminal,
     },
 };
 
@@ -17,6 +22,8 @@ use crate::{
     term::{Action, Application, Frame},
     widgets::{cache::Cache, Element, Widget},
 };
+
+static HOOK_SET: Once = Once::new();
 
 /// The main entry points for terminal management and rendering.
 ///
@@ -104,6 +111,15 @@ impl Term {
                 ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN, HIDE_CURSOR
             );
             _ = stdout().flush();
+
+            HOOK_SET.call_once(|| {
+                let hook = take_hook();
+                set_hook(Box::new(move |pi| {
+                    Self::restore();
+                    hook(pi);
+                }));
+            });
+
             self.setuped = true;
         }
         Ok(())
@@ -257,6 +273,18 @@ impl Term {
         self.cache = Cache::default();
     }
 
+    /// Restores the terminal: disables the alternate buffer and shows cursor
+    ///
+    /// Note restore is done automatically and should be used only when you
+    /// want to restore the buffer before the [`Term`] is dropped.
+    pub fn restore() {
+        if is_raw_mode_enabled() {
+            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
+            _ = stdout().flush();
+            _ = disable_raw_mode();
+        }
+    }
+
     /// Gets size of the terminal
     pub fn get_size() -> Option<(usize, usize)> {
         term_size().ok().map(|s| (s.char_width, s.char_height))
@@ -303,7 +331,7 @@ impl Term {
         }
 
         Ok(Rect::from_coords(pos, size))
-   }
+    }
 }
 
 impl Drop for Term {
@@ -312,6 +340,7 @@ impl Drop for Term {
             print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
             _ = stdout().flush();
             _ = disable_raw_mode();
+            self.setuped = false;
         }
     }
 }
