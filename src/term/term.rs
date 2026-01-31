@@ -11,7 +11,7 @@ use termal::{
     },
     raw::{
         disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size,
-        StdioProvider, Terminal,
+        Terminal,
     },
 };
 

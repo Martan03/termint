@@ -17,7 +17,7 @@ bitflags = "2.9.1"
 compact_str = "0.9.0"
 crossterm = { version = "0.29.0", optional = true }
 serde = { version = "1.0.218", features = ["std", "derive"], optional = true }
-termal = { version = "2.1.2", features = ["raw"] }
+termal = { version = "4.1.1", features = ["raw"] }
 thiserror = "2.0.18"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.2"
