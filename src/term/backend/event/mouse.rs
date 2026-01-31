@@ -12,7 +12,7 @@ pub struct MouseEvent {
 pub enum MouseEventKind {
     Down(Button),
     Up(Button),
-    Drag,
+    Drag(Button),
     Move,
     ScrollDown,
     ScrollUp,

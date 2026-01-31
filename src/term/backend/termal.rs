@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use termal::raw::events::Status;
 use termal::raw::events::{
     mouse::Button as TermalButton, mouse::Event as TermalMouseEvent,
     mouse::Mouse, Event as TermalEvent, Key, KeyCode as TermalKeyCode,
@@ -27,7 +28,8 @@ impl Backend for TermalBackend {
             .0
             .read_timeout(timeout)?
             .map(TryInto::try_into)
-            .transpose()?;
+            .transpose()
+            .unwrap_or(None);
         Ok(event)
     }
 }
@@ -39,7 +41,7 @@ impl TryFrom<TermalEvent> for Event {
         match value {
             TermalEvent::KeyPress(key) => Ok(Event::Key(key.into())),
             TermalEvent::Mouse(mouse) => Ok(Event::Mouse(mouse.into())),
-            TermalEvent::Status(_status) => Err("unsupported event type"),
+            TermalEvent::Status(status) => status.try_into(),
             TermalEvent::Focus => Ok(Event::FocusGained),
             TermalEvent::FocusLost => Ok(Event::FocusLost),
             TermalEvent::StateChange(_state) => Err("unsupported event type"),
@@ -160,6 +162,17 @@ impl TryFrom<TermalButton> for Button {
             TermalButton::Button6 => Ok(Button::Button6),
             TermalButton::Button7 => Ok(Button::Button7),
             TermalButton::Other(v) => Ok(Button::Other(v)),
+        }
+    }
+}
+
+impl TryFrom<Status> for Event {
+    type Error = &'static str;
+
+    fn try_from(value: Status) -> Result<Self, Self::Error> {
+        match value {
+            Status::TextAreaSize { w, h } => Ok(Event::Resize(w, h)),
+            _ => Err("unsupported event type"),
         }
     }
 }
