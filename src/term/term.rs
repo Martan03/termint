@@ -19,7 +19,10 @@ use crate::{
     buffer::Buffer,
     error::Error,
     geometry::{Padding, Rect, Vec2},
-    term::{Action, Application, Frame},
+    term::{
+        backend::{Backend, CrosstermBackend, NoBackend, TermalBackend},
+        Action, Application, Frame,
+    },
     widgets::{cache::Cache, Element, Widget},
 };
 
@@ -70,8 +73,9 @@ static HOOK_SET: Once = Once::new();
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, Default)]
-pub struct Term {
+#[derive(Debug)]
+pub struct Term<B = NoBackend> {
+    backend: B,
     prev: Option<Buffer>,
     prev_widget: Option<Element>,
     small: Option<Element>,
@@ -81,21 +85,71 @@ pub struct Term {
     last_size: Vec2,
 }
 
-impl Term {
-    /// Creates new [`Term`] with default settings.
+impl Term<NoBackend> {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            backend: NoBackend,
+            prev: None,
+            prev_widget: None,
+            small: None,
+            cache: Cache::default(),
+            padding: Padding::default(),
+            setuped: false,
+            last_size: Vec2::default(),
+        }
     }
 
     /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
     ///
     /// The terminal is restored automatically when [`Term`] is dropped.
     pub fn init() -> Result<Self, Error> {
-        let mut term = Term::new();
+        let mut term = Self::new();
         term.setup()?;
         Ok(term)
     }
+}
 
+impl Term<TermalBackend> {
+    /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
+    ///
+    /// The terminal is restored automatically when [`Term`] is dropped.
+    pub fn init() -> Result<Self, Error> {
+        let mut term = Self {
+            backend: TermalBackend(Terminal::default()),
+            prev: None,
+            prev_widget: None,
+            small: None,
+            cache: Cache::default(),
+            padding: Padding::default(),
+            setuped: false,
+            last_size: Vec2::default(),
+        };
+        term.setup()?;
+        Ok(term)
+    }
+}
+
+impl Term<CrosstermBackend> {
+    /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
+    ///
+    /// The terminal is restored automatically when [`Term`] is dropped.
+    pub fn init() -> Result<Self, Error> {
+        let mut term = Self {
+            backend: CrosstermBackend,
+            prev: None,
+            prev_widget: None,
+            small: None,
+            cache: Cache::default(),
+            padding: Padding::default(),
+            setuped: false,
+            last_size: Vec2::default(),
+        };
+        term.setup()?;
+        Ok(term)
+    }
+}
+
+impl<B> Term<B> {
     /// Prepares the terminal: enables the alternate buffer, clears screen,
     /// hides cursor and enable raw mode.
     ///
@@ -207,6 +261,34 @@ impl Term {
         Ok(())
     }
 
+    /// Clears the cache of the [`Term`].
+    ///
+    /// This is useful when a widget's state changes, but the cache doesn't
+    /// automatically update. After clearing the cache, the next rendering will
+    /// recalculate the sizes and positions of widgets.
+    pub fn clear_cache(&mut self) {
+        self.cache = Cache::default();
+    }
+
+    /// Restores the terminal: disables the alternate buffer and shows cursor
+    ///
+    /// Note restore is done automatically and should be used only when you
+    /// want to restore the buffer before the [`Term`] is dropped.
+    pub fn restore() {
+        if is_raw_mode_enabled() {
+            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
+            _ = stdout().flush();
+            _ = disable_raw_mode();
+        }
+    }
+
+    /// Gets size of the terminal
+    pub fn get_size() -> Option<(usize, usize)> {
+        term_size().ok().map(|s| (s.char_width, s.char_height))
+    }
+}
+
+impl<B: Backend> Term<B> {
     /// Starts the application main loop and handles the terminal state.
     ///
     /// This method does the following:
@@ -240,13 +322,12 @@ impl Term {
     /// ```
     pub fn run<A: Application>(&mut self, app: &mut A) -> Result<(), Error> {
         self.setup()?;
-        let mut term = Terminal::<StdioProvider>::default();
         self.draw(|f| app.view(f))?;
 
         let timeout = app.poll_timeout();
         loop {
             let mut action = Action::NONE;
-            if let Some(event) = term.read_timeout(timeout)? {
+            if let Some(event) = self.backend.read_event(timeout)? {
                 action |= app.event(event);
             }
 
@@ -263,35 +344,9 @@ impl Term {
 
         Ok(())
     }
-
-    /// Clears the cache of the [`Term`].
-    ///
-    /// This is useful when a widget's state changes, but the cache doesn't
-    /// automatically update. After clearing the cache, the next rendering will
-    /// recalculate the sizes and positions of widgets.
-    pub fn clear_cache(&mut self) {
-        self.cache = Cache::default();
-    }
-
-    /// Restores the terminal: disables the alternate buffer and shows cursor
-    ///
-    /// Note restore is done automatically and should be used only when you
-    /// want to restore the buffer before the [`Term`] is dropped.
-    pub fn restore() {
-        if is_raw_mode_enabled() {
-            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
-            _ = stdout().flush();
-            _ = disable_raw_mode();
-        }
-    }
-
-    /// Gets size of the terminal
-    pub fn get_size() -> Option<(usize, usize)> {
-        term_size().ok().map(|s| (s.char_width, s.char_height))
-    }
 }
 
-impl Term {
+impl<B> Term<B> {
     fn render_widget(&mut self, widget: Element, rect: Rect) {
         let mut buffer = Buffer::empty(rect);
         match &self.small {
@@ -317,7 +372,7 @@ impl Term {
     }
 
     fn get_rect(&mut self) -> Result<Rect, Error> {
-        let (w, h) = Term::get_size().ok_or(Error::UnknownTerminalSize)?;
+        let (w, h) = Self::get_size().ok_or(Error::UnknownTerminalSize)?;
 
         let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
         let size = Vec2::new(
@@ -334,7 +389,7 @@ impl Term {
     }
 }
 
-impl Drop for Term {
+impl<B> Drop for Term<B> {
     fn drop(&mut self) {
         if self.setuped {
             print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);

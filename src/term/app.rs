@@ -1,9 +1,7 @@
 use std::time::Duration;
 
-use termal::raw::events::Event;
-
 use crate::{
-    term::{Action, Frame},
+    term::{backend::Event, Action, Frame},
     widgets::Element,
 };
 

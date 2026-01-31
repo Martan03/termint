@@ -7,6 +7,7 @@
 
 mod action;
 mod app;
+pub mod backend;
 mod frame;
 #[allow(clippy::module_inception)]
 mod term;

@@ -9,7 +9,6 @@ use crate::{
 
 /// A buffer cell containing foreground, background, modifiers and symbol.
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Cell {
     pub fg: Color,
     pub bg: Color,
