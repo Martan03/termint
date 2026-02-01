@@ -9,10 +9,7 @@ use termal::{
         DISABLE_ALTERNATIVE_BUFFER, ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN,
         HIDE_CURSOR, SHOW_CURSOR,
     },
-    raw::{
-        disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size,
-        Terminal,
-    },
+    raw::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size},
 };
 
 use crate::{
@@ -20,7 +17,7 @@ use crate::{
     error::Error,
     geometry::{Padding, Rect, Vec2},
     term::{
-        backend::{Backend, CrosstermBackend, NoBackend, TermalBackend},
+        backend::{Backend, DefaultBackend, NoBackend},
         Action, Application, Frame,
     },
     widgets::{cache::Cache, Element, Widget},
@@ -85,10 +82,13 @@ pub struct Term<B = NoBackend> {
     last_size: Vec2,
 }
 
-impl Term<NoBackend> {
+impl<B: Default> Term<B> {
+    /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
+    ///
+    /// The terminal is restored automatically when [`Term`] is dropped.
     pub fn new() -> Self {
         Self {
-            backend: NoBackend,
+            backend: B::default(),
             prev: None,
             prev_widget: None,
             small: None,
@@ -99,52 +99,9 @@ impl Term<NoBackend> {
         }
     }
 
-    /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
-    ///
-    /// The terminal is restored automatically when [`Term`] is dropped.
     pub fn init() -> Result<Self, Error> {
         let mut term = Self::new();
-        term.setup()?;
-        Ok(term)
-    }
-}
-
-impl Term<TermalBackend> {
-    /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
-    ///
-    /// The terminal is restored automatically when [`Term`] is dropped.
-    pub fn init() -> Result<Self, Error> {
-        let mut term = Self {
-            backend: TermalBackend(Terminal::default()),
-            prev: None,
-            prev_widget: None,
-            small: None,
-            cache: Cache::default(),
-            padding: Padding::default(),
-            setuped: false,
-            last_size: Vec2::default(),
-        };
-        term.setup()?;
-        Ok(term)
-    }
-}
-
-impl Term<CrosstermBackend> {
-    /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
-    ///
-    /// The terminal is restored automatically when [`Term`] is dropped.
-    pub fn init() -> Result<Self, Error> {
-        let mut term = Self {
-            backend: CrosstermBackend,
-            prev: None,
-            prev_widget: None,
-            small: None,
-            cache: Cache::default(),
-            padding: Padding::default(),
-            setuped: false,
-            last_size: Vec2::default(),
-        };
-        term.setup()?;
+        term = term.setup()?;
         Ok(term)
     }
 }
@@ -157,7 +114,7 @@ impl<B> Term<B> {
     /// should call this once at the start of your program.
     ///
     /// The terminal is restored automatically when [`Term`] is dropped.
-    pub fn setup(&mut self) -> Result<(), Error> {
+    pub fn setup(mut self) -> Result<Self, Error> {
         if !self.setuped {
             enable_raw_mode()?;
             print!(
@@ -176,7 +133,7 @@ impl<B> Term<B> {
 
             self.setuped = true;
         }
-        Ok(())
+        Ok(self)
     }
 
     /// Sets [`Padding`] of the [`Term`] to given value.
@@ -292,12 +249,11 @@ impl<B: Backend> Term<B> {
     /// Starts the application main loop and handles the terminal state.
     ///
     /// This method does the following:
-    /// 1. Calls [`Term::setup`] to setup terminal and does the initial render
-    /// 2. Main loop: polls for events and updates the state:
+    /// 1. Main loop: polls for events and updates the state:
     ///     - Calls [`Application::event`] on event
     ///     - Calls [`Application::update`] each tick
     ///     - Runs corresponding merged action from previous calls
-    /// 3. Ends the main loop when [`Action::QUIT`] is received
+    /// 2. Ends the main loop when [`Action::QUIT`] is received
     ///
     /// # Example
     ///
@@ -321,7 +277,6 @@ impl<B: Backend> Term<B> {
     /// # }
     /// ```
     pub fn run<A: Application>(&mut self, app: &mut A) -> Result<(), Error> {
-        self.setup()?;
         self.draw(|f| app.view(f))?;
 
         let timeout = app.poll_timeout();
@@ -386,6 +341,21 @@ impl<B> Term<B> {
         }
 
         Ok(Rect::from_coords(pos, size))
+    }
+}
+
+impl Default for Term<DefaultBackend> {
+    fn default() -> Self {
+        Self {
+            backend: Default::default(),
+            prev: Default::default(),
+            prev_widget: Default::default(),
+            small: Default::default(),
+            cache: Default::default(),
+            padding: Default::default(),
+            setuped: Default::default(),
+            last_size: Default::default(),
+        }
     }
 }
 

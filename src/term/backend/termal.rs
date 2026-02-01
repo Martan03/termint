@@ -17,6 +17,7 @@ use crate::{
     Error,
 };
 
+#[derive(Debug, Default)]
 pub struct TermalBackend(pub(crate) Terminal<StdioProvider>);
 
 impl Backend for TermalBackend {

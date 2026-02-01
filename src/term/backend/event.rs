@@ -10,5 +10,6 @@ pub enum Event {
     Mouse(MouseEvent),
     FocusGained,
     FocusLost,
+    Paste(String),
     Resize(usize, usize),
 }

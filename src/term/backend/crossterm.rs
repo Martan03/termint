@@ -20,6 +20,7 @@ use crossterm::event::{
     MouseEvent as CTermMouseEvent, MouseEventKind as CTermMouseEventKind,
 };
 
+#[derive(Debug, Default)]
 pub struct CrosstermBackend;
 
 impl Backend for CrosstermBackend {
@@ -44,7 +45,7 @@ impl TryFrom<CTermEvent> for Event {
             CTermEvent::FocusLost => Ok(Event::FocusLost),
             CTermEvent::Key(e) => Ok(Event::Key(e.into())),
             CTermEvent::Mouse(e) => Ok(Event::Mouse(e.into())),
-            CTermEvent::Paste(_) => Err("unsupported event type"),
+            CTermEvent::Paste(v) => Ok(Event::Paste(v)),
             CTermEvent::Resize(w, h) => {
                 Ok(Event::Resize(w as usize, h as usize))
             }

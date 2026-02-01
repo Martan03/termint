@@ -1,18 +1,10 @@
 use std::{cell::Cell, process::ExitCode, rc::Rc};
 
-use termal::{
-    eprintcln,
-    raw::events::{Event, Key, KeyCode},
-};
+use termal::eprintcln;
 use termint::{
-    enums::{Border, BorderType, Color, Modifier},
-    geometry::Constraint,
-    style::Style,
-    term::{Action, Application, Frame, Term},
-    widgets::{
+    Error, enums::{Border, BorderType, Color, Modifier}, geometry::Constraint, style::Style, term::{Action, Application, Frame, Term, backend::{Event, KeyCode, KeyEvent}}, widgets::{
         Block, Element, Layout, Scrollable, ScrollbarState, Span, ToSpan,
-    },
-    Error,
+    }
 };
 
 const BG: Color = Color::Hex(0x02081e);
@@ -30,7 +22,7 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), Error> {
     let mut app = App::default();
-    Term::new().run(&mut app)
+    Term::default().setup()?.run(&mut app)
 }
 
 struct App {
@@ -70,14 +62,14 @@ impl Application for App {
 
     fn event(&mut self, event: Event) -> Action {
         match event {
-            Event::KeyPress(key) => self.key_listener(key),
+            Event::Key(key) => self.key_listener(key),
             _ => Action::NONE,
         }
     }
 }
 
 impl App {
-    fn key_listener(&mut self, key: Key) -> Action {
+    fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
             KeyCode::Down => self.ver_state.set(self.ver_state.get().next()),
             KeyCode::Up => self.ver_state.set(self.ver_state.get().prev()),

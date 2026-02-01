@@ -8,13 +8,25 @@ mod termal;
 
 #[cfg(feature = "backend-crossterm")]
 pub use crossterm::CrosstermBackend;
-pub use event::Event;
+pub use event::*;
 #[cfg(feature = "backend-termal")]
 pub use termal::TermalBackend;
 
 use crate::Error;
 
-pub trait Backend {
+#[cfg(feature = "backend-termal")]
+pub type DefaultBackend = TermalBackend;
+
+#[cfg(all(not(feature = "backend-termal"), feature = "backend-crossterm"))]
+pub type DefaultBackend = CrosstermBackend;
+
+#[cfg(all(
+    not(feature = "backend-termal"),
+    not(feature = "backend-crossterm")
+))]
+pub type DefaultBackend = NoBackend;
+
+pub trait Backend: Default {
     /// Polls for an event and returns it if available within the timeout
     fn read_event(
         &mut self,
@@ -22,4 +34,5 @@ pub trait Backend {
     ) -> Result<Option<Event>, Error>;
 }
 
+#[derive(Debug, Default)]
 pub struct NoBackend;

@@ -1,16 +1,8 @@
 use std::{cell::Cell, process::ExitCode, rc::Rc, time::Duration};
 
-use termal::{
-    eprintcln,
-    raw::events::{Event, Key, KeyCode},
-};
+use termal::eprintcln;
 use termint::{
-    enums::{BorderType, Color},
-    geometry::Constraint,
-    style::Style,
-    term::{Action, Application, Frame, Term},
-    widgets::{Block, Element, ProgressBar, Spacer, ToSpan},
-    Error,
+    Error, enums::{BorderType, Color}, geometry::Constraint, style::Style, term::{Action, Application, Frame, Term, backend::{Event, KeyCode, KeyEvent}}, widgets::{Block, Element, ProgressBar, Spacer, ToSpan}
 };
 
 const BG: Color = Color::Hex(0x02081e);
@@ -27,7 +19,7 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), Error> {
     let mut app = App::default();
-    Term::new().run(&mut app)
+    Term::default().setup()?.run(&mut app)
 }
 
 struct App {
@@ -56,7 +48,7 @@ impl Application for App {
 
     fn event(&mut self, event: Event) -> Action {
         match event {
-            Event::KeyPress(key) => self.key_listener(key),
+            Event::Key(key) => self.key_listener(key),
             _ => Action::NONE,
         }
     }
@@ -74,7 +66,7 @@ impl Application for App {
 }
 
 impl App {
-    fn key_listener(&mut self, key: Key) -> Action {
+    fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
             KeyCode::Esc | KeyCode::Char('q') => Action::QUIT,
             _ => Action::NONE,
