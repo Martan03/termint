@@ -49,7 +49,7 @@ use super::{span::ToSpan, widget::Widget, Element};
 ///         .highlight_symbol("*")
 ///         .auto_scroll();
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(list)?;
 /// # Ok(())
 /// # }

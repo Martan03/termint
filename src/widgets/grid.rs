@@ -29,7 +29,7 @@ use super::{widget::Widget, Element};
 /// );
 /// grid.push("Grid", 1, 1);
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(grid)?;
 /// # Ok(())
 /// # }

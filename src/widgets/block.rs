@@ -36,7 +36,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// let block2 = Block::vertical().title("Another");
 /// main.add_child(block2, Constraint::Percent(50));
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(main)?;
 /// # Ok(())
 /// # }

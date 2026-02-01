@@ -99,7 +99,7 @@
 //! main.push(block2, Constraint::Fill(1));
 //!
 //! // Renders the main block which renders all the children using Buffer
-//! let mut term = Term::new();
+//! let mut term = Term::default();
 //! term.render(main)?;
 //! # Ok(())
 //! # }

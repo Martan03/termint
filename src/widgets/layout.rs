@@ -39,7 +39,7 @@ use super::{widget::Widget, Element};
 /// layout.push(block1, Constraint::Percent(50));
 /// layout.push(block2, Constraint::Percent(50));
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(layout)?;
 /// # Ok(())
 /// # }

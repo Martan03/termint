@@ -17,7 +17,7 @@ use crate::{
     error::Error,
     geometry::{Padding, Rect, Vec2},
     term::{
-        backend::{Backend, DefaultBackend, NoBackend},
+        backend::{Backend, DefaultBackend, Event, NoBackend},
         Action, Application, Frame,
     },
     widgets::{cache::Cache, Element, Widget},
@@ -35,7 +35,8 @@ static HOOK_SET: Once = Once::new();
 /// # Example (framework mode):
 ///
 /// Simple app definition and usage without any event handling (results in
-/// static app).
+/// static app). This assumes at least one backend feature is enabled (by
+/// default crossterm backend is used).
 ///
 /// ```rust
 /// # use termint::{
@@ -50,7 +51,7 @@ static HOOK_SET: Once = Once::new();
 /// }
 /// # fn example() -> Result<(), termint::Error> {
 /// let mut app = MyApp;
-/// Term::new().run(&mut app)?;
+/// Term::default().run(&mut app)?;
 /// # Ok(())
 /// # }
 /// ```
@@ -65,7 +66,7 @@ static HOOK_SET: Once = Once::new();
 /// # fn example() -> Result<(), termint::Error> {
 /// let main = Block::vertical().title("Example".to_span());
 /// // Creates new Term with padding 1 on every side
-/// let mut term = Term::new().padding(1);
+/// let mut term = Term::default().padding(1);
 /// term.render(main)?;
 /// # Ok(())
 /// # }
@@ -183,7 +184,7 @@ impl<B> Term<B> {
     /// # fn example() -> Result<(), termint::Error> {
     /// let main = Block::vertical().title("Example".to_span());
     /// // Creates new Term with padding 1 on every side
-    /// let mut term = Term::new().padding(1);
+    /// let mut term = Term::default().padding(1);
     /// term.draw(|frame| {
     ///     if frame.area().width() < 100 {
     ///         "Width is smaller then 100.".into()
@@ -251,6 +252,7 @@ impl<B: Backend> Term<B> {
     /// This method does the following:
     /// 1. Main loop: polls for events and updates the state:
     ///     - Calls [`Application::event`] on event
+    ///         - Automatically renders on resize
     ///     - Calls [`Application::update`] each tick
     ///     - Runs corresponding merged action from previous calls
     /// 2. Ends the main loop when [`Action::QUIT`] is received
@@ -270,7 +272,7 @@ impl<B: Backend> Term<B> {
     /// #     }
     /// # }
     /// # fn example() -> Result<(), termint::Error> {
-    /// let mut term = Term::new();
+    /// let mut term = Term::default();
     /// let mut app = MyApp::default();
     /// term.run(&mut app)?;
     /// # Ok(())
@@ -283,6 +285,10 @@ impl<B: Backend> Term<B> {
         loop {
             let mut action = Action::NONE;
             if let Some(event) = self.backend.read_event(timeout)? {
+                match event {
+                    Event::Resize(_, _) => action |= Action::RENDER,
+                    _ => {}
+                }
                 action |= app.event(event);
             }
 

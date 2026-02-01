@@ -45,7 +45,7 @@ pub use table_state::TableState;
 ///     .header_separator(BorderType::Double)
 ///     .column_spacing(2);
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(table)?;
 /// # Ok(())
 /// # }
