@@ -5,7 +5,7 @@ use crate::geometry::{Rect, Vec2};
 /// The [`Frame`] is passed to [`Application::view`] and to the closure given
 /// to [`Term::draw`] to provide context about the current frame. This ensures
 /// that the UI can adapt to the size of the terminal, such as hide menu.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Frame {
     area: Rect,
 }

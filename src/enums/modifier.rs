@@ -22,7 +22,6 @@ bitflags! {
     /// let modifiers = modifiers!(BOLD, ITALIC);
     /// ```
     #[derive(Debug, PartialEq, Clone, Copy)]
-    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub struct Modifier: u8 {
         /// Bold mode
         const BOLD = 0b0000_0001;

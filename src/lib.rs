@@ -4,17 +4,22 @@
 //! [![docs.rs](https://img.shields.io/docsrs/termint?logo=rust)](https://docs.rs/termint/latest/termint/)
 //! [![Crates.io Total Downloads](https://img.shields.io/crates/d/termint)](https://crates.io/crates/termint)
 //!
-//! Rust library for colored printing and Terminal User Interfaces
+//! **termint** is high-performance, structural TUI (Terminal User Interface)
+//! library and framework for Rust.
 //!
 //! ## Table of Contents
+//!
 //! - [How to get it](#how-to-get-it)
 //!     - [With cargo](#with-cargo)
 //!     - [In Cargo.toml](#in-cargotoml)
 //!     - [Features](#features)
 //! - [Examples](#examples)
-//!     - [Printing colored text](#printing-colored-text)
-//!     - [Terminal User Interface (TUI)](#terminal-user-interface-tui)
+//!     - [Framework Mode](#framework-mode)
+//!     - [Manual Mode](#manual-mode)
+//!     - [Colored printing](#colored-printing)
+//!     - [TUI examples](#tui-examples)
 //! - [Usage](#usage)
+//! - [Projects](#projects)
 //! - [Links](#links)
 //!
 //! ## How to get it
@@ -22,89 +27,116 @@
 //! This crate is available on [crates.io](https://crates.io/crates/termint).
 //!
 //! ### With cargo
+//!
 //! ```terminal
 //! cargo add termint
 //! ```
 //!
 //! ### In Cargo.toml
+//!
 //! ```toml
 //! [dependencies]
-//! termint = "0.6.0"
+//! termint = "0.7.0"
 //! ```
 //!
 //! ### Features
 //!
+//! - `backend-crossterm`: Enables [Crossterm](https://crates.io/crates/crossterm)
+//!   as the event-reading backend.
+//! - `backend-termal`: Enables [Termal](https://crates.io/crates/termal) as the
+//!   event-reading backend.
 //! - `serde`: Enables serialization and deserialization of some structs.
 //! - `all`: Enables all features.
 //!
+//! `backend-crossterm` is enabled by default. If both `backend-crossterm` and
+//! `backend-termal` are enabled, Termint defaults to **Crossterm**, unless
+//! specified otherwise via `Term::<Backend>::init()`.
+//!
 //! ## Examples
 //!
-//! ### Printing colored text
+//! ### Framework Mode
 //!
-//! Printing colored text is really easy, you can do it by using any `Text`
-//! widget. Here is an example of using `Span` widget:
+//! > **Note:** To use `Framework mode`, you must enable either the
+//! > `backend-crossterm` or `backend-termal` feature.
+//!
+//! Termint provides the `Application` trait to manage the UI lifecycle. You can
+//! then use `Term::run`, which runs the main loop, handles the input events and
+//! efficient rendering all using the given `Application` implementation.
+//!
+//! ```rust,no_run
+//! use termint::prelude::*;
+//!
+//! struct MyApp;
+//!
+//! impl Application for MyApp {
+//!     fn view(&self, _frame: &Frame) -> Element {
+//!         let mut main = Block::vertical().title("Termint App");
+//!         main.push("Hello from the Application trait!".fg(Color::Cyan), 0..);
+//!         main.into()
+//!     }
+//!
+//!     fn event(&mut self, event: Event) -> Action {
+//!         match event {
+//!             Event::Key(k) if k.code == KeyCode::Char('q') => Action::QUIT,
+//!             _ => Action::NONE,
+//!         }
+//!     }
+//! }
+//!
+//! fn main() -> Result<(), Error> {
+//!     Term::default().setup()?.run(&mut MyApp)
+//! }
+//! ```
+//!
+//! ### Manual Mode
+//!
+//! If you prefer to manage you own loop, you can use the manual mode, where
+//! `Term` manages only terminal state and rendering. Everything else, such as the
+//! main loop, event handling and so on, you have to implement yourself.
+//!
+//! ```rust,no_run
+//! use termint::prelude::*;
+//!
+//! fn main() -> Result<(), Error> {
+//!     let mut term = Term::default().setup()?;
+//!     loop {
+//!         // 1. Custom event handling
+//!         // 2. Logic updates
+//!
+//!         let mut main = Block::vertical().title("Termint App");
+//!         main.push("Hello from the Manual mode!".fg(Color::Red), 0..);
+//!
+//!         // 3. Render on demand
+//!         term.render(main)?;
+//!     }
+//! }
+//! ```
+//!
+//! ### Colored printing
+//!
+//! Colored printing is really easy, you can do it by using any `Text` widget.
+//! Here is an example of using `Span` widget:
 //!
 //! ```rust
-//! # use termint::{
-//! #     enums::{Modifier, Color},
-//! #     widgets::ToSpan
-//! # };
+//! use termint::prelude::*;
+//!
 //! println!("{}", "Cyan text".fg(Color::Cyan));
 //! println!("{}", "Cyan text on white".fg(Color::Cyan).bg(Color::White));
 //! println!("{}", "Bold red text".fg(Color::Red).modifier(Modifier::BOLD));
 //! println!("{}", "Text with RGB value".fg(Color::Rgb(0, 249, 210)));
 //! ```
+//!
 //! ![image](https://github.com/Martan03/termint/assets/46300167/c906a565-69b5-4664-9db0-ad89ff457cbb)
 //!
 //! You can also use re-exported `termal` crate to print colored text:
+//!
 //! ```rust
-//! # use termint::termal::printcln;
+//! use termint::termal::printcln;
+//!
 //! printcln!("{'yellow italic}Yellow Italic text{'reset}");
 //! printcln!("{'y i}{}{'_}", "Yellow Italic text");
 //! printcln!("{'#dd0 i}{}{'_}", "Custom Yellow Italic text");
 //! ```
-//!
-//! ### Terminal User Interface (TUI)
-//!
-//! The main purpose of this crate is to create Terminal User Interfaces (TUIs).
-//! Example below shows minimal example of creating a TUI using `Block` widget
-//! and rendering it using `Term`. You can find more examples in the `examples`
-//! directory of this repository.
-//!
-//! ```rust
-//! # use termint::{
-//! #     term::Term,
-//! #     enums::{Color, Border, BorderType},
-//! #     geometry::{Constraint, Rect},
-//! #     widgets::{Block, ToSpan, Widget}
-//! # };
-//! # fn example() -> Result<(), termint::Error> {
-//! // Creates main block and sets its properties
-//! let mut main = Block::horizontal()
-//!     .title("Termint")
-//!     .border_type(BorderType::Double);
-//!
-//! // Creates block1 and adds span as its child
-//! let mut block1 = Block::vertical().title("Sub block");
-//! let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-//! block1.push(span1, Constraint::Percent(100));
-//! // Adds block1 as child of main block
-//! main.push(block1, Constraint::Min(0));
-//!
-//! // Creates block2 and adds span as its child
-//! let mut block2 = Block::vertical().title("Another");
-//! let span2 = "This is really cool, right?".fg(Color::Blue);
-//! block2.push(span2, Constraint::Percent(100));
-//! // Adds block2 as child of main block
-//! main.push(block2, Constraint::Fill(1));
-//!
-//! // Renders the main block which renders all the children using Buffer
-//! let mut term = Term::new();
-//! term.render(main)?;
-//! # Ok(())
-//! # }
-//! ```
-//! ![image](https://github.com/Martan03/termint/assets/46300167/cdd0850b-1952-4c4b-8dec-b49c30d59f6d)
 //!
 //! ### TUI examples
 //!
@@ -159,3 +191,5 @@ pub mod widgets;
 
 pub use error::Error;
 pub use termal;
+
+pub mod prelude;

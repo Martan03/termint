@@ -9,23 +9,25 @@ use termal::{
         DISABLE_ALTERNATIVE_BUFFER, ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN,
         HIDE_CURSOR, SHOW_CURSOR,
     },
-    raw::{
-        disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size,
-        StdioProvider, Terminal,
-    },
+    raw::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size},
 };
 
 use crate::{
     buffer::Buffer,
     error::Error,
     geometry::{Padding, Rect, Vec2},
-    term::{Action, Application, Frame},
+    term::{
+        backend::{Backend, DefaultBackend, Event, NoBackend},
+        disable_bracketed_paste, disable_mouse_capture,
+        enable_bracketed_paste, enable_mouse_capture, Action, Application,
+        Frame,
+    },
     widgets::{cache::Cache, Element, Widget},
 };
 
 static HOOK_SET: Once = Once::new();
 
-/// The main entry points for terminal management and rendering.
+/// The main entry point for terminal management and rendering.
 ///
 /// [`Term`] provides two ways to build the TUI:
 /// 1. **Framework mode**: using [`Term::run`] with [`Application`] trait
@@ -34,66 +36,90 @@ static HOOK_SET: Once = Once::new();
 ///
 /// # Example (framework mode):
 ///
-/// Simple app definition and usage without any event handling (results in
-/// static app).
+/// Simple app definition and usage. This assumes at least one backend feature
+/// is enabled (by default crossterm backend is used).
 ///
-/// ```rust
-/// # use termint::{
-/// #     term::{Term, Application, Frame},
-/// #     widgets::Element
-/// # };
+/// ```rust,no_run
+/// use termint::prelude::*;
+///
 /// struct MyApp;
+///
 /// impl Application for MyApp {
 ///     fn view(&self, _frame: &Frame) -> Element {
 ///         "Your UI here".into()
 ///     }
+///
+///     fn event(&mut self, event: Event) -> Action {
+///         match event {
+///             Event::Key(k) if k.code == KeyCode::Char('q') => Action::QUIT,
+///             _ => Action::NONE,
+///         }
+///     }
 /// }
-/// # fn example() -> Result<(), termint::Error> {
-/// let mut app = MyApp;
-/// Term::new().run(&mut app)?;
-/// # Ok(())
-/// # }
+///
+/// fn main() -> Result<(), Error> {
+///     Term::default().setup()?.run(&mut MyApp)
+/// }
 /// ```
 ///
 /// # Example (manual mode):
 ///
 /// ```rust
-/// # use termint::{
-/// #    term::Term, widgets::{Block, ToSpan}
-/// # };
+/// use termint::prelude::*;
 ///
 /// # fn example() -> Result<(), termint::Error> {
 /// let main = Block::vertical().title("Example".to_span());
 /// // Creates new Term with padding 1 on every side
-/// let mut term = Term::new().padding(1);
+/// let mut term = Term::default().padding(1);
 /// term.render(main)?;
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, Default)]
-pub struct Term {
+#[derive(Debug)]
+pub struct Term<B = NoBackend> {
+    backend: B,
     prev: Option<Buffer>,
     prev_widget: Option<Element>,
     small: Option<Element>,
     cache: Cache,
     padding: Padding,
     setuped: bool,
+    mouse_enabled: bool,
+    paste_enabled: bool,
     last_size: Vec2,
 }
 
-impl Term {
-    /// Creates new [`Term`] with default settings.
+impl<B: Default> Term<B> {
+    /// Creates new [`Term`] with the specified backend
     pub fn new() -> Self {
-        Self::default()
+        Self::custom(B::default())
     }
 
     /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
     ///
     /// The terminal is restored automatically when [`Term`] is dropped.
     pub fn init() -> Result<Self, Error> {
-        let mut term = Term::new();
-        term.setup()?;
+        let mut term = Self::new();
+        term = term.setup()?;
         Ok(term)
+    }
+}
+
+impl<B> Term<B> {
+    /// Creates new [`Term`] with the given backend
+    pub fn custom(backend: B) -> Self {
+        Self {
+            backend: backend,
+            prev: None,
+            prev_widget: None,
+            small: None,
+            cache: Cache::default(),
+            padding: Padding::default(),
+            setuped: false,
+            mouse_enabled: false,
+            paste_enabled: false,
+            last_size: Vec2::default(),
+        }
     }
 
     /// Prepares the terminal: enables the alternate buffer, clears screen,
@@ -103,7 +129,7 @@ impl Term {
     /// should call this once at the start of your program.
     ///
     /// The terminal is restored automatically when [`Term`] is dropped.
-    pub fn setup(&mut self) -> Result<(), Error> {
+    pub fn setup(mut self) -> Result<Self, Error> {
         if !self.setuped {
             enable_raw_mode()?;
             print!(
@@ -122,7 +148,41 @@ impl Term {
 
             self.setuped = true;
         }
-        Ok(())
+        Ok(self)
+    }
+
+    /// Enables mouse events backend capture.
+    pub fn with_mouse(mut self) -> Self {
+        if !self.mouse_enabled {
+            enable_mouse_capture();
+            self.mouse_enabled = true;
+        }
+        self
+    }
+
+    /// Enables bracketed paste mode, which allows capturing `Event::Paste`.
+    pub fn with_paste(mut self) -> Self {
+        if !self.paste_enabled {
+            enable_bracketed_paste();
+            self.paste_enabled = true;
+        }
+        self
+    }
+
+    /// Disable mouse events backend capture.
+    pub fn disable_mouse(&mut self) {
+        if self.mouse_enabled {
+            disable_mouse_capture();
+            self.mouse_enabled = false;
+        }
+    }
+
+    /// Disables bracketed paste mode.
+    pub fn disable_paste(&mut self) {
+        if self.paste_enabled {
+            disable_bracketed_paste();
+            self.paste_enabled = false;
+        }
     }
 
     /// Sets [`Padding`] of the [`Term`] to given value.
@@ -165,14 +225,12 @@ impl Term {
     /// # Example:
     ///
     /// ```rust
-    /// # use termint::{
-    /// #    term::Term, widgets::{Block, ToSpan}
-    /// # };
+    /// use termint::prelude::*;
     ///
     /// # fn example() -> Result<(), termint::Error> {
     /// let main = Block::vertical().title("Example".to_span());
     /// // Creates new Term with padding 1 on every side
-    /// let mut term = Term::new().padding(1);
+    /// let mut term = Term::default().padding(1);
     /// term.draw(|frame| {
     ///     if frame.area().width() < 100 {
     ///         "Width is smaller then 100.".into()
@@ -207,63 +265,6 @@ impl Term {
         Ok(())
     }
 
-    /// Starts the application main loop and handles the terminal state.
-    ///
-    /// This method does the following:
-    /// 1. Calls [`Term::setup`] to setup terminal and does the initial render
-    /// 2. Main loop: polls for events and updates the state:
-    ///     - Calls [`Application::event`] on event
-    ///     - Calls [`Application::update`] each tick
-    ///     - Runs corresponding merged action from previous calls
-    /// 3. Ends the main loop when [`Action::QUIT`] is received
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # use termint::{
-    /// #     term::{Term, Application, Frame},
-    /// #     widgets::{Spacer, Element}
-    /// # };
-    /// # #[derive(Default)]
-    /// # struct MyApp;
-    /// # impl Application for MyApp {
-    /// #     fn view(&self, _frame: &Frame) -> Element {
-    /// #         Spacer::new().into()
-    /// #     }
-    /// # }
-    /// # fn example() -> Result<(), termint::Error> {
-    /// let mut term = Term::new();
-    /// let mut app = MyApp::default();
-    /// term.run(&mut app)?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn run<A: Application>(&mut self, app: &mut A) -> Result<(), Error> {
-        self.setup()?;
-        let mut term = Terminal::<StdioProvider>::default();
-        self.draw(|f| app.view(f))?;
-
-        let timeout = app.poll_timeout();
-        loop {
-            let mut action = Action::NONE;
-            if let Some(event) = term.read_timeout(timeout)? {
-                action |= app.event(event);
-            }
-
-            action |= app.update();
-
-            if action.contains(Action::QUIT) {
-                break;
-            } else if action.contains(Action::RENDER) {
-                self.draw(|f| app.view(f))?;
-            } else if action.contains(Action::RERENDER) {
-                self.rerender()?;
-            }
-        }
-
-        Ok(())
-    }
-
     /// Clears the cache of the [`Term`].
     ///
     /// This is useful when a widget's state changes, but the cache doesn't
@@ -280,9 +281,11 @@ impl Term {
     pub fn restore() {
         if is_raw_mode_enabled() {
             print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
-            _ = stdout().flush();
             _ = disable_raw_mode();
         }
+        disable_mouse_capture();
+        disable_bracketed_paste();
+        _ = stdout().flush();
     }
 
     /// Gets size of the terminal
@@ -291,7 +294,66 @@ impl Term {
     }
 }
 
-impl Term {
+impl<B: Backend> Term<B> {
+    /// Starts the application main loop and handles the terminal state.
+    ///
+    /// This method does the following:
+    /// 1. Main loop: polls for events and updates the state:
+    ///     - Calls [`Application::event`] on event
+    ///         - Automatically renders on resize
+    ///     - Calls [`Application::update`] each tick
+    ///     - Runs corresponding merged action from previous calls
+    /// 2. Ends the main loop when [`Action::QUIT`] is received
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    ///
+    /// # #[derive(Default)]
+    /// # struct MyApp;
+    /// # impl Application for MyApp {
+    /// #     fn view(&self, _frame: &Frame) -> Element {
+    /// #         Spacer::new().into()
+    /// #     }
+    /// # }
+    /// # fn example() -> Result<(), termint::Error> {
+    /// let mut term = Term::default();
+    /// let mut app = MyApp::default();
+    /// term.run(&mut app)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn run<A: Application>(&mut self, app: &mut A) -> Result<(), Error> {
+        self.draw(|f| app.view(f))?;
+
+        let timeout = app.poll_timeout();
+        loop {
+            let mut action = Action::NONE;
+            if let Some(event) = self.backend.read_event(timeout)? {
+                match event {
+                    Event::Resize(_, _) => action |= Action::RENDER,
+                    _ => {}
+                }
+                action |= app.event(event);
+            }
+
+            action |= app.update();
+
+            if action.contains(Action::QUIT) {
+                break;
+            } else if action.contains(Action::RENDER) {
+                self.draw(|f| app.view(f))?;
+            } else if action.contains(Action::RERENDER) {
+                self.rerender()?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl<B> Term<B> {
     fn render_widget(&mut self, widget: Element, rect: Rect) {
         let mut buffer = Buffer::empty(rect);
         match &self.small {
@@ -317,7 +379,7 @@ impl Term {
     }
 
     fn get_rect(&mut self) -> Result<Rect, Error> {
-        let (w, h) = Term::get_size().ok_or(Error::UnknownTerminalSize)?;
+        let (w, h) = Self::get_size().ok_or(Error::UnknownTerminalSize)?;
 
         let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
         let size = Vec2::new(
@@ -334,13 +396,36 @@ impl Term {
     }
 }
 
-impl Drop for Term {
+impl Default for Term<DefaultBackend> {
+    fn default() -> Self {
+        Self {
+            backend: Default::default(),
+            prev: Default::default(),
+            prev_widget: Default::default(),
+            small: Default::default(),
+            cache: Default::default(),
+            padding: Default::default(),
+            setuped: false,
+            mouse_enabled: false,
+            paste_enabled: false,
+            last_size: Default::default(),
+        }
+    }
+}
+
+impl<B> Drop for Term<B> {
     fn drop(&mut self) {
         if self.setuped {
             print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
             _ = stdout().flush();
             _ = disable_raw_mode();
-            self.setuped = false;
+        }
+
+        if self.mouse_enabled {
+            disable_mouse_capture();
+        }
+        if self.paste_enabled {
+            disable_bracketed_paste();
         }
     }
 }

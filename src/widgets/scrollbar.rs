@@ -33,7 +33,7 @@ use super::{Element, Widget};
 /// // Creates new horizontal scrollbar with the shared state
 /// let scrollbar = Scrollbar::horizontal(state.clone());
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(scrollbar)?;
 /// # Ok(())
 /// # }

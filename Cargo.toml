@@ -1,6 +1,6 @@
 [package]
 name = "termint"
-version = "0.6.1"
+version = "0.7.0"
 authors = ["Martin Slezák (github.com/Martan03)"]
 description = "Library for colored printing and Terminal User Interfaces"
 keywords = ["tui", "terminal", "termint", "ansi-codes", "color-printing"]
@@ -15,8 +15,9 @@ exclude = ["src/main.rs", ".github"]
 [dependencies]
 bitflags = "2.9.1"
 compact_str = "0.9.0"
+crossterm = { version = "0.29.0", optional = true }
 serde = { version = "1.0.218", features = ["std", "derive"], optional = true }
-termal = { version = "2.1.2", features = ["raw", "events"] }
+termal = { version = "4.1.1", features = ["raw"] }
 thiserror = "2.0.18"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.2"
@@ -25,9 +26,13 @@ unicode-width = "0.2.2"
 criterion = "0.5.1"
 
 [features]
-default = []
+default = ["backend-crossterm"]
 serde = ["dep:serde"]
-all = ["dep:serde"]
+
+backend-termal = ["termal/events"]
+backend-crossterm = ["dep:crossterm"]
+
+all = ["serde", "backend-termal", "backend-crossterm"]
 
 [package.metadata."docs.rs"]
 all-features = true

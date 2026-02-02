@@ -27,7 +27,7 @@ use super::{Element, Widget};
 ///     get_top_child(),
 /// ]);
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(overlay)?;
 /// # Ok(())
 /// # }

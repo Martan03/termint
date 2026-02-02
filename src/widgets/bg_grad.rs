@@ -28,7 +28,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// # fn example() -> Result<(), termint::Error> {
 /// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(grad)?;
 /// # Ok(())
 /// # }

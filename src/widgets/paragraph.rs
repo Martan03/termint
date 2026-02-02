@@ -52,7 +52,7 @@ use super::{widget::Widget, Element};
 /// println!("{p}");
 ///
 /// // Or you can render it using `Term` (or manually using `Buffer`)
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(p)?;
 /// # Ok(())
 /// # }

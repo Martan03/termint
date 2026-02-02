@@ -1,14 +1,14 @@
 use std::process::ExitCode;
 
-use termal::{
-    eprintcln,
-    raw::events::{Event, Key, KeyCode},
-};
+use termal::eprintcln;
 use termint::{
     enums::{BorderType, Color},
     geometry::{Constraint, Direction},
     style::Style,
-    term::{Action, Application, Frame, Term},
+    term::{
+        backend::{Event, KeyCode, KeyEvent},
+        Action, Application, Frame, Term,
+    },
     widgets::{BgGrad, Block, Element, Layout, Spacer, ToSpan},
     Error,
 };
@@ -33,7 +33,7 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), Error> {
     let mut app = App::default();
-    Term::new().run(&mut app)
+    Term::default().setup()?.run(&mut app)
 }
 
 struct App {
@@ -64,14 +64,14 @@ impl Application for App {
 
     fn event(&mut self, event: Event) -> Action {
         match event {
-            Event::KeyPress(key) => self.key_listener(key),
+            Event::Key(key) => self.key_listener(key),
             _ => Action::NONE,
         }
     }
 }
 
 impl App {
-    fn key_listener(&mut self, key: Key) -> Action {
+    fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
             KeyCode::Esc | KeyCode::Char('q') => return Action::QUIT,
             KeyCode::Left => {

@@ -31,7 +31,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// // Creates vertical scrollable widget
 /// let scrollable: Scrollable<Span> = Scrollable::vertical(span, state);
 ///
-/// let mut term = Term::new();
+/// let mut term = Term::default();
 /// term.render(scrollable)?;
 /// # Ok(())
 /// # }

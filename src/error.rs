@@ -7,5 +7,7 @@ pub enum Error {
     #[error("Cannot determine terminal size.")]
     UnknownTerminalSize,
     #[error(transparent)]
-    Termal(#[from] termal::error::Error),
+    Termal(#[from] termal::Error),
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
 }

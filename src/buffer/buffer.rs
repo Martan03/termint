@@ -44,7 +44,6 @@ use super::cell::Cell;
 /// buffer.render();
 /// ```
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Buffer {
     rect: Rect,
     content: Vec<Cell>,
