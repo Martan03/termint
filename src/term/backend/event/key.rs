@@ -4,8 +4,8 @@ use bitflags::bitflags;
 ///
 /// # Example
 ///
-/// This is how KeyEvent can be used in combination of the [`Application`]
-/// trait:
+/// This is how KeyEvent can be used in combination of the
+/// [`crate::term::Application`] trait:
 ///
 /// ```rust
 /// use termint::prelude::*;

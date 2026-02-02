@@ -2,12 +2,14 @@ use crate::term::backend::event::KeyModifiers;
 
 /// Detailed information about a mouse event.
 ///
-/// Mouse events are captured only if the terminal emulator supports them.
+/// Mouse events are captured only if the terminal emulator supports them and
+/// mouse capture is enabled (can be done using
+/// [`crate::term::enable_mouse_capture`]).
 ///
 /// # Example:
 ///
-/// This is how MouseEvent can be used in combination of the [`Application`]
-/// trait:
+/// This is how MouseEvent can be used in combination of the
+/// [`crate::term::Application`] trait:
 ///
 /// ```rust
 /// use termint::prelude::*;

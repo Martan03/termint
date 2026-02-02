@@ -2,9 +2,10 @@ use crate::geometry::{Rect, Vec2};
 
 /// Contains details about currently rendering frame.
 ///
-/// The [`Frame`] is passed to [`Application::view`] and to the closure given
-/// to [`Term::draw`] to provide context about the current frame. This ensures
-/// that the UI can adapt to the size of the terminal, such as hide menu.
+/// The [`Frame`] is passed to [`crate::term::Application::view`] and to the
+/// closure given to [`crate::term::Term::draw`] to provide context about the
+/// current frame. This ensures that the UI can adapt to the size of the
+/// terminal, such as hide menu.
 #[derive(Debug, Default)]
 pub struct Frame {
     area: Rect,
@@ -18,7 +19,8 @@ impl Frame {
 
     /// Gets the available rendering area of the terminal.
     ///
-    /// This [`Rect`] accounts for the [`Padding`] set in the [`Term`].
+    /// This [`crate::geometry::Rect`] accounts for the
+    /// [`crate::geometry::Padding`] set in the [`crate::term::Term`].
     pub fn area(&self) -> &Rect {
         &self.area
     }

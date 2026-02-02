@@ -15,18 +15,23 @@ pub enum Event {
     Key(KeyEvent),
     /// A mouse event (click, movements, scroll)
     ///
-    /// **Note**: Mouse support may vary depending on the terminal.
+    /// **Note**: Mouse support may vary depending on the terminal and whether
+    /// mouse capture was enabled during setup (using
+    /// [`crate::term::enable_mouse_capture`]).
     Mouse(MouseEvent),
     /// Triggered when the terminal window gains focus.
     FocusGained,
     /// Triggered whent the terminal window loses focus.
     FocusLost,
     /// Triggered when text is pasted into the terminal.
+    ///
+    /// **Note**: This needs to be enabled during setup (using
+    /// [`crate::term::enable_bracketed_paste`]).
     Paste(String),
     /// Triggered when the terminal window is resized. The new dimensions are
     /// in characters.
     ///
-    /// When using [`Term::run`], this event is intercepted to automatically
-    /// render again.
+    /// When using [`crate::term::Term::run`], this event is intercepted to
+    /// automatically render again.
     Resize(usize, usize),
 }

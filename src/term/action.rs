@@ -1,9 +1,10 @@
 use bitflags::bitflags;
 
 bitflags! {
-    /// Used by [`Application`] to signal required action to the [`Term`].
-    /// This, for example, allows rendering only when needed or a clean way to
-    /// quit the [`Term`] main loop in the [`Term::run`].
+    /// Used by [`crate::term::Application`] to signal required action to the
+    /// [`crate::term::Term`]. This, for example, allows rendering only when
+    /// needed or a clean way to quit the [`crate::term::Term`] main loop in
+    /// the [`crate::term::Term::run`].
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Action: u8 {
         /// Do nothing

@@ -20,8 +20,9 @@ use crossterm::event::{
     MouseEvent as CTermMouseEvent, MouseEventKind as CTermMouseEventKind,
 };
 
-/// An event-reading backend powered by the [`crossterm`] crate. It is used as
-/// a generic parameter for [`Term`], which then uses it as the backend.
+/// An event-reading backend powered by the `crossterm` crate. It is used as
+/// a generic parameter for [`crate::term::Term`], which then uses it as the
+/// backend.
 ///
 /// # Usage:
 /// ```rust

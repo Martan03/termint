@@ -8,8 +8,9 @@ use crate::{
 pub trait Application {
     /// Returns the widget tree to be rendered.
     ///
-    /// This is called by [`Term`] whenever [`Action::RENDER`] is triggered.
-    /// See [`Frame`] documentation to know what information it contains.
+    /// This is called by [`crate::term::Term`] whenever [`Action::RENDER`] is
+    /// triggered. See [`Frame`] documentation to know what information it
+    /// contains.
     fn view(&self, frame: &Frame) -> Element;
 
     /// Handles terminal events such as key presses.

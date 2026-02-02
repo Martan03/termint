@@ -4,6 +4,43 @@
 //! stateful apps easily. The [`Term`] is also provided by this module and
 //! provides rendering options together with running the provided app
 //! implementation and handling the basic lifecycle.
+//!
+//! # Backend
+//!
+//! This module also contains backend module, which provides [`Event`] enum,
+//! [`Backend`] trait and backend implementations - currently those are
+//! [`CrosstermBackend`] and [`TermalBackend`] if you have the corresponding
+//! features enabled (`backend-crossterm` or `backend-termal`).
+//!
+//! # Example
+//!
+//! Implementing [`Application`] and running it in Framework mode using
+//! [`Term::run`].
+//!
+//! ```rust,no_run
+//! use termint::prelude::*;
+//!
+//! struct MyApp;
+//!
+//! impl Application for MyApp {
+//!     fn view(&self, _frame: &Frame) -> Element {
+//!         let mut main = Block::vertical().title("Termint App");
+//!         main.push("Hello from the Application trait!".fg(Color::Cyan), 0..);
+//!         main.into()
+//!     }
+//!
+//!     fn event(&mut self, event: Event) -> Action {
+//!         match event {
+//!             Event::Key(k) if k.code == KeyCode::Char('q') => Action::QUIT,
+//!             _ => Action::NONE,
+//!         }
+//!     }
+//! }
+//!
+//! fn main() -> Result<(), Error> {
+//!     Term::default().setup()?.run(&mut MyApp)
+//! }
+//! ```
 
 mod action;
 mod app;

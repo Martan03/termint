@@ -4,10 +4,17 @@
 
 ### Features:
 
+- Add `Backend` trait with `CrosstermBackend` and `TermalBackend`
+  implementations
+- Add option to change `Term` backend
 - Add `Application` trait and `Term::run` for managed main loop
 - Add `Term::draw` for size-aware rendering using `Frame` context
 - Add option to force scrollbar visibility to List and Table
 - Add automatic terminal restoration on crash or when `Term` dropped
+
+### Changes:
+
+- `Term` now requires a backend type (such as `Term::<Backend>::new()`)
 
 ### Fixes:
 

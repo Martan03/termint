@@ -17,8 +17,9 @@ use crate::{
     Error,
 };
 
-/// An event-reading backend powered by the [`termal`] crate. It is used as a
-/// generic parameter for [`Term`], which then uses it as the backend.
+/// An event-reading backend powered by the `termal` crate. It is used as a
+/// generic parameter for [`crate::term::Term`], which then uses it as the 
+/// backend.
 ///
 /// # Usage:
 /// ```rust

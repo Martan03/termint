@@ -151,7 +151,7 @@ impl<B> Term<B> {
         Ok(self)
     }
 
-    /// Enables mouse events backend capture.
+    /// Enables mouse events backend capture ([`Event::Mouse`]).
     pub fn with_mouse(mut self) -> Self {
         if !self.mouse_enabled {
             enable_mouse_capture();
@@ -160,7 +160,7 @@ impl<B> Term<B> {
         self
     }
 
-    /// Enables bracketed paste mode, which allows capturing `Event::Paste`.
+    /// Enables bracketed paste mode, which allows capturing [`Event::Paste`].
     pub fn with_paste(mut self) -> Self {
         if !self.paste_enabled {
             enable_bracketed_paste();
@@ -255,8 +255,8 @@ impl<B> Term<B> {
     /// Re-renders the last rendered widget tree.
     ///
     /// This is efficient way of updating UI, when you only update states of
-    /// widgets that don't change the layout structure (such as [`List`]
-    /// selected item).
+    /// widgets that don't change the layout structure (such as
+    /// [`create::widgets::List`] selected item).
     pub fn rerender(&mut self) -> Result<(), Error> {
         let wid = self.prev_widget.take().ok_or(Error::NoPreviousWidget)?;
 
