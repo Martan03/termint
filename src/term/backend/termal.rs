@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use termal::raw::events::Status;
 use termal::raw::events::{
     mouse::Button as TermalButton, mouse::Event as TermalMouseEvent,
     mouse::Mouse, Event as TermalEvent, Key, KeyCode as TermalKeyCode,
     Modifiers as TermalMod,
 };
+use termal::raw::events::{StateChange, Status};
 use termal::raw::{StdioProvider, Terminal};
 
 use crate::term::backend::event::{
@@ -34,20 +34,40 @@ use crate::{
 ///
 /// This requires `backend-termal` feature to be enabled.
 #[derive(Debug, Default)]
-pub struct TermalBackend(pub(crate) Terminal<StdioProvider>);
+pub struct TermalBackend {
+    terminal: Terminal<StdioProvider>,
+    paste_buffer: Option<String>,
+}
 
 impl Backend for TermalBackend {
     fn read_event(
         &mut self,
         timeout: Duration,
     ) -> Result<Option<Event>, Error> {
-        let event = self
-            .0
-            .read_timeout(timeout)?
-            .map(TryInto::try_into)
-            .transpose()
-            .unwrap_or(None);
-        Ok(event)
+        let event = match self.terminal.read_timeout(timeout)? {
+            Some(e) => e,
+            None => return Ok(None),
+        };
+
+        match event {
+            TermalEvent::StateChange(StateChange::BracketedPasteStart) => {
+                self.paste_buffer = Some(String::new());
+                self.read_event(timeout)
+            }
+            TermalEvent::StateChange(StateChange::BracketedPasteEnd) => {
+                let content = self.paste_buffer.take().unwrap_or_default();
+                Ok(Some(Event::Paste(content)))
+            }
+            TermalEvent::KeyPress(key) if self.paste_buffer.is_some() => {
+                if let Some(c) = key.key_char {
+                    if let Some(buf) = self.paste_buffer.as_mut() {
+                        buf.push(c);
+                    }
+                }
+                self.read_event(timeout)
+            }
+            other => Ok(other.try_into().ok()),
+        }
     }
 }
 
