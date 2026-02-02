@@ -6,7 +6,9 @@ use std::{
 
 use termal::{
     codes::{
-        DISABLE_ALTERNATIVE_BUFFER, ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN,
+        DISABLE_ALTERNATIVE_BUFFER, DISABLE_MOUSE_XY_ALL_TRACKING,
+        DISABLE_MOUSE_XY_EXT, ENABLE_ALTERNATIVE_BUFFER,
+        ENABLE_MOUSE_XY_ALL_TRACKING, ENABLE_MOUSE_XY_EXT, ERASE_SCREEN,
         HIDE_CURSOR, SHOW_CURSOR,
     },
     raw::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size},
@@ -82,6 +84,7 @@ pub struct Term<B = NoBackend> {
     cache: Cache,
     padding: Padding,
     setuped: bool,
+    mouse_capture: bool,
     last_size: Vec2,
 }
 
@@ -112,6 +115,7 @@ impl<B> Term<B> {
             cache: Cache::default(),
             padding: Padding::default(),
             setuped: false,
+            mouse_capture: false,
             last_size: Vec2::default(),
         }
     }
@@ -143,6 +147,26 @@ impl<B> Term<B> {
             self.setuped = true;
         }
         Ok(self)
+    }
+
+    /// Enables mouse events backend capture
+    pub fn enable_mouse_capture(mut self) -> Self {
+        if !self.mouse_capture {
+            print!("{}{}", ENABLE_MOUSE_XY_ALL_TRACKING, ENABLE_MOUSE_XY_EXT);
+            self.mouse_capture = true;
+        }
+        self
+    }
+
+    /// Disable mouse events backend capture
+    pub fn disable_mouse_capture(&mut self) {
+        if self.mouse_capture {
+            print!(
+                "{}{}",
+                DISABLE_MOUSE_XY_ALL_TRACKING, DISABLE_MOUSE_XY_EXT
+            );
+            self.mouse_capture = false;
+        }
     }
 
     /// Sets [`Padding`] of the [`Term`] to given value.
@@ -363,7 +387,8 @@ impl Default for Term<DefaultBackend> {
             small: Default::default(),
             cache: Default::default(),
             padding: Default::default(),
-            setuped: Default::default(),
+            setuped: false,
+            mouse_capture: false,
             last_size: Default::default(),
         }
     }
@@ -377,5 +402,6 @@ impl<B> Drop for Term<B> {
             _ = disable_raw_mode();
             self.setuped = false;
         }
+        self.disable_mouse_capture();
     }
 }
