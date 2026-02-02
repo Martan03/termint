@@ -281,9 +281,11 @@ impl<B> Term<B> {
     pub fn restore() {
         if is_raw_mode_enabled() {
             print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
-            _ = stdout().flush();
             _ = disable_raw_mode();
         }
+        disable_mouse_capture();
+        disable_bracketed_paste();
+        _ = stdout().flush();
     }
 
     /// Gets size of the terminal
