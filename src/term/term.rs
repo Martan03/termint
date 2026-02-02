@@ -25,7 +25,7 @@ use crate::{
 
 static HOOK_SET: Once = Once::new();
 
-/// The main entry points for terminal management and rendering.
+/// The main entry point for terminal management and rendering.
 ///
 /// [`Term`] provides two ways to build the TUI:
 /// 1. **Framework mode**: using [`Term::run`] with [`Application`] trait
@@ -34,34 +34,36 @@ static HOOK_SET: Once = Once::new();
 ///
 /// # Example (framework mode):
 ///
-/// Simple app definition and usage without any event handling (results in
-/// static app). This assumes at least one backend feature is enabled (by
-/// default crossterm backend is used).
+/// Simple app definition and usage. This assumes at least one backend feature
+/// is enabled (by default crossterm backend is used).
 ///
-/// ```rust
-/// # use termint::{
-/// #     term::{Term, Application, Frame},
-/// #     widgets::Element
-/// # };
+/// ```rust,no_run
+/// use termint::prelude::*;
+///
 /// struct MyApp;
+///
 /// impl Application for MyApp {
 ///     fn view(&self, _frame: &Frame) -> Element {
 ///         "Your UI here".into()
 ///     }
+///
+///     fn event(&mut self, event: Event) -> Action {
+///         match event {
+///             Event::Key(k) if k.code == KeyCode::Char('q') => Action::QUIT,
+///             _ => Action::NONE,
+///         }
+///     }
 /// }
-/// # fn example() -> Result<(), termint::Error> {
-/// let mut app = MyApp;
-/// Term::default().run(&mut app)?;
-/// # Ok(())
-/// # }
+///
+/// fn main() -> Result<(), Error> {
+///     Term::default().setup()?.run(&mut MyApp)
+/// }
 /// ```
 ///
 /// # Example (manual mode):
 ///
 /// ```rust
-/// # use termint::{
-/// #    term::Term, widgets::{Block, ToSpan}
-/// # };
+/// use termint::prelude::*;
 ///
 /// # fn example() -> Result<(), termint::Error> {
 /// let main = Block::vertical().title("Example".to_span());
@@ -84,12 +86,26 @@ pub struct Term<B = NoBackend> {
 }
 
 impl<B: Default> Term<B> {
+    /// Creates new [`Term`] with the specified backend
+    pub fn new() -> Self {
+        Self::custom(B::default())
+    }
+
     /// Creates new [`Term`] and prepares the terminal using [`Term::setup`].
     ///
     /// The terminal is restored automatically when [`Term`] is dropped.
-    pub fn new() -> Self {
+    pub fn init() -> Result<Self, Error> {
+        let mut term = Self::new();
+        term = term.setup()?;
+        Ok(term)
+    }
+}
+
+impl<B> Term<B> {
+    /// Creates new [`Term`] with the given backend
+    pub fn custom(backend: B) -> Self {
         Self {
-            backend: B::default(),
+            backend: backend,
             prev: None,
             prev_widget: None,
             small: None,
@@ -100,14 +116,6 @@ impl<B: Default> Term<B> {
         }
     }
 
-    pub fn init() -> Result<Self, Error> {
-        let mut term = Self::new();
-        term = term.setup()?;
-        Ok(term)
-    }
-}
-
-impl<B> Term<B> {
     /// Prepares the terminal: enables the alternate buffer, clears screen,
     /// hides cursor and enable raw mode.
     ///
@@ -177,9 +185,7 @@ impl<B> Term<B> {
     /// # Example:
     ///
     /// ```rust
-    /// # use termint::{
-    /// #    term::Term, widgets::{Block, ToSpan}
-    /// # };
+    /// use termint::prelude::*;
     ///
     /// # fn example() -> Result<(), termint::Error> {
     /// let main = Block::vertical().title("Example".to_span());
@@ -260,10 +266,8 @@ impl<B: Backend> Term<B> {
     /// # Example
     ///
     /// ```rust
-    /// # use termint::{
-    /// #     term::{Term, Application, Frame},
-    /// #     widgets::{Spacer, Element}
-    /// # };
+    /// use termint::prelude::*;
+    ///
     /// # #[derive(Default)]
     /// # struct MyApp;
     /// # impl Application for MyApp {

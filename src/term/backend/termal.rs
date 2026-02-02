@@ -17,6 +17,22 @@ use crate::{
     Error,
 };
 
+/// An event-reading backend powered by the [`termal`] crate. It is used as a
+/// generic parameter for [`Term`], which then uses it as the backend.
+///
+/// # Usage:
+/// ```rust
+/// use termint::prelude::*;
+///
+/// # fn main() -> Result<(), Error> {
+/// Term::<TermalBackend>::init()?;
+/// # Ok(())
+/// # }
+/// ```
+///
+/// # Requirements
+///
+/// This requires `backend-termal` feature to be enabled.
 #[derive(Debug, Default)]
 pub struct TermalBackend(pub(crate) Terminal<StdioProvider>);
 

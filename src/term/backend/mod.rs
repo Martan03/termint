@@ -26,6 +26,8 @@ pub type DefaultBackend = CrosstermBackend;
 ))]
 pub type DefaultBackend = NoBackend;
 
+/// Backend trait allows creating custom backends, which then can be used as
+/// a custom [`Term`] backend in the Framework mode.
 pub trait Backend: Default {
     /// Polls for an event and returns it if available within the timeout
     fn read_event(
@@ -34,5 +36,19 @@ pub trait Backend: Default {
     ) -> Result<Option<Event>, Error>;
 }
 
+/// This is used when no backend feature is enabled. When [`Term`] has
+/// `NoBackend`, the Framework mode is disabled.
+///
+/// # Example
+///
+/// If you want to use the `NoBackend` with [`Term], you can create it like
+/// this:
+///
+/// ```rust
+/// use termint::prelude::*;
+/// use termint::term::backend::NoBackend;
+///
+/// Term::<NoBackend>::new();
+/// ```
 #[derive(Debug, Default)]
 pub struct NoBackend;
