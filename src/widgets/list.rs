@@ -11,7 +11,7 @@ use crate::{
     geometry::{Rect, Vec2},
     style::Style,
     text::Text,
-    widgets::cache::Cache,
+    widgets::{cache::Cache, Span},
 };
 
 use super::{span::ToSpan, widget::Widget, Element};
@@ -56,7 +56,7 @@ use super::{span::ToSpan, widget::Widget, Element};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct List<M: 'static> {
+pub struct List<M: 'static = ()> {
     items: Vec<String>,
     state: Rc<RefCell<ListState>>,
     auto_scroll: bool,
@@ -227,7 +227,7 @@ impl<M> Widget<M> for List<M> {
 
         let selected = self.state.borrow().selected;
         for i in self.state.borrow().offset..self.items.len() {
-            let mut span = ToSpan::<M>::style(&self.items[i], self.style);
+            let mut span = self.items[i].style(self.style);
             if Some(i) == selected {
                 buffer.set_str_styled(
                     &self.highlight,
@@ -253,7 +253,7 @@ impl<M> Widget<M> for List<M> {
     fn height(&self, size: &Vec2) -> usize {
         self.items
             .iter()
-            .map(|i| ToSpan::<M>::to_span(i).height(size))
+            .map(|i| <Span as Widget<M>>::height(&i.to_span(), size))
             .sum()
     }
 
@@ -261,9 +261,12 @@ impl<M> Widget<M> for List<M> {
         let mut width = 0;
         let mut height = 0;
         for item in self.items.iter() {
-            let span = ToSpan::<M>::to_span(item);
-            let h = span.height(size);
-            width = max(span.width(&Vec2::new(size.x, h)), width);
+            let span = item.to_span();
+            let h = <Span as Widget<M>>::height(&span, size);
+            width = max(
+                <Span as Widget<M>>::width(&span, &Vec2::new(size.x, h)),
+                width,
+            );
             height += h;
         }
         width + self.highlight.len() + (height > size.y) as usize
@@ -322,7 +325,8 @@ impl<M> List<M> {
     fn is_visible(&self, item: usize, offset: usize, size: &Vec2) -> bool {
         let mut height = 0;
         for i in offset..self.items.len() {
-            height += ToSpan::<M>::to_span(&self.items[i]).height(size);
+            height +=
+                <Span as Widget<M>>::height(&self.items[i].to_span(), size);
             if height > size.y {
                 return false;
             }

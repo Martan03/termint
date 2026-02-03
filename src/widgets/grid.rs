@@ -35,7 +35,7 @@ use super::{widget::Widget, Element};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Grid<M: 'static> {
+pub struct Grid<M: 'static = ()> {
     children: Vec<GridChild<M>>,
     rows: Vec<Unit>,
     cols: Vec<Unit>,
@@ -43,7 +43,7 @@ pub struct Grid<M: 'static> {
 
 /// Internal struct representing a child widget in a specific grid cell.
 #[derive(Debug)]
-struct GridChild<M: 'static> {
+struct GridChild<M: 'static = ()> {
     pub child: Element<M>,
     pub row: usize,
     pub col: usize,

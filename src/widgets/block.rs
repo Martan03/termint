@@ -42,7 +42,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Block<M: 'static, W = Element<M>> {
+pub struct Block<M: 'static = (), W = Element<M>> {
     title: Box<dyn Text>,
     borders: Border,
     border_type: BorderType,
@@ -65,7 +65,7 @@ where
         T: Into<Element<M>>,
     {
         Self {
-            title: Box::new(Span::<M>::new("")),
+            title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
@@ -131,7 +131,7 @@ impl<M> Block<M, Spacer> {
     #[must_use]
     pub fn empty() -> Self {
         Self {
-            title: Box::new(Span::<M>::new("")),
+            title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
@@ -158,7 +158,7 @@ impl<M> Block<M, Layout<M>> {
     #[must_use]
     pub fn vertical() -> Self {
         Self {
-            title: Box::new(Span::<M>::new("")),
+            title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),
@@ -183,7 +183,7 @@ impl<M> Block<M, Layout<M>> {
     #[must_use]
     pub fn horizontal() -> Self {
         Self {
-            title: Box::new(Span::<M>::new("")),
+            title: Box::new(Span::new("")),
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),

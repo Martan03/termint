@@ -34,7 +34,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct BgGrad<M: 'static, W = Element<M>> {
+pub struct BgGrad<M: 'static = (), W = Element<M>> {
     bg_start: RGB,
     bg_end: RGB,
     direction: Direction,

@@ -51,7 +51,7 @@ pub use table_state::TableState;
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Table<M: 'static> {
+pub struct Table<M: 'static = ()> {
     header: Option<Row<M>>,
     header_separator: Option<BorderType>,
     rows: Vec<Row<M>>,

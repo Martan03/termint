@@ -37,7 +37,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Scrollable<M: 'static, W = Element<M>> {
+pub struct Scrollable<M: 'static = (), W = Element<M>> {
     horizontal: Option<Element<M>>,
     vertical: Option<Element<M>>,
     child: Element<M>,

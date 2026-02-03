@@ -275,7 +275,7 @@ fn test_layout() {
 
 #[allow(unused)]
 fn grid_test() {
-    let mut grid = Grid::new(
+    let mut grid = Grid::<()>::new(
         vec![Unit::Length(3), Unit::Length(4), Unit::Fill(1)],
         vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
     );
@@ -373,7 +373,7 @@ fn scrollbar_test() {
 
     let state = Rc::new(Cell::new(ScrollbarState::new(5).content_len(30)));
 
-    let vertical = Scrollbar::vertical(state.clone());
+    let vertical = Scrollbar::<()>::vertical(state.clone());
     let horizontal = Scrollbar::horizontal(state.clone());
 
     let mut grid = Grid::new(

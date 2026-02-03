@@ -45,7 +45,7 @@ use super::{widget::Widget, Element};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Layout<M: 'static> {
+pub struct Layout<M: 'static = ()> {
     direction: Direction,
     children: Vec<Element<M>>,
     constraints: Vec<Constraint>,

@@ -20,7 +20,7 @@ use crate::{
 /// Users will use [`Widget`] trait directly only when implementing custom
 /// widget, otherwise they will use built-in widgets like [`Span`], [`List`]
 /// and so on.
-pub trait Widget<Message>: Any {
+pub trait Widget<Message = ()>: Any {
     /// Renders the widget into the given [`Buffer`] within the provided
     /// [`Rect`] bounds.
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache);
@@ -73,7 +73,7 @@ impl<M> fmt::Debug for dyn Widget<M> {
 ///
 /// Use [`Element::new`] to convert a widget into an `Element`.
 #[derive(Debug)]
-pub struct Element<Message: 'static> {
+pub struct Element<Message: 'static = ()> {
     pub type_id: TypeId,
     pub widget: Box<dyn Widget<Message>>,
 }

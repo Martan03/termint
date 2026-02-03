@@ -88,7 +88,7 @@ where
 
 impl<M, T> From<&Vec<T>> for Row<M>
 where
-    for<'a> &'a T: ToSpan<M>,
+    for<'a> &'a T: ToSpan,
 {
     fn from(vec: &Vec<T>) -> Self {
         vec.iter()

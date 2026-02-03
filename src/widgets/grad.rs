@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{cmp::min, marker::PhantomData};
+use std::cmp::min;
 
 use crate::{
     buffer::Buffer,
@@ -52,7 +52,7 @@ use super::{widget::Widget, Element};
 ///
 /// println!("{grad}");
 /// ```
-pub struct Grad<M: 'static> {
+pub struct Grad {
     text: String,
     fg_start: RGB,
     fg_end: RGB,
@@ -62,10 +62,9 @@ pub struct Grad<M: 'static> {
     align: TextAlign,
     wrap: Wrap,
     ellipsis: String,
-    _marker: PhantomData<M>,
 }
 
-impl<M> Grad<M> {
+impl Grad {
     /// Creates a new [`Grad`] with given text and gradient colors.
     ///
     /// # Parameters
@@ -99,7 +98,6 @@ impl<M> Grad<M> {
             align: Default::default(),
             wrap: Default::default(),
             ellipsis: "...".to_string(),
-            _marker: PhantomData,
         }
     }
 
@@ -194,27 +192,21 @@ impl<M> Grad<M> {
     }
 }
 
-impl<M> Widget<M> for Grad<M> {
+impl<M> Widget<M> for Grad {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.height_letter_wrap(size),
-            Wrap::Word => self.height_word_wrap(size),
-        }
+        self.inner_height(size)
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => self.width_word_wrap(size),
-        }
+        self.inner_width(size)
     }
 }
 
-impl<M> Text for Grad<M> {
+impl Text for Grad {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
@@ -264,14 +256,28 @@ impl<M> Text for Grad<M> {
     }
 }
 
-impl<M> fmt::Display for Grad<M> {
+impl fmt::Display for Grad {
     /// Automatically converts [`Grad`] to String when printing
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }
 }
 
-impl<M> Grad<M> {
+impl Grad {
+    fn inner_height(&self, size: &Vec2) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.height_letter_wrap(size),
+            Wrap::Word => self.height_word_wrap(size),
+        }
+    }
+
+    fn inner_width(&self, size: &Vec2) -> usize {
+        match self.wrap {
+            Wrap::Letter => self.width_letter_wrap(size),
+            Wrap::Word => self.width_word_wrap(size),
+        }
+    }
+
     fn render_vertical(
         &self,
         buffer: &mut Buffer,
@@ -279,8 +285,10 @@ impl<M> Grad<M> {
         offset: usize,
         wrap: Option<Wrap>,
     ) -> Vec2 {
-        let height =
-            min(self.height(rect.size()).saturating_sub(1), rect.height());
+        let height = min(
+            self.inner_height(rect.size()).saturating_sub(1),
+            rect.height(),
+        );
         let step = self.get_step(height as i16);
         self._render(
             buffer,
@@ -300,7 +308,7 @@ impl<M> Grad<M> {
         offset: usize,
         wrap: Option<Wrap>,
     ) -> Vec2 {
-        let width = if self.height(rect.size()) <= 1 {
+        let width = if self.inner_height(rect.size()) <= 1 {
             self.text.chars().count()
         } else {
             rect.width()
@@ -511,20 +519,20 @@ impl<M> Grad<M> {
 }
 
 // From implementations
-impl<M> From<Grad<M>> for Box<dyn Widget<M>> {
-    fn from(value: Grad<M>) -> Self {
+impl<M> From<Grad> for Box<dyn Widget<M>> {
+    fn from(value: Grad) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<Grad<M>> for Element<M> {
-    fn from(value: Grad<M>) -> Self {
+impl<M> From<Grad> for Element<M> {
+    fn from(value: Grad) -> Self {
         Element::new(value)
     }
 }
 
-impl<M> From<Grad<M>> for Box<dyn Text> {
-    fn from(value: Grad<M>) -> Self {
+impl From<Grad> for Box<dyn Text> {
+    fn from(value: Grad) -> Self {
         Box::new(value)
     }
 }

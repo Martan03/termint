@@ -35,7 +35,7 @@ use super::{Element, Widget};
 ///
 /// In this example, the second child (`get_top_child()`) is rendered on top of
 /// the first.
-pub struct Overlay<M: 'static> {
+pub struct Overlay<M: 'static = ()> {
     children: Vec<Element<M>>,
 }
 

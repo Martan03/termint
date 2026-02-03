@@ -39,7 +39,7 @@ use super::{Element, Widget};
 /// # }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
-pub struct Scrollbar<M: 'static> {
+pub struct Scrollbar<M: 'static = ()> {
     track_char: char,
     track_style: Style,
     thumb_char: char,
