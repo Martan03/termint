@@ -45,16 +45,16 @@ use super::{widget::Widget, Element};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Layout {
+pub struct Layout<M: 'static> {
     direction: Direction,
-    children: Vec<Element>,
+    children: Vec<Element<M>>,
     constraints: Vec<Constraint>,
     style: Style,
     padding: Padding,
     center: bool,
 }
 
-impl Layout {
+impl<M> Layout<M> {
     /// Creates new [`Layout`] that flexes in given [`Direction`].
     #[must_use]
     pub fn new(direction: Direction) -> Self {
@@ -143,7 +143,7 @@ impl Layout {
     )]
     pub fn add_child<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
         C: Into<Constraint>,
     {
         self.children.push(child.into());
@@ -158,7 +158,7 @@ impl Layout {
     ///   [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
         C: Into<Constraint>,
     {
         self.children.push(child.into());
@@ -166,7 +166,7 @@ impl Layout {
     }
 }
 
-impl Widget for Layout {
+impl<M> Widget<M> for Layout<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.render_base_style(buffer, &rect);
 
@@ -209,12 +209,12 @@ impl Widget for Layout {
         width + self.padding.get_horizontal()
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().collect()
     }
 }
 
-impl Default for Layout {
+impl<M> Default for Layout<M> {
     fn default() -> Self {
         Self {
             direction: Direction::Vertical,
@@ -227,7 +227,7 @@ impl Default for Layout {
     }
 }
 
-impl Layout {
+impl<M> Layout<M> {
     /// Renders layout
     fn ver_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         let (sizes, mut rect) = match self.get_cache(&rect, cache) {
@@ -317,7 +317,7 @@ impl Layout {
         inner: F4,
     ) -> (Vec<usize>, Rect)
     where
-        F1: Fn(&Element, &Vec2) -> usize,
+        F1: Fn(&Element<M>, &Vec2) -> usize,
         F2: Fn(&mut Vec2, usize),
         F3: Fn(Vec2) -> usize,
         F4: Fn(Rect, usize) -> Rect,
@@ -373,7 +373,7 @@ impl Layout {
 
     fn size_sd<F>(&self, size: &Vec2, prim: usize, csize: F) -> usize
     where
-        F: Fn(&Element, &Vec2) -> usize,
+        F: Fn(&Element<M>, &Vec2) -> usize,
     {
         let mut total = 0;
         let mut fill = false;
@@ -507,14 +507,14 @@ impl Layout {
 }
 
 // From implementations
-impl From<Layout> for Box<dyn Widget> {
-    fn from(value: Layout) -> Self {
+impl<M> From<Layout<M>> for Box<dyn Widget<M>> {
+    fn from(value: Layout<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Layout> for Element {
-    fn from(value: Layout) -> Self {
+impl<M> From<Layout<M>> for Element<M> {
+    fn from(value: Layout<M>) -> Self {
         Element::new(value)
     }
 }

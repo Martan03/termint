@@ -42,18 +42,18 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Block<W = Element> {
+pub struct Block<M: 'static, W = Element<M>> {
     title: Box<dyn Text>,
     borders: Border,
     border_type: BorderType,
     border_style: Style,
-    child: Element,
+    child: Element<M>,
     child_type: PhantomData<W>,
 }
 
-impl<W> Block<W>
+impl<M, W> Block<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     /// Returns a new [`Block`] wrapping the given widget, with all borders
     /// enabled and no title.
@@ -62,10 +62,10 @@ where
     #[must_use]
     pub fn new<T>(child: T) -> Self
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         Self {
-            title: Box::new(Span::new("")),
+            title: Box::new(Span::<M>::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
@@ -126,12 +126,12 @@ where
     }
 }
 
-impl Block<Spacer> {
+impl<M> Block<M, Spacer> {
     /// Returns an empty [`Block`] with no title and all borders
     #[must_use]
     pub fn empty() -> Self {
         Self {
-            title: Box::new(Span::new("")),
+            title: Box::new(Span::<M>::new("")),
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
@@ -141,7 +141,7 @@ impl Block<Spacer> {
     }
 }
 
-impl Block<Layout> {
+impl<M> Block<M, Layout<M>> {
     /// Returns a [`Block`] containing a vertical [`Layout`] as its child.
     ///
     /// Very often you want to have a layout inside of a [`Block`] widget. This
@@ -158,7 +158,7 @@ impl Block<Layout> {
     #[must_use]
     pub fn vertical() -> Self {
         Self {
-            title: Box::new(Span::new("")),
+            title: Box::new(Span::<M>::new("")),
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),
@@ -183,7 +183,7 @@ impl Block<Layout> {
     #[must_use]
     pub fn horizontal() -> Self {
         Self {
-            title: Box::new(Span::new("")),
+            title: Box::new(Span::<M>::new("")),
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),
@@ -195,7 +195,8 @@ impl Block<Layout> {
     /// Sets flexing [`Direction`] of the [`Layout`].
     #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
-        self.child = self.child.map::<Layout, _>(|l| l.direction(direction));
+        self.child =
+            self.child.map::<Layout<M>, _>(|l| l.direction(direction));
         self
     }
 
@@ -205,7 +206,7 @@ impl Block<Layout> {
     where
         T: Into<Style>,
     {
-        self.child = self.child.map::<Layout, _>(|l| l.style(style));
+        self.child = self.child.map::<Layout<M>, _>(|l| l.style(style));
         self
     }
 
@@ -215,7 +216,7 @@ impl Block<Layout> {
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.map::<Layout, _>(|l| l.bg(bg));
+        self.child = self.child.map::<Layout<M>, _>(|l| l.bg(bg));
         self
     }
 
@@ -225,7 +226,7 @@ impl Block<Layout> {
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.map::<Layout, _>(|l| l.fg(fg));
+        self.child = self.child.map::<Layout<M>, _>(|l| l.fg(fg));
         self
     }
 
@@ -235,7 +236,7 @@ impl Block<Layout> {
     where
         T: Into<Padding>,
     {
-        self.child = self.child.map::<Layout, _>(|l| l.padding(padding));
+        self.child = self.child.map::<Layout<M>, _>(|l| l.padding(padding));
         self
     }
 
@@ -245,7 +246,7 @@ impl Block<Layout> {
     /// be centered horizontally. Otherwise it will be centered vertically.
     #[must_use]
     pub fn center(mut self) -> Self {
-        self.child = self.child.map::<Layout, _>(|l| l.center());
+        self.child = self.child.map::<Layout<M>, _>(|l| l.center());
         self
     }
 
@@ -256,10 +257,10 @@ impl Block<Layout> {
     )]
     pub fn add_child<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
         C: Into<Constraint>,
     {
-        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+        if let Some(layout) = self.child.downcast_mut::<Layout<M>>() {
             layout.push(child, constraint);
         }
     }
@@ -272,18 +273,18 @@ impl Block<Layout> {
     ///   [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
         C: Into<Constraint>,
     {
-        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+        if let Some(layout) = self.child.downcast_mut::<Layout<M>>() {
             layout.push(child, constraint);
         }
     }
 }
 
-impl<W> Widget for Block<W>
+impl<M, W> Widget<M> for Block<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         let (t, r, b, l) = self.render_border(buffer, &rect);
@@ -320,14 +321,14 @@ where
         max(self.child.width(&size), self.title.get_text().len()) + width
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<M>> {
         vec![&self.child]
     }
 }
 
-impl<W> Block<W>
+impl<M, W> Block<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     /// Renders [`Block`] border
     fn render_border(
@@ -425,20 +426,20 @@ where
 }
 
 // From implementations
-impl<W> From<Block<W>> for Box<dyn Widget>
+impl<M, W> From<Block<M, W>> for Box<dyn Widget<M>>
 where
-    W: Widget + 'static,
+    W: Widget<M> + 'static,
 {
-    fn from(value: Block<W>) -> Self {
+    fn from(value: Block<M, W>) -> Self {
         Box::new(value)
     }
 }
 
-impl<W> From<Block<W>> for Element
+impl<M, W> From<Block<M, W>> for Element<M>
 where
-    W: Widget + 'static,
+    W: Widget<M> + 'static,
 {
-    fn from(value: Block<W>) -> Self {
+    fn from(value: Block<M, W>) -> Self {
         Element::new(value)
     }
 }

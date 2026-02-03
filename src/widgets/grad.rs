@@ -1,5 +1,5 @@
 use core::fmt;
-use std::cmp::min;
+use std::{cmp::min, marker::PhantomData};
 
 use crate::{
     buffer::Buffer,
@@ -52,7 +52,7 @@ use super::{widget::Widget, Element};
 ///
 /// println!("{grad}");
 /// ```
-pub struct Grad {
+pub struct Grad<M: 'static> {
     text: String,
     fg_start: RGB,
     fg_end: RGB,
@@ -62,9 +62,10 @@ pub struct Grad {
     align: TextAlign,
     wrap: Wrap,
     ellipsis: String,
+    _marker: PhantomData<M>,
 }
 
-impl Grad {
+impl<M> Grad<M> {
     /// Creates a new [`Grad`] with given text and gradient colors.
     ///
     /// # Parameters
@@ -98,6 +99,7 @@ impl Grad {
             align: Default::default(),
             wrap: Default::default(),
             ellipsis: "...".to_string(),
+            _marker: PhantomData,
         }
     }
 
@@ -192,7 +194,7 @@ impl Grad {
     }
 }
 
-impl Widget for Grad {
+impl<M> Widget<M> for Grad<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
     }
@@ -212,7 +214,7 @@ impl Widget for Grad {
     }
 }
 
-impl Text for Grad {
+impl<M> Text for Grad<M> {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
@@ -262,14 +264,14 @@ impl Text for Grad {
     }
 }
 
-impl fmt::Display for Grad {
+impl<M> fmt::Display for Grad<M> {
     /// Automatically converts [`Grad`] to String when printing
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }
 }
 
-impl Grad {
+impl<M> Grad<M> {
     fn render_vertical(
         &self,
         buffer: &mut Buffer,
@@ -509,20 +511,20 @@ impl Grad {
 }
 
 // From implementations
-impl From<Grad> for Box<dyn Widget> {
-    fn from(value: Grad) -> Self {
+impl<M> From<Grad<M>> for Box<dyn Widget<M>> {
+    fn from(value: Grad<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Grad> for Element {
-    fn from(value: Grad) -> Self {
+impl<M> From<Grad<M>> for Element<M> {
+    fn from(value: Grad<M>) -> Self {
         Element::new(value)
     }
 }
 
-impl From<Grad> for Box<dyn Text> {
-    fn from(value: Grad) -> Self {
+impl<M> From<Grad<M>> for Box<dyn Text> {
+    fn from(value: Grad<M>) -> Self {
         Box::new(value)
     }
 }

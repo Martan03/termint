@@ -34,22 +34,22 @@ use super::{widget::Widget, Element};
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, Default)]
-pub struct Grid {
-    children: Vec<GridChild>,
+#[derive(Debug)]
+pub struct Grid<M: 'static> {
+    children: Vec<GridChild<M>>,
     rows: Vec<Unit>,
     cols: Vec<Unit>,
 }
 
 /// Internal struct representing a child widget in a specific grid cell.
 #[derive(Debug)]
-struct GridChild {
-    pub child: Element,
+struct GridChild<M: 'static> {
+    pub child: Element<M>,
     pub row: usize,
     pub col: usize,
 }
 
-impl Grid {
+impl<M> Grid<M> {
     /// Creates a new [`Grid`] from columns and rows specifications.
     ///
     /// Both `cols` and `rows` accept any iterable of types convertible into
@@ -102,7 +102,7 @@ impl Grid {
     )]
     pub fn add_child<T>(&mut self, child: T, col: usize, row: usize)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         self.children.push(GridChild {
             child: child.into(),
@@ -119,7 +119,7 @@ impl Grid {
     /// - `row`: Zero-based row index (y)
     pub fn push<T>(&mut self, child: T, col: usize, row: usize)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         self.children.push(GridChild {
             child: child.into(),
@@ -129,7 +129,7 @@ impl Grid {
     }
 }
 
-impl Widget for Grid {
+impl<M> Widget<M> for Grid<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() || self.children.is_empty() {
             return;
@@ -174,12 +174,12 @@ impl Widget for Grid {
         width
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().map(|c| &c.child).collect()
     }
 }
 
-impl Grid {
+impl<M> Grid<M> {
     /// Gets sizes and starting positions of each row and column
     fn get_sizes(
         &self,
@@ -283,14 +283,24 @@ impl Grid {
     }
 }
 
-impl From<Grid> for Box<dyn Widget> {
-    fn from(value: Grid) -> Self {
+impl<M> Default for Grid<M> {
+    fn default() -> Self {
+        Self {
+            children: Default::default(),
+            rows: Default::default(),
+            cols: Default::default(),
+        }
+    }
+}
+
+impl<M> From<Grid<M>> for Box<dyn Widget<M>> {
+    fn from(value: Grid<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Grid> for Element {
-    fn from(value: Grid) -> Self {
+impl<M> From<Grid<M>> for Element<M> {
+    fn from(value: Grid<M>) -> Self {
         Element::new(value)
     }
 }

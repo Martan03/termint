@@ -1,4 +1,4 @@
-use std::{cell::Cell, rc::Rc};
+use std::{cell::Cell, marker::PhantomData, rc::Rc};
 
 use crate::{
     buffer::Buffer,
@@ -39,13 +39,14 @@ use super::{Element, Widget};
 /// # }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
-pub struct Scrollbar {
+pub struct Scrollbar<M: 'static> {
     track_char: char,
     track_style: Style,
     thumb_char: char,
     thumb_style: Style,
     direction: Direction,
     state: Rc<Cell<ScrollbarState>>,
+    _marker: PhantomData<M>,
 }
 
 /// Represents the scroll state shared by a [`Scrollbar`] and the app itself.
@@ -79,7 +80,7 @@ pub struct ScrollbarState {
     pub offset: usize,
 }
 
-impl Scrollbar {
+impl<M> Scrollbar<M> {
     /// Creates a vertical [`Scrollbar`] with the given state.
     ///
     /// Uses `│` character for track and `┃` for thumb by default.
@@ -252,7 +253,7 @@ impl ScrollbarState {
     }
 }
 
-impl Widget for Scrollbar {
+impl<M> Widget<M> for Scrollbar<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         match self.direction {
             Direction::Vertical => self.ver_render(buffer, &rect),
@@ -277,7 +278,7 @@ impl Widget for Scrollbar {
     }
 }
 
-impl Scrollbar {
+impl<M> Scrollbar<M> {
     /// Renders the vertical scrollbar
     fn ver_render(&self, buffer: &mut Buffer, rect: &Rect) {
         let Some((size, pos)) = self.calc_thumb(rect.height()) else {
@@ -351,7 +352,7 @@ impl Scrollbar {
     }
 }
 
-impl Default for Scrollbar {
+impl<M> Default for Scrollbar<M> {
     fn default() -> Self {
         Self {
             track_char: '│',
@@ -360,18 +361,19 @@ impl Default for Scrollbar {
             thumb_style: Default::default(),
             direction: Default::default(),
             state: Default::default(),
+            _marker: PhantomData,
         }
     }
 }
 
-impl From<Scrollbar> for Box<dyn Widget> {
-    fn from(value: Scrollbar) -> Self {
+impl<M> From<Scrollbar<M>> for Box<dyn Widget<M>> {
+    fn from(value: Scrollbar<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Scrollbar> for Element {
-    fn from(value: Scrollbar) -> Self {
+impl<M> From<Scrollbar<M>> for Element<M> {
+    fn from(value: Scrollbar<M>) -> Self {
         Element::new(value)
     }
 }

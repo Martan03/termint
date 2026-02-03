@@ -6,12 +6,14 @@ use crate::{
 };
 
 pub trait Application {
+    type Message;
+
     /// Returns the widget tree to be rendered.
     ///
     /// This is called by [`crate::term::Term`] whenever [`Action::RENDER`] is
     /// triggered. See [`Frame`] documentation to know what information it
     /// contains.
-    fn view(&self, frame: &Frame) -> Element;
+    fn view(&self, frame: &Frame) -> Element<Self::Message>;
 
     /// Handles terminal events such as key presses.
     ///

@@ -34,16 +34,16 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct BgGrad<W = Element> {
+pub struct BgGrad<M: 'static, W = Element<M>> {
     bg_start: RGB,
     bg_end: RGB,
     direction: Direction,
     padding: Padding,
-    child: Element,
+    child: Element<M>,
     child_type: PhantomData<W>,
 }
 
-impl BgGrad<Spacer> {
+impl<M> BgGrad<M, Spacer> {
     /// Creates a new empty [`BgGrad`] with the given gradient colors and
     /// direction.
     ///
@@ -127,7 +127,7 @@ impl BgGrad<Spacer> {
     }
 }
 
-impl<W> BgGrad<W> {
+impl<M, W> BgGrad<M, W> {
     /// Sets the child widget to be displayed in front of the gradient.
     ///
     /// # Example
@@ -138,9 +138,9 @@ impl<W> BgGrad<W> {
     ///     .child(SomeWidget::new());
     /// ```
     #[must_use]
-    pub fn child<CW>(self, child: CW) -> BgGrad<CW>
+    pub fn child<I>(self, child: I) -> BgGrad<M, I>
     where
-        CW: Into<Element>,
+        I: Into<Element<M>>,
     {
         BgGrad {
             bg_start: self.bg_start,
@@ -153,9 +153,9 @@ impl<W> BgGrad<W> {
     }
 }
 
-impl<W> BgGrad<W>
+impl<M, W> BgGrad<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     /// Sets the gradient direction of the [`BgGrad`] background.
     ///
@@ -191,11 +191,12 @@ where
     }
 }
 
-impl BgGrad<Layout> {
+impl<M> BgGrad<M, Layout<M>> {
     /// Sets flexing [`Direction`] of the [`Layout`].
     #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
-        self.child = self.child.map::<Layout, _>(|l| l.direction(direction));
+        self.child =
+            self.child.map::<Layout<M>, _>(|l| l.direction(direction));
         self
     }
 
@@ -205,7 +206,7 @@ impl BgGrad<Layout> {
     where
         T: Into<Style>,
     {
-        self.child = self.child.map::<Layout, _>(|l| l.style(style));
+        self.child = self.child.map::<Layout<M>, _>(|l| l.style(style));
         self
     }
 
@@ -215,7 +216,7 @@ impl BgGrad<Layout> {
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.map::<Layout, _>(|l| l.bg(bg));
+        self.child = self.child.map::<Layout<M>, _>(|l| l.bg(bg));
         self
     }
 
@@ -225,7 +226,7 @@ impl BgGrad<Layout> {
     where
         T: Into<Option<Color>>,
     {
-        self.child = self.child.map::<Layout, _>(|l| l.fg(fg));
+        self.child = self.child.map::<Layout<M>, _>(|l| l.fg(fg));
         self
     }
 
@@ -235,7 +236,7 @@ impl BgGrad<Layout> {
     /// be centered horizontally. Otherwise it will be centered vertically.
     #[must_use]
     pub fn center(mut self) -> Self {
-        self.child = self.child.map::<Layout, _>(|l| l.center());
+        self.child = self.child.map::<Layout<M>, _>(|l| l.center());
         self
     }
 
@@ -246,10 +247,10 @@ impl BgGrad<Layout> {
     )]
     pub fn add_child<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
         C: Into<Constraint>,
     {
-        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+        if let Some(layout) = self.child.downcast_mut::<Layout<M>>() {
             layout.push(child, constraint);
         }
     }
@@ -262,18 +263,18 @@ impl BgGrad<Layout> {
     ///   [`Constraint`])
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
         C: Into<Constraint>,
     {
-        if let Some(layout) = self.child.downcast_mut::<Layout>() {
+        if let Some(layout) = self.child.downcast_mut::<Layout<M>>() {
             layout.push(child, constraint);
         }
     }
 }
 
-impl<W> Widget for BgGrad<W>
+impl<M, W> Widget<M> for BgGrad<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() {
@@ -307,14 +308,14 @@ where
         self.child.width(&size) + self.padding.get_horizontal()
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<M>> {
         vec![&self.child]
     }
 }
 
-impl<W> BgGrad<W>
+impl<M, W> BgGrad<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     /// Renders horizontal background gradient
     fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
@@ -375,20 +376,20 @@ where
 }
 
 // From implementations
-impl<W> From<BgGrad<W>> for Box<dyn Widget>
+impl<M, W> From<BgGrad<M, W>> for Box<dyn Widget<M>>
 where
-    W: Widget + 'static,
+    W: Widget<M> + 'static,
 {
-    fn from(value: BgGrad<W>) -> Self {
+    fn from(value: BgGrad<M, W>) -> Self {
         Box::new(value)
     }
 }
 
-impl<W> From<BgGrad<W>> for Element
+impl<M, W> From<BgGrad<M, W>> for Element<M>
 where
-    W: Widget + 'static,
+    W: Widget<M> + 'static,
 {
-    fn from(value: BgGrad<W>) -> Self {
+    fn from(value: BgGrad<M, W>) -> Self {
         Element::new(value)
     }
 }

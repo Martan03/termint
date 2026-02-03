@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, marker::PhantomData};
 
 use crate::{
     buffer::Buffer,
@@ -68,15 +68,16 @@ use super::{widget::Widget, Element};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Span {
+pub struct Span<M: 'static> {
     text: String,
     style: Style,
     align: TextAlign,
     wrap: Wrap,
     ellipsis: String,
+    _marker: PhantomData<M>,
 }
 
-impl Span {
+impl<M> Span<M> {
     /// Creates a new [`Span`] from any type convertible to string slice.
     ///
     /// # Example
@@ -216,7 +217,7 @@ impl Span {
     }
 }
 
-impl Widget for Span {
+impl<M> Widget<M> for Span<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
     }
@@ -236,7 +237,7 @@ impl Widget for Span {
     }
 }
 
-impl Text for Span {
+impl<M> Text for Span<M> {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
@@ -284,7 +285,7 @@ impl Text for Span {
     }
 }
 
-impl Default for Span {
+impl<M> Default for Span<M> {
     fn default() -> Self {
         Self {
             text: Default::default(),
@@ -292,17 +293,18 @@ impl Default for Span {
             align: Default::default(),
             wrap: Default::default(),
             ellipsis: "...".to_string(),
+            _marker: PhantomData,
         }
     }
 }
 
-impl fmt::Display for Span {
+impl<M> fmt::Display for Span<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }
 }
 
-impl Span {
+impl<M> Span<M> {
     /// Renders one line of text and aligns it based on set alignment
     fn render_line(
         &self,
@@ -391,98 +393,99 @@ impl Span {
 ///
 /// It's recommended to use `std::fmt::Display` trait. Types implementing this
 /// trait will contain `ToSpan` as well and can be converted to `Span`.
-pub trait ToSpan {
+pub trait ToSpan<M: 'static> {
     /// Creates [`Span`] from string and sets its style to given value
-    fn style<T>(self, style: T) -> Span
+    fn style<T>(self, style: T) -> Span<M>
     where
         T: Into<Style>;
 
     /// Creates [`Span`] from string and sets its fg to given color
-    fn fg<T>(self, fg: T) -> Span
+    fn fg<T>(self, fg: T) -> Span<M>
     where
         T: Into<Option<Color>>;
 
     /// Creates [`Span`] from string and sets its bg to given color
-    fn bg<T>(self, bg: T) -> Span
+    fn bg<T>(self, bg: T) -> Span<M>
     where
         T: Into<Option<Color>>;
 
     /// Creates [`Span`] from string and sets its modifier to given value
-    fn modifier(self, modifier: Modifier) -> Span;
+    fn modifier(self, modifier: Modifier) -> Span<M>;
 
     /// Creates [`Span`] from string and add given modifier to it
-    fn add_modifier(self, flag: Modifier) -> Span;
+    fn add_modifier(self, flag: Modifier) -> Span<M>;
 
     /// Creates [`Span`] from string and sets its alignment to given value
-    fn align(self, align: TextAlign) -> Span;
+    fn align(self, align: TextAlign) -> Span<M>;
 
     /// Creates [`Span`] from string and sets its wrapping to given value
-    fn wrap(self, wrap: Wrap) -> Span;
+    fn wrap(self, wrap: Wrap) -> Span<M>;
 
     /// Creates [`Span`] from string and sets its ellipsis to given value
-    fn ellipsis<T>(self, ellipsis: T) -> Span
+    fn ellipsis<T>(self, ellipsis: T) -> Span<M>
     where
         T: AsRef<str>;
 
     /// Converts type to [`Span`]
-    fn to_span(self) -> Span;
+    fn to_span(self) -> Span<M>;
 }
 
-impl<T> ToSpan for &T
+impl<M, T> ToSpan<M> for &T
 where
+    M: 'static,
     T: std::fmt::Display,
 {
-    fn style<S>(self, style: S) -> Span
+    fn style<S>(self, style: S) -> Span<M>
     where
         S: Into<Style>,
     {
         Span::new(self.to_string()).style(style)
     }
 
-    fn fg<C>(self, fg: C) -> Span
+    fn fg<C>(self, fg: C) -> Span<M>
     where
         C: Into<Option<Color>>,
     {
         Span::new(self.to_string()).fg(fg)
     }
 
-    fn bg<C>(self, bg: C) -> Span
+    fn bg<C>(self, bg: C) -> Span<M>
     where
         C: Into<Option<Color>>,
     {
         Span::new(self.to_string()).bg(bg)
     }
 
-    fn modifier(self, modifier: Modifier) -> Span {
+    fn modifier(self, modifier: Modifier) -> Span<M> {
         Span::new(self.to_string()).modifier(modifier)
     }
 
-    fn add_modifier(self, flag: Modifier) -> Span {
+    fn add_modifier(self, flag: Modifier) -> Span<M> {
         Span::new(self.to_string()).add_modifier(flag)
     }
 
-    fn align(self, align: TextAlign) -> Span {
+    fn align(self, align: TextAlign) -> Span<M> {
         Span::new(self.to_string()).align(align)
     }
 
-    fn wrap(self, wrap: Wrap) -> Span {
+    fn wrap(self, wrap: Wrap) -> Span<M> {
         Span::new(self.to_string()).wrap(wrap)
     }
 
-    fn ellipsis<R>(self, ellipsis: R) -> Span
+    fn ellipsis<R>(self, ellipsis: R) -> Span<M>
     where
         R: AsRef<str>,
     {
         Span::new(self.to_string()).ellipsis(ellipsis.as_ref())
     }
 
-    fn to_span(self) -> Span {
+    fn to_span(self) -> Span<M> {
         Span::new(self.to_string())
     }
 }
 
 // From implementations
-impl<T> From<T> for Span
+impl<M, T> From<T> for Span<M>
 where
     T: AsRef<str>,
 {
@@ -491,7 +494,7 @@ where
     }
 }
 
-impl<T> From<T> for Box<dyn Widget>
+impl<M: 'static, T> From<T> for Box<dyn Widget<M>>
 where
     T: AsRef<str>,
 {
@@ -505,11 +508,11 @@ where
     T: AsRef<str>,
 {
     fn from(value: T) -> Self {
-        Box::new(Span::new(value))
+        Box::new(Span::<()>::new(value))
     }
 }
 
-impl<T> From<T> for Element
+impl<M, T> From<T> for Element<M>
 where
     T: AsRef<str>,
 {
@@ -518,20 +521,20 @@ where
     }
 }
 
-impl From<Span> for Box<dyn Widget> {
-    fn from(value: Span) -> Self {
+impl<M> From<Span<M>> for Box<dyn Widget<M>> {
+    fn from(value: Span<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Span> for Box<dyn Text> {
-    fn from(value: Span) -> Self {
+impl<M> From<Span<M>> for Box<dyn Text> {
+    fn from(value: Span<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Span> for Element {
-    fn from(value: Span) -> Self {
+impl<M> From<Span<M>> for Element<M> {
+    fn from(value: Span<M>) -> Self {
         Element::new(value)
     }
 }

@@ -6,6 +6,7 @@ use std::{
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
+    prelude::MouseEvent,
     widgets::cache::Cache,
 };
 
@@ -19,7 +20,7 @@ use crate::{
 /// Users will use [`Widget`] trait directly only when implementing custom
 /// widget, otherwise they will use built-in widgets like [`Span`], [`List`]
 /// and so on.
-pub trait Widget: Any {
+pub trait Widget<Message>: Any {
     /// Renders the widget into the given [`Buffer`] within the provided
     /// [`Rect`] bounds.
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache);
@@ -33,12 +34,23 @@ pub trait Widget: Any {
     fn width(&self, size: &Vec2) -> usize;
 
     /// Gets widget's children
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<Message>> {
         vec![]
+    }
+
+    /// Handles the mouse event, returns None if outside of this widget or
+    /// no event handler set, otherwise returns corresponding Message.
+    fn on_event(
+        &self,
+        _area: Rect,
+        _cache: &mut Cache,
+        _event: MouseEvent,
+    ) -> Option<Message> {
+        None
     }
 }
 
-impl dyn Widget {
+impl<M> dyn Widget<M> {
     pub fn as_any(&self) -> &dyn Any {
         self
     }
@@ -48,7 +60,7 @@ impl dyn Widget {
     }
 }
 
-impl fmt::Debug for dyn Widget {
+impl<M> fmt::Debug for dyn Widget<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Converted widget")
     }
@@ -61,12 +73,12 @@ impl fmt::Debug for dyn Widget {
 ///
 /// Use [`Element::new`] to convert a widget into an `Element`.
 #[derive(Debug)]
-pub struct Element {
+pub struct Element<Message: 'static> {
     pub type_id: TypeId,
-    pub widget: Box<dyn Widget>,
+    pub widget: Box<dyn Widget<Message>>,
 }
 
-impl Element {
+impl<Message: 'static> Element<Message> {
     /// Creates a new [`Element`] from a given widget.
     ///
     /// This is commonly used to wrap widgets when composing layouts.
@@ -79,7 +91,7 @@ impl Element {
     /// ```
     pub fn new<W>(widget: W) -> Self
     where
-        W: Widget + 'static,
+        W: Widget<Message> + 'static,
     {
         Self {
             type_id: TypeId::of::<W>(),
@@ -87,7 +99,10 @@ impl Element {
         }
     }
 
-    pub fn map<W: Widget + 'static, F: FnOnce(W) -> W>(self, f: F) -> Self {
+    pub fn map<W: Widget<Message> + 'static, F: FnOnce(W) -> W>(
+        self,
+        f: F,
+    ) -> Self {
         let Element { type_id: _, widget } = self;
         let boxed_any: Box<dyn Any> = widget;
 
@@ -100,8 +115,8 @@ impl Element {
                 }
             }
             Err(orig) => {
-                let widget: Box<dyn Widget> = *orig
-                    .downcast::<Box<dyn Widget>>()
+                let widget: Box<dyn Widget<Message>> = *orig
+                    .downcast::<Box<dyn Widget<Message>>>()
                     .expect("Original type must be Box<dyn Widget>");
                 let type_id = widget.as_ref().type_id();
 
@@ -112,18 +127,18 @@ impl Element {
 
     /// Downcasts widget stored in the [`Element`] to given type, returns
     /// optional reference to the downcast widget on success.
-    pub fn downcast_ref<W: Widget>(&self) -> Option<&W> {
+    pub fn downcast_ref<W: Widget<Message>>(&self) -> Option<&W> {
         self.widget.as_ref().as_any().downcast_ref::<W>()
     }
 
     /// Downcasts widget stored in the [`Element`] to given type, returns
     /// optional mutable reference to the downcast widget on success.
-    pub fn downcast_mut<W: Widget>(&mut self) -> Option<&mut W> {
+    pub fn downcast_mut<W: Widget<Message>>(&mut self) -> Option<&mut W> {
         self.widget.as_mut().as_any_mut().downcast_mut::<W>()
     }
 }
 
-impl Widget for Element {
+impl<Message> Widget<Message> for Element<Message> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.widget.render(buffer, rect, cache)
     }
@@ -136,7 +151,16 @@ impl Widget for Element {
         self.widget.width(size)
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<Message>> {
         self.widget.children()
+    }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        cache: &mut Cache,
+        event: MouseEvent,
+    ) -> Option<Message> {
+        self.widget.on_event(area, cache, event)
     }
 }

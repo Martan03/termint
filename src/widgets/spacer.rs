@@ -45,7 +45,7 @@ impl Spacer {
     }
 }
 
-impl Widget for Spacer {
+impl<M> Widget<M> for Spacer {
     fn render(&self, _buffer: &mut Buffer, _rect: Rect, _cache: &mut Cache) {}
 
     fn height(&self, _size: &Vec2) -> usize {
@@ -57,13 +57,13 @@ impl Widget for Spacer {
     }
 }
 
-impl From<Spacer> for Box<dyn Widget> {
+impl<M> From<Spacer> for Box<dyn Widget<M>> {
     fn from(value: Spacer) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Spacer> for Element {
+impl<M> From<Spacer> for Element<M> {
     fn from(value: Spacer) -> Self {
         Element::new(value)
     }

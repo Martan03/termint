@@ -35,16 +35,16 @@ use super::{Element, Widget};
 ///
 /// In this example, the second child (`get_top_child()`) is rendered on top of
 /// the first.
-pub struct Overlay {
-    children: Vec<Element>,
+pub struct Overlay<M: 'static> {
+    children: Vec<Element<M>>,
 }
 
-impl Overlay {
+impl<M> Overlay<M> {
     /// Creates a new [`Overlay`] from a list of child widgets.
     ///
     /// The first widget will be at the bottom, and the last on top.
     #[must_use]
-    pub fn new(children: Vec<Element>) -> Self {
+    pub fn new(children: Vec<Element<M>>) -> Self {
         Self { children }
     }
 
@@ -58,13 +58,13 @@ impl Overlay {
     /// children.
     pub fn push<W>(&mut self, child: W)
     where
-        W: Into<Element>,
+        W: Into<Element<M>>,
     {
         self.children.push(child.into());
     }
 }
 
-impl Widget for Overlay {
+impl<M> Widget<M> for Overlay<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.children
             .iter()
@@ -88,19 +88,19 @@ impl Widget for Overlay {
             .unwrap_or(0)
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().collect()
     }
 }
 
-impl From<Overlay> for Element {
-    fn from(value: Overlay) -> Self {
+impl<M> From<Overlay<M>> for Element<M> {
+    fn from(value: Overlay<M>) -> Self {
         Element::new(value)
     }
 }
 
-impl From<Overlay> for Box<dyn Widget> {
-    fn from(value: Overlay) -> Self {
+impl<M> From<Overlay<M>> for Box<dyn Widget<M>> {
+    fn from(value: Overlay<M>) -> Self {
         Box::new(value)
     }
 }

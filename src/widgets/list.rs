@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     cmp::{max, min},
+    marker::PhantomData,
     rc::Rc,
 };
 
@@ -55,7 +56,7 @@ use super::{span::ToSpan, widget::Widget, Element};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct List {
+pub struct List<M: 'static> {
     items: Vec<String>,
     state: Rc<RefCell<ListState>>,
     auto_scroll: bool,
@@ -66,6 +67,7 @@ pub struct List {
     force_scrollbar: bool,
     scrollbar_fg: Color,
     thumb_fg: Color,
+    _marker: PhantomData<M>,
 }
 
 /// State of the [`List`] widget, including scroll offset and selected index.
@@ -75,7 +77,7 @@ pub struct ListState {
     pub selected: Option<usize>,
 }
 
-impl List {
+impl<M> List<M> {
     /// Creates a new [`List`] with given items and given state.
     #[must_use]
     pub fn new<T>(items: T, state: Rc<RefCell<ListState>>) -> Self
@@ -97,6 +99,7 @@ impl List {
             force_scrollbar: false,
             scrollbar_fg: Color::Default,
             thumb_fg: Color::Default,
+            _marker: PhantomData,
         }
     }
 
@@ -206,7 +209,7 @@ impl ListState {
     }
 }
 
-impl Widget for List {
+impl<M> Widget<M> for List<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         if self.auto_scroll {
             self.scroll_offset(rect.size());
@@ -224,7 +227,7 @@ impl Widget for List {
 
         let selected = self.state.borrow().selected;
         for i in self.state.borrow().offset..self.items.len() {
-            let mut span = self.items[i].style(self.style);
+            let mut span = ToSpan::<M>::style(&self.items[i], self.style);
             if Some(i) == selected {
                 buffer.set_str_styled(
                     &self.highlight,
@@ -248,14 +251,17 @@ impl Widget for List {
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        self.items.iter().map(|i| i.to_span().height(size)).sum()
+        self.items
+            .iter()
+            .map(|i| ToSpan::<M>::to_span(i).height(size))
+            .sum()
     }
 
     fn width(&self, size: &Vec2) -> usize {
         let mut width = 0;
         let mut height = 0;
         for item in self.items.iter() {
-            let span = item.to_span();
+            let span = ToSpan::<M>::to_span(item);
             let h = span.height(size);
             width = max(span.width(&Vec2::new(size.x, h)), width);
             height += h;
@@ -264,7 +270,7 @@ impl Widget for List {
     }
 }
 
-impl List {
+impl<M> List<M> {
     /// Renders [`List`] scrollbar
     fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
         let rat = self.items.len() as f32 / rect.height() as f32;
@@ -316,7 +322,7 @@ impl List {
     fn is_visible(&self, item: usize, offset: usize, size: &Vec2) -> bool {
         let mut height = 0;
         for i in offset..self.items.len() {
-            height += self.items[i].to_span().height(size);
+            height += ToSpan::<M>::to_span(&self.items[i]).height(size);
             if height > size.y {
                 return false;
             }
@@ -335,14 +341,14 @@ impl List {
 }
 
 // From implementations
-impl From<List> for Box<dyn Widget> {
-    fn from(value: List) -> Self {
+impl<M> From<List<M>> for Box<dyn Widget<M>> {
+    fn from(value: List<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<List> for Element {
-    fn from(value: List) -> Self {
+impl<M> From<List<M>> for Element<M> {
+    fn from(value: List<M>) -> Self {
         Element::new(value)
     }
 }

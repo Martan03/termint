@@ -51,10 +51,10 @@ pub use table_state::TableState;
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Table {
-    header: Option<Row>,
+pub struct Table<M: 'static> {
+    header: Option<Row<M>>,
     header_separator: Option<BorderType>,
-    rows: Vec<Row>,
+    rows: Vec<Row<M>>,
     selected_row_style: Style,
     selected_column_style: Style,
     selected_cell_style: Style,
@@ -65,7 +65,7 @@ pub struct Table {
     force_scrollbar: bool,
 }
 
-impl Table {
+impl<M> Table<M> {
     /// Creates new [`Table`] with given rows and columns widths
     #[must_use]
     pub fn new<R, W>(
@@ -75,7 +75,7 @@ impl Table {
     ) -> Self
     where
         R: IntoIterator,
-        R::Item: Into<Row>,
+        R::Item: Into<Row<M>>,
         W: IntoIterator,
         W::Item: Into<Unit>,
     {
@@ -98,7 +98,7 @@ impl Table {
     #[must_use]
     pub fn header<H>(mut self, header: H) -> Self
     where
-        H: Into<Row>,
+        H: Into<Row<M>>,
     {
         self.header = Some(header.into());
         self
@@ -117,7 +117,7 @@ impl Table {
     where
         R: IntoIterator,
         R::Item: IntoIterator<Item = C>,
-        C: Into<Element>,
+        C: Into<Element<M>>,
     {
         self.rows = rows
             .into_iter()
@@ -190,7 +190,7 @@ impl Table {
     }
 }
 
-impl Widget for Table {
+impl<M> Widget<M> for Table<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() || self.rows.is_empty() {
             return;
@@ -287,7 +287,7 @@ impl Widget for Table {
         total + self.column_spacing * (self.widths.len() - 1)
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<M>> {
         let mut result = Vec::new();
 
         if let Some(header) = &self.header {
@@ -302,7 +302,7 @@ impl Widget for Table {
     }
 }
 
-impl Table {
+impl<M> Table<M> {
     fn calc_header_height(&self, rect: &Rect, widths: &[usize]) -> usize {
         let mut header_height = self.header_separator.is_some() as usize;
         if let Some(header) = &self.header {
@@ -418,7 +418,7 @@ impl Table {
         rect: &Rect,
         cache: &mut Cache,
         id: &mut usize,
-        row: &Row,
+        row: &Row<M>,
         widths: &[usize],
     ) {
         let mut pos = *rect.pos();
@@ -442,7 +442,7 @@ impl Table {
         mut rect: Rect,
         cache: &mut Cache,
         id: &mut usize,
-        row: &Row,
+        row: &Row<M>,
         widths: &[usize],
     ) {
         let mut cell = Cell::empty();
@@ -521,7 +521,7 @@ impl Table {
         }
     }
 
-    fn row_height(height: usize, row: &Row, widths: &[usize]) -> usize {
+    fn row_height(height: usize, row: &Row<M>, widths: &[usize]) -> usize {
         let mut row_height = 0;
         for (i, child) in row.cells.iter().enumerate() {
             let width = widths.get(i).copied().unwrap_or_default();
@@ -591,14 +591,14 @@ impl Table {
     }
 }
 
-impl From<Table> for Box<dyn Widget> {
-    fn from(value: Table) -> Self {
+impl<M> From<Table<M>> for Box<dyn Widget<M>> {
+    fn from(value: Table<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Table> for Element {
-    fn from(value: Table) -> Self {
+impl<M> From<Table<M>> for Element<M> {
+    fn from(value: Table<M>) -> Self {
         Element::new(value)
     }
 }

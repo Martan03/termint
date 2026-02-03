@@ -37,16 +37,16 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Scrollable<W = Element> {
-    horizontal: Option<Element>,
-    vertical: Option<Element>,
-    child: Element,
+pub struct Scrollable<M: 'static, W = Element<M>> {
+    horizontal: Option<Element<M>>,
+    vertical: Option<Element<M>>,
+    child: Element<M>,
     child_type: PhantomData<W>,
 }
 
-impl<W> Scrollable<W>
+impl<M, W> Scrollable<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     /// Creates a [`Scrollable`] that scrolls in given direction.
     ///
@@ -60,7 +60,7 @@ where
         dir: Direction,
     ) -> Self
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         match dir {
             Direction::Vertical => Self::vertical(child, state),
@@ -75,7 +75,7 @@ where
     /// - `state`: Shared state holding the vertical scroll offset
     pub fn vertical<T>(child: T, state: Rc<Cell<ScrollbarState>>) -> Self
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         Self {
             vertical: Some(Scrollbar::vertical(state.clone()).into()),
@@ -92,7 +92,7 @@ where
     /// - `state`: Shared state holding the horizontal scroll offset
     pub fn horizontal<T>(child: T, state: Rc<Cell<ScrollbarState>>) -> Self
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         Self {
             vertical: None,
@@ -115,7 +115,7 @@ where
         hor_state: Rc<Cell<ScrollbarState>>,
     ) -> Self
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         Self {
             vertical: Some(Scrollbar::vertical(ver_state).into()),
@@ -126,9 +126,9 @@ where
     }
 }
 
-impl<W> Widget for Scrollable<W>
+impl<M, W> Widget<M> for Scrollable<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         match (self.vertical.as_ref(), self.horizontal.as_ref()) {
@@ -185,7 +185,7 @@ where
         }
     }
 
-    fn children(&self) -> Vec<&Element> {
+    fn children(&self) -> Vec<&Element<M>> {
         std::iter::once(&self.child)
             .chain(self.vertical.iter())
             .chain(self.horizontal.iter())
@@ -193,9 +193,9 @@ where
     }
 }
 
-impl<W> Scrollable<W>
+impl<M, W> Scrollable<M, W>
 where
-    W: Widget,
+    W: Widget<M>,
 {
     /// Renders vertical scrollable
     fn ver_render(
@@ -203,9 +203,9 @@ where
         buffer: &mut Buffer,
         rect: &Rect,
         cache: &mut Cache,
-        vertical: &Element,
+        vertical: &Element<M>,
     ) {
-        let Some(vertical) = vertical.downcast_ref::<Scrollbar>() else {
+        let Some(vertical) = vertical.downcast_ref::<Scrollbar<M>>() else {
             return;
         };
 
@@ -232,9 +232,10 @@ where
         buffer: &mut Buffer,
         rect: &Rect,
         cache: &mut Cache,
-        horizontal: &Element,
+        horizontal: &Element<M>,
     ) {
-        let Some(horizontal) = horizontal.downcast_ref::<Scrollbar>() else {
+        let Some(horizontal) = horizontal.downcast_ref::<Scrollbar<M>>()
+        else {
             return;
         };
 
@@ -261,13 +262,14 @@ where
         buffer: &mut Buffer,
         rect: &Rect,
         cache: &mut Cache,
-        vertical: &Element,
-        horizontal: &Element,
+        vertical: &Element<M>,
+        horizontal: &Element<M>,
     ) {
-        let Some(vertical) = vertical.downcast_ref::<Scrollbar>() else {
+        let Some(vertical) = vertical.downcast_ref::<Scrollbar<M>>() else {
             return;
         };
-        let Some(horizontal) = horizontal.downcast_ref::<Scrollbar>() else {
+        let Some(horizontal) = horizontal.downcast_ref::<Scrollbar<M>>()
+        else {
             return;
         };
 
@@ -323,7 +325,7 @@ where
     fn scrollbar(
         buffer: &mut Buffer,
         cache: &mut Cache,
-        scroll: &Scrollbar,
+        scroll: &Scrollbar<M>,
         rect: Rect,
         size: usize,
     ) {
@@ -332,20 +334,20 @@ where
     }
 }
 
-impl<W> From<Scrollable<W>> for Box<dyn Widget>
+impl<M, W> From<Scrollable<M, W>> for Box<dyn Widget<M>>
 where
-    W: Widget + 'static,
+    W: Widget<M> + 'static,
 {
-    fn from(value: Scrollable<W>) -> Self {
+    fn from(value: Scrollable<M, W>) -> Self {
         Box::new(value)
     }
 }
 
-impl<W> From<Scrollable<W>> for Element
+impl<M, W> From<Scrollable<M, W>> for Element<M>
 where
-    W: Widget + 'static,
+    W: Widget<M> + 'static,
 {
-    fn from(value: Scrollable<W>) -> Self {
+    fn from(value: Scrollable<M, W>) -> Self {
         Element::new(value)
     }
 }

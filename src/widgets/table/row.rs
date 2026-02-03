@@ -14,13 +14,13 @@ use crate::{
 /// let row = Row::new(["First", "Second", "Third"]).style(Color::Red);
 /// let row: Row = ["First", "Second", "Third"].into_iter().collect();
 /// ```
-#[derive(Debug, Default)]
-pub struct Row {
-    pub(crate) cells: Vec<Element>,
+#[derive(Debug)]
+pub struct Row<M: 'static> {
+    pub(crate) cells: Vec<Element<M>>,
     pub(crate) style: Style,
 }
 
-impl Row {
+impl<M> Row<M> {
     /// Creates a new [`Row`] from the given cells.
     ///
     /// You can provide any type that can be converted into an iterator of any
@@ -40,7 +40,7 @@ impl Row {
     pub fn new<T>(cells: T) -> Self
     where
         T: IntoIterator,
-        T::Item: Into<Element>,
+        T::Item: Into<Element<M>>,
     {
         Self {
             cells: cells.into_iter().map(Into::into).collect(),
@@ -59,27 +59,36 @@ impl Row {
     }
 }
 
-impl<I> FromIterator<I> for Row
+impl<M> Default for Row<M> {
+    fn default() -> Self {
+        Self {
+            cells: Default::default(),
+            style: Default::default(),
+        }
+    }
+}
+
+impl<M, I> FromIterator<I> for Row<M>
 where
-    I: Into<Element>,
+    I: Into<Element<M>>,
 {
     fn from_iter<T: IntoIterator<Item = I>>(iter: T) -> Self {
         Self::new(iter)
     }
 }
 
-impl<T> From<Vec<T>> for Row
+impl<M, T> From<Vec<T>> for Row<M>
 where
-    T: Into<Element>,
+    T: Into<Element<M>>,
 {
     fn from(vec: Vec<T>) -> Self {
         vec.into_iter().map(Into::into).collect()
     }
 }
 
-impl<T> From<&Vec<T>> for Row
+impl<M, T> From<&Vec<T>> for Row<M>
 where
-    for<'a> &'a T: ToSpan,
+    for<'a> &'a T: ToSpan<M>,
 {
     fn from(vec: &Vec<T>) -> Self {
         vec.iter()

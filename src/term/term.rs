@@ -76,11 +76,11 @@ static HOOK_SET: Once = Once::new();
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Term<B = NoBackend> {
+pub struct Term<M: 'static, B = NoBackend> {
     backend: B,
     prev: Option<Buffer>,
-    prev_widget: Option<Element>,
-    small: Option<Element>,
+    prev_widget: Option<Element<M>>,
+    small: Option<Element<M>>,
     cache: Cache,
     padding: Padding,
     setuped: bool,
@@ -89,7 +89,7 @@ pub struct Term<B = NoBackend> {
     last_size: Vec2,
 }
 
-impl<B: Default> Term<B> {
+impl<M: 'static, B: Default> Term<M, B> {
     /// Creates new [`Term`] with the specified backend
     pub fn new() -> Self {
         Self::custom(B::default())
@@ -105,7 +105,7 @@ impl<B: Default> Term<B> {
     }
 }
 
-impl<B> Term<B> {
+impl<M, B> Term<M, B> {
     /// Creates new [`Term`] with the given backend
     pub fn custom(backend: B) -> Self {
         Self {
@@ -195,7 +195,7 @@ impl<B> Term<B> {
     /// cannot fit.
     pub fn small_screen<T>(mut self, small_screen: T) -> Self
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         self.small = Some(small_screen.into());
         self
@@ -205,7 +205,7 @@ impl<B> Term<B> {
     /// screen when cannot fit (only when `small_screen` is set).
     pub fn render<T>(&mut self, widget: T) -> Result<(), Error>
     where
-        T: Into<Element>,
+        T: Into<Element<M>>,
     {
         let widget = widget.into();
         let rect = self.get_rect()?;
@@ -243,7 +243,7 @@ impl<B> Term<B> {
     /// ```
     pub fn draw<F>(&mut self, get_widget: F) -> Result<(), Error>
     where
-        F: FnOnce(&Frame) -> Element,
+        F: FnOnce(&Frame) -> Element<M>,
     {
         let rect = self.get_rect()?;
         let frame = Frame::new(rect);
@@ -294,7 +294,7 @@ impl<B> Term<B> {
     }
 }
 
-impl<B: Backend> Term<B> {
+impl<M, B: Backend> Term<M, B> {
     /// Starts the application main loop and handles the terminal state.
     ///
     /// This method does the following:
@@ -324,7 +324,10 @@ impl<B: Backend> Term<B> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn run<A: Application>(&mut self, app: &mut A) -> Result<(), Error> {
+    pub fn run<A>(&mut self, app: &mut A) -> Result<(), Error>
+    where
+        A: Application<Message = M>,
+    {
         self.draw(|f| app.view(f))?;
 
         let timeout = app.poll_timeout();
@@ -353,8 +356,8 @@ impl<B: Backend> Term<B> {
     }
 }
 
-impl<B> Term<B> {
-    fn render_widget(&mut self, widget: Element, rect: Rect) {
+impl<M, B> Term<M, B> {
+    fn render_widget(&mut self, widget: Element<M>, rect: Rect) {
         let mut buffer = Buffer::empty(rect);
         match &self.small {
             Some(small)
@@ -396,7 +399,7 @@ impl<B> Term<B> {
     }
 }
 
-impl Default for Term<DefaultBackend> {
+impl<M> Default for Term<M, DefaultBackend> {
     fn default() -> Self {
         Self {
             backend: Default::default(),
@@ -413,7 +416,7 @@ impl Default for Term<DefaultBackend> {
     }
 }
 
-impl<B> Drop for Term<B> {
+impl<M, B> Drop for Term<M, B> {
     fn drop(&mut self) {
         if self.setuped {
             print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);

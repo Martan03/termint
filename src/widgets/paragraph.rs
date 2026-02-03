@@ -133,7 +133,7 @@ impl Paragraph {
     }
 }
 
-impl Widget for Paragraph {
+impl<M> Widget<M> for Paragraph {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         let mut pos = Vec2::new(rect.x(), rect.y());
         let mut size = Vec2::new(rect.width(), rect.height());
@@ -242,13 +242,13 @@ impl Paragraph {
 }
 
 // From implementations
-impl From<Paragraph> for Box<dyn Widget> {
+impl<M> From<Paragraph> for Box<dyn Widget<M>> {
     fn from(value: Paragraph) -> Self {
         Box::new(value)
     }
 }
 
-impl From<Paragraph> for Element {
+impl<M> From<Paragraph> for Element<M> {
     fn from(value: Paragraph) -> Self {
         Element::new(value)
     }
