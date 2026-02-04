@@ -177,6 +177,32 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
     fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().map(|c| &c.child).collect()
     }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        cache: &mut Cache,
+        event: &crate::prelude::MouseEvent,
+    ) -> Option<M> {
+        let (cols, cols_pos, rows, rows_pos) = self.get_sizes(&area, cache);
+
+        for (i, GridChild { child, row, col }) in
+            self.children.iter().enumerate()
+        {
+            let crect = Rect::new(
+                area.x() + cols_pos[*col],
+                area.y() + rows_pos[*row],
+                cols[*col],
+                rows[*row],
+            );
+            if let Some(m) =
+                child.on_event(crect, &mut cache.children[i], event)
+            {
+                return Some(m);
+            }
+        }
+        None
+    }
 }
 
 impl<M> Grid<M> {
