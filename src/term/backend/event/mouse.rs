@@ -18,7 +18,9 @@ use crate::term::backend::event::KeyModifiers;
 /// struct MyApp;
 ///
 /// impl Application for MyApp {
-///     fn view(&self, _frame: &Frame) -> Element {
+///     type Message = ();
+///
+///     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
 ///         "Your UI here".into()
 ///     }
 ///

@@ -62,7 +62,7 @@ use super::{widget::Widget, Element};
 /// # fn example() -> Result<(), termint::Error> {
 /// # let span = "test".to_span();
 ///
-/// let mut term = Term::default();
+/// let mut term = Term::<(), _>::default();
 /// term.render(span)?;
 /// # Ok(())
 /// # }

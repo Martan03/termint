@@ -13,7 +13,7 @@
 //! ```rust
 //! use termint::prelude::*;
 //!
-//! let term = Term::<TermalBackend>::new();
+//! let term = Term::<(), TermalBackend>::new();
 //! ```
 //!
 //! # Backend trait

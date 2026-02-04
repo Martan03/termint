@@ -27,7 +27,7 @@ use super::{Element, Widget};
 ///     .style(Color::White);
 ///
 /// // You can then render it using Term
-/// let mut term = Term::default();
+/// let mut term = Term::<(), _>::default();
 /// term.render(pb)?;
 /// # Ok(())
 /// # }

@@ -24,7 +24,7 @@ use super::{widget::Widget, Element};
 /// #     geometry::Constraint,
 /// #     widgets::{Layout, Spacer, ToSpan},
 /// # };
-/// let mut layout = Layout::vertical();
+/// let mut layout = Layout::<()>::vertical();
 /// layout.push("Top Widget", Constraint::Min(0));
 ///
 /// // Insert a spacer with fixed height of 1

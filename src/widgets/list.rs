@@ -45,7 +45,7 @@ use super::{span::ToSpan, widget::Widget, Element};
 /// // and automatically scroll to keep the selected item in view
 /// let items = vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"];
 /// let list =
-///     List::new(items, state.clone())
+///     List::<()>::new(items, state.clone())
 ///         .selected_style((Color::Yellow))
 ///         .highlight_symbol("*")
 ///         .auto_scroll();

@@ -32,7 +32,7 @@ use super::{widget::Widget, Element};
 ///     .wrap(Wrap::Letter)
 ///     .ellipsis("...");
 ///
-/// let mut term = Term::default();
+/// let mut term = Term::<(), _>::default();
 /// term.render(grad)?;
 /// # Ok(())
 /// # }

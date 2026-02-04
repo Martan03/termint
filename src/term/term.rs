@@ -45,7 +45,9 @@ static HOOK_SET: Once = Once::new();
 /// struct MyApp;
 ///
 /// impl Application for MyApp {
-///     fn view(&self, _frame: &Frame) -> Element {
+///     type Message = ();
+///
+///     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
 ///         "Your UI here".into()
 ///     }
 ///
@@ -70,13 +72,13 @@ static HOOK_SET: Once = Once::new();
 /// # fn example() -> Result<(), termint::Error> {
 /// let main = Block::vertical().title("Example".to_span());
 /// // Creates new Term with padding 1 on every side
-/// let mut term = Term::default().padding(1);
+/// let mut term = Term::<(), _>::default().padding(1);
 /// term.render(main)?;
 /// # Ok(())
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Term<M: 'static, B = NoBackend> {
+pub struct Term<M: 'static = (), B = NoBackend> {
     backend: B,
     prev: Option<Buffer>,
     prev_widget: Option<Element<M>>,
@@ -228,9 +230,9 @@ impl<M, B> Term<M, B> {
     /// use termint::prelude::*;
     ///
     /// # fn example() -> Result<(), termint::Error> {
-    /// let main = Block::vertical().title("Example".to_span());
+    /// let main = Block::<(), _>::vertical().title("Example".to_span());
     /// // Creates new Term with padding 1 on every side
-    /// let mut term = Term::default().padding(1);
+    /// let mut term = Term::<(), _>::default().padding(1);
     /// term.draw(|frame| {
     ///     if frame.area().width() < 100 {
     ///         "Width is smaller then 100.".into()
@@ -313,6 +315,8 @@ impl<M, B: Backend> Term<M, B> {
     /// # #[derive(Default)]
     /// # struct MyApp;
     /// # impl Application for MyApp {
+    /// #     type Message = ();
+    /// #
     /// #     fn view(&self, _frame: &Frame) -> Element {
     /// #         Spacer::new().into()
     /// #     }

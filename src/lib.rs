@@ -69,7 +69,9 @@
 //! struct MyApp;
 //!
 //! impl Application for MyApp {
-//!     fn view(&self, _frame: &Frame) -> Element {
+//!     type Message = ();
+//!
+//!     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
 //!         let mut main = Block::vertical().title("Termint App");
 //!         main.push("Hello from the Application trait!".fg(Color::Cyan), 0..);
 //!         main.into()
@@ -98,7 +100,7 @@
 //! use termint::prelude::*;
 //!
 //! fn main() -> Result<(), Error> {
-//!     let mut term = Term::default().setup()?;
+//!     let mut term = Term::<(), _>::default().setup()?;
 //!     loop {
 //!         // 1. Custom event handling
 //!         // 2. Logic updates

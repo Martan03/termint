@@ -35,7 +35,7 @@ use super::{widget::Widget, Element};
 /// let block1 = Block::vertical().title("Block 1");
 /// let block2 = Block::vertical().title("Block 2");
 ///
-/// let mut layout = Layout::horizontal();
+/// let mut layout = Layout::<()>::horizontal();
 /// layout.push(block1, Constraint::Percent(50));
 /// layout.push(block2, Constraint::Percent(50));
 ///

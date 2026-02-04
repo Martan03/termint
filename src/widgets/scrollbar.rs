@@ -31,7 +31,7 @@ use super::{Element, Widget};
 /// let state = Rc::new(Cell::new(ScrollbarState::new(3).content_len(30)));
 ///
 /// // Creates new horizontal scrollbar with the shared state
-/// let scrollbar = Scrollbar::horizontal(state.clone());
+/// let scrollbar = Scrollbar::<()>::horizontal(state.clone());
 ///
 /// let mut term = Term::default();
 /// term.render(scrollbar)?;
@@ -95,7 +95,7 @@ impl<M> Scrollbar<M> {
     /// # };
     /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
     /// #    .content_len(30)));
-    /// let scrollbar = Scrollbar::vertical(state);
+    /// let scrollbar = Scrollbar::<()>::vertical(state);
     /// ```
     #[must_use]
     pub fn vertical(state: Rc<Cell<ScrollbarState>>) -> Self {
@@ -119,7 +119,7 @@ impl<M> Scrollbar<M> {
     /// # };
     /// # let state = Rc::new(Cell::new(ScrollbarState::new(3)
     /// #    .content_len(30)));
-    /// let scrollbar = Scrollbar::horizontal(state);
+    /// let scrollbar = Scrollbar::<()>::horizontal(state);
     /// ```
     #[must_use]
     pub fn horizontal(state: Rc<Cell<ScrollbarState>>) -> Self {

@@ -23,7 +23,7 @@ use super::{widget::Widget, Element};
 /// #     term::Term,
 /// # };
 /// # fn example() -> Result<(), termint::Error> {
-/// let mut grid = Grid::new(
+/// let mut grid = Grid::<()>::new(
 ///     vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],
 ///     vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
 /// );
@@ -62,7 +62,7 @@ impl<M> Grid<M> {
     /// #     widgets::{Grid, Widget},
     /// #     term::Term,
     /// # };
-    /// let mut grid = Grid::new([3, 5, 3], [3, 1, 1]);
+    /// let mut grid = Grid::<()>::new([3, 5, 3], [3, 1, 1]);
     /// ```
     #[must_use]
     pub fn new<T1, T2>(cols: T1, rows: T2) -> Self

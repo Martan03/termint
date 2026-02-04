@@ -87,7 +87,7 @@ impl<Message: 'static> Element<Message> {
     /// ```
     /// # use termint::widgets::{Span, Element};
     /// let span = Span::new("Hello");
-    /// let element = Element::new(span);
+    /// let element = Element::<()>::new(span);
     /// ```
     pub fn new<W>(widget: W) -> Self
     where

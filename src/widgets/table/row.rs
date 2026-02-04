@@ -11,8 +11,8 @@ use crate::{
 /// # Example
 /// ```rust
 /// # use termint::{widgets::Row, enums::Color};
-/// let row = Row::new(["First", "Second", "Third"]).style(Color::Red);
-/// let row: Row = ["First", "Second", "Third"].into_iter().collect();
+/// let row = Row::<()>::new(["First", "Second", "Third"]).style(Color::Red);
+/// let row: Row<()> = ["First", "Second", "Third"].into_iter().collect();
 /// ```
 #[derive(Debug)]
 pub struct Row<M: 'static> {
@@ -29,8 +29,8 @@ impl<M> Row<M> {
     /// # Example
     /// ```rust
     /// # use termint::{widgets::{Row, ToSpan}, enums::Color};
-    /// let row = Row::new(["First", "Second", "Third"]);
-    /// let row = Row::new(vec![
+    /// let row = Row::<()>::new(["First", "Second", "Third"]);
+    /// let row = Row::<()>::new(vec![
     ///     "First".fg(Color::Red),
     ///     "Second".fg(Color::Green),
     ///     "Third".fg(Color::Blue),

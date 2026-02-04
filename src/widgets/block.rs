@@ -27,7 +27,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// #     widgets::{Block, ToSpan, Widget},
 /// # };
 /// # fn example() -> Result<(), termint::Error> {
-/// let mut main = Block::horizontal()
+/// let mut main = Block::<(), _>::horizontal()
 ///     .title("Termint".fg(Color::Red))
 ///     .border_type(BorderType::Double)
 ///     .border_color(Color::LightGray);
@@ -95,8 +95,8 @@ where
     /// # Example
     /// ```rust
     /// # use termint::{enums::Border, widgets::Block, borders};
-    /// let block1 = Block::horizontal().borders(Border::TOP | Border::BOTTOM);
-    /// let block2 = Block::horizontal().borders(borders!(TOP, BOTTOM));
+    /// let block1 = Block::<(), _>::horizontal().borders(Border::TOP | Border::BOTTOM);
+    /// let block2 = Block::<(), _>::horizontal().borders(borders!(TOP, BOTTOM));
     /// ```
     #[must_use]
     pub fn borders(mut self, borders: Border) -> Self {
@@ -154,9 +154,7 @@ impl<M> Block<M, Layout<M>> {
     /// ```rust
     /// # use termint::widgets::{Block, Layout};
     /// // Creates block with vertical layout as its child
-    /// let block1: Block<Layout> = Block::new(Layout::vertical());
-    /// // Does the same, but shorter
-    /// let block2: Block<Layout> = Block::vertical();
+    /// let block2 = Block::<(), _>::vertical();
     /// ```
     #[must_use]
     pub fn vertical() -> Self {
@@ -179,9 +177,7 @@ impl<M> Block<M, Layout<M>> {
     /// ```rust
     /// # use termint::widgets::{Block, Layout};
     /// // Creates block with horizontal layout as its child
-    /// let block1: Block<Layout> = Block::new(Layout::horizontal());
-    /// // Does the same, but shorter
-    /// let block2: Block<Layout> = Block::horizontal();
+    /// let block2: Block<(), _> = Block::horizontal();
     /// ```
     #[must_use]
     pub fn horizontal() -> Self {

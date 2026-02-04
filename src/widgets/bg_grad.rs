@@ -27,7 +27,7 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// ```rust
 /// # use termint::{term::Term, widgets::BgGrad};
 /// # fn example() -> Result<(), termint::Error> {
-/// let grad = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+/// let grad = BgGrad::<(), _>::horizontal((0, 150, 255), (150, 255, 0));
 ///
 /// let mut term = Term::default();
 /// term.render(grad)?;
@@ -57,7 +57,7 @@ impl<M> BgGrad<M, Spacer> {
     /// # Example
     /// ```rust
     /// # use termint::{widgets::BgGrad, geometry::Direction};
-    /// let widget = BgGrad::new(
+    /// let widget = BgGrad::<(), _>::new(
     ///     Direction::Vertical,
     ///     (0, 150, 255),
     ///     (150, 255, 0)
@@ -83,7 +83,7 @@ impl<M> BgGrad<M, Spacer> {
     /// # Example
     /// ```rust
     /// # use termint::widgets::BgGrad;
-    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0));
+    /// let widget = BgGrad::<(), _>::vertical((0, 150, 255), (150, 255, 0));
     /// ```
     #[must_use]
     pub fn vertical<T1, T2>(start: T1, end: T2) -> Self
@@ -111,7 +111,7 @@ impl<M> BgGrad<M, Spacer> {
     /// # Example
     /// ```rust
     /// # use termint::widgets::BgGrad;
-    /// let widget = BgGrad::horizontal((0, 150, 255), (150, 255, 0));
+    /// let widget = BgGrad::<(), _>::horizontal((0, 150, 255), (150, 255, 0));
     /// ```
     #[must_use]
     pub fn horizontal<T1, T2>(start: T1, end: T2) -> Self
@@ -135,7 +135,7 @@ impl<M, W> BgGrad<M, W> {
     /// ```rust
     /// # use termint::widgets::{BgGrad, Spacer};
     /// # type SomeWidget = Spacer;
-    /// let widget = BgGrad::vertical((0, 150, 255), (150, 255, 0))
+    /// let widget = BgGrad::<(), _>::vertical((0, 150, 255), (150, 255, 0))
     ///     .child(SomeWidget::new());
     /// ```
     #[must_use]

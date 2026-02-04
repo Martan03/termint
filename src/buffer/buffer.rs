@@ -27,7 +27,7 @@ use super::cell::Cell;
 /// #     widgets::{Block, Widget, Layout, cache::Cache},
 /// #     geometry::Rect,
 /// # };
-/// # fn get_your_widget() -> Block<Layout> { Block::vertical() }
+/// # fn get_your_widget() -> Block<(), Layout<()>> { Block::vertical() }
 /// // Creates new buffer with desired position and size given by the [`Rect`]
 /// let rect = Rect::new(1, 1, 20, 9);
 /// let mut buffer = Buffer::empty(rect);
