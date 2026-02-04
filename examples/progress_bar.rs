@@ -2,7 +2,15 @@ use std::{cell::Cell, process::ExitCode, rc::Rc, time::Duration};
 
 use termal::eprintcln;
 use termint::{
-    Error, enums::{BorderType, Color}, geometry::Constraint, style::Style, term::{Action, Application, Frame, Term, backend::{Event, KeyCode, KeyEvent}}, widgets::{Block, Element, ProgressBar, Spacer, ToSpan}
+    enums::{BorderType, Color},
+    geometry::Constraint,
+    style::Style,
+    term::{
+        backend::{Event, KeyCode, KeyEvent},
+        Action, Application, Frame, Term,
+    },
+    widgets::{Block, Element, ProgressBar, Spacer, ToSpan},
+    Error,
 };
 
 const BG: Color = Color::Hex(0x02081e);
@@ -27,7 +35,9 @@ struct App {
 }
 
 impl Application for App {
-    fn view(&self, _frame: &Frame) -> Element {
+    type Message = ();
+
+    fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let mut block = Block::vertical()
             .title("Progress Bar")
             .border_type(BorderType::Thicker)

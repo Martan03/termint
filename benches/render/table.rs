@@ -64,7 +64,7 @@ fn table_no_cache_render(c: &mut Criterion) {
     });
 }
 
-fn get_data() -> Vec<Row> {
+fn get_data() -> Vec<Row<()>> {
     let mut rows = vec![];
     for i in 0..100 {
         rows.push(Row::new(vec![

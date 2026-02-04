@@ -42,7 +42,9 @@ struct App {
 }
 
 impl Application for App {
-    fn view(&self, _frame: &Frame) -> Element {
+    type Message = ();
+
+    fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let mut block = Block::vertical()
             .title("Centering")
             .border_type(BorderType::Thicker)

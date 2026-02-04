@@ -37,7 +37,9 @@ struct App {
 }
 
 impl Application for App {
-    fn view(&self, _frame: &Frame) -> Element {
+    type Message = ();
+
+    fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let list = List::new(&self.people, self.list_state.clone())
             .auto_scroll()
             .selected_style(SELECTED)

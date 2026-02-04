@@ -1,6 +1,7 @@
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
+    prelude::MouseEvent,
     widgets::cache::Cache,
 };
 
@@ -90,6 +91,20 @@ impl<M> Widget<M> for Overlay<M> {
 
     fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().collect()
+    }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        cache: &mut Cache,
+        event: &MouseEvent,
+    ) -> Option<M> {
+        for child in self.children.iter().rev() {
+            if let Some(message) = child.on_event(area, cache, event) {
+                return Some(message);
+            }
+        }
+        None
     }
 }
 

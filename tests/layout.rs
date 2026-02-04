@@ -5,7 +5,7 @@ mod tests {
         buffer::Buffer,
         enums::Color,
         geometry::{Constraint, Rect},
-        widgets::{cache::Cache, Layout, Widget},
+        widgets::{cache::Cache, Element, Layout, Widget},
     };
 
     #[test]
@@ -14,7 +14,7 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
         let mut cache = Cache::new();
 
-        let layout = Layout::vertical().bg(Color::Red).into();
+        let layout: Element<()> = Layout::vertical().bg(Color::Red).into();
         cache.diff(&layout);
         layout.render(&mut buffer, Rect::new(3, 2, 6, 3), &mut cache);
 
@@ -34,7 +34,7 @@ mod tests {
 
         let mut layout = Layout::vertical().padding((1, 2, 2, 3));
         layout.push(Layout::vertical().bg(Color::Red), Constraint::Fill(1));
-        let layout = layout.into();
+        let layout: Element<()> = layout.into();
 
         cache.diff(&layout);
         layout.render(&mut buffer, rect, &mut cache);
@@ -58,7 +58,7 @@ mod tests {
         inner.push(Layout::vertical().bg(Color::Red), Constraint::Length(3));
         layout.push(inner, Constraint::Length(2));
 
-        let layout = layout.into();
+        let layout: Element<()> = layout.into();
         cache.diff(&layout);
         layout.render(&mut buffer, rect, &mut cache);
 

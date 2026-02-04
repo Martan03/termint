@@ -44,7 +44,7 @@ pub trait Widget<Message = ()>: Any {
         &self,
         _area: Rect,
         _cache: &mut Cache,
-        _event: MouseEvent,
+        _event: &MouseEvent,
     ) -> Option<Message> {
         None
     }
@@ -159,7 +159,7 @@ impl<Message> Widget<Message> for Element<Message> {
         &self,
         area: Rect,
         cache: &mut Cache,
-        event: MouseEvent,
+        event: &MouseEvent,
     ) -> Option<Message> {
         self.widget.on_event(area, cache, event)
     }

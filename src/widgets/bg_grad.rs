@@ -4,6 +4,7 @@ use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
+    prelude::MouseEvent,
     style::Style,
     widgets::cache::Cache,
 };
@@ -310,6 +311,15 @@ where
 
     fn children(&self) -> Vec<&Element<M>> {
         vec![&self.child]
+    }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        cache: &mut Cache,
+        event: &MouseEvent,
+    ) -> Option<M> {
+        self.child.on_event(area.inner(self.padding), cache, event)
     }
 }
 

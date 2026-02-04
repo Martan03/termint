@@ -1,10 +1,16 @@
 use std::{cell::RefCell, process::ExitCode, rc::Rc};
 
-use termal::{
-    eprintcln,
-};
+use termal::eprintcln;
 use termint::{
-    Error, enums::{BorderType, Color}, geometry::{Constraint, Unit}, style::Style, term::{Action, Application, Frame, Term, backend::{Event, KeyCode, KeyEvent}}, widgets::{Block, Element, Row, Table, TableState, ToSpan}
+    enums::{BorderType, Color},
+    geometry::{Constraint, Unit},
+    style::Style,
+    term::{
+        backend::{Event, KeyCode, KeyEvent},
+        Action, Application, Frame, Term,
+    },
+    widgets::{Block, Element, Row, Table, TableState, ToSpan},
+    Error,
 };
 
 const BG: Color = Color::Hex(0x02081e);
@@ -33,7 +39,9 @@ struct App {
 }
 
 impl Application for App {
-    fn view(&self, _frame: &Frame) -> Element {
+    type Message = ();
+
+    fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let table = Table::new(
             get_rows(),
             vec![Unit::Fill(1); 3],
@@ -144,7 +152,7 @@ fn get_songs() -> Vec<Vec<&'static str>> {
     ]
 }
 
-fn get_rows() -> Vec<Row> {
+fn get_rows<M>() -> Vec<Row<M>> {
     let rows = get_songs()
         .iter()
         .enumerate()

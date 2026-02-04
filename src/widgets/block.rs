@@ -5,6 +5,7 @@ use crate::{
     buffer::Buffer,
     enums::{Border, BorderType, Color},
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
+    prelude::MouseEvent,
     style::Style,
     text::Text,
     widgets::{cache::Cache, span::Span},
@@ -51,10 +52,7 @@ pub struct Block<M: 'static = (), W = Element<M>> {
     child_type: PhantomData<W>,
 }
 
-impl<M, W> Block<M, W>
-where
-    W: Widget<M>,
-{
+impl<M> Block<M, Element<M>> {
     /// Returns a new [`Block`] wrapping the given widget, with all borders
     /// enabled and no title.
     ///
@@ -73,7 +71,12 @@ where
             child_type: PhantomData,
         }
     }
+}
 
+impl<M, W> Block<M, W>
+where
+    W: Widget<M>,
+{
     /// Sets the [`Text`] title displayed at the top of the [`Block`].
     ///
     /// This is typically used for section labels in your TUI.
@@ -323,6 +326,15 @@ where
 
     fn children(&self) -> Vec<&Element<M>> {
         vec![&self.child]
+    }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        cache: &mut Cache,
+        event: &MouseEvent,
+    ) -> Option<M> {
+        self.child.on_event(area, cache, event)
     }
 }
 

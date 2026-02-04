@@ -3,6 +3,7 @@ use std::{cell::Cell, cmp::min, marker::PhantomData, rc::Rc};
 use crate::{
     buffer::Buffer,
     geometry::{Direction, Rect, Vec2},
+    prelude::MouseEvent,
     widgets::cache::Cache,
 };
 
@@ -190,6 +191,15 @@ where
             .chain(self.vertical.iter())
             .chain(self.horizontal.iter())
             .collect()
+    }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        cache: &mut Cache,
+        event: &MouseEvent,
+    ) -> Option<M> {
+        self.child.on_event(area, cache, event)
     }
 }
 

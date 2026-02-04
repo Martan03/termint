@@ -7,7 +7,7 @@ mod tests {
         enums::{BorderType, Color, Modifier},
         geometry::Rect,
         style::Style,
-        widgets::{cache::Cache, Block, Widget},
+        widgets::{cache::Cache, Block, Element, Widget},
     };
 
     #[test]
@@ -16,7 +16,7 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
         let mut cache = Cache::new();
 
-        let bg = Block::empty().title("Test").into();
+        let bg: Element<()> = Block::empty().title("Test").into();
         cache.diff(&bg);
         bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
 
@@ -36,7 +36,7 @@ mod tests {
             .fg(Color::Cyan)
             .bg(Color::Black)
             .modifier(Modifier::BOLD);
-        let bg = Block::empty().border_style(style).into();
+        let bg: Element<()> = Block::empty().border_style(style).into();
         cache.diff(&bg);
         bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
 
@@ -54,7 +54,8 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
         let mut cache = Cache::new();
 
-        let bg = Block::empty().border_type(BorderType::Double).into();
+        let bg: Element<()> =
+            Block::empty().border_type(BorderType::Double).into();
         cache.diff(&bg);
         bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
 
@@ -70,7 +71,8 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
         let mut cache = Cache::new();
 
-        let bg = Block::empty().borders(borders!(TOP, LEFT)).into();
+        let bg: Element<()> =
+            Block::empty().borders(borders!(TOP, LEFT)).into();
         cache.diff(&bg);
         bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
 
@@ -86,7 +88,7 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
         let mut cache = Cache::new();
 
-        let bg = Block::vertical().bg(Color::Red).into();
+        let bg: Element<()> = Block::vertical().bg(Color::Red).into();
         cache.diff(&bg);
         bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
 

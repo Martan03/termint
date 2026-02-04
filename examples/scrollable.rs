@@ -2,9 +2,15 @@ use std::{cell::Cell, process::ExitCode, rc::Rc};
 
 use termal::eprintcln;
 use termint::{
-    Error, enums::{Border, BorderType, Color, Modifier}, geometry::Constraint, style::Style, term::{Action, Application, Frame, Term, backend::{Event, KeyCode, KeyEvent}}, widgets::{
-        Block, Element, Layout, Scrollable, ScrollbarState, Span, ToSpan,
-    }
+    enums::{Border, BorderType, Color, Modifier},
+    geometry::Constraint,
+    style::Style,
+    term::{
+        backend::{Event, KeyCode, KeyEvent},
+        Action, Application, Frame, Term,
+    },
+    widgets::{Block, Element, Layout, Scrollable, ScrollbarState, ToSpan},
+    Error,
 };
 
 const BG: Color = Color::Hex(0x02081e);
@@ -31,19 +37,20 @@ struct App {
 }
 
 impl Application for App {
-    fn view(&self, _frame: &Frame) -> Element {
+    type Message = ();
+
+    fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let mut layout = Layout::vertical();
         for i in 0..20 {
             layout.push(
                 format!("Title {i}").modifier(Modifier::UNDERLINED).fg(SEL),
                 0..,
             );
-            let block: Block<Span> =
-                Block::new(get_lorem()).borders(Border::LEFT);
+            let block = Block::new(get_lorem()).borders(Border::LEFT);
             layout.push(block, 2..);
         }
 
-        let scrollable = Scrollable::<Layout>::both(
+        let scrollable: Scrollable<_, Block> = Scrollable::both(
             layout,
             self.ver_state.clone(),
             self.hor_state.clone(),

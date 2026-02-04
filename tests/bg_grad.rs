@@ -4,7 +4,7 @@ mod tests {
     use termint::{
         buffer::Buffer,
         geometry::Rect,
-        widgets::{cache::Cache, BgGrad, Widget},
+        widgets::{cache::Cache, BgGrad, Element, Widget},
     };
 
     #[test]
@@ -13,7 +13,7 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
         let mut cache = Cache::new();
 
-        let bg = BgGrad::horizontal(0x0088FF, 0xFF8800).into();
+        let bg: Element<()> = BgGrad::horizontal(0x0088FF, 0xFF8800).into();
         cache.diff(&bg);
         bg.render(&mut buffer, Rect::new(3, 2, 4, 2), &mut cache);
 
@@ -32,7 +32,7 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
         let mut cache = Cache::new();
 
-        let bg = BgGrad::vertical(0x0088FE, 0xFE8800).into();
+        let bg: Element<()> = BgGrad::vertical(0x0088FE, 0xFE8800).into();
         cache.diff(&bg);
         bg.render(&mut buffer, Rect::new(3, 2, 4, 3), &mut cache);
 
