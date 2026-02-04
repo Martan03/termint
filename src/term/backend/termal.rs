@@ -8,8 +8,9 @@ use termal::raw::events::{
 use termal::raw::events::{StateChange, Status};
 use termal::raw::{StdioProvider, Terminal};
 
+use crate::prelude::Vec2;
 use crate::term::backend::event::{
-    MouseButton, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
+    KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
     MouseEvent, MouseEventKind,
 };
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
 };
 
 /// An event-reading backend powered by the `termal` crate. It is used as a
-/// generic parameter for [`crate::term::Term`], which then uses it as the 
+/// generic parameter for [`crate::term::Term`], which then uses it as the
 /// backend.
 ///
 /// # Usage:
@@ -180,8 +181,7 @@ impl From<Mouse> for MouseEvent {
         Self {
             kind,
             modifiers: value.modifiers.into(),
-            x: value.x,
-            y: value.y,
+            pos: Vec2::new(value.x, value.y),
         }
     }
 }

@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use crate::{
+    prelude::Vec2,
     term::backend::{
         event::{
             KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
@@ -215,8 +216,7 @@ impl From<CTermMouseEvent> for MouseEvent {
         Self {
             kind: value.kind.into(),
             modifiers: value.modifiers.into(),
-            x: value.column.into(),
-            y: value.row.into(),
+            pos: Vec2::new(value.column as usize + 1, value.row as usize + 1),
         }
     }
 }

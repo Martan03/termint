@@ -134,7 +134,9 @@ where
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         match (self.vertical.as_ref(), self.horizontal.as_ref()) {
-            (None, None) => self.child.render(buffer, rect, cache),
+            (None, None) => {
+                self.child.render(buffer, rect, &mut cache.children[0])
+            }
             (None, Some(hor)) => self.hor_render(buffer, &rect, cache, hor),
             (Some(ver), None) => self.ver_render(buffer, &rect, cache, ver),
             (Some(ver), Some(hor)) => {
@@ -200,10 +202,10 @@ where
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
-        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+        if !area.contains_pos(&event.pos) {
             return None;
         }
-        self.child.on_event(area, cache, event)
+        self.child.on_event(area, &mut cache.children[0], event)
     }
 }
 

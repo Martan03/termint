@@ -323,10 +323,14 @@ where
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
-        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+        if !area.contains_pos(&event.pos) {
             return None;
         }
-        self.child.on_event(area.inner(self.padding), cache, event)
+        self.child.on_event(
+            area.inner(self.padding),
+            &mut cache.children[0],
+            event,
+        )
     }
 }
 

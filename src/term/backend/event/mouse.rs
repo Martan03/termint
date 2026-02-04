@@ -1,4 +1,4 @@
-use crate::term::backend::event::KeyModifiers;
+use crate::{prelude::Vec2, term::backend::event::KeyModifiers};
 
 /// Detailed information about a mouse event.
 ///
@@ -42,8 +42,7 @@ pub struct MouseEvent {
     pub kind: MouseEventKind,
     /// Keyboard modifiers active during the mouse event (Shift + Click,...)
     pub modifiers: KeyModifiers,
-    pub x: usize,
-    pub y: usize,
+    pub pos: Vec2,
 }
 
 /// The type of the mouse action

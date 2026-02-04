@@ -68,7 +68,11 @@ impl<M: Clone + 'static> Button<M> {
 impl<M: Clone + 'static> Widget<M> for Button<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         buffer.set_area_style(self.style, rect);
-        self.child.render(buffer, rect.inner(self.padding), cache);
+        self.child.render(
+            buffer,
+            rect.inner(self.padding),
+            &mut cache.children[0],
+        );
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -97,13 +101,15 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
-        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+        if !area.contains_pos(&event.pos) {
             return None;
         }
 
-        if let Some(message) =
-            self.child.on_event(area.inner(self.padding), cache, event)
-        {
+        if let Some(message) = self.child.on_event(
+            area.inner(self.padding),
+            &mut cache.children[0],
+            event,
+        ) {
             return Some(message);
         }
 

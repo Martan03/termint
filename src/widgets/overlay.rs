@@ -99,12 +99,14 @@ impl<M: Clone + 'static> Widget<M> for Overlay<M> {
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
-        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+        if !area.contains_pos(&event.pos) {
             return None;
         }
 
-        for child in self.children.iter().rev() {
-            if let Some(message) = child.on_event(area, cache, event) {
+        for (i, child) in self.children.iter().rev().enumerate() {
+            if let Some(message) =
+                child.on_event(area, &mut cache.children[i], event)
+            {
                 return Some(message);
             }
         }

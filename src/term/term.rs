@@ -16,6 +16,7 @@ use crate::{
     buffer::Buffer,
     error::Error,
     geometry::{Padding, Rect, Vec2},
+    prelude::MouseEvent,
     term::{
         backend::{Backend, DefaultBackend, Event, NoBackend},
         disable_bracketed_paste, disable_mouse_capture,
@@ -31,7 +32,7 @@ static HOOK_SET: Once = Once::new();
 ///
 /// [`Term`] provides two ways to build the TUI:
 /// 1. **Framework mode**: using [`Term::run`] with [`Application`] trait
-///     (recommended).
+///    (recommended).
 /// 2. **Manual mode**: manually managing the application lifetime.
 ///
 /// # Example (framework mode):
@@ -111,7 +112,7 @@ impl<M, B> Term<M, B> {
     /// Creates new [`Term`] with the given backend
     pub fn custom(backend: B) -> Self {
         Self {
-            backend: backend,
+            backend,
             prev: None,
             prev_widget: None,
             small: None,
@@ -347,6 +348,7 @@ where
             let mut action = Action::NONE;
             if let Some(event) = self.backend.read_event(timeout)? {
                 match event {
+                    Event::Mouse(ref e) => action |= self.handle_mouse(app, e),
                     Event::Resize(_, _) => action |= Action::RENDER,
                     _ => {}
                 }
@@ -365,6 +367,19 @@ where
         }
 
         Ok(())
+    }
+
+    fn handle_mouse<A>(&mut self, app: &mut A, event: &MouseEvent) -> Action
+    where
+        A: Application<Message = M>,
+    {
+        let Some(root) = &self.prev_widget else {
+            return Action::NONE;
+        };
+        let rect = Rect::from_coords(Vec2::new(1, 1), self.last_size);
+        root.on_event(rect, &mut self.cache, event)
+            .map(|m| app.message(m))
+            .unwrap_or(Action::NONE)
     }
 }
 
@@ -433,17 +448,16 @@ impl<M> Default for Term<M, DefaultBackend> {
 
 impl<M, B> Drop for Term<M, B> {
     fn drop(&mut self) {
-        if self.setuped {
-            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
-            _ = stdout().flush();
-            _ = disable_raw_mode();
-        }
-
         if self.mouse_enabled {
             disable_mouse_capture();
         }
         if self.paste_enabled {
             disable_bracketed_paste();
+        }
+        if self.setuped {
+            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
+            _ = stdout().flush();
+            _ = disable_raw_mode();
         }
     }
 }

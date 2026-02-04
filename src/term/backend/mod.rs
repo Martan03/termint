@@ -72,11 +72,11 @@ pub use termal::TermalBackend;
 
 use crate::Error;
 
-#[cfg(feature = "backend-termal")]
-pub type DefaultBackend = TermalBackend;
-
-#[cfg(all(not(feature = "backend-termal"), feature = "backend-crossterm"))]
+#[cfg(feature = "backend-crossterm")]
 pub type DefaultBackend = CrosstermBackend;
+
+#[cfg(all(not(feature = "backend-crossterm"), feature = "backend-termal"))]
+pub type DefaultBackend = TermalBackend;
 
 #[cfg(all(
     not(feature = "backend-termal"),
