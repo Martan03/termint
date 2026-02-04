@@ -13,7 +13,7 @@ use crate::term::backend::event::KeyModifiers;
 ///
 /// ```rust
 /// use termint::prelude::*;
-/// use termint::term::backend::{Button, MouseEvent, MouseEventKind};
+/// use termint::term::backend::{MouseButton, MouseEvent, MouseEventKind};
 ///
 /// struct MyApp;
 ///
@@ -27,7 +27,7 @@ use crate::term::backend::event::KeyModifiers;
 ///     fn event(&mut self, event: Event) -> Action {
 ///         if let Event::Mouse(mouse) = event {
 ///             match mouse.kind {
-///                 MouseEventKind::Down(Button::Left) => {
+///                 MouseEventKind::Down(MouseButton::Left) => {
 ///                     // Handle the click at mouse.x, mouse.y
 ///                 }
 ///                 _ => {}
@@ -49,9 +49,9 @@ pub struct MouseEvent {
 /// The type of the mouse action
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MouseEventKind {
-    Down(Button),
-    Up(Button),
-    Drag(Button),
+    Down(MouseButton),
+    Up(MouseButton),
+    Drag(MouseButton),
     Move,
     ScrollDown,
     ScrollUp,
@@ -61,7 +61,7 @@ pub enum MouseEventKind {
 
 /// Represents the mouse buttons
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Button {
+pub enum MouseButton {
     Left,
     Middle,
     Right,

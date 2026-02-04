@@ -216,7 +216,7 @@ impl Span {
     }
 }
 
-impl<M> Widget<M> for Span {
+impl<M: Clone + 'static> Widget<M> for Span {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
     }
@@ -491,7 +491,7 @@ where
     }
 }
 
-impl<M: 'static, T> From<T> for Box<dyn Widget<M>>
+impl<M: Clone + 'static, T> From<T> for Box<dyn Widget<M>>
 where
     T: AsRef<str>,
 {
@@ -511,6 +511,7 @@ where
 
 impl<M, T> From<T> for Element<M>
 where
+    M: Clone + 'static,
     T: AsRef<str>,
 {
     fn from(value: T) -> Self {
@@ -518,7 +519,7 @@ where
     }
 }
 
-impl<M> From<Span> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Span> for Box<dyn Widget<M>> {
     fn from(value: Span) -> Self {
         Box::new(value)
     }
@@ -530,7 +531,7 @@ impl From<Span> for Box<dyn Text> {
     }
 }
 
-impl<M> From<Span> for Element<M> {
+impl<M: Clone + 'static> From<Span> for Element<M> {
     fn from(value: Span) -> Self {
         Element::new(value)
     }

@@ -253,7 +253,7 @@ impl ScrollbarState {
     }
 }
 
-impl<M> Widget<M> for Scrollbar<M> {
+impl<M: Clone + 'static> Widget<M> for Scrollbar<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         match self.direction {
             Direction::Vertical => self.ver_render(buffer, &rect),
@@ -366,13 +366,13 @@ impl<M> Default for Scrollbar<M> {
     }
 }
 
-impl<M> From<Scrollbar<M>> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Scrollbar<M>> for Box<dyn Widget<M>> {
     fn from(value: Scrollbar<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<Scrollbar<M>> for Element<M> {
+impl<M: Clone + 'static> From<Scrollbar<M>> for Element<M> {
     fn from(value: Scrollbar<M>) -> Self {
         Element::new(value)
     }

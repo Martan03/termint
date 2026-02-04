@@ -73,10 +73,7 @@ impl<M> Block<M, Element<M>> {
     }
 }
 
-impl<M, W> Block<M, W>
-where
-    W: Widget<M>,
-{
+impl<M, W> Block<M, W> {
     /// Sets the [`Text`] title displayed at the top of the [`Block`].
     ///
     /// This is typically used for section labels in your TUI.
@@ -129,7 +126,7 @@ where
     }
 }
 
-impl<M> Block<M, Spacer> {
+impl<M: Clone + 'static> Block<M, Spacer> {
     /// Returns an empty [`Block`] with no title and all borders
     #[must_use]
     pub fn empty() -> Self {
@@ -144,7 +141,7 @@ impl<M> Block<M, Spacer> {
     }
 }
 
-impl<M> Block<M, Layout<M>> {
+impl<M: Clone + 'static> Block<M, Layout<M>> {
     /// Returns a [`Block`] containing a vertical [`Layout`] as its child.
     ///
     /// Very often you want to have a layout inside of a [`Block`] widget. This
@@ -283,6 +280,7 @@ impl<M> Block<M, Layout<M>> {
 
 impl<M, W> Widget<M> for Block<M, W>
 where
+    M: Clone + 'static,
     W: Widget<M>,
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
@@ -330,14 +328,14 @@ where
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
+        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+            return None;
+        }
         self.child.on_event(area, cache, event)
     }
 }
 
-impl<M, W> Block<M, W>
-where
-    W: Widget<M>,
-{
+impl<M, W> Block<M, W> {
     /// Renders [`Block`] border
     fn render_border(
         &self,
@@ -436,6 +434,7 @@ where
 // From implementations
 impl<M, W> From<Block<M, W>> for Box<dyn Widget<M>>
 where
+    M: Clone + 'static,
     W: Widget<M> + 'static,
 {
     fn from(value: Block<M, W>) -> Self {
@@ -445,6 +444,7 @@ where
 
 impl<M, W> From<Block<M, W>> for Element<M>
 where
+    M: Clone + 'static,
     W: Widget<M> + 'static,
 {
     fn from(value: Block<M, W>) -> Self {

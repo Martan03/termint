@@ -20,7 +20,7 @@ use crate::{
 /// Users will use [`Widget`] trait directly only when implementing custom
 /// widget, otherwise they will use built-in widgets like [`Span`], [`List`]
 /// and so on.
-pub trait Widget<Message = ()>: Any {
+pub trait Widget<Message: Clone + 'static = ()>: Any {
     /// Renders the widget into the given [`Buffer`] within the provided
     /// [`Rect`] bounds.
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache);
@@ -78,7 +78,7 @@ pub struct Element<Message: 'static = ()> {
     pub widget: Box<dyn Widget<Message>>,
 }
 
-impl<Message: 'static> Element<Message> {
+impl<Message: Clone + 'static> Element<Message> {
     /// Creates a new [`Element`] from a given widget.
     ///
     /// This is commonly used to wrap widgets when composing layouts.
@@ -138,7 +138,7 @@ impl<Message: 'static> Element<Message> {
     }
 }
 
-impl<Message> Widget<Message> for Element<Message> {
+impl<Message: Clone + 'static> Widget<Message> for Element<Message> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.widget.render(buffer, rect, cache)
     }

@@ -9,7 +9,7 @@ use termal::raw::events::{StateChange, Status};
 use termal::raw::{StdioProvider, Terminal};
 
 use crate::term::backend::event::{
-    Button, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
+    MouseButton, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
     MouseEvent, MouseEventKind,
 };
 use crate::{
@@ -168,10 +168,10 @@ impl From<Mouse> for MouseEvent {
         let kind = match value.event {
             // Button shouldn't be None when event Down or Up
             TermalMouseEvent::Down => MouseEventKind::Down(
-                value.button.try_into().unwrap_or(Button::Left),
+                value.button.try_into().unwrap_or(MouseButton::Left),
             ),
             TermalMouseEvent::Up => MouseEventKind::Up(
-                value.button.try_into().unwrap_or(Button::Left),
+                value.button.try_into().unwrap_or(MouseButton::Left),
             ),
             TermalMouseEvent::ScrollUp => MouseEventKind::ScrollUp,
             TermalMouseEvent::ScrollDown => MouseEventKind::ScrollDown,
@@ -186,20 +186,20 @@ impl From<Mouse> for MouseEvent {
     }
 }
 
-impl TryFrom<TermalButton> for Button {
+impl TryFrom<TermalButton> for MouseButton {
     type Error = &'static str;
 
     fn try_from(value: TermalButton) -> Result<Self, Self::Error> {
         match value {
             TermalButton::None => Err("unknown button variant"),
-            TermalButton::Left => Ok(Button::Left),
-            TermalButton::Middle => Ok(Button::Middle),
-            TermalButton::Right => Ok(Button::Right),
-            TermalButton::Button4 => Ok(Button::Button4),
-            TermalButton::Button5 => Ok(Button::Button5),
-            TermalButton::Button6 => Ok(Button::Button6),
-            TermalButton::Button7 => Ok(Button::Button7),
-            TermalButton::Other(v) => Ok(Button::Other(v)),
+            TermalButton::Left => Ok(MouseButton::Left),
+            TermalButton::Middle => Ok(MouseButton::Middle),
+            TermalButton::Right => Ok(MouseButton::Right),
+            TermalButton::Button4 => Ok(MouseButton::Button4),
+            TermalButton::Button5 => Ok(MouseButton::Button5),
+            TermalButton::Button6 => Ok(MouseButton::Button6),
+            TermalButton::Button7 => Ok(MouseButton::Button7),
+            TermalButton::Other(v) => Ok(MouseButton::Other(v)),
         }
     }
 }

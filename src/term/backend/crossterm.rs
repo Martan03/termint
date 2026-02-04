@@ -3,8 +3,8 @@ use std::time::Duration;
 use crate::{
     term::backend::{
         event::{
-            Button, KeyCode, KeyEvent, KeyEventKind, KeyEventState,
-            KeyModifiers, MediaKeyCode, ModifierKeyCode, MouseEvent,
+            KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
+            MediaKeyCode, ModifierKeyCode, MouseButton, MouseEvent,
             MouseEventKind,
         },
         Backend, Event,
@@ -16,7 +16,7 @@ use crossterm::event::{
     Event as CTermEvent, KeyCode as CTermKeyCode, KeyEvent as CTermKeyEvent,
     KeyEventKind as CTermKeyEventKind, KeyEventState as CTermKeyEventState,
     KeyModifiers as CTermKeyModifiers, MediaKeyCode as CTermMediaKeyCode,
-    ModifierKeyCode as CTermModifierKeyCode, MouseButton,
+    ModifierKeyCode as CTermModifierKeyCode, MouseButton as CTermMouseButton,
     MouseEvent as CTermMouseEvent, MouseEventKind as CTermMouseEventKind,
 };
 
@@ -236,12 +236,12 @@ impl From<CTermMouseEventKind> for MouseEventKind {
     }
 }
 
-impl From<MouseButton> for Button {
-    fn from(value: MouseButton) -> Self {
+impl From<CTermMouseButton> for MouseButton {
+    fn from(value: CTermMouseButton) -> Self {
         match value {
-            MouseButton::Left => Self::Left,
-            MouseButton::Right => Self::Right,
-            MouseButton::Middle => Self::Middle,
+            CTermMouseButton::Left => Self::Left,
+            CTermMouseButton::Right => Self::Right,
+            CTermMouseButton::Middle => Self::Middle,
         }
     }
 }

@@ -166,7 +166,7 @@ impl<M> Layout<M> {
     }
 }
 
-impl<M> Widget<M> for Layout<M> {
+impl<M: Clone + 'static> Widget<M> for Layout<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.render_base_style(buffer, &rect);
 
@@ -227,7 +227,7 @@ impl<M> Default for Layout<M> {
     }
 }
 
-impl<M> Layout<M> {
+impl<M: Clone + 'static> Layout<M> {
     /// Renders layout
     fn ver_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         let (sizes, mut rect) = match self.get_cache(&rect, cache) {
@@ -507,13 +507,13 @@ impl<M> Layout<M> {
 }
 
 // From implementations
-impl<M> From<Layout<M>> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Layout<M>> for Box<dyn Widget<M>> {
     fn from(value: Layout<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<Layout<M>> for Element<M> {
+impl<M: Clone + 'static> From<Layout<M>> for Element<M> {
     fn from(value: Layout<M>) -> Self {
         Element::new(value)
     }

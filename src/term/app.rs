@@ -24,6 +24,15 @@ pub trait Application {
         Action::NONE
     }
 
+    /// Handles the message events thrown by the widgets mouse events.
+    ///
+    /// Some widgets support adding a mouse handler (such as Click, Scroll,...)
+    /// and when this mouse event occurs, the widget then returns the set
+    /// Message.
+    fn message(&mut self, _message: Self::Message) -> Action {
+        Action::NONE
+    }
+
     /// Called every loop iteration, regardless of user input.
     ///
     /// This is ideal for animations, background taks or timer related logic.

@@ -88,6 +88,7 @@ where
 
 impl<M, T> From<&Vec<T>> for Row<M>
 where
+    M: Clone + 'static,
     for<'a> &'a T: ToSpan,
 {
     fn from(vec: &Vec<T>) -> Self {

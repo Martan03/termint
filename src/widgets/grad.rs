@@ -192,7 +192,7 @@ impl Grad {
     }
 }
 
-impl<M> Widget<M> for Grad {
+impl<M: Clone + 'static> Widget<M> for Grad {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
     }
@@ -519,13 +519,13 @@ impl Grad {
 }
 
 // From implementations
-impl<M> From<Grad> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Grad> for Box<dyn Widget<M>> {
     fn from(value: Grad) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<Grad> for Element<M> {
+impl<M: Clone + 'static> From<Grad> for Element<M> {
     fn from(value: Grad) -> Self {
         Element::new(value)
     }

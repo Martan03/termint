@@ -30,7 +30,7 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// let state = Rc::new(Cell::new(ScrollbarState::new(0)));
 ///
 /// // Creates vertical scrollable widget
-/// let scrollable: Scrollable<Span> = Scrollable::vertical(span, state);
+/// let scrollable: Scrollable<(), Span> = Scrollable::vertical(span, state);
 ///
 /// let mut term = Term::default();
 /// term.render(scrollable)?;
@@ -47,7 +47,7 @@ pub struct Scrollable<M: 'static = (), W = Element<M>> {
 
 impl<M, W> Scrollable<M, W>
 where
-    W: Widget<M>,
+    M: Clone + 'static,
 {
     /// Creates a [`Scrollable`] that scrolls in given direction.
     ///
@@ -129,6 +129,7 @@ where
 
 impl<M, W> Widget<M> for Scrollable<M, W>
 where
+    M: Clone + 'static,
     W: Widget<M>,
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
@@ -199,12 +200,16 @@ where
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
+        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+            return None;
+        }
         self.child.on_event(area, cache, event)
     }
 }
 
 impl<M, W> Scrollable<M, W>
 where
+    M: Clone + 'static,
     W: Widget<M>,
 {
     /// Renders vertical scrollable
@@ -346,6 +351,7 @@ where
 
 impl<M, W> From<Scrollable<M, W>> for Box<dyn Widget<M>>
 where
+    M: Clone + 'static,
     W: Widget<M> + 'static,
 {
     fn from(value: Scrollable<M, W>) -> Self {
@@ -355,6 +361,7 @@ where
 
 impl<M, W> From<Scrollable<M, W>> for Element<M>
 where
+    M: Clone + 'static,
     W: Widget<M> + 'static,
 {
     fn from(value: Scrollable<M, W>) -> Self {

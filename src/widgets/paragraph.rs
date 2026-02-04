@@ -133,7 +133,7 @@ impl Paragraph {
     }
 }
 
-impl<M> Widget<M> for Paragraph {
+impl<M: Clone + 'static> Widget<M> for Paragraph {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         let mut pos = Vec2::new(rect.x(), rect.y());
         let mut size = Vec2::new(rect.width(), rect.height());
@@ -242,13 +242,13 @@ impl Paragraph {
 }
 
 // From implementations
-impl<M> From<Paragraph> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Paragraph> for Box<dyn Widget<M>> {
     fn from(value: Paragraph) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<Paragraph> for Element<M> {
+impl<M: Clone + 'static> From<Paragraph> for Element<M> {
     fn from(value: Paragraph) -> Self {
         Element::new(value)
     }

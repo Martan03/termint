@@ -27,7 +27,7 @@ impl Cache {
     }
 
     /// Updates the cache tree when it differs from the widget tree.
-    pub fn diff<M>(&mut self, widget: &Element<M>) {
+    pub fn diff<M: Clone + 'static>(&mut self, widget: &Element<M>) {
         if self.widget_type != Some(widget.type_id) {
             self.widget_type = Some(widget.type_id);
             self.local = None;

@@ -44,7 +44,7 @@ pub struct BgGrad<M: 'static = (), W = Element<M>> {
     child_type: PhantomData<W>,
 }
 
-impl<M> BgGrad<M, Spacer> {
+impl<M: Clone + 'static> BgGrad<M, Spacer> {
     /// Creates a new empty [`BgGrad`] with the given gradient colors and
     /// direction.
     ///
@@ -154,10 +154,7 @@ impl<M, W> BgGrad<M, W> {
     }
 }
 
-impl<M, W> BgGrad<M, W>
-where
-    W: Widget<M>,
-{
+impl<M, W> BgGrad<M, W> {
     /// Sets the gradient direction of the [`BgGrad`] background.
     ///
     /// The direction determines in which direction is the gradient drawn.
@@ -179,7 +176,13 @@ where
         self.padding = padding.into();
         self
     }
+}
 
+impl<M, W> BgGrad<M, W>
+where
+    M: Clone + 'static,
+    W: Widget<M>,
+{
     fn construct(start: RGB, end: RGB, dir: Direction, child: W) -> Self {
         Self {
             bg_start: start,
@@ -192,7 +195,7 @@ where
     }
 }
 
-impl<M> BgGrad<M, Layout<M>> {
+impl<M: Clone + 'static> BgGrad<M, Layout<M>> {
     /// Sets flexing [`Direction`] of the [`Layout`].
     #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
@@ -275,6 +278,7 @@ impl<M> BgGrad<M, Layout<M>> {
 
 impl<M, W> Widget<M> for BgGrad<M, W>
 where
+    M: Clone + 'static,
     W: Widget<M>,
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
@@ -319,14 +323,14 @@ where
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
+        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+            return None;
+        }
         self.child.on_event(area.inner(self.padding), cache, event)
     }
 }
 
-impl<M, W> BgGrad<M, W>
-where
-    W: Widget<M>,
-{
+impl<M, W> BgGrad<M, W> {
     /// Renders horizontal background gradient
     fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
         let step = self.get_step(rect.width() as i16 - 1);
@@ -388,6 +392,7 @@ where
 // From implementations
 impl<M, W> From<BgGrad<M, W>> for Box<dyn Widget<M>>
 where
+    M: Clone + 'static,
     W: Widget<M> + 'static,
 {
     fn from(value: BgGrad<M, W>) -> Self {
@@ -397,6 +402,7 @@ where
 
 impl<M, W> From<BgGrad<M, W>> for Element<M>
 where
+    M: Clone + 'static,
     W: Widget<M> + 'static,
 {
     fn from(value: BgGrad<M, W>) -> Self {

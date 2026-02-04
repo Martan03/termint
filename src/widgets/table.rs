@@ -190,7 +190,7 @@ impl<M> Table<M> {
     }
 }
 
-impl<M> Widget<M> for Table<M> {
+impl<M: Clone + 'static> Widget<M> for Table<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() || self.rows.is_empty() {
             return;
@@ -302,7 +302,7 @@ impl<M> Widget<M> for Table<M> {
     }
 }
 
-impl<M> Table<M> {
+impl<M: Clone + 'static> Table<M> {
     fn calc_header_height(&self, rect: &Rect, widths: &[usize]) -> usize {
         let mut header_height = self.header_separator.is_some() as usize;
         if let Some(header) = &self.header {
@@ -591,13 +591,13 @@ impl<M> Table<M> {
     }
 }
 
-impl<M> From<Table<M>> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Table<M>> for Box<dyn Widget<M>> {
     fn from(value: Table<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<Table<M>> for Element<M> {
+impl<M: Clone + 'static> From<Table<M>> for Element<M> {
     fn from(value: Table<M>) -> Self {
         Element::new(value)
     }

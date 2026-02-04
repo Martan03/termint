@@ -203,6 +203,39 @@ impl<M, B> Term<M, B> {
         self
     }
 
+    /// Clears the cache of the [`Term`].
+    ///
+    /// This is useful when a widget's state changes, but the cache doesn't
+    /// automatically update. After clearing the cache, the next rendering will
+    /// recalculate the sizes and positions of widgets.
+    pub fn clear_cache(&mut self) {
+        self.cache = Cache::default();
+    }
+
+    /// Restores the terminal: disables the alternate buffer and shows cursor
+    ///
+    /// Note restore is done automatically and should be used only when you
+    /// want to restore the buffer before the [`Term`] is dropped.
+    pub fn restore() {
+        if is_raw_mode_enabled() {
+            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
+            _ = disable_raw_mode();
+        }
+        disable_mouse_capture();
+        disable_bracketed_paste();
+        _ = stdout().flush();
+    }
+
+    /// Gets size of the terminal
+    pub fn get_size() -> Option<(usize, usize)> {
+        term_size().ok().map(|s| (s.char_width, s.char_height))
+    }
+}
+
+impl<M, B> Term<M, B>
+where
+    M: Clone + 'static,
+{
     /// Renders given widget on full screen with set padding. Displays small
     /// screen when cannot fit (only when `small_screen` is set).
     pub fn render<T>(&mut self, widget: T) -> Result<(), Error>
@@ -266,37 +299,12 @@ impl<M, B> Term<M, B> {
         self.render_widget(wid, rect);
         Ok(())
     }
-
-    /// Clears the cache of the [`Term`].
-    ///
-    /// This is useful when a widget's state changes, but the cache doesn't
-    /// automatically update. After clearing the cache, the next rendering will
-    /// recalculate the sizes and positions of widgets.
-    pub fn clear_cache(&mut self) {
-        self.cache = Cache::default();
-    }
-
-    /// Restores the terminal: disables the alternate buffer and shows cursor
-    ///
-    /// Note restore is done automatically and should be used only when you
-    /// want to restore the buffer before the [`Term`] is dropped.
-    pub fn restore() {
-        if is_raw_mode_enabled() {
-            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
-            _ = disable_raw_mode();
-        }
-        disable_mouse_capture();
-        disable_bracketed_paste();
-        _ = stdout().flush();
-    }
-
-    /// Gets size of the terminal
-    pub fn get_size() -> Option<(usize, usize)> {
-        term_size().ok().map(|s| (s.char_width, s.char_height))
-    }
 }
 
-impl<M, B: Backend> Term<M, B> {
+impl<M, B: Backend> Term<M, B>
+where
+    M: Clone + 'static,
+{
     /// Starts the application main loop and handles the terminal state.
     ///
     /// This method does the following:
@@ -360,7 +368,10 @@ impl<M, B: Backend> Term<M, B> {
     }
 }
 
-impl<M, B> Term<M, B> {
+impl<M, B> Term<M, B>
+where
+    M: Clone + 'static,
+{
     fn render_widget(&mut self, widget: Element<M>, rect: Rect) {
         let mut buffer = Buffer::empty(rect);
         match &self.small {

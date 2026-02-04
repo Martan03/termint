@@ -129,7 +129,7 @@ impl<M> Grid<M> {
     }
 }
 
-impl<M> Widget<M> for Grid<M> {
+impl<M: Clone + 'static> Widget<M> for Grid<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() || self.children.is_empty() {
             return;
@@ -293,13 +293,13 @@ impl<M> Default for Grid<M> {
     }
 }
 
-impl<M> From<Grid<M>> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Grid<M>> for Box<dyn Widget<M>> {
     fn from(value: Grid<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<Grid<M>> for Element<M> {
+impl<M: Clone + 'static> From<Grid<M>> for Element<M> {
     fn from(value: Grid<M>) -> Self {
         Element::new(value)
     }

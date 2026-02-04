@@ -65,7 +65,7 @@ impl<M> Overlay<M> {
     }
 }
 
-impl<M> Widget<M> for Overlay<M> {
+impl<M: Clone + 'static> Widget<M> for Overlay<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         self.children
             .iter()
@@ -99,6 +99,10 @@ impl<M> Widget<M> for Overlay<M> {
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
+        if !area.contains_pos(&Vec2::new(event.x, event.y)) {
+            return None;
+        }
+
         for child in self.children.iter().rev() {
             if let Some(message) = child.on_event(area, cache, event) {
                 return Some(message);
@@ -108,13 +112,13 @@ impl<M> Widget<M> for Overlay<M> {
     }
 }
 
-impl<M> From<Overlay<M>> for Element<M> {
+impl<M: Clone + 'static> From<Overlay<M>> for Element<M> {
     fn from(value: Overlay<M>) -> Self {
         Element::new(value)
     }
 }
 
-impl<M> From<Overlay<M>> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<Overlay<M>> for Box<dyn Widget<M>> {
     fn from(value: Overlay<M>) -> Self {
         Box::new(value)
     }

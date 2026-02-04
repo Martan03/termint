@@ -152,7 +152,7 @@ fn get_songs() -> Vec<Vec<&'static str>> {
     ]
 }
 
-fn get_rows<M>() -> Vec<Row<M>> {
+fn get_rows<M: Clone>() -> Vec<Row<M>> {
     let rows = get_songs()
         .iter()
         .enumerate()

@@ -31,6 +31,7 @@
 
 mod bg_grad;
 mod block;
+mod button;
 mod grad;
 mod grid;
 mod layout;
@@ -52,6 +53,7 @@ pub mod cache;
 pub use bg_grad::BgGrad;
 /// A widget that wrap another widget and adds border and title.
 pub use block::Block;
+pub use button::Button;
 /// A widget for rendering text with a gradient foreground color.
 pub use grad::Grad;
 /// A layout widget that arranges children in a grid specified by rows and

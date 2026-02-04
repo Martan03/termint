@@ -402,7 +402,7 @@ fn scrollable_test() {
     // Scrollable state containing offset
     let state = Rc::new(Cell::new(ScrollbarState::new(2)));
     // Creates scrollable widget with vertical scrolling
-    let scrollable = Scrollable::<Layout>::vertical(span, state);
+    let scrollable = Scrollable::<(), Layout>::vertical(span, state);
     // Renders using the buffer
     let rect = Rect::new(1, 1, 9, 5);
     let mut buffer = Buffer::empty(rect);

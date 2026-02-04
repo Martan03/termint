@@ -115,7 +115,7 @@ impl ProgressBar {
     }
 }
 
-impl<M> Widget<M> for ProgressBar {
+impl<M: Clone + 'static> Widget<M> for ProgressBar {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         if rect.is_empty() || self.thumb_chars.is_empty() {
             return;
@@ -170,13 +170,13 @@ impl ProgressBar {
     }
 }
 
-impl<M> From<ProgressBar> for Element<M> {
+impl<M: Clone + 'static> From<ProgressBar> for Element<M> {
     fn from(value: ProgressBar) -> Self {
         Element::new(value)
     }
 }
 
-impl<M> From<ProgressBar> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<ProgressBar> for Box<dyn Widget<M>> {
     fn from(value: ProgressBar) -> Self {
         Box::new(value)
     }

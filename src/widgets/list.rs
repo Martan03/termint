@@ -209,7 +209,7 @@ impl ListState {
     }
 }
 
-impl<M> Widget<M> for List<M> {
+impl<M: Clone + 'static> Widget<M> for List<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         if self.auto_scroll {
             self.scroll_offset(rect.size());
@@ -273,7 +273,7 @@ impl<M> Widget<M> for List<M> {
     }
 }
 
-impl<M> List<M> {
+impl<M: Clone + 'static> List<M> {
     /// Renders [`List`] scrollbar
     fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
         let rat = self.items.len() as f32 / rect.height() as f32;
@@ -345,13 +345,13 @@ impl<M> List<M> {
 }
 
 // From implementations
-impl<M> From<List<M>> for Box<dyn Widget<M>> {
+impl<M: Clone + 'static> From<List<M>> for Box<dyn Widget<M>> {
     fn from(value: List<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M> From<List<M>> for Element<M> {
+impl<M: Clone + 'static> From<List<M>> for Element<M> {
     fn from(value: List<M>) -> Self {
         Element::new(value)
     }
