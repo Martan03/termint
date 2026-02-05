@@ -101,6 +101,7 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
         cache: &mut Cache,
         event: &MouseEvent,
     ) -> Option<M> {
+        // eprint!("{:?} {:?}\n\r", area, event.pos);
         if !area.contains_pos(&event.pos) {
             return None;
         }

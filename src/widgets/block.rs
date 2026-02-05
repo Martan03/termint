@@ -331,7 +331,13 @@ where
         if !area.contains_pos(&event.pos) {
             return None;
         }
-        self.child.on_event(area, &mut cache.children[0], event)
+
+        let l = self.borders.contains(Border::LEFT) as usize;
+        let r = self.borders.contains(Border::RIGHT) as usize;
+        let t = self.borders.contains(Border::TOP) as usize;
+        let b = self.borders.contains(Border::BOTTOM) as usize;
+        let rect = area.inner((t, r, l, b));
+        self.child.on_event(rect, &mut cache.children[0], event)
     }
 }
 

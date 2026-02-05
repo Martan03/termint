@@ -184,8 +184,11 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
         cache: &mut Cache,
         event: &crate::prelude::MouseEvent,
     ) -> Option<M> {
-        let (cols, cols_pos, rows, rows_pos) = self.get_sizes(&area, cache);
+        if !area.contains_pos(&event.pos) {
+            return None;
+        }
 
+        let (cols, cols_pos, rows, rows_pos) = self.get_sizes(&area, cache);
         for (i, GridChild { child, row, col }) in
             self.children.iter().enumerate()
         {
