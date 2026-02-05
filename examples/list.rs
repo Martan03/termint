@@ -28,7 +28,7 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), Error> {
     let mut app = App::default();
-    Term::default().setup()?.run(&mut app)
+    Term::default().setup()?.with_mouse().run(&mut app)
 }
 
 struct App {

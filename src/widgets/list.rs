@@ -285,8 +285,14 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
         }
 
         match &event.kind {
-            MouseEventKind::ScrollDown => todo!(),
-            MouseEventKind::ScrollUp => todo!(),
+            MouseEventKind::ScrollDown => {
+                self.move_selection(1);
+                EventResult::Consumed
+            }
+            MouseEventKind::ScrollUp => {
+                self.move_selection(-1);
+                EventResult::Consumed
+            }
             _ => EventResult::None,
         }
     }
@@ -338,6 +344,20 @@ impl<M: Clone + 'static> List<M> {
         while !self.is_visible(selected, self.state.borrow().offset, size) {
             self.state.borrow_mut().offset += 1;
         }
+    }
+
+    fn move_selection(&self, delta: i32) {
+        let mut state = self.state.borrow_mut();
+        let Some(selected) = state.selected else {
+            return;
+        };
+
+        let id = match delta < 0 {
+            true => selected.saturating_sub(delta.unsigned_abs() as usize),
+            false => (selected + delta as usize)
+                .min(self.items.len().saturating_sub(1)),
+        };
+        state.selected = Some(id);
     }
 
     /// Checks if item is visible with given offset
