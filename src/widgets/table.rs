@@ -10,7 +10,10 @@ use crate::{
     geometry::{Padding, Rect, Unit, Vec2},
     prelude::MouseEvent,
     style::Style,
-    widgets::cache::{Cache, TableCache},
+    widgets::{
+        cache::{Cache, TableCache},
+        widget::EventResult,
+    },
 };
 
 use super::{Element, Widget};
@@ -311,19 +314,19 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         area: Rect,
         cache: &mut Cache,
         event: &crate::prelude::MouseEvent,
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
 
         let (widths, heights, header_height, scrollbar) =
             self.get_sizes(&area, cache);
         let crect = area.inner((header_height, scrollbar as usize, 0, 0));
 
-        if let Some(m) =
-            self.on_event_header(&area, cache, event, header_height, &widths)
-        {
-            return Some(m);
+        let m =
+            self.on_event_header(&area, cache, event, header_height, &widths);
+        if !m.is_none() {
+            return m;
         }
 
         let mut pos = *crect.pos();
@@ -350,16 +353,17 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 
             if pos.y + row_height > area.bottom() + 1 {
                 let bot = crect.bottom();
-                if let Some(m) = self.on_event_last(
+                let m = self.on_event_last(
                     rrect, bot, cache, event, &mut id, row, &widths,
-                ) {
-                    return Some(m);
+                );
+                if !m.is_none() {
+                    return m;
                 }
             } else {
-                if let Some(m) = self
-                    .on_event_row(&rrect, cache, event, &mut id, row, &widths)
-                {
-                    return Some(m);
+                let m = self
+                    .on_event_row(&rrect, cache, event, &mut id, row, &widths);
+                if !m.is_none() {
+                    return m;
                 }
             }
 
@@ -367,7 +371,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             pos.y += row_height;
         }
 
-        None
+        EventResult::None
     }
 }
 
@@ -513,9 +517,9 @@ impl<M: Clone + 'static> Table<M> {
         id: &mut usize,
         row: &Row<M>,
         widths: &[usize],
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !rect.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
 
         let mut pos = *rect.pos();
@@ -524,10 +528,9 @@ impl<M: Clone + 'static> Table<M> {
             size.x = widths.get(i).copied().unwrap_or_default();
             if size.x != 0 {
                 let crect = Rect::from_coords(pos, size);
-                if let Some(m) =
-                    child.on_event(crect, &mut cache.children[*id], event)
-                {
-                    return Some(m);
+                let m = child.on_event(crect, &mut cache.children[*id], event);
+                if !m.is_none() {
+                    return m;
                 }
                 pos.x += size.x;
             }
@@ -535,7 +538,7 @@ impl<M: Clone + 'static> Table<M> {
             pos.x += self.column_spacing;
             *id += 1;
         }
-        None
+        EventResult::None
     }
 
     fn render_last(
@@ -571,11 +574,11 @@ impl<M: Clone + 'static> Table<M> {
         id: &mut usize,
         row: &Row<M>,
         widths: &[usize],
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         let mut crect = rect.clone();
         crect.size.y = rect.height() - (rect.bottom().saturating_sub(bottom));
         if !crect.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
         self.on_event_row(&rect, cache, event, id, row, widths)
     }
@@ -649,9 +652,9 @@ impl<M: Clone + 'static> Table<M> {
         event: &MouseEvent,
         height: usize,
         widths: &[usize],
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         let Some(header) = &self.header else {
-            return None;
+            return EventResult::None;
         };
 
         let height =
@@ -664,14 +667,13 @@ impl<M: Clone + 'static> Table<M> {
             }
 
             let crect = Rect::from_coords(pos, Vec2::new(width, height));
-            if let Some(m) =
-                child.on_event(crect, &mut cache.children[i], event)
-            {
-                return Some(m);
+            let m = child.on_event(crect, &mut cache.children[i], event);
+            if !m.is_none() {
+                return m;
             }
             pos.x += width + self.column_spacing;
         }
-        None
+        EventResult::None
     }
 
     fn row_height(height: usize, row: &Row<M>, widths: &[usize]) -> usize {

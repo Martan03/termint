@@ -6,7 +6,10 @@ use crate::{
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     prelude::MouseEvent,
     style::Style,
-    widgets::cache::{Cache, LayoutCache},
+    widgets::{
+        cache::{Cache, LayoutCache},
+        widget::EventResult,
+    },
 };
 
 use super::{widget::Widget, Element};
@@ -219,14 +222,14 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
         area: Rect,
         cache: &mut Cache,
         event: &MouseEvent,
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
 
         let rect = area.inner(self.padding);
         if rect.is_empty() || self.children.is_empty() {
-            return None;
+            return EventResult::None;
         }
 
         match self.direction {
@@ -258,13 +261,18 @@ impl<M: Clone + 'static> Layout<M> {
     fn ver_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         _ = self.ver_fn(rect, cache, |e, r, c| {
             e.render(buffer, r, c);
-            None
+            EventResult::None
         });
     }
 
-    fn ver_fn<F>(&self, rect: Rect, cache: &mut Cache, mut f: F) -> Option<M>
+    fn ver_fn<F>(
+        &self,
+        rect: Rect,
+        cache: &mut Cache,
+        mut f: F,
+    ) -> EventResult<M>
     where
-        F: FnMut(&Element<M>, Rect, &mut Cache) -> Option<M>,
+        F: FnMut(&Element<M>, Rect, &mut Cache) -> EventResult<M>,
     {
         let (sizes, mut rect) = self.get_sizes(
             rect,
@@ -279,27 +287,31 @@ impl<M: Clone + 'static> Layout<M> {
             let crect =
                 Rect::from_coords(*rect.pos(), Vec2::new(rect.width(), csize));
 
-            if let Some(msg) =
-                f(&self.children[i], crect, &mut cache.children[i])
-            {
-                return Some(msg);
+            let m = f(&self.children[i], crect, &mut cache.children[i]);
+            if !m.is_none() {
+                return m;
             }
             rect = rect.inner(Padding::top(csize));
         }
-        None
+        EventResult::None
     }
 
     /// Renders layout
     fn hor_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         _ = self.hor_fn(rect, cache, |e, r, c| {
             e.render(buffer, r, c);
-            None
+            EventResult::None
         });
     }
 
-    fn hor_fn<F>(&self, rect: Rect, cache: &mut Cache, mut f: F) -> Option<M>
+    fn hor_fn<F>(
+        &self,
+        rect: Rect,
+        cache: &mut Cache,
+        mut f: F,
+    ) -> EventResult<M>
     where
-        F: FnMut(&Element<M>, Rect, &mut Cache) -> Option<M>,
+        F: FnMut(&Element<M>, Rect, &mut Cache) -> EventResult<M>,
     {
         let (sizes, mut rect) = self.get_sizes(
             rect,
@@ -316,14 +328,13 @@ impl<M: Clone + 'static> Layout<M> {
                 Vec2::new(csize, rect.height()),
             );
 
-            if let Some(msg) =
-                f(&self.children[i], crect, &mut cache.children[i])
-            {
-                return Some(msg);
+            let m = f(&self.children[i], crect, &mut cache.children[i]);
+            if !m.is_none() {
+                return m;
             }
             rect = rect.inner(Padding::left(csize));
         }
-        None
+        EventResult::None
     }
 
     /// Gets child sizes of vertical layout

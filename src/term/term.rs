@@ -23,7 +23,7 @@ use crate::{
         enable_bracketed_paste, enable_mouse_capture, Action, Application,
         Frame,
     },
-    widgets::{cache::Cache, Element, Widget},
+    widgets::{cache::Cache, Element, EventResult, Widget},
 };
 
 static HOOK_SET: Once = Once::new();
@@ -377,9 +377,11 @@ where
             return Action::NONE;
         };
         let rect = Rect::from_coords(Vec2::new(1, 1), self.last_size);
-        root.on_event(rect, &mut self.cache, event)
-            .map(|m| app.message(m))
-            .unwrap_or(Action::NONE)
+        match root.on_event(rect, &mut self.cache, event) {
+            EventResult::None => Action::NONE,
+            EventResult::Consumed => Action::RERENDER,
+            EventResult::Response(m) => app.message(m),
+        }
     }
 }
 

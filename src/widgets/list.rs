@@ -9,9 +9,11 @@ use crate::{
     buffer::Buffer,
     enums::Color,
     geometry::{Rect, Vec2},
+    prelude::MouseEvent,
     style::Style,
+    term::backend::MouseEventKind,
     text::Text,
-    widgets::{cache::Cache, Span},
+    widgets::{cache::Cache, widget::EventResult, Span},
 };
 
 use super::{span::ToSpan, widget::Widget, Element};
@@ -270,6 +272,23 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
             height += h;
         }
         width + self.highlight.len() + (height > size.y) as usize
+    }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        _cache: &mut Cache,
+        event: &MouseEvent,
+    ) -> EventResult<M> {
+        if !area.contains_pos(&event.pos) {
+            return EventResult::None;
+        }
+
+        match &event.kind {
+            MouseEventKind::ScrollDown => todo!(),
+            MouseEventKind::ScrollUp => todo!(),
+            _ => EventResult::None,
+        }
     }
 }
 

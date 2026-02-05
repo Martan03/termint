@@ -1,7 +1,10 @@
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Unit, Vec2},
-    widgets::cache::{Cache, GridCache},
+    widgets::{
+        cache::{Cache, GridCache},
+        widget::EventResult,
+    },
 };
 
 use super::{widget::Widget, Element};
@@ -183,9 +186,9 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
         area: Rect,
         cache: &mut Cache,
         event: &crate::prelude::MouseEvent,
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
 
         let (cols, cols_pos, rows, rows_pos) = self.get_sizes(&area, cache);
@@ -198,13 +201,12 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
                 cols[*col],
                 rows[*row],
             );
-            if let Some(m) =
-                child.on_event(crect, &mut cache.children[i], event)
-            {
-                return Some(m);
+            let m = child.on_event(crect, &mut cache.children[i], event);
+            if !m.is_none() {
+                return m;
             }
         }
-        None
+        EventResult::None
     }
 }
 

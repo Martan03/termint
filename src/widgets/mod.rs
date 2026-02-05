@@ -96,5 +96,6 @@ pub use table::Table;
 pub use table::TableState;
 /// A container for any widget implementing the [`Widget`] trait.
 pub use widget::Element;
+pub use widget::EventResult;
 /// Trait implemented by all the widgets.
 pub use widget::Widget;

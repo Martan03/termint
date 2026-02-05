@@ -4,7 +4,7 @@ use crate::{
     prelude::{MouseEvent, Rect, Vec2},
     style::Style,
     term::backend::{MouseButton, MouseEventKind},
-    widgets::{cache::Cache, Element, Spacer, Widget},
+    widgets::{cache::Cache, widget::EventResult, Element, Spacer, Widget},
 };
 
 pub struct Button<M: 'static> {
@@ -100,23 +100,27 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
         area: Rect,
         cache: &mut Cache,
         event: &MouseEvent,
-    ) -> Option<M> {
-        // eprint!("{:?} {:?}\n\r", area, event.pos);
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
 
-        if let Some(message) = self.child.on_event(
-            area.inner(self.padding),
-            &mut cache.children[0],
-            event,
-        ) {
-            return Some(message);
-        }
+        let cr = area.inner(self.padding);
+        self.child
+            .on_event(cr, &mut cache.children[0], event)
+            .or_else(|| self.handle_click(event))
+    }
+}
 
+impl<M: Clone> Button<M> {
+    fn handle_click(&self, event: &MouseEvent) -> EventResult<M> {
         match &event.kind {
-            MouseEventKind::Down(MouseButton::Left) => self.on_click.clone(),
-            _ => None,
+            MouseEventKind::Down(MouseButton::Left) => self
+                .on_click
+                .clone()
+                .map(EventResult::Response)
+                .unwrap_or(EventResult::None),
+            _ => EventResult::None,
         }
     }
 }

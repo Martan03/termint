@@ -2,7 +2,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
     prelude::MouseEvent,
-    widgets::cache::Cache,
+    widgets::{cache::Cache, widget::EventResult},
 };
 
 use super::{Element, Widget};
@@ -98,19 +98,18 @@ impl<M: Clone + 'static> Widget<M> for Overlay<M> {
         area: Rect,
         cache: &mut Cache,
         event: &MouseEvent,
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
 
         for (i, child) in self.children.iter().rev().enumerate() {
-            if let Some(message) =
-                child.on_event(area, &mut cache.children[i], event)
-            {
-                return Some(message);
+            let m = child.on_event(area, &mut cache.children[i], event);
+            if !m.is_none() {
+                return m;
             }
         }
-        None
+        EventResult::None
     }
 }
 

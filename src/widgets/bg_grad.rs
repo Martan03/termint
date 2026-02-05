@@ -6,7 +6,7 @@ use crate::{
     geometry::{Constraint, Direction, Padding, Rect, Vec2},
     prelude::MouseEvent,
     style::Style,
-    widgets::cache::Cache,
+    widgets::{cache::Cache, widget::EventResult},
 };
 
 use super::{widget::Widget, Element, Layout, Spacer};
@@ -322,9 +322,9 @@ where
         area: Rect,
         cache: &mut Cache,
         event: &MouseEvent,
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
         self.child.on_event(
             area.inner(self.padding),

@@ -8,7 +8,7 @@ use crate::{
     prelude::MouseEvent,
     style::Style,
     text::Text,
-    widgets::{cache::Cache, span::Span},
+    widgets::{cache::Cache, span::Span, widget::EventResult},
 };
 
 use super::{widget::Widget, Element, Layout, Spacer};
@@ -327,9 +327,9 @@ where
         area: Rect,
         cache: &mut Cache,
         event: &MouseEvent,
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
 
         let l = self.borders.contains(Border::LEFT) as usize;

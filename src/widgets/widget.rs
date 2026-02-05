@@ -10,6 +10,30 @@ use crate::{
     widgets::cache::Cache,
 };
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EventResult<M> {
+    None,
+    Consumed,
+    Response(M),
+}
+
+impl<M> EventResult<M> {
+    pub fn is_none(&self) -> bool {
+        matches!(self, EventResult::None)
+    }
+
+    pub fn or_else<F>(self, f: F) -> Self
+    where
+        F: FnOnce() -> Self,
+    {
+        if self.is_none() {
+            f()
+        } else {
+            self
+        }
+    }
+}
+
 /// Trait implemented by all the widgets.
 ///
 /// A widget is a visual component that can render itself to a [`Buffer`] and
@@ -45,8 +69,8 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
         _area: Rect,
         _cache: &mut Cache,
         _event: &MouseEvent,
-    ) -> Option<Message> {
-        None
+    ) -> EventResult<Message> {
+        EventResult::None
     }
 }
 
@@ -160,7 +184,7 @@ impl<Message: Clone + 'static> Widget<Message> for Element<Message> {
         area: Rect,
         cache: &mut Cache,
         event: &MouseEvent,
-    ) -> Option<Message> {
+    ) -> EventResult<Message> {
         self.widget.on_event(area, cache, event)
     }
 }

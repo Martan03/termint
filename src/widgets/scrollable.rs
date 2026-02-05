@@ -4,7 +4,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Direction, Rect, Vec2},
     prelude::MouseEvent,
-    widgets::cache::Cache,
+    widgets::{cache::Cache, widget::EventResult},
 };
 
 use super::{Element, Scrollbar, ScrollbarState, Widget};
@@ -201,9 +201,9 @@ where
         area: Rect,
         cache: &mut Cache,
         event: &MouseEvent,
-    ) -> Option<M> {
+    ) -> EventResult<M> {
         if !area.contains_pos(&event.pos) {
-            return None;
+            return EventResult::None;
         }
         self.child.on_event(area, &mut cache.children[0], event)
     }
