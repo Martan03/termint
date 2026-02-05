@@ -8,8 +8,9 @@ use crate::{
     buffer::{Buffer, Cell},
     enums::{Border, BorderType},
     geometry::{Padding, Rect, Unit, Vec2},
-    prelude::MouseEvent,
+    prelude::{KeyModifiers, MouseEvent},
     style::Style,
+    term::backend::MouseEventKind,
     widgets::{
         cache::{Cache, TableCache},
         widget::EventResult,
@@ -371,7 +372,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             pos.y += row_height;
         }
 
-        EventResult::None
+        self.handle_mouse(event)
     }
 }
 
@@ -743,6 +744,51 @@ impl<M: Clone + 'static> Table<M> {
             .scrollbar(scrollbar)
             .header_height(header_height);
         cache.local = Some(Box::new(lcache));
+    }
+
+    fn handle_mouse(&self, event: &MouseEvent) -> EventResult<M> {
+        match &event.kind {
+            MouseEventKind::ScrollDown
+                if event.modifiers.contains(KeyModifiers::SHIFT) =>
+            {
+                self.move_col(1);
+            }
+            MouseEventKind::ScrollUp
+                if event.modifiers.contains(KeyModifiers::SHIFT) =>
+            {
+                self.move_col(-1);
+            }
+            MouseEventKind::ScrollDown => self.move_row(1),
+            MouseEventKind::ScrollUp => self.move_row(-1),
+            MouseEventKind::ScrollLeft => self.move_col(-1),
+            MouseEventKind::ScrollRight => self.move_col(1),
+            _ => return EventResult::None,
+        }
+        EventResult::Consumed
+    }
+
+    fn move_row(&self, delta: i32) {
+        let mut state = self.state.borrow_mut();
+        if let Some(selected) = state.selected {
+            state.selected =
+                Some(Self::move_selection(selected, delta, self.rows.len()));
+        }
+    }
+
+    fn move_col(&self, delta: i32) {
+        let mut state = self.state.borrow_mut();
+        if let Some(selected) = state.selected_column {
+            state.selected_column =
+                Some(Self::move_selection(selected, delta, self.widths.len()));
+        }
+    }
+
+    fn move_selection(current: usize, delta: i32, max: usize) -> usize {
+        if delta < 0 {
+            current.saturating_sub(delta.unsigned_abs() as usize)
+        } else {
+            (current + delta as usize).min(max.saturating_sub(1))
+        }
     }
 }
 
