@@ -3,7 +3,8 @@ use std::{cell::Cell, cmp::min, marker::PhantomData, rc::Rc};
 use crate::{
     buffer::Buffer,
     geometry::{Direction, Rect, Vec2},
-    prelude::MouseEvent,
+    prelude::{KeyModifiers, MouseEvent},
+    term::backend::MouseEventKind,
     widgets::{cache::Cache, widget::EventResult},
 };
 
@@ -205,7 +206,9 @@ where
         if !area.contains_pos(&event.pos) {
             return EventResult::None;
         }
-        self.child.on_event(area, &mut cache.children[0], event)
+        self.child
+            .on_event(area, &mut cache.children[0], event)
+            .or_else(|| self.handle_mouse(area, event))
     }
 }
 
@@ -348,6 +351,62 @@ where
     ) {
         scroll.content_len(size);
         scroll.render(buffer, rect, cache);
+    }
+
+    fn handle_mouse(&self, area: Rect, event: &MouseEvent) -> EventResult<M> {
+        use MouseEventKind::*;
+        match &event.kind {
+            ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
+                self.hor_move_offset(area, 1);
+            }
+            ScrollUp if event.modifiers.contains(KeyModifiers::SHIFT) => {
+                self.hor_move_offset(area, -1);
+            }
+            ScrollDown => self.ver_move_offset(area, 1),
+            ScrollUp => self.ver_move_offset(area, -1),
+            ScrollLeft => self.hor_move_offset(area, -1),
+            ScrollRight => self.hor_move_offset(area, 1),
+            _ => return EventResult::None,
+        }
+        EventResult::Consumed
+    }
+
+    fn ver_move_offset(&self, area: Rect, delta: i32) {
+        let height = area
+            .height()
+            .saturating_sub(self.horizontal.is_some() as usize);
+        self.apply_scroll(&self.vertical, height, delta);
+    }
+
+    fn hor_move_offset(&self, area: Rect, delta: i32) {
+        let width = area
+            .width()
+            .saturating_sub(self.vertical.is_some() as usize);
+        self.apply_scroll(&self.horizontal, width, delta);
+    }
+
+    fn apply_scroll(
+        &self,
+        scrollbar: &Option<Element<M>>,
+        size: usize,
+        delta: i32,
+    ) {
+        scrollbar
+            .as_ref()
+            .and_then(|b| b.downcast_ref::<Scrollbar<M>>())
+            .map(|bar| {
+                let state = bar.get_state();
+                bar.offset(Self::get_offset(state, delta, size))
+            });
+    }
+
+    fn get_offset(state: ScrollbarState, delta: i32, size: usize) -> usize {
+        if delta < 0 {
+            state.offset.saturating_sub(delta.unsigned_abs() as usize)
+        } else {
+            (state.offset + delta as usize)
+                .min(state.content_len.saturating_sub(size))
+        }
     }
 }
 

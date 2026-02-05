@@ -782,8 +782,9 @@ impl<M: Clone + 'static> Table<M> {
         y: usize,
         event: &MouseEvent,
     ) -> EventResult<M> {
+        use MouseEventKind::*;
         match &event.kind {
-            MouseEventKind::Down(button) => {
+            Down(button) => {
                 return self
                     .handlers
                     .iter()
@@ -791,20 +792,16 @@ impl<M: Clone + 'static> Table<M> {
                     .map(|(_, m)| EventResult::Response(m(x, y)))
                     .unwrap_or(EventResult::None)
             }
-            MouseEventKind::ScrollDown
-                if event.modifiers.contains(KeyModifiers::SHIFT) =>
-            {
+            ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
                 self.move_col(1);
             }
-            MouseEventKind::ScrollUp
-                if event.modifiers.contains(KeyModifiers::SHIFT) =>
-            {
+            ScrollUp if event.modifiers.contains(KeyModifiers::SHIFT) => {
                 self.move_col(-1);
             }
-            MouseEventKind::ScrollDown => self.move_row(1),
-            MouseEventKind::ScrollUp => self.move_row(-1),
-            MouseEventKind::ScrollLeft => self.move_col(-1),
-            MouseEventKind::ScrollRight => self.move_col(1),
+            ScrollDown => self.move_row(1),
+            ScrollUp => self.move_row(-1),
+            ScrollLeft => self.move_col(-1),
+            ScrollRight => self.move_col(1),
             _ => return EventResult::None,
         }
         EventResult::Consumed
