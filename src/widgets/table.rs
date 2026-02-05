@@ -10,7 +10,7 @@ use crate::{
     geometry::{Padding, Rect, Unit, Vec2},
     prelude::{KeyModifiers, MouseEvent},
     style::Style,
-    term::backend::MouseEventKind,
+    term::backend::{MouseButton, MouseEventKind},
     widgets::{
         cache::{Cache, TableCache},
         widget::EventResult,
@@ -55,7 +55,6 @@ pub use table_state::TableState;
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug)]
 pub struct Table<M: 'static = ()> {
     header: Option<Row<M>>,
     header_separator: Option<BorderType>,
@@ -68,6 +67,7 @@ pub struct Table<M: 'static = ()> {
     state: Rc<RefCell<TableState>>,
     auto_scroll: bool,
     force_scrollbar: bool,
+    handlers: Vec<(MouseButton, Box<dyn Fn(usize, usize) -> M>)>,
 }
 
 impl<M> Table<M> {
@@ -96,6 +96,7 @@ impl<M> Table<M> {
             state,
             auto_scroll: false,
             force_scrollbar: false,
+            handlers: vec![],
         }
     }
 
@@ -191,6 +192,26 @@ impl<M> Table<M> {
     #[must_use]
     pub fn force_scrollbar(mut self) -> Self {
         self.force_scrollbar = true;
+        self
+    }
+
+    /// Sets the response Message of the on click handler.
+    #[must_use]
+    pub fn on_click<F>(self, response: F) -> Self
+    where
+        F: Fn(usize, usize) -> M + 'static,
+    {
+        self.on_press(MouseButton::Left, response)
+    }
+
+    /// Sets the response Message for the given button click handler.
+    #[must_use]
+    pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
+    where
+        F: Fn(usize, usize) -> M + 'static,
+    {
+        self.handlers.retain(|(b, _)| *b != button);
+        self.handlers.push((button, Box::new(response)));
         self
     }
 }
@@ -336,10 +357,10 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             id += self.widths.len();
         }
 
-        id += self.state.borrow().offset * widths.len();
-        for (i, height) in
-            heights.iter().enumerate().skip(self.state.borrow().offset)
-        {
+        let offset = self.state.borrow().offset;
+        let mut row_id = offset;
+        id += row_id * widths.len();
+        for (i, height) in heights.iter().enumerate().skip(offset) {
             if area.bottom() < pos.y {
                 break;
             }
@@ -355,14 +376,15 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             if pos.y + row_height > area.bottom() + 1 {
                 let bot = crect.bottom();
                 let m = self.on_event_last(
-                    rrect, bot, cache, event, &mut id, row, &widths,
+                    rrect, bot, cache, event, &mut id, row_id, row, &widths,
                 );
                 if !m.is_none() {
                     return m;
                 }
             } else {
-                let m = self
-                    .on_event_row(&rrect, cache, event, &mut id, row, &widths);
+                let m = self.on_event_row(
+                    &rrect, cache, event, &mut id, row_id, row, &widths,
+                );
                 if !m.is_none() {
                     return m;
                 }
@@ -370,9 +392,9 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 
             pos.x = area.x();
             pos.y += row_height;
+            row_id += 1;
         }
-
-        self.handle_mouse(event)
+        EventResult::None
     }
 }
 
@@ -516,6 +538,7 @@ impl<M: Clone + 'static> Table<M> {
         cache: &mut Cache,
         event: &MouseEvent,
         id: &mut usize,
+        row_id: usize,
         row: &Row<M>,
         widths: &[usize],
     ) -> EventResult<M> {
@@ -529,11 +552,17 @@ impl<M: Clone + 'static> Table<M> {
             size.x = widths.get(i).copied().unwrap_or_default();
             if size.x != 0 {
                 let crect = Rect::from_coords(pos, size);
+                pos.x += size.x;
+                if !crect.contains_pos(&event.pos) {
+                    continue;
+                }
+
                 let m = child.on_event(crect, &mut cache.children[*id], event);
                 if !m.is_none() {
                     return m;
                 }
-                pos.x += size.x;
+
+                return self.handle_mouse(i, row_id, event);
             }
 
             pos.x += self.column_spacing;
@@ -573,6 +602,7 @@ impl<M: Clone + 'static> Table<M> {
         cache: &mut Cache,
         event: &MouseEvent,
         id: &mut usize,
+        row_id: usize,
         row: &Row<M>,
         widths: &[usize],
     ) -> EventResult<M> {
@@ -581,7 +611,7 @@ impl<M: Clone + 'static> Table<M> {
         if !crect.contains_pos(&event.pos) {
             return EventResult::None;
         }
-        self.on_event_row(&rect, cache, event, id, row, widths)
+        self.on_event_row(&rect, cache, event, id, row_id, row, widths)
     }
 
     fn set_sel_style(
@@ -746,8 +776,21 @@ impl<M: Clone + 'static> Table<M> {
         cache.local = Some(Box::new(lcache));
     }
 
-    fn handle_mouse(&self, event: &MouseEvent) -> EventResult<M> {
+    fn handle_mouse(
+        &self,
+        x: usize,
+        y: usize,
+        event: &MouseEvent,
+    ) -> EventResult<M> {
         match &event.kind {
+            MouseEventKind::Down(button) => {
+                return self
+                    .handlers
+                    .iter()
+                    .find(|(b, _)| b == button)
+                    .map(|(_, m)| EventResult::Response(m(x, y)))
+                    .unwrap_or(EventResult::None)
+            }
             MouseEventKind::ScrollDown
                 if event.modifiers.contains(KeyModifiers::SHIFT) =>
             {

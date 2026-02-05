@@ -33,13 +33,18 @@ fn run() -> Result<(), Error> {
     Term::default().setup()?.with_mouse().run(&mut app)
 }
 
+#[derive(Clone)]
+enum Message {
+    CellClicked(usize, usize),
+}
+
 struct App {
     table_state: Rc<RefCell<TableState>>,
     songs: Vec<Vec<&'static str>>,
 }
 
 impl Application for App {
-    type Message = ();
+    type Message = Message;
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let table = Table::new(
@@ -52,6 +57,7 @@ impl Application for App {
         .selected_row_style(SELL)
         .selected_column_style(SELL)
         .selected_cell_style(SEL)
+        .on_click(Message::CellClicked)
         .auto_scroll();
 
         let help =
@@ -73,6 +79,17 @@ impl Application for App {
             Event::Key(key) => self.key_listener(key),
             _ => Action::NONE,
         }
+    }
+
+    fn message(&mut self, message: Self::Message) -> Action {
+        match message {
+            Message::CellClicked(x, y) => {
+                let mut state = self.table_state.borrow_mut();
+                state.selected = Some(y);
+                state.selected_column = Some(x);
+            }
+        }
+        Action::RERENDER
     }
 }
 
