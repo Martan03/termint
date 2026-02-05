@@ -11,7 +11,7 @@ pub struct Button<M: 'static> {
     child: Element<M>,
     padding: Padding,
     style: Style,
-    on_click: Option<M>,
+    handlers: Vec<(MouseButton, M)>,
 }
 
 impl<M> Button<M> {
@@ -25,7 +25,7 @@ impl<M> Button<M> {
             child: child.into(),
             padding: Default::default(),
             style: Default::default(),
-            on_click: None,
+            handlers: vec![],
         }
     }
 
@@ -51,8 +51,15 @@ impl<M> Button<M> {
 
     /// Sets the response Message of the on click handler.
     #[must_use]
-    pub fn on_click(mut self, response: M) -> Self {
-        self.on_click = Some(response);
+    pub fn on_click(self, response: M) -> Self {
+        self.on_press(MouseButton::Left, response)
+    }
+
+    /// Sets the response Message for the given button click handler.
+    #[must_use]
+    pub fn on_press(mut self, button: MouseButton, response: M) -> Self {
+        self.handlers.retain(|(b, _)| *b != button);
+        self.handlers.push((button, response));
         self
     }
 }
@@ -115,10 +122,11 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
 impl<M: Clone> Button<M> {
     fn handle_click(&self, event: &MouseEvent) -> EventResult<M> {
         match &event.kind {
-            MouseEventKind::Down(MouseButton::Left) => self
-                .on_click
-                .clone()
-                .map(EventResult::Response)
+            MouseEventKind::Down(button) => self
+                .handlers
+                .iter()
+                .find(|(b, _)| b == button)
+                .map(|(_, m)| EventResult::Response(m.clone()))
                 .unwrap_or(EventResult::None),
             _ => EventResult::None,
         }

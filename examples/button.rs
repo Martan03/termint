@@ -6,7 +6,7 @@ use termint::{
     geometry::Constraint,
     style::Style,
     term::{
-        backend::{Event, KeyCode, KeyEvent},
+        backend::{Event, KeyCode, KeyEvent, MouseButton},
         Action, Application, Frame, Term,
     },
     widgets::{Block, Button, Element, Layout, Spacer, ToSpan},
@@ -48,12 +48,23 @@ impl Application for App {
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
 
-        let button = Button::new("Quit App")
+        let left = Button::new("Left Click")
             .style(Style::new().bg(Color::Cyan).fg(BG))
             .padding((1, 2))
             .on_click(Message::Quit);
+        let right = Button::new("Right Click")
+            .style(Style::new().bg(Color::Cyan).fg(BG))
+            .padding((1, 2))
+            .on_press(MouseButton::Right, Message::Quit);
+        let mut buttons = Layout::horizontal();
+        buttons.push(left, 14);
+        buttons.push(Spacer::new(), 2);
+        buttons.push(right, 15);
+
         let mut wrapper = Layout::vertical();
-        wrapper.push(button, 0..);
+        wrapper.push("Press a button to quit...", 0..);
+        wrapper.push(Spacer::new(), 1);
+        wrapper.push(buttons, 0..);
 
         let mut center = Layout::horizontal().center();
         center.push(wrapper, 0..);
