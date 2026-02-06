@@ -76,8 +76,8 @@ impl Application for App {
         Action::RERENDER
     }
 
-    fn update(&mut self) -> Action {
-        if self.increase_states() {
+    fn update(&mut self, delta: Duration) -> Action {
+        if self.increase_states(delta) {
             self.reset_states();
         }
         Action::RERENDER
@@ -96,13 +96,13 @@ impl App {
         }
     }
 
-    fn increase_states(&mut self) -> bool {
+    fn increase_states(&mut self, delta: Duration) -> bool {
         let len = self.states.len() as f64;
 
         let mut complete = true;
         for (i, state) in self.states.iter().enumerate() {
             let speed = (len - i as f64) / len;
-            let val = state.get() + speed * 3.;
+            let val = state.get() + speed * delta.as_secs_f64() * 50.;
             state.set(val);
             if val < 120. {
                 complete = false;

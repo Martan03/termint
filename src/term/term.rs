@@ -2,6 +2,7 @@ use std::{
     io::{stdout, Write},
     panic::{set_hook, take_hook},
     sync::Once,
+    time::Instant,
 };
 
 use termal::{
@@ -343,6 +344,7 @@ where
     {
         self.draw(|f| app.view(f))?;
 
+        let mut last_tick = Instant::now();
         let timeout = app.poll_timeout();
         loop {
             let mut action = Action::NONE;
@@ -355,7 +357,10 @@ where
                 action |= app.event(event);
             }
 
-            action |= app.update();
+            let now = Instant::now();
+            let delta = now.duration_since(last_tick);
+            last_tick = now;
+            action |= app.update(delta);
 
             if action.contains(Action::QUIT) {
                 break;

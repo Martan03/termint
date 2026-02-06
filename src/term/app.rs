@@ -38,7 +38,7 @@ pub trait Application {
     /// This is ideal for animations, background taks or timer related logic.
     /// Return [`Action`] to signal, if the UI needs to be updated. See
     /// [`Action`] documentation to know all the variants and their meanings.
-    fn update(&mut self) -> Action {
+    fn update(&mut self, _delta: Duration) -> Action {
         Action::NONE
     }
 
