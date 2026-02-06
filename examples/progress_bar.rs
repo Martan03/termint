@@ -84,7 +84,8 @@ impl Application for App {
     }
 
     fn poll_timeout(&self) -> Duration {
-        Duration::from_millis(50)
+        // This doesn't wait for event, so the animation is really smooth :)
+        Duration::from_millis(0)
     }
 }
 
