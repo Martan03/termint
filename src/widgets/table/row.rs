@@ -3,16 +3,30 @@ use crate::{
     widgets::{Element, ToSpan},
 };
 
-/// Represents a single row in a [`Table`] widget.
+/// Represents a single row in a [`crate::widgets::Table`] widget.
 ///
 /// A [`Row`] consists of a list of [`Element`]s (one per column) and base
 /// style of the row.
 ///
 /// # Example
+///
+/// Row can be constructed from iterator of types convertable to [`Element`].
+///
 /// ```rust
-/// # use termint::{widgets::Row, enums::Color};
-/// let row = Row::<()>::new(["First", "Second", "Third"]).style(Color::Red);
+/// use termint::{prelude::*, widgets::Grad};
+///
+/// // Row can be created from iterator over strings.
 /// let row: Row<()> = ["First", "Second", "Third"].into_iter().collect();
+///
+/// // You can style the entire row.
+/// let row = Row::<()>::new(["First", "Second", "Third"]).style(Color::Red);
+///
+/// // Or you can create row from elements.
+/// let row = Row::<()>::new([
+///     Element::new("First".fg(Color::Green)),
+///     Element::new("Second".modifier(Modifier::BOLD)),
+///     Element::new(Grad::new("Third", (0, 220, 255), (200, 60, 255))),
+/// ]);
 /// ```
 #[derive(Debug)]
 pub struct Row<M: 'static> {
@@ -48,7 +62,10 @@ impl<M> Row<M> {
         }
     }
 
-    /// Sets the base style of the [`Row`]
+    /// Sets the base style of the entire [`Row`].
+    ///
+    /// Accepts any type that is convertible to [`Style`] (read style docs for
+    /// more details).
     #[must_use]
     pub fn style<S>(mut self, style: S) -> Self
     where

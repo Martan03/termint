@@ -30,17 +30,23 @@ type TableHandler<M> = Box<dyn Fn(usize, usize) -> M>;
 /// A widget that displays a table with configurable column widths, optional
 /// header and scrollable row content.
 ///
-/// Each cell is represented by an [`Element`], so cell can be any widget.
-/// Layout of the cells is controlled by per-column widths and optional spacing
-/// between columns.
+/// Each row is represented by [`Row`], where each cell is represented by an
+/// [`Element`], so cell can be any widget. Layout of the cells is controlled
+/// by per-column widths and optional spacing between columns.
+///
+/// See `table` example for more in depth example of how to use the [`Table`]
+/// widget.
 ///
 /// # Example
+///
+/// This example assumes you have already created a function, which returns
+/// all the rows. If you want to see more about how to create a row, visit the
+/// [`Row`] documentation.
+///
 /// ```rust
-/// # use std::{cell::RefCell, rc::Rc};
-/// # use termint::{
-/// #    term::Term, geometry::Unit, enums::BorderType,
-/// #    widgets::{Element, Table, TableState}
-/// # };
+/// use termint::prelude::*;
+/// use std::{cell::RefCell, rc::Rc};
+///
 /// # fn get_people() -> Vec<Vec<Element>> { return vec![] }
 /// # fn example() -> Result<(), termint::Error> {
 /// let rows = get_people();
@@ -48,9 +54,18 @@ type TableHandler<M> = Box<dyn Fn(usize, usize) -> M>;
 /// let state = Rc::new(RefCell::new(TableState::new(0).selected(1)));
 ///
 /// let table = Table::new(rows, widths, state)
+///     // Optional header is a Row always visible at the top.
 ///     .header(vec!["Name", "Age", "Email"])
+///     // Horizontal border below header.
 ///     .header_separator(BorderType::Double)
-///     .column_spacing(2);
+///     // Fixed spacing between columns.
+///     .column_spacing(2)
+///     // You can also style selected row, column and cell
+///     .selected_row_style(Color::Cyan)
+///     .selected_column_style(Style::new().bg(Color::Red))
+///     .selected_cell_style(Modifier::BOLD)
+///     // Or enable auto scrolling, which assures the selected row is visible
+///     .auto_scroll();
 ///
 /// let mut term = Term::default();
 /// term.render(table)?;
@@ -69,7 +84,7 @@ pub struct Table<M: 'static = ()> {
     state: Rc<RefCell<TableState>>,
     auto_scroll: bool,
     handle_scroll: bool,
-    scroll_dist: Vec2,
+    scroll_step: Vec2,
     force_scrollbar: bool,
     handlers: Vec<(MouseButton, TableHandler<M>)>,
     on_scroll_ver: Option<Box<dyn Fn(isize) -> M>>,
@@ -77,7 +92,28 @@ pub struct Table<M: 'static = ()> {
 }
 
 impl<M> Table<M> {
-    /// Creates new [`Table`] with given rows and columns widths
+    /// Creates new [`Table`] with given rows and columns widths.
+    ///
+    /// The `rows` can be any type convertable into an iterator of [`Row`]s.
+    ///
+    /// The `widths` accepts any type convertable into an iterator of
+    /// [`Unit`]s.
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    /// use std::{cell::RefCell, rc::Rc};
+    ///
+    /// # fn example() -> Table<()> {
+    /// let rows = [
+    ///     vec!["First", "Second"],
+    ///     vec!["Third", "Fourth"],
+    /// ];
+    /// let widths = [Unit::Fill(1), Unit::Length(6)];
+    /// let state = Rc::new(RefCell::new(TableState::default()));
+    /// let table = Table::new(rows, widths, state);
+    /// # table
+    /// # }
+    /// ```
     #[must_use]
     pub fn new<R, W>(
         rows: R,
@@ -102,7 +138,7 @@ impl<M> Table<M> {
             state,
             auto_scroll: false,
             handle_scroll: true,
-            scroll_dist: Vec2::new(1, 1),
+            scroll_step: Vec2::new(1, 1),
             force_scrollbar: false,
             handlers: vec![],
             on_scroll_ver: None,
@@ -110,7 +146,11 @@ impl<M> Table<M> {
         }
     }
 
-    /// Adds given header to the [`Table`]
+    /// Adds given header to the [`Table`].
+    ///
+    /// Header is displayed at the top of the [`Table`] and always visible.
+    ///
+    /// The `header` is type convertable into [`Row`].
     #[must_use]
     pub fn header<H>(mut self, header: H) -> Self
     where
@@ -120,14 +160,19 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the header separator of the [`Table`]
+    /// Sets the header separator of the [`Table`].
+    ///
+    /// Header separator is a horizontal border below the header and together
+    /// with the header is at the top of the [`Table`] and always visible.
     #[must_use]
     pub fn header_separator(mut self, separator: BorderType) -> Self {
         self.header_separator = Some(separator);
         self
     }
 
-    /// Sets [`Table`] rows to the given value
+    /// Sets [`Table`] rows to the given value.
+    ///
+    /// The `rows` can be any type convertable into an iterator of [`Row`]s.
     #[must_use]
     pub fn rows<R, C>(mut self, rows: R) -> Self
     where
@@ -142,7 +187,12 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the selected row style
+    /// Sets the style of the selected row.
+    ///
+    /// It will overwrite the style of the [`Row`] and the individual cells.
+    /// It also has priority over the selected column style.
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn selected_row_style<S>(mut self, style: S) -> Self
     where
@@ -152,7 +202,13 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the selected column style
+    /// Sets the style of the selected column.
+    ///
+    /// This styles the whole column and will overwrite [`Row`] styles and
+    /// styles of the individual cells. Selected row style has higher priority
+    /// though.
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn selected_column_style<S>(mut self, style: S) -> Self
     where
@@ -162,7 +218,12 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the selected cell style
+    /// Sets the style of the selected cell.
+    ///
+    /// It has priority over any other style, including selected row and
+    /// and selected column styles.
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn selected_cell_style<S>(mut self, style: S) -> Self
     where
@@ -172,7 +233,10 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets columns widths of the [`Table`]
+    /// Sets the widths of the [`Table`] columns.
+    ///
+    /// The `widths` accepts any type convertable into an iterator of
+    /// [`Unit`]s.
     #[must_use]
     pub fn widths<W>(mut self, widths: W) -> Self
     where
@@ -183,7 +247,7 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the column spacing of the [`Table`]
+    /// Sets the spacing in between [`Table`] columns.
     #[must_use]
     pub fn column_spacing(mut self, space: usize) -> Self {
         self.column_spacing = space;
@@ -191,6 +255,10 @@ impl<M> Table<M> {
     }
 
     /// Enables automatic scrolling to ensure the selected item is visible.
+    ///
+    /// It always makes sure that the currently selected row is in the view.
+    /// This allows for much easier scrolling implementation, where it's
+    /// enough to change only the selected row.
     #[must_use]
     pub fn auto_scroll(mut self) -> Self {
         self.auto_scroll = true;
@@ -198,34 +266,51 @@ impl<M> Table<M> {
     }
 
     /// Enables or disables automatic mouse scroll handling.
+    ///
+    /// By default table handles the mouse scroll events by changing the row
+    /// and column selection depending on the vertical, respectively
+    /// horizontal scroll events.
+    ///
+    /// The step size of the scrolling can be configured using
+    /// [`Table::scroll_distance`], [`Table::scroll_distance_x`] and
+    /// [`Table::scroll_distance_y`].
     #[must_use]
     pub fn scrollable(mut self, enabled: bool) -> Self {
         self.handle_scroll = enabled;
         self
     }
 
-    /// Sets the scroll distance for both horizontal and vertical scrolling
-    /// used in the automatic mouse scroll handling.
+    /// Sets the scroll step size for both horizontal and vertical scrolling.
+    ///
+    /// It is mainly used in automatic mouse scroll handling, but the step
+    /// size also determines the value returned in the Message if custom
+    /// scroll handler is used.
     #[must_use]
-    pub fn scroll_distance(mut self, distance: usize) -> Self {
-        self.scroll_dist.x = distance;
-        self.scroll_dist.y = distance;
+    pub fn scroll_step(mut self, size: usize) -> Self {
+        self.scroll_step.x = size;
+        self.scroll_step.y = size;
         self
     }
 
-    /// Sets the horizontal scroll distance used in the automatic mouse scroll
-    /// handling.
+    /// Sets the scroll step size for horizontal scrolling.
+    ///
+    /// It is mainly used in automatic mouse scroll handling, but the step
+    /// size also determines the value returned in the Message if custom
+    /// scroll handler is used.
     #[must_use]
     pub fn scroll_distance_x(mut self, distance: usize) -> Self {
-        self.scroll_dist.x = distance;
+        self.scroll_step.x = distance;
         self
     }
 
-    /// Sets the vertical scroll distance used in the automatic mouse scroll
-    /// handling.
+    /// Sets the scroll step size for vertical scrolling.
+    ///
+    /// It is mainly used in automatic mouse scroll handling, but the step
+    /// size also determines the value returned in the Message if custom
+    /// scroll handler is used.
     #[must_use]
     pub fn scroll_distance_y(mut self, distance: usize) -> Self {
-        self.scroll_dist.y = distance;
+        self.scroll_step.y = distance;
         self
     }
 
@@ -237,9 +322,12 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the response Message of the on click handler.
+    /// Sets the response to the left mouse click event.
     ///
-    /// This overwrites any already set click response message.
+    /// This will overwrite any click responses already set.
+    ///
+    /// The `response` is closure accepting two `usize` values - column and
+    /// row clicked - and returns the corresponding message.
     #[must_use]
     pub fn on_click<F>(self, response: F) -> Self
     where
@@ -248,9 +336,13 @@ impl<M> Table<M> {
         self.on_press(MouseButton::Left, response)
     }
 
-    /// Sets the response Message for the given button click handler.
+    /// Sets the response to the button click event.
     ///
-    /// This overwrites any already set response message for the given button.
+    /// This will overwrite any click responses already set for the given
+    /// button.
+    ///
+    /// The `response` is closure accepting two `usize` values - column and
+    /// row clicked - and returns the corresponding message.
     #[must_use]
     pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
     where
@@ -261,10 +353,13 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the response Message of the vertical scroll handler.
+    /// Sets the response to the vertical mouse scroll event.
     ///
     /// This disables the default vertical scroll handler, so only the given
     /// response will be used.
+    ///
+    /// The `response` is closure accepting a `isize` value - scroll offset
+    /// based on the scroll direction and the set vertical scroll step size.
     #[must_use]
     pub fn on_scroll<F>(mut self, response: F) -> Self
     where
@@ -274,10 +369,13 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the response Message of the horizontal scroll handler.
+    /// Sets the response to the horizontal mouse scroll event.
     ///
     /// This disables the default horizontal scroll handler, so only the given
     /// response will be used.
+    ///
+    /// The `response` is closure accepting a `isize` value - scroll offset
+    /// based on the scroll direction and the set horizontal scroll step size.
     #[must_use]
     pub fn on_scroll_horizontal<F>(mut self, response: F) -> Self
     where
@@ -864,15 +962,15 @@ impl<M: Clone + 'static> Table<M> {
                 .map(|(_, m)| EventResult::Response(m(x, y)))
                 .unwrap_or(EventResult::None),
             ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.move_col(self.scroll_dist.x as isize)
+                self.move_col(self.scroll_step.x as isize)
             }
             ScrollUp if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.move_col(-(self.scroll_dist.x as isize))
+                self.move_col(-(self.scroll_step.x as isize))
             }
-            ScrollDown => self.move_row(self.scroll_dist.y as isize),
-            ScrollUp => self.move_row(-(self.scroll_dist.y as isize)),
-            ScrollLeft => self.move_col(-(self.scroll_dist.x as isize)),
-            ScrollRight => self.move_col(self.scroll_dist.x as isize),
+            ScrollDown => self.move_row(self.scroll_step.y as isize),
+            ScrollUp => self.move_row(-(self.scroll_step.y as isize)),
+            ScrollLeft => self.move_col(-(self.scroll_step.x as isize)),
+            ScrollRight => self.move_col(self.scroll_step.x as isize),
             _ => EventResult::None,
         }
     }
