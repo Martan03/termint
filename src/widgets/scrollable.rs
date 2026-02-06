@@ -38,13 +38,14 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug)]
 pub struct Scrollable<M: 'static = (), W = Element<M>> {
     horizontal: Option<Element<M>>,
     vertical: Option<Element<M>>,
     child: Element<M>,
     handle_scroll: bool,
     scroll_dist: Vec2,
+    on_scroll_ver: Option<Box<dyn Fn(isize) -> M>>,
+    on_scroll_hor: Option<Box<dyn Fn(isize) -> M>>,
     child_type: PhantomData<W>,
 }
 
@@ -87,6 +88,8 @@ where
             child: child.into(),
             handle_scroll: true,
             scroll_dist: Vec2::new(1, 1),
+            on_scroll_ver: None,
+            on_scroll_hor: None,
             child_type: PhantomData,
         }
     }
@@ -106,6 +109,8 @@ where
             child: child.into(),
             handle_scroll: true,
             scroll_dist: Vec2::new(1, 1),
+            on_scroll_ver: None,
+            on_scroll_hor: None,
             child_type: PhantomData,
         }
     }
@@ -131,6 +136,8 @@ where
             child: child.into(),
             handle_scroll: true,
             scroll_dist: Vec2::new(1, 1),
+            on_scroll_ver: None,
+            on_scroll_hor: None,
             child_type: PhantomData,
         }
     }
@@ -164,6 +171,32 @@ where
     #[must_use]
     pub fn scroll_distance_y(mut self, distance: usize) -> Self {
         self.scroll_dist.y = distance;
+        self
+    }
+
+    /// Sets the response Message of the vertical scroll handler.
+    ///
+    /// This disables the default vertical scroll handler, so only the given
+    /// response will be used.
+    #[must_use]
+    pub fn on_scroll<F>(mut self, response: F) -> Self
+    where
+        F: Fn(isize) -> M + 'static,
+    {
+        self.on_scroll_ver = Some(Box::new(response));
+        self
+    }
+
+    /// Sets the response Message of the horizontal scroll handler.
+    ///
+    /// This disables the default horizontal scroll handler, so only the given
+    /// response will be used.
+    #[must_use]
+    pub fn on_scroll_horizontal<F>(mut self, response: F) -> Self
+    where
+        F: Fn(isize) -> M + 'static,
+    {
+        self.on_scroll_hor = Some(Box::new(response));
         self
     }
 }
@@ -404,10 +437,10 @@ where
         let dy = self.scroll_dist.y as isize;
         match &event.kind {
             ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.hor_move_offset(area, dx);
+                self.hor_move_offset(area, dx)
             }
             ScrollUp if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.hor_move_offset(area, -dx);
+                self.hor_move_offset(area, -dx)
             }
             ScrollDown => self.ver_move_offset(area, dy),
             ScrollUp => self.ver_move_offset(area, -dy),
@@ -415,21 +448,46 @@ where
             ScrollRight => self.hor_move_offset(area, dx),
             _ => return EventResult::None,
         }
+    }
+
+    fn ver_move_offset(&self, area: Rect, delta: isize) -> EventResult<M> {
+        let scroll = || {
+            let height = area
+                .height()
+                .saturating_sub(self.horizontal.is_some() as usize);
+            self.apply_scroll(&self.vertical, height, delta);
+        };
+        self.handle_scroll(&self.on_scroll_ver, scroll, delta)
+    }
+
+    fn hor_move_offset(&self, area: Rect, delta: isize) -> EventResult<M> {
+        let scroll = || {
+            let width = area
+                .width()
+                .saturating_sub(self.vertical.is_some() as usize);
+            self.apply_scroll(&self.horizontal, width, delta);
+        };
+        self.handle_scroll(&self.on_scroll_hor, scroll, delta)
+    }
+
+    fn handle_scroll<F>(
+        &self,
+        handler: &Option<Box<dyn Fn(isize) -> M>>,
+        scroll: F,
+        delta: isize,
+    ) -> EventResult<M>
+    where
+        F: Fn(),
+    {
+        if let Some(handler) = handler {
+            return EventResult::Response(handler(delta));
+        }
+
+        if !self.handle_scroll {
+            return EventResult::None;
+        }
+        scroll();
         EventResult::Consumed
-    }
-
-    fn ver_move_offset(&self, area: Rect, delta: isize) {
-        let height = area
-            .height()
-            .saturating_sub(self.horizontal.is_some() as usize);
-        self.apply_scroll(&self.vertical, height, delta);
-    }
-
-    fn hor_move_offset(&self, area: Rect, delta: isize) {
-        let width = area
-            .width()
-            .saturating_sub(self.vertical.is_some() as usize);
-        self.apply_scroll(&self.horizontal, width, delta);
     }
 
     fn apply_scroll(

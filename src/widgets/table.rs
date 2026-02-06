@@ -70,6 +70,8 @@ pub struct Table<M: 'static = ()> {
     scroll_dist: Vec2,
     force_scrollbar: bool,
     handlers: Vec<(MouseButton, Box<dyn Fn(usize, usize) -> M>)>,
+    on_scroll_ver: Option<Box<dyn Fn(isize) -> M>>,
+    on_scroll_hor: Option<Box<dyn Fn(isize) -> M>>,
 }
 
 impl<M> Table<M> {
@@ -101,6 +103,8 @@ impl<M> Table<M> {
             scroll_dist: Vec2::new(1, 1),
             force_scrollbar: false,
             handlers: vec![],
+            on_scroll_ver: None,
+            on_scroll_hor: None,
         }
     }
 
@@ -252,6 +256,32 @@ impl<M> Table<M> {
     {
         self.handlers.retain(|(b, _)| *b != button);
         self.handlers.push((button, Box::new(response)));
+        self
+    }
+
+    /// Sets the response Message of the vertical scroll handler.
+    ///
+    /// This disables the default vertical scroll handler, so only the given
+    /// response will be used.
+    #[must_use]
+    pub fn on_scroll<F>(mut self, response: F) -> Self
+    where
+        F: Fn(isize) -> M + 'static,
+    {
+        self.on_scroll_ver = Some(Box::new(response));
+        self
+    }
+
+    /// Sets the response Message of the horizontal scroll handler.
+    ///
+    /// This disables the default horizontal scroll handler, so only the given
+    /// response will be used.
+    #[must_use]
+    pub fn on_scroll_horizontal<F>(mut self, response: F) -> Self
+    where
+        F: Fn(isize) -> M + 'static,
+    {
+        self.on_scroll_hor = Some(Box::new(response));
         self
     }
 }
@@ -833,12 +863,11 @@ impl<M: Clone + 'static> Table<M> {
                     .map(|(_, m)| EventResult::Response(m(x, y)))
                     .unwrap_or(EventResult::None)
             }
-            _ if !self.handle_scroll => return EventResult::None,
             ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.move_col(self.scroll_dist.x as isize);
+                self.move_col(self.scroll_dist.x as isize)
             }
             ScrollUp if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.move_col(-(self.scroll_dist.x as isize));
+                self.move_col(-(self.scroll_dist.x as isize))
             }
             ScrollDown => self.move_row(self.scroll_dist.y as isize),
             ScrollUp => self.move_row(-(self.scroll_dist.y as isize)),
@@ -846,23 +875,54 @@ impl<M: Clone + 'static> Table<M> {
             ScrollRight => self.move_col(self.scroll_dist.x as isize),
             _ => return EventResult::None,
         }
+    }
+
+    fn move_row(&self, delta: isize) -> EventResult<M> {
+        let scroll = || {
+            let mut state = self.state.borrow_mut();
+            if let Some(selected) = state.selected {
+                state.selected = Some(Self::move_selection(
+                    selected,
+                    delta,
+                    self.rows.len(),
+                ));
+            }
+        };
+        self.handle_scroll(&self.on_scroll_ver, scroll, delta)
+    }
+
+    fn move_col(&self, delta: isize) -> EventResult<M> {
+        let scroll = || {
+            let mut state = self.state.borrow_mut();
+            if let Some(selected) = state.selected_column {
+                state.selected_column = Some(Self::move_selection(
+                    selected,
+                    delta,
+                    self.widths.len(),
+                ));
+            }
+        };
+        self.handle_scroll(&self.on_scroll_hor, scroll, delta)
+    }
+
+    fn handle_scroll<F>(
+        &self,
+        handler: &Option<Box<dyn Fn(isize) -> M>>,
+        scroll: F,
+        delta: isize,
+    ) -> EventResult<M>
+    where
+        F: Fn(),
+    {
+        if let Some(handler) = handler {
+            return EventResult::Response(handler(delta));
+        }
+
+        if !self.handle_scroll {
+            return EventResult::None;
+        }
+        scroll();
         EventResult::Consumed
-    }
-
-    fn move_row(&self, delta: isize) {
-        let mut state = self.state.borrow_mut();
-        if let Some(selected) = state.selected {
-            state.selected =
-                Some(Self::move_selection(selected, delta, self.rows.len()));
-        }
-    }
-
-    fn move_col(&self, delta: isize) {
-        let mut state = self.state.borrow_mut();
-        if let Some(selected) = state.selected_column {
-            state.selected_column =
-                Some(Self::move_selection(selected, delta, self.widths.len()));
-        }
     }
 
     fn move_selection(current: usize, delta: isize, max: usize) -> usize {

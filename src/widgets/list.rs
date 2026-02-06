@@ -70,6 +70,7 @@ pub struct List<M: 'static = ()> {
     scrollbar_fg: Color,
     thumb_fg: Color,
     handlers: Vec<(MouseButton, Box<dyn Fn(usize) -> M>)>,
+    on_scroll: Option<Box<dyn Fn(isize) -> M>>,
 }
 
 /// State of the [`List`] widget, including scroll offset and selected index.
@@ -104,6 +105,7 @@ impl<M> List<M> {
             scrollbar_fg: Color::Default,
             thumb_fg: Color::Default,
             handlers: vec![],
+            on_scroll: None,
         }
     }
 
@@ -226,6 +228,19 @@ impl<M> List<M> {
     {
         self.handlers.retain(|(b, _)| *b != button);
         self.handlers.push((button, Box::new(response)));
+        self
+    }
+
+    /// Sets the response Message of the on scroll handler.
+    ///
+    /// This disables the default on scroll handler, so only the given response
+    /// will be used.
+    #[must_use]
+    pub fn on_scroll<F>(mut self, response: F) -> Self
+    where
+        F: Fn(isize) -> M + 'static,
+    {
+        self.on_scroll = Some(Box::new(response));
         self
     }
 }
@@ -450,21 +465,22 @@ impl<M: Clone + 'static> List<M> {
     }
 
     fn handle_mouse(&self, event: &MouseEvent) -> EventResult<M> {
-        if !self.handle_scroll {
-            return EventResult::None;
+        let delta = match &event.kind {
+            MouseEventKind::ScrollDown => self.scroll_dist as isize,
+            MouseEventKind::ScrollUp => -(self.scroll_dist as isize),
+            _ => return EventResult::None,
+        };
+
+        if let Some(handler) = &self.on_scroll {
+            return EventResult::Response(handler(delta));
         }
 
-        match &event.kind {
-            MouseEventKind::ScrollDown => {
-                self.move_selection(self.scroll_dist as isize);
-                EventResult::Consumed
-            }
-            MouseEventKind::ScrollUp => {
-                self.move_selection(-(self.scroll_dist as isize));
-                EventResult::Consumed
-            }
-            _ => EventResult::None,
+        if self.handle_scroll {
+            self.move_selection(delta);
+            return EventResult::Consumed;
         }
+
+        EventResult::None
     }
 }
 
