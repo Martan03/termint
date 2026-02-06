@@ -25,6 +25,8 @@ pub use row::Row;
 mod table_state;
 pub use table_state::TableState;
 
+type TableHandler<M> = Box<dyn Fn(usize, usize) -> M>;
+
 /// A widget that displays a table with configurable column widths, optional
 /// header and scrollable row content.
 ///
@@ -69,7 +71,7 @@ pub struct Table<M: 'static = ()> {
     handle_scroll: bool,
     scroll_dist: Vec2,
     force_scrollbar: bool,
-    handlers: Vec<(MouseButton, Box<dyn Fn(usize, usize) -> M>)>,
+    handlers: Vec<(MouseButton, TableHandler<M>)>,
     on_scroll_ver: Option<Box<dyn Fn(isize) -> M>>,
     on_scroll_hor: Option<Box<dyn Fn(isize) -> M>>,
 }
@@ -676,7 +678,7 @@ impl<M: Clone + 'static> Table<M> {
         row: &Row<M>,
         widths: &[usize],
     ) -> EventResult<M> {
-        let mut crect = rect.clone();
+        let mut crect = rect;
         crect.size.y = rect.height() - (rect.bottom().saturating_sub(bottom));
         if !crect.contains_pos(&event.pos) {
             return EventResult::None;
@@ -855,14 +857,12 @@ impl<M: Clone + 'static> Table<M> {
         use MouseEventKind::*;
 
         match &event.kind {
-            Down(button) => {
-                return self
-                    .handlers
-                    .iter()
-                    .find(|(b, _)| b == button)
-                    .map(|(_, m)| EventResult::Response(m(x, y)))
-                    .unwrap_or(EventResult::None)
-            }
+            Down(button) => self
+                .handlers
+                .iter()
+                .find(|(b, _)| b == button)
+                .map(|(_, m)| EventResult::Response(m(x, y)))
+                .unwrap_or(EventResult::None),
             ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
                 self.move_col(self.scroll_dist.x as isize)
             }
@@ -873,7 +873,7 @@ impl<M: Clone + 'static> Table<M> {
             ScrollUp => self.move_row(-(self.scroll_dist.y as isize)),
             ScrollLeft => self.move_col(-(self.scroll_dist.x as isize)),
             ScrollRight => self.move_col(self.scroll_dist.x as isize),
-            _ => return EventResult::None,
+            _ => EventResult::None,
         }
     }
 
@@ -927,7 +927,7 @@ impl<M: Clone + 'static> Table<M> {
 
     fn move_selection(current: usize, delta: isize, max: usize) -> usize {
         if delta < 0 {
-            current.saturating_sub(delta.unsigned_abs() as usize)
+            current.saturating_sub(delta.unsigned_abs())
         } else {
             (current + delta as usize).min(max.saturating_sub(1))
         }

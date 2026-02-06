@@ -454,7 +454,7 @@ where
             ScrollUp => self.ver_move_offset(area, -dy),
             ScrollLeft => self.hor_move_offset(area, -dx),
             ScrollRight => self.hor_move_offset(area, dx),
-            _ => return EventResult::None,
+            _ => EventResult::None,
         }
     }
 
@@ -512,7 +512,7 @@ where
 
     fn get_offset(state: &ScrollbarState, delta: isize, size: usize) -> usize {
         if delta < 0 {
-            state.offset.saturating_sub(delta.unsigned_abs() as usize)
+            state.offset.saturating_sub(delta.unsigned_abs())
         } else {
             (state.offset + delta as usize)
                 .min(state.content_len.saturating_sub(size))

@@ -11,6 +11,8 @@ use crate::{
 
 use super::{Element, Widget};
 
+type ProgressBarHandler<M> = Box<dyn Fn(f64) -> M>;
+
 /// A widget that displays a horizontal progress bar.
 ///
 /// The [`ProgressBar`] visually represents a percentage value in the range
@@ -40,7 +42,7 @@ pub struct ProgressBar<M> {
     thumb_style: Style,
     track_char: char,
     style: Style,
-    handlers: Vec<(MouseButton, Box<dyn Fn(f64) -> M>)>,
+    handlers: Vec<(MouseButton, ProgressBarHandler<M>)>,
 }
 
 impl<M> ProgressBar<M> {
@@ -51,7 +53,7 @@ impl<M> ProgressBar<M> {
     /// # use std::{cell::Cell, rc::Rc};
     /// # use termint::widgets::ProgressBar;
     /// let state = Rc::new(Cell::new(69.0));
-    /// let pb = ProgressBar::new(state.clone());
+    /// let pb = ProgressBar::<()>::new(state.clone());
     /// ```
     #[must_use]
     pub fn new(state: Rc<Cell<f64>>) -> Self {
@@ -75,7 +77,7 @@ impl<M> ProgressBar<M> {
     /// # use std::{cell::Cell, rc::Rc};
     /// # use termint::widgets::ProgressBar;
     /// # let state = Rc::new(Cell::new(69.0));
-    /// let pb = ProgressBar::new(state.clone())
+    /// let pb = ProgressBar::<()>::new(state.clone())
     ///     .thumb_chars(['▎', '▌', '▊', '█']);
     /// ```
     #[must_use]

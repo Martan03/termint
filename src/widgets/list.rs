@@ -17,6 +17,8 @@ use crate::{
 
 use super::{span::ToSpan, widget::Widget, Element};
 
+type ListHandler<M> = Box<dyn Fn(usize) -> M>;
+
 /// A scrollable list widget with suuport for item selection and highlighting.
 ///
 /// The [`List`] widgets displays a list of strings with optional selection
@@ -69,7 +71,7 @@ pub struct List<M: 'static = ()> {
     force_scrollbar: bool,
     scrollbar_fg: Color,
     thumb_fg: Color,
-    handlers: Vec<(MouseButton, Box<dyn Fn(usize) -> M>)>,
+    handlers: Vec<(MouseButton, ListHandler<M>)>,
     on_scroll: Option<Box<dyn Fn(isize) -> M>>,
 }
 
@@ -423,7 +425,7 @@ impl<M: Clone + 'static> List<M> {
         };
 
         let id = match delta < 0 {
-            true => selected.saturating_sub(delta.unsigned_abs() as usize),
+            true => selected.saturating_sub(delta.unsigned_abs()),
             false => (selected + delta as usize)
                 .min(self.items.len().saturating_sub(1)),
         };
