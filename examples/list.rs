@@ -31,19 +31,25 @@ fn run() -> Result<(), Error> {
     Term::default().setup()?.with_mouse().run(&mut app)
 }
 
+#[derive(Clone)]
+pub enum Message {
+    Select(usize),
+}
+
 struct App {
     list_state: Rc<RefCell<ListState>>,
     people: Vec<String>,
 }
 
 impl Application for App {
-    type Message = ();
+    type Message = Message;
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let list = List::new(&self.people, self.list_state.clone())
             .auto_scroll()
             .selected_style(SELECTED)
             .scrollbar_fg(BORDER)
+            .on_click(Message::Select)
             .thumb_fg(FG);
         let help = "[↑]Move up [↓]Move down [Esc|q]Quit".fg(BORDER);
 
@@ -62,6 +68,13 @@ impl Application for App {
             Event::Key(key) => self.key_listener(key),
             _ => Action::NONE,
         }
+    }
+
+    fn message(&mut self, message: Self::Message) -> Action {
+        match message {
+            Message::Select(id) => self.select(id),
+        }
+        Action::RERENDER
     }
 }
 
@@ -90,6 +103,11 @@ impl App {
             _ => return Action::NONE,
         }
         Action::RERENDER
+    }
+
+    fn select(&self, id: usize) {
+        let mut state = self.list_state.borrow_mut();
+        state.selected = Some(id);
     }
 }
 

@@ -1,17 +1,16 @@
 use std::{
     cell::RefCell,
     cmp::{max, min},
-    marker::PhantomData,
     rc::Rc,
 };
 
 use crate::{
     buffer::Buffer,
     enums::Color,
-    geometry::{Rect, Vec2},
+    geometry::{Padding, Rect, Vec2},
     prelude::MouseEvent,
     style::Style,
-    term::backend::MouseEventKind,
+    term::backend::{MouseButton, MouseEventKind},
     text::Text,
     widgets::{cache::Cache, widget::EventResult, Span},
 };
@@ -57,7 +56,6 @@ use super::{span::ToSpan, widget::Widget, Element};
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug)]
 pub struct List<M: 'static = ()> {
     items: Vec<String>,
     state: Rc<RefCell<ListState>>,
@@ -69,7 +67,7 @@ pub struct List<M: 'static = ()> {
     force_scrollbar: bool,
     scrollbar_fg: Color,
     thumb_fg: Color,
-    _marker: PhantomData<M>,
+    handlers: Vec<(MouseButton, Box<dyn Fn(usize) -> M>)>,
 }
 
 /// State of the [`List`] widget, including scroll offset and selected index.
@@ -101,7 +99,7 @@ impl<M> List<M> {
             force_scrollbar: false,
             scrollbar_fg: Color::Default,
             thumb_fg: Color::Default,
-            _marker: PhantomData,
+            handlers: vec![],
         }
     }
 
@@ -188,6 +186,26 @@ impl<M> List<M> {
         self.thumb_fg = fg;
         self
     }
+
+    /// Sets the response Message of the on click handler.
+    #[must_use]
+    pub fn on_click<F>(self, response: F) -> Self
+    where
+        F: Fn(usize) -> M + 'static,
+    {
+        self.on_press(MouseButton::Left, response)
+    }
+
+    /// Sets the response Message for the given button click handler.
+    #[must_use]
+    pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
+    where
+        F: Fn(usize) -> M + 'static,
+    {
+        self.handlers.retain(|(b, _)| *b != button);
+        self.handlers.push((button, Box::new(response)));
+        self
+    }
 }
 
 impl ListState {
@@ -213,17 +231,21 @@ impl ListState {
 
 impl<M: Clone + 'static> Widget<M> for List<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
-        if self.auto_scroll {
-            self.scroll_offset(rect.size());
-        }
-
         let mut text_pos =
             Vec2::new(rect.x() + self.highlight.len(), rect.y());
         let mut text_size =
             Vec2::new(rect.width() - self.highlight.len(), rect.height());
 
-        if self.force_scrollbar || !self.fits(rect.size()) {
-            text_size.x -= 1;
+        let has_bar = self.force_scrollbar || !self.fits(&text_size);
+        if has_bar {
+            text_size.x = text_size.x.saturating_sub(1);
+        }
+
+        if self.auto_scroll {
+            self.scroll_offset(&text_size);
+        }
+
+        if has_bar {
             self.render_scrollbar(buffer, &rect);
         }
 
@@ -284,17 +306,28 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
             return EventResult::None;
         }
 
-        match &event.kind {
-            MouseEventKind::ScrollDown => {
-                self.move_selection(1);
-                EventResult::Consumed
-            }
-            MouseEventKind::ScrollUp => {
-                self.move_selection(-1);
-                EventResult::Consumed
-            }
-            _ => EventResult::None,
+        let mut area = area.inner(Padding::left(self.highlight.len()));
+        if self.force_scrollbar || !self.fits(area.size()) {
+            area.size.x -= 1;
         }
+
+        for i in self.state.borrow().offset..self.items.len() {
+            let span: Element<M> = self.items[i].to_span().into();
+            let height = span.height(area.size());
+
+            let mut irect = Rect::from_coords(*area.pos(), *area.size());
+            irect.size.y = height;
+            if !irect.contains_pos(&event.pos) {
+                area = area.inner(Padding::top(height));
+                continue;
+            }
+
+            let m = self.item_event(event, i);
+            if !m.is_none() {
+                return m;
+            }
+        }
+        self.handle_mouse(event)
     }
 }
 
@@ -380,6 +413,32 @@ impl<M: Clone + 'static> List<M> {
     /// Checks if list fits to the visible area
     fn fits(&self, size: &Vec2) -> bool {
         self.is_visible(self.items.len() - 1, 0, size)
+    }
+
+    fn item_event(&self, event: &MouseEvent, id: usize) -> EventResult<M> {
+        match &event.kind {
+            MouseEventKind::Down(button) => self
+                .handlers
+                .iter()
+                .find(|(b, _)| b == button)
+                .map(|(_, m)| EventResult::Response(m(id)))
+                .unwrap_or(EventResult::None),
+            _ => EventResult::None,
+        }
+    }
+
+    fn handle_mouse(&self, event: &MouseEvent) -> EventResult<M> {
+        match &event.kind {
+            MouseEventKind::ScrollDown => {
+                self.move_selection(1);
+                EventResult::Consumed
+            }
+            MouseEventKind::ScrollUp => {
+                self.move_selection(-1);
+                EventResult::Consumed
+            }
+            _ => EventResult::None,
+        }
     }
 }
 
