@@ -60,6 +60,8 @@ pub struct List<M: 'static = ()> {
     items: Vec<String>,
     state: Rc<RefCell<ListState>>,
     auto_scroll: bool,
+    handle_scroll: bool,
+    scroll_dist: usize,
     style: Style,
     sel_style: Style,
     highlight: String,
@@ -92,6 +94,8 @@ impl<M> List<M> {
             items,
             state,
             auto_scroll: false,
+            handle_scroll: true,
+            scroll_dist: 1,
             style: Default::default(),
             sel_style: Default::default(),
             highlight: String::new(),
@@ -117,6 +121,20 @@ impl<M> List<M> {
     #[must_use]
     pub fn auto_scroll(mut self) -> Self {
         self.auto_scroll = true;
+        self
+    }
+
+    /// Enables or disables automatic mouse scroll handling.
+    #[must_use]
+    pub fn scrollable(mut self, enabled: bool) -> Self {
+        self.handle_scroll = enabled;
+        self
+    }
+
+    /// Sets the scroll distance used in the automatic mouse scroll handling.
+    #[must_use]
+    pub fn scroll_distance(mut self, distance: usize) -> Self {
+        self.scroll_dist = distance;
         self
     }
 
@@ -379,7 +397,7 @@ impl<M: Clone + 'static> List<M> {
         }
     }
 
-    fn move_selection(&self, delta: i32) {
+    fn move_selection(&self, delta: isize) {
         let mut state = self.state.borrow_mut();
         let Some(selected) = state.selected else {
             return;
@@ -428,13 +446,17 @@ impl<M: Clone + 'static> List<M> {
     }
 
     fn handle_mouse(&self, event: &MouseEvent) -> EventResult<M> {
+        if !self.handle_scroll {
+            return EventResult::None;
+        }
+
         match &event.kind {
             MouseEventKind::ScrollDown => {
-                self.move_selection(1);
+                self.move_selection(self.scroll_dist as isize);
                 EventResult::Consumed
             }
             MouseEventKind::ScrollUp => {
-                self.move_selection(-1);
+                self.move_selection(-(self.scroll_dist as isize));
                 EventResult::Consumed
             }
             _ => EventResult::None,

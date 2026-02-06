@@ -66,6 +66,8 @@ pub struct Table<M: 'static = ()> {
     column_spacing: usize,
     state: Rc<RefCell<TableState>>,
     auto_scroll: bool,
+    handle_scroll: bool,
+    scroll_dist: Vec2,
     force_scrollbar: bool,
     handlers: Vec<(MouseButton, Box<dyn Fn(usize, usize) -> M>)>,
 }
@@ -95,6 +97,8 @@ impl<M> Table<M> {
             column_spacing: 1,
             state,
             auto_scroll: false,
+            handle_scroll: true,
+            scroll_dist: Vec2::new(1, 1),
             force_scrollbar: false,
             handlers: vec![],
         }
@@ -184,6 +188,38 @@ impl<M> Table<M> {
     #[must_use]
     pub fn auto_scroll(mut self) -> Self {
         self.auto_scroll = true;
+        self
+    }
+
+    /// Enables or disables automatic mouse scroll handling.
+    #[must_use]
+    pub fn scrollable(mut self, enabled: bool) -> Self {
+        self.handle_scroll = enabled;
+        self
+    }
+
+    /// Sets the scroll distance for both horizontal and vertical scrolling
+    /// used in the automatic mouse scroll handling.
+    #[must_use]
+    pub fn scroll_distance(mut self, distance: usize) -> Self {
+        self.scroll_dist.x = distance;
+        self.scroll_dist.y = distance;
+        self
+    }
+
+    /// Sets the horizontal scroll distance used in the automatic mouse scroll
+    /// handling.
+    #[must_use]
+    pub fn scroll_distance_x(mut self, distance: usize) -> Self {
+        self.scroll_dist.x = distance;
+        self
+    }
+
+    /// Sets the vertical scroll distance used in the automatic mouse scroll
+    /// handling.
+    #[must_use]
+    pub fn scroll_distance_y(mut self, distance: usize) -> Self {
+        self.scroll_dist.y = distance;
         self
     }
 
@@ -783,6 +819,7 @@ impl<M: Clone + 'static> Table<M> {
         event: &MouseEvent,
     ) -> EventResult<M> {
         use MouseEventKind::*;
+
         match &event.kind {
             Down(button) => {
                 return self
@@ -792,22 +829,23 @@ impl<M: Clone + 'static> Table<M> {
                     .map(|(_, m)| EventResult::Response(m(x, y)))
                     .unwrap_or(EventResult::None)
             }
+            _ if !self.handle_scroll => return EventResult::None,
             ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.move_col(1);
+                self.move_col(self.scroll_dist.x as isize);
             }
             ScrollUp if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.move_col(-1);
+                self.move_col(-(self.scroll_dist.x as isize));
             }
-            ScrollDown => self.move_row(1),
-            ScrollUp => self.move_row(-1),
-            ScrollLeft => self.move_col(-1),
-            ScrollRight => self.move_col(1),
+            ScrollDown => self.move_row(self.scroll_dist.y as isize),
+            ScrollUp => self.move_row(-(self.scroll_dist.y as isize)),
+            ScrollLeft => self.move_col(-(self.scroll_dist.x as isize)),
+            ScrollRight => self.move_col(self.scroll_dist.x as isize),
             _ => return EventResult::None,
         }
         EventResult::Consumed
     }
 
-    fn move_row(&self, delta: i32) {
+    fn move_row(&self, delta: isize) {
         let mut state = self.state.borrow_mut();
         if let Some(selected) = state.selected {
             state.selected =
@@ -815,7 +853,7 @@ impl<M: Clone + 'static> Table<M> {
         }
     }
 
-    fn move_col(&self, delta: i32) {
+    fn move_col(&self, delta: isize) {
         let mut state = self.state.borrow_mut();
         if let Some(selected) = state.selected_column {
             state.selected_column =
@@ -823,7 +861,7 @@ impl<M: Clone + 'static> Table<M> {
         }
     }
 
-    fn move_selection(current: usize, delta: i32, max: usize) -> usize {
+    fn move_selection(current: usize, delta: isize, max: usize) -> usize {
         if delta < 0 {
             current.saturating_sub(delta.unsigned_abs() as usize)
         } else {

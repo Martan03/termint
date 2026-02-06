@@ -43,6 +43,8 @@ pub struct Scrollable<M: 'static = (), W = Element<M>> {
     horizontal: Option<Element<M>>,
     vertical: Option<Element<M>>,
     child: Element<M>,
+    handle_scroll: bool,
+    scroll_dist: Vec2,
     child_type: PhantomData<W>,
 }
 
@@ -83,6 +85,8 @@ where
             vertical: Some(Scrollbar::vertical(state.clone()).into()),
             horizontal: None,
             child: child.into(),
+            handle_scroll: true,
+            scroll_dist: Vec2::new(1, 1),
             child_type: PhantomData,
         }
     }
@@ -100,6 +104,8 @@ where
             vertical: None,
             horizontal: Some(Scrollbar::horizontal(state).into()),
             child: child.into(),
+            handle_scroll: true,
+            scroll_dist: Vec2::new(1, 1),
             child_type: PhantomData,
         }
     }
@@ -123,8 +129,42 @@ where
             vertical: Some(Scrollbar::vertical(ver_state).into()),
             horizontal: Some(Scrollbar::horizontal(hor_state).into()),
             child: child.into(),
+            handle_scroll: true,
+            scroll_dist: Vec2::new(1, 1),
             child_type: PhantomData,
         }
+    }
+
+    /// Enables or disables automatic mouse scroll handling.
+    #[must_use]
+    pub fn scrollable(mut self, enabled: bool) -> Self {
+        self.handle_scroll = enabled;
+        self
+    }
+
+    /// Sets the scroll distance for both horizontal and vertical scrolling
+    /// used in the automatic mouse scroll handling.
+    #[must_use]
+    pub fn scroll_distance(mut self, distance: usize) -> Self {
+        self.scroll_dist.x = distance;
+        self.scroll_dist.y = distance;
+        self
+    }
+
+    /// Sets the horizontal scroll distance used in the automatic mouse scroll
+    /// handling.
+    #[must_use]
+    pub fn scroll_distance_x(mut self, distance: usize) -> Self {
+        self.scroll_dist.x = distance;
+        self
+    }
+
+    /// Sets the vertical scroll distance used in the automatic mouse scroll
+    /// handling.
+    #[must_use]
+    pub fn scroll_distance_y(mut self, distance: usize) -> Self {
+        self.scroll_dist.y = distance;
+        self
     }
 }
 
@@ -354,31 +394,38 @@ where
     }
 
     fn handle_mouse(&self, area: Rect, event: &MouseEvent) -> EventResult<M> {
+        if !self.handle_scroll {
+            return EventResult::None;
+        }
+
         use MouseEventKind::*;
+
+        let dx = self.scroll_dist.x as isize;
+        let dy = self.scroll_dist.y as isize;
         match &event.kind {
             ScrollDown if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.hor_move_offset(area, 1);
+                self.hor_move_offset(area, dx);
             }
             ScrollUp if event.modifiers.contains(KeyModifiers::SHIFT) => {
-                self.hor_move_offset(area, -1);
+                self.hor_move_offset(area, -dx);
             }
-            ScrollDown => self.ver_move_offset(area, 1),
-            ScrollUp => self.ver_move_offset(area, -1),
-            ScrollLeft => self.hor_move_offset(area, -1),
-            ScrollRight => self.hor_move_offset(area, 1),
+            ScrollDown => self.ver_move_offset(area, dy),
+            ScrollUp => self.ver_move_offset(area, -dy),
+            ScrollLeft => self.hor_move_offset(area, -dx),
+            ScrollRight => self.hor_move_offset(area, dx),
             _ => return EventResult::None,
         }
         EventResult::Consumed
     }
 
-    fn ver_move_offset(&self, area: Rect, delta: i32) {
+    fn ver_move_offset(&self, area: Rect, delta: isize) {
         let height = area
             .height()
             .saturating_sub(self.horizontal.is_some() as usize);
         self.apply_scroll(&self.vertical, height, delta);
     }
 
-    fn hor_move_offset(&self, area: Rect, delta: i32) {
+    fn hor_move_offset(&self, area: Rect, delta: isize) {
         let width = area
             .width()
             .saturating_sub(self.vertical.is_some() as usize);
@@ -389,7 +436,7 @@ where
         &self,
         scrollbar: &Option<Element<M>>,
         size: usize,
-        delta: i32,
+        delta: isize,
     ) {
         scrollbar
             .as_ref()
@@ -400,7 +447,7 @@ where
             });
     }
 
-    fn get_offset(state: ScrollbarState, delta: i32, size: usize) -> usize {
+    fn get_offset(state: ScrollbarState, delta: isize, size: usize) -> usize {
         if delta < 0 {
             state.offset.saturating_sub(delta.unsigned_abs() as usize)
         } else {
