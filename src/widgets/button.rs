@@ -40,6 +40,8 @@ impl<M> Button<M> {
     }
 
     /// Sets the base [`Style`] of the [`Button`]
+    ///
+    /// This overwrites any already set click response message.
     #[must_use]
     pub fn style<S>(mut self, style: S) -> Self
     where
@@ -56,6 +58,8 @@ impl<M> Button<M> {
     }
 
     /// Sets the response Message for the given button click handler.
+    ///
+    /// This overwrites any already set response message for the given button.
     #[must_use]
     pub fn on_press(mut self, button: MouseButton, response: M) -> Self {
         self.handlers.retain(|(b, _)| *b != button);

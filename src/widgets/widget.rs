@@ -10,18 +10,38 @@ use crate::{
     widgets::cache::Cache,
 };
 
+/// The result of processing a mouse event within a widget.
+///
+/// This enum allows event propagation in the widget tree. It tells the parent
+/// widget whether an event was already handled or not.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EventResult<M> {
+    /// The event was not handled by the widget.
+    ///
+    /// The parent widget should pass the event to the next child, try to
+    /// handle itself or propagate [`EventResult::None`] to indicate unhandled
+    /// event.
     None,
+    /// This event was handled internally by the widget.
+    ///
+    /// This signifies that the widget's state has changed (such as list
+    /// scrolled) and the UI should be updated. No message is generated.
     Consumed,
+    /// The events was handled and produced a message.
+    ///
+    /// This message will bubble up to the [`crate::term::Application::update`]
+    /// method.
     Response(M),
 }
 
 impl<M> EventResult<M> {
+    /// Returns `true` if the result is [`EventResult::None`].
     pub fn is_none(&self) -> bool {
         matches!(self, EventResult::None)
     }
 
+    /// Returns either this [`EventResult`] or [`EventResult`] given by the
+    /// closure if this result is [`EventResult::None`].
     pub fn or_else<F>(self, f: F) -> Self
     where
         F: FnOnce() -> Self,

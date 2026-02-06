@@ -206,6 +206,8 @@ impl<M> List<M> {
     }
 
     /// Sets the response Message of the on click handler.
+    ///
+    /// This overwrites any already set click response message.
     #[must_use]
     pub fn on_click<F>(self, response: F) -> Self
     where
@@ -215,6 +217,8 @@ impl<M> List<M> {
     }
 
     /// Sets the response Message for the given button click handler.
+    ///
+    /// This overwrites any already set response message for the given button.
     #[must_use]
     pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
     where
