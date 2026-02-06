@@ -3,8 +3,10 @@ use std::{cell::Cell, rc::Rc};
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
+    prelude::MouseEvent,
     style::Style,
-    widgets::cache::Cache,
+    term::backend::{MouseButton, MouseEventKind},
+    widgets::{cache::Cache, EventResult},
 };
 
 use super::{Element, Widget};
@@ -32,15 +34,16 @@ use super::{Element, Widget};
 /// # Ok(())
 /// # }
 /// ```
-pub struct ProgressBar {
+pub struct ProgressBar<M> {
     state: Rc<Cell<f64>>,
     thumb_chars: Vec<char>,
     thumb_style: Style,
     track_char: char,
     style: Style,
+    handlers: Vec<(MouseButton, Box<dyn Fn(f64) -> M>)>,
 }
 
-impl ProgressBar {
+impl<M> ProgressBar<M> {
     /// Creates a new [`ProgressBar`] with given percentage state.
     ///
     /// # Example
@@ -58,6 +61,7 @@ impl ProgressBar {
             thumb_chars: vec!['▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'],
             track_char: ' ',
             style: Default::default(),
+            handlers: vec![],
         }
     }
 
@@ -113,9 +117,29 @@ impl ProgressBar {
         self.style = style.into();
         self
     }
+
+    /// Sets the response Message of the on click handler.
+    #[must_use]
+    pub fn on_click<F>(self, response: F) -> Self
+    where
+        F: Fn(f64) -> M + 'static,
+    {
+        self.on_press(MouseButton::Left, response)
+    }
+
+    /// Sets the response Message for the given button click handler.
+    #[must_use]
+    pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
+    where
+        F: Fn(f64) -> M + 'static,
+    {
+        self.handlers.retain(|(b, _)| *b != button);
+        self.handlers.push((button, Box::new(response)));
+        self
+    }
 }
 
-impl<M: Clone + 'static> Widget<M> for ProgressBar {
+impl<M: Clone + 'static> Widget<M> for ProgressBar<M> {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         if rect.is_empty() || self.thumb_chars.is_empty() {
             return;
@@ -154,9 +178,33 @@ impl<M: Clone + 'static> Widget<M> for ProgressBar {
     fn width(&self, size: &Vec2) -> usize {
         size.x
     }
+
+    fn on_event(
+        &self,
+        area: Rect,
+        _cache: &mut Cache,
+        event: &MouseEvent,
+    ) -> EventResult<M> {
+        if !area.contains_pos(&event.pos) {
+            return EventResult::None;
+        }
+
+        match &event.kind {
+            MouseEventKind::Down(button) => {
+                let rx = event.pos.x.saturating_sub(area.x());
+                let progress = (rx as f64 / area.width() as f64).clamp(0., 1.);
+                self.handlers
+                    .iter()
+                    .find(|(b, _)| b == button)
+                    .map(|(_, m)| EventResult::Response(m(progress)))
+                    .unwrap_or(EventResult::None)
+            }
+            _ => EventResult::None,
+        }
+    }
 }
 
-impl ProgressBar {
+impl<M> ProgressBar<M> {
     /// Calculates the size of full cells and head ID to get corresponding
     /// progress character with.
     fn calc_size(&self, rect: &Rect) -> (usize, usize) {
@@ -170,14 +218,14 @@ impl ProgressBar {
     }
 }
 
-impl<M: Clone + 'static> From<ProgressBar> for Element<M> {
-    fn from(value: ProgressBar) -> Self {
+impl<M: Clone + 'static> From<ProgressBar<M>> for Element<M> {
+    fn from(value: ProgressBar<M>) -> Self {
         Element::new(value)
     }
 }
 
-impl<M: Clone + 'static> From<ProgressBar> for Box<dyn Widget<M>> {
-    fn from(value: ProgressBar) -> Self {
+impl<M: Clone + 'static> From<ProgressBar<M>> for Box<dyn Widget<M>> {
+    fn from(value: ProgressBar<M>) -> Self {
         Box::new(value)
     }
 }

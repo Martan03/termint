@@ -27,7 +27,12 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), Error> {
     let mut app = App::default();
-    Term::default().setup()?.run(&mut app)
+    Term::default().setup()?.with_mouse().run(&mut app)
+}
+
+#[derive(Clone)]
+enum Message {
+    Seek(usize, f64),
 }
 
 struct App {
@@ -35,7 +40,7 @@ struct App {
 }
 
 impl Application for App {
-    type Message = ();
+    type Message = Message;
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let mut block = Block::vertical()
@@ -44,8 +49,9 @@ impl Application for App {
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
 
-        for state in self.states.iter() {
-            let bar = ProgressBar::new(state.clone());
+        for (i, state) in self.states.iter().enumerate() {
+            let bar = ProgressBar::new(state.clone())
+                .on_click(move |p| Message::Seek(i, p));
             block.push(bar, Constraint::Min(0));
             block.push(Spacer::new(), 1);
         }
@@ -61,6 +67,13 @@ impl Application for App {
             Event::Key(key) => self.key_listener(key),
             _ => Action::NONE,
         }
+    }
+
+    fn message(&mut self, message: Self::Message) -> Action {
+        match message {
+            Message::Seek(id, p) => self.states[id].set(p * 100.),
+        }
+        Action::RERENDER
     }
 
     fn update(&mut self) -> Action {
