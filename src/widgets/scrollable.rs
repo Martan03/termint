@@ -40,7 +40,9 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// ```
 pub struct Scrollable<M: 'static = (), W = Element<M>> {
     horizontal: Option<Element<M>>,
+    hor_state: Option<Rc<Cell<ScrollbarState>>>,
     vertical: Option<Element<M>>,
+    ver_state: Option<Rc<Cell<ScrollbarState>>>,
     child: Element<M>,
     handle_scroll: bool,
     scroll_dist: Vec2,
@@ -84,7 +86,9 @@ where
     {
         Self {
             vertical: Some(Scrollbar::vertical(state.clone()).into()),
+            ver_state: Some(state),
             horizontal: None,
+            hor_state: None,
             child: child.into(),
             handle_scroll: true,
             scroll_dist: Vec2::new(1, 1),
@@ -105,7 +109,9 @@ where
     {
         Self {
             vertical: None,
-            horizontal: Some(Scrollbar::horizontal(state).into()),
+            ver_state: None,
+            horizontal: Some(Scrollbar::horizontal(state.clone()).into()),
+            hor_state: Some(state),
             child: child.into(),
             handle_scroll: true,
             scroll_dist: Vec2::new(1, 1),
@@ -131,8 +137,10 @@ where
         T: Into<Element<M>>,
     {
         Self {
-            vertical: Some(Scrollbar::vertical(ver_state).into()),
-            horizontal: Some(Scrollbar::horizontal(hor_state).into()),
+            vertical: Some(Scrollbar::vertical(ver_state.clone()).into()),
+            ver_state: Some(ver_state),
+            horizontal: Some(Scrollbar::horizontal(hor_state.clone()).into()),
+            hor_state: Some(hor_state),
             child: child.into(),
             handle_scroll: true,
             scroll_dist: Vec2::new(1, 1),
@@ -298,7 +306,7 @@ where
         cache: &mut Cache,
         vertical: &Element<M>,
     ) {
-        let Some(vertical) = vertical.downcast_ref::<Scrollbar<M>>() else {
+        let Some(state) = &self.ver_state else {
             return;
         };
 
@@ -308,11 +316,11 @@ where
 
         let srect = Rect::new(rect.right(), rect.y(), 1, rect.height());
         let ccache = &mut cache.children[1];
-        Self::scrollbar(buffer, ccache, vertical, srect, size.y);
+        Self::scrollbar(buffer, ccache, vertical, state, srect, size.y);
 
         let crect = Rect::new(
             rect.x(),
-            rect.y() + vertical.get_state().offset,
+            rect.y() + state.get().offset,
             size.x,
             rect.height(),
         );
@@ -327,8 +335,7 @@ where
         cache: &mut Cache,
         horizontal: &Element<M>,
     ) {
-        let Some(horizontal) = horizontal.downcast_ref::<Scrollbar<M>>()
-        else {
+        let Some(state) = &self.hor_state else {
             return;
         };
 
@@ -338,10 +345,10 @@ where
 
         let srect = Rect::new(rect.x(), rect.bottom(), rect.width(), 1);
         let ccache = &mut cache.children[1];
-        Self::scrollbar(buffer, ccache, horizontal, srect, size.x);
+        Self::scrollbar(buffer, ccache, horizontal, state, srect, size.x);
 
         let crect = Rect::new(
-            rect.x() + horizontal.get_state().offset,
+            rect.x() + state.get().offset,
             rect.y(),
             rect.width(),
             size.y,
@@ -358,10 +365,8 @@ where
         vertical: &Element<M>,
         horizontal: &Element<M>,
     ) {
-        let Some(vertical) = vertical.downcast_ref::<Scrollbar<M>>() else {
-            return;
-        };
-        let Some(horizontal) = horizontal.downcast_ref::<Scrollbar<M>>()
+        let (Some(ver_state), Some(hor_state)) =
+            (&self.ver_state, &self.hor_state)
         else {
             return;
         };
@@ -373,16 +378,16 @@ where
         let height = rect.height().saturating_sub(1);
         let mut crect = Rect::new(rect.right(), rect.y(), 1, height);
         let ccache = &mut cache.children[1];
-        Self::scrollbar(buffer, ccache, vertical, crect, size.y);
+        Self::scrollbar(buffer, ccache, vertical, ver_state, crect, size.y);
 
         let width = rect.width().saturating_sub(1);
         crect = Rect::new(rect.x(), rect.bottom(), width, 1);
         let ccache = &mut cache.children[2];
-        Self::scrollbar(buffer, ccache, horizontal, crect, size.x);
+        Self::scrollbar(buffer, ccache, horizontal, hor_state, crect, size.x);
 
         let mask = Rect::new(
-            rect.x() + horizontal.get_state().offset,
-            rect.y() + vertical.get_state().offset,
+            rect.x() + hor_state.get().offset,
+            rect.y() + ver_state.get().offset,
             width,
             height,
         );
@@ -418,11 +423,14 @@ where
     fn scrollbar(
         buffer: &mut Buffer,
         cache: &mut Cache,
-        scroll: &Scrollbar<M>,
+        scroll: &Element<M>,
+        state: &Rc<Cell<ScrollbarState>>,
         rect: Rect,
         size: usize,
     ) {
-        scroll.content_len(size);
+        let mut s = state.get();
+        s.content_len = size;
+        state.set(s);
         scroll.render(buffer, rect, cache);
     }
 
@@ -455,7 +463,7 @@ where
             let height = area
                 .height()
                 .saturating_sub(self.horizontal.is_some() as usize);
-            self.apply_scroll(&self.vertical, height, delta);
+            self.apply_scroll(&self.ver_state, height, delta);
         };
         self.handle_scroll(&self.on_scroll_ver, scroll, delta)
     }
@@ -465,7 +473,7 @@ where
             let width = area
                 .width()
                 .saturating_sub(self.vertical.is_some() as usize);
-            self.apply_scroll(&self.horizontal, width, delta);
+            self.apply_scroll(&self.hor_state, width, delta);
         };
         self.handle_scroll(&self.on_scroll_hor, scroll, delta)
     }
@@ -492,20 +500,17 @@ where
 
     fn apply_scroll(
         &self,
-        scrollbar: &Option<Element<M>>,
+        scrollbar: &Option<Rc<Cell<ScrollbarState>>>,
         size: usize,
         delta: isize,
     ) {
-        scrollbar
-            .as_ref()
-            .and_then(|b| b.downcast_ref::<Scrollbar<M>>())
-            .map(|bar| {
-                let state = bar.get_state();
-                bar.offset(Self::get_offset(state, delta, size))
-            });
+        if let Some(ref state) = scrollbar {
+            let s = state.get();
+            state.set(s.offset(Self::get_offset(&s, delta, size)));
+        };
     }
 
-    fn get_offset(state: ScrollbarState, delta: isize, size: usize) -> usize {
+    fn get_offset(state: &ScrollbarState, delta: isize, size: usize) -> usize {
         if delta < 0 {
             state.offset.saturating_sub(delta.unsigned_abs() as usize)
         } else {
