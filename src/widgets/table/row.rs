@@ -10,7 +10,7 @@ use crate::{
 ///
 /// # Example
 ///
-/// Row can be constructed from iterator of types convertable to [`Element`].
+/// Row can be constructed from iterator of types convertible to [`Element`].
 ///
 /// ```rust
 /// use termint::{prelude::*, widgets::Grad};

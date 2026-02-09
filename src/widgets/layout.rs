@@ -140,20 +140,6 @@ impl<M> Layout<M> {
         self
     }
 
-    /// Adds child with its [`Constraint`] to [`Layout`]
-    #[deprecated(
-        since = "0.6.0",
-        note = "Kept for compatibility purposes; use `push` function instead"
-    )]
-    pub fn add_child<T, C>(&mut self, child: T, constraint: C)
-    where
-        T: Into<Element<M>>,
-        C: Into<Constraint>,
-    {
-        self.children.push(child.into());
-        self.constraints.push(constraint.into());
-    }
-
     /// Adds a child widget with its contraint
     ///
     /// # Parameters

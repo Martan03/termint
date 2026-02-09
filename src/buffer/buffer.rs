@@ -22,7 +22,7 @@ use super::cell::Cell;
 /// screen using the [`Buffer`], so you don't have to care about it. But if you
 /// would like to do it without the [`Term`](crate::term::Term) struct, you can
 /// do it like this:
-/// 
+///
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,
@@ -153,15 +153,6 @@ impl Buffer {
             buffer.set(self[self.index_of(&pos)].clone(), &pos);
         }
         buffer
-    }
-
-    /// Unites current buffer with given one
-    #[deprecated(
-        since = "0.6.0",
-        note = "Kept for compatibility purposes; use `merge` function instead"
-    )]
-    pub fn union(&mut self, buffer: Buffer) {
-        self.merge(buffer);
     }
 
     /// Merges given buffer to the current. If the given buffer is not

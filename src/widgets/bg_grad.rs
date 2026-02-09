@@ -1,63 +1,61 @@
-use std::marker::PhantomData;
-
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
-    geometry::{Constraint, Direction, Padding, Rect, Vec2},
+    geometry::{Direction, Padding, Rect, Vec2},
     prelude::MouseEvent,
-    style::Style,
     widgets::{cache::Cache, widget::EventResult},
 };
 
-use super::{widget::Widget, Element, Layout, Spacer};
+use super::{widget::Widget, Element, Spacer};
 
-/// A container widget that renders a gradient background behind its child
-/// widget.
+/// A container widget that renders a gradient background behind child.
 ///
-/// The [`BgGrad`] widget supports horizontal and vertical gradients. You can
-/// set the gradient direction by providing [`Direction`] directly using
-/// [`BgGrad::new`] method, or you can use methods like [`BgGrad::horizontal`]
-/// and [`BgGrad::vertical`].
+/// [`BgGrad`] fills the assigned area with linear gradient (vertical or
+/// horizontal) and renders the optional child widget on top of it.
 ///
-/// By default BgGrad is empty, it doesn't have a child. To set the child
-/// widget, you can use [`BgGrad::child`] method.
+/// By default, a new [`BgGrad`] contains a [`Spacer`], meaning only the
+/// gradient background will be visible. You can use [`BgGrad::child`] to add
+/// any widget as its child.
 ///
-/// # Examples
+/// # Example
 ///
 /// ```rust
-/// # use termint::{term::Term, widgets::BgGrad};
-/// # fn example() -> Result<(), termint::Error> {
-/// let grad = BgGrad::<(), _>::horizontal((0, 150, 255), (150, 255, 0));
+/// use termint::{prelude::*, widgets::BgGrad};
+/// # type AnyWidget = Spacer;
 ///
-/// let mut term = Term::default();
-/// term.render(grad)?;
-/// # Ok(())
-/// # }
+/// // Horizontal blue to green gradient
+/// let grad = BgGrad::<()>::new(Direction::Horizontal, (0, 0, 255), (0, 255, 0));
+/// // Or using the horizontal gradient constructor
+/// let grad = BgGrad::<()>::horizontal((0, 0, 255), (0, 255, 0));
+///
+/// // Vertical blue-green gradient
+/// let grad = BgGrad::<()>::vertical((0, 0, 255), (0, 255, 0))
+///     // Add any widget as its child
+///     .child(AnyWidget::new())
+///     // Add uniform padding between child and gradient edges
+///     .padding(1);
 /// ```
 #[derive(Debug)]
-pub struct BgGrad<M: 'static = (), W = Element<M>> {
+pub struct BgGrad<M: 'static = ()> {
     bg_start: RGB,
     bg_end: RGB,
     direction: Direction,
     padding: Padding,
     child: Element<M>,
-    child_type: PhantomData<W>,
 }
 
-impl<M: Clone + 'static> BgGrad<M, Spacer> {
-    /// Creates a new empty [`BgGrad`] with the given gradient colors and
-    /// direction.
+impl<M: Clone + 'static> BgGrad<M> {
+    /// Creates a new [`BgGrad`] with the specified direction and colors.
     ///
-    /// For `start` and `end` you can provide any type that can be converted
-    /// into RGB, such as `u32`, `(u8 ,u8, u8)`.
-    ///
-    /// You can add child to be rendered on top of the gradient using
-    /// [`BgGrad::child`] method.
+    /// The `start` and `end` colors can be any type convertible into [`RGB`],
+    /// such as `u32`, `(u8 ,u8, u8)`. You can read more in the [`RGB`]
+    /// documentation.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::BgGrad, geometry::Direction};
-    /// let widget = BgGrad::<(), _>::new(
+    /// use termint::{prelude::*, widgets::BgGrad};
+    ///
+    /// let bg = BgGrad::<()>::new(
     ///     Direction::Vertical,
     ///     (0, 150, 255),
     ///     (150, 255, 0)
@@ -72,18 +70,18 @@ impl<M: Clone + 'static> BgGrad<M, Spacer> {
         Self::construct(start.into(), end.into(), dir, Spacer::new())
     }
 
-    /// Creates a new empty vertical [`BgGrad`] with the given gradient colors.
+    /// Creates a vertical (top-to-bottom) [`BgGrad`] with the specified
+    /// colors.
     ///
-    /// For `start` and `end` you can provide any type that can be converted
-    /// into RGB, such as `u32`, `(u8 ,u8, u8)`.
-    ///
-    /// You can add child to be rendered on top of the gradient using
-    /// [`BgGrad::child`] method.
+    /// The `start` and `end` colors can be any type convertible into [`RGB`],
+    /// such as `u32`, `(u8 ,u8, u8)`. You can read more in the [`RGB`]
+    /// documentation.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::widgets::BgGrad;
-    /// let widget = BgGrad::<(), _>::vertical((0, 150, 255), (150, 255, 0));
+    /// use termint::{prelude::*, widgets::BgGrad};
+    ///
+    /// let bg = BgGrad::<()>::vertical((0, 150, 255), (150, 255, 0));
     /// ```
     #[must_use]
     pub fn vertical<T1, T2>(start: T1, end: T2) -> Self
@@ -99,19 +97,18 @@ impl<M: Clone + 'static> BgGrad<M, Spacer> {
         )
     }
 
-    /// Creates a new empty horizontal [`BgGrad`] with the given gradient
+    /// Creates a horizontal (left-to-right) [`BgGrad`] with the specified
     /// colors.
     ///
-    /// For `start` and `end` you can provide any type that can be converted
-    /// into RGB, such as `u32`, `(u8 ,u8, u8)`.
-    ///
-    /// You can add child to be rendered on top of the gradient using
-    /// [`BgGrad::child`] method.
+    /// The `start` and `end` colors can be any type convertible into [`RGB`],
+    /// such as `u32` (hex), `(u8 ,u8, u8)` (RGB). You can read more in the
+    /// [`RGB`] documentation.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::widgets::BgGrad;
-    /// let widget = BgGrad::<(), _>::horizontal((0, 150, 255), (150, 255, 0));
+    /// use termint::{prelude::*, widgets::BgGrad};
+    ///
+    /// let bg = BgGrad::<()>::horizontal((0, 150, 255), (150, 255, 0));
     /// ```
     #[must_use]
     pub fn horizontal<T1, T2>(start: T1, end: T2) -> Self
@@ -126,48 +123,70 @@ impl<M: Clone + 'static> BgGrad<M, Spacer> {
             Spacer::new(),
         )
     }
-}
 
-impl<M, W> BgGrad<M, W> {
-    /// Sets the child widget to be displayed in front of the gradient.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use termint::widgets::{BgGrad, Spacer};
-    /// # type SomeWidget = Spacer;
-    /// let widget = BgGrad::<(), _>::vertical((0, 150, 255), (150, 255, 0))
-    ///     .child(SomeWidget::new());
-    /// ```
-    #[must_use]
-    pub fn child<I>(self, child: I) -> BgGrad<M, I>
+    fn construct<W>(start: RGB, end: RGB, dir: Direction, child: W) -> Self
     where
-        I: Into<Element<M>>,
+        W: Widget<M>,
     {
-        BgGrad {
-            bg_start: self.bg_start,
-            bg_end: self.bg_end,
-            direction: self.direction,
-            padding: self.padding,
-            child: child.into(),
-            child_type: PhantomData,
+        Self {
+            bg_start: start,
+            bg_end: end,
+            direction: dir,
+            padding: Default::default(),
+            child: Element::new(child),
         }
     }
 }
 
-impl<M, W> BgGrad<M, W> {
+impl<M> BgGrad<M> {
+    /// Sets the child widget to be rendered on top of the gradient.
+    ///
+    /// If a child was already set, this will replace it.
+    ///
+    /// # Example
+    /// ```rust
+    /// use termint::{prelude::*, widgets::BgGrad};
+    ///
+    /// # type SomeWidget = Spacer;
+    /// let widget = BgGrad::<()>::vertical((0, 150, 255), (150, 255, 0))
+    ///     .child(SomeWidget::new());
+    /// ```
+    #[must_use]
+    pub fn child<I>(mut self, child: I) -> Self
+    where
+        I: Into<Element<M>>,
+    {
+        self.child = child.into();
+        self
+    }
+
     /// Sets the gradient direction of the [`BgGrad`] background.
     ///
     /// The direction determines in which direction is the gradient drawn.
+    #[deprecated(
+        since = "0.7.0",
+        note = "Replaced by `BgGrad::direction` for clarity."
+    )]
     #[must_use]
     pub fn bg_dir(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
     }
 
-    /// Sets padding around the child widget of the [`BgGrad`].
+    /// Sets the gradient direction of the [`BgGrad`] background.
     ///
-    /// You can provide any type that can be converted into [`Padding`], such
-    /// as `usize`, `(usize, usize)`, or `(usize, usize, usize, usize)`.
+    /// The direction determines in which direction is the gradient drawn.
+    #[must_use]
+    pub fn direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
+    }
+
+    /// Sets the padding between the gradient adges and the child widget.
+    ///
+    /// The `padding` can be any type convertible into [`Padding`], such as
+    /// `usize` (uniform), `(usize, usize)` (vertical, horizontal). You can
+    /// read more in the [`Padding`] documentation.
     #[must_use]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
@@ -178,108 +197,9 @@ impl<M, W> BgGrad<M, W> {
     }
 }
 
-impl<M, W> BgGrad<M, W>
+impl<M> Widget<M> for BgGrad<M>
 where
     M: Clone + 'static,
-    W: Widget<M>,
-{
-    fn construct(start: RGB, end: RGB, dir: Direction, child: W) -> Self {
-        Self {
-            bg_start: start,
-            bg_end: end,
-            direction: dir,
-            padding: Default::default(),
-            child: Element::new(child),
-            child_type: PhantomData,
-        }
-    }
-}
-
-impl<M: Clone + 'static> BgGrad<M, Layout<M>> {
-    /// Sets flexing [`Direction`] of the [`Layout`].
-    #[must_use]
-    pub fn direction(mut self, direction: Direction) -> Self {
-        self.child =
-            self.child.map::<Layout<M>, _>(|l| l.direction(direction));
-        self
-    }
-
-    /// Sets the base style of the [`Layout`].
-    #[must_use]
-    pub fn style<T>(mut self, style: T) -> Self
-    where
-        T: Into<Style>,
-    {
-        self.child = self.child.map::<Layout<M>, _>(|l| l.style(style));
-        self
-    }
-
-    /// Sets base background color of the [`Layout`].
-    #[must_use]
-    pub fn bg<T>(mut self, bg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.child = self.child.map::<Layout<M>, _>(|l| l.bg(bg));
-        self
-    }
-
-    /// Sets base foreground color of the [`Layout`].
-    #[must_use]
-    pub fn fg<T>(mut self, fg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.child = self.child.map::<Layout<M>, _>(|l| l.fg(fg));
-        self
-    }
-
-    /// Makes [`Layout`] center its content in the direction it flexes.
-    ///
-    /// If the layout is flexing its children horizontally, the content will
-    /// be centered horizontally. Otherwise it will be centered vertically.
-    #[must_use]
-    pub fn center(mut self) -> Self {
-        self.child = self.child.map::<Layout<M>, _>(|l| l.center());
-        self
-    }
-
-    /// Adds child with its [`Constraint`] to [`Layout`]
-    #[deprecated(
-        since = "0.6.0",
-        note = "Kept for compatibility purposes; use `push` function instead"
-    )]
-    pub fn add_child<T, C>(&mut self, child: T, constraint: C)
-    where
-        T: Into<Element<M>>,
-        C: Into<Constraint>,
-    {
-        if let Some(layout) = self.child.downcast_mut::<Layout<M>>() {
-            layout.push(child, constraint);
-        }
-    }
-
-    /// Adds a child widget with its contraint
-    ///
-    /// # Parameters
-    /// - `child`: The widget to add (any type convertible to [`Element`])
-    /// - `contraint`: Widget's contraint (any type convertible to
-    ///   [`Constraint`])
-    pub fn push<T, C>(&mut self, child: T, constraint: C)
-    where
-        T: Into<Element<M>>,
-        C: Into<Constraint>,
-    {
-        if let Some(layout) = self.child.downcast_mut::<Layout<M>>() {
-            layout.push(child, constraint);
-        }
-    }
-}
-
-impl<M, W> Widget<M> for BgGrad<M, W>
-where
-    M: Clone + 'static,
-    W: Widget<M>,
 {
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         if rect.is_empty() {
@@ -334,7 +254,7 @@ where
     }
 }
 
-impl<M, W> BgGrad<M, W> {
+impl<M> BgGrad<M> {
     /// Renders horizontal background gradient
     fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
         let step = self.get_step(rect.width() as i16 - 1);
@@ -394,22 +314,20 @@ impl<M, W> BgGrad<M, W> {
 }
 
 // From implementations
-impl<M, W> From<BgGrad<M, W>> for Box<dyn Widget<M>>
+impl<M> From<BgGrad<M>> for Box<dyn Widget<M>>
 where
     M: Clone + 'static,
-    W: Widget<M> + 'static,
 {
-    fn from(value: BgGrad<M, W>) -> Self {
+    fn from(value: BgGrad<M>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M, W> From<BgGrad<M, W>> for Element<M>
+impl<M> From<BgGrad<M>> for Element<M>
 where
     M: Clone + 'static,
-    W: Widget<M> + 'static,
 {
-    fn from(value: BgGrad<M, W>) -> Self {
+    fn from(value: BgGrad<M>) -> Self {
         Element::new(value)
     }
 }

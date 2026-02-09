@@ -19,28 +19,22 @@ use super::{widget::Widget, Element, Layout, Spacer};
 /// You can customize the border style, type of the border and so on.
 ///
 /// # Example
+///
 /// ```rust
-/// # use termint::{
-/// #     term::Term,
-/// #     enums::{Color, BorderType},
-/// #     geometry::{Constraint, Rect},
-/// #     widgets::{Block, ToSpan, Widget},
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
-/// let mut main = Block::<(), _>::horizontal()
+/// use termint::prelude::*;
+///
+/// // Creates new block containing horizontal layout
+/// let mut main: Block<(), _> = Block::horizontal()
+///     // Add any `Text` widget as a title
 ///     .title("Termint".fg(Color::Red))
+///     // Double line border
 ///     .border_type(BorderType::Double)
+///     // Makes the border color light gray
 ///     .border_color(Color::LightGray);
 ///
-/// let block1 = Block::vertical().title("Sub block");
-/// main.add_child(block1, Constraint::Percent(50));
-/// let block2 = Block::vertical().title("Another");
-/// main.add_child(block2, Constraint::Percent(50));
-///
-/// let mut term = Term::default();
-/// term.render(main)?;
-/// # Ok(())
-/// # }
+/// // Block exposes `Layout` methods for simplification
+/// main.push("Sidebar", Constraint::Percent(30));
+/// main.push("Content", Constraint::Fill(1))
 /// ```
 #[derive(Debug)]
 pub struct Block<M: 'static = (), W = Element<M>> {
@@ -53,10 +47,11 @@ pub struct Block<M: 'static = (), W = Element<M>> {
 }
 
 impl<M> Block<M, Element<M>> {
-    /// Returns a new [`Block`] wrapping the given widget, with all borders
-    /// enabled and no title.
+    /// Creates a new [`Block`] wrapping the given widget.
     ///
-    /// You can provide any type implementing the [`Widget`] trait.
+    /// By default all the borders are visible and no title is set.
+    ///
+    /// The `child` can be any type convertible to [`Element`].
     #[must_use]
     pub fn new<T>(child: T) -> Self
     where
@@ -74,9 +69,11 @@ impl<M> Block<M, Element<M>> {
 }
 
 impl<M, W> Block<M, W> {
-    /// Sets the [`Text`] title displayed at the top of the [`Block`].
+    /// Sets the title at the top of the [`Block`].
     ///
     /// This is typically used for section labels in your TUI.
+    ///
+    /// The `title` can be any type implementing [`Text`] trait.
     #[must_use]
     pub fn title<T>(mut self, title: T) -> Self
     where
@@ -90,10 +87,16 @@ impl<M, W> Block<M, W> {
     /// flags.
     ///
     /// # Example
+    ///
     /// ```rust
-    /// # use termint::{enums::Border, widgets::Block, borders};
-    /// let block1 = Block::<(), _>::horizontal().borders(Border::TOP | Border::BOTTOM);
-    /// let block2 = Block::<(), _>::horizontal().borders(borders!(TOP, BOTTOM));
+    /// use termint::{prelude::*, borders};
+    ///
+    /// // Creates new [`Block`] with only top and bottom borders
+    /// let block1 = Block::<(), _>::empty()
+    ///     .borders(Border::TOP | Border::BOTTOM);
+    /// // Or shorter using `borders!` macro
+    /// let block2 = Block::<(), _>::horizontal()
+    ///     .borders(borders!(TOP, BOTTOM));
     /// ```
     #[must_use]
     pub fn borders(mut self, borders: Border) -> Self {
@@ -102,6 +105,9 @@ impl<M, W> Block<M, W> {
     }
 
     /// Sets the [`BorderType`] used to render the [`Block`] border.
+    ///
+    /// You can look at the [`BorderType`]'s documentation to look at all the
+    /// supported border types.
     #[must_use]
     pub fn border_type(mut self, border_type: BorderType) -> Self {
         self.border_type = border_type;
@@ -109,6 +115,8 @@ impl<M, W> Block<M, W> {
     }
 
     /// Sets the style applied to [`Block`] borders.
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn border_style<T>(mut self, style: T) -> Self
     where
@@ -142,16 +150,20 @@ impl<M: Clone + 'static> Block<M, Spacer> {
 }
 
 impl<M: Clone + 'static> Block<M, Layout<M>> {
-    /// Returns a [`Block`] containing a vertical [`Layout`] as its child.
+    /// Creates a new [`Block`] wrapping a vertical [`Layout`].
     ///
-    /// Very often you want to have a layout inside of a [`Block`] widget. This
-    /// constructor makes it easier.
+    /// This is convenience constructor. A lot of the times you add [`Layout`]
+    /// inside of the [`Block`], so this eliminates the need to adding it
+    /// manually.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::widgets::{Block, Layout};
-    /// // Creates block with vertical layout as its child
-    /// let block2 = Block::<(), _>::vertical();
+    /// use termint::prelude::*;
+    ///
+    /// // Block with vertical layout without this constructor
+    /// let block = Block::<(), _>::new(Layout::vertical());
+    /// // And using this constructor
+    /// let block = Block::<(), _>::vertical();
     /// ```
     #[must_use]
     pub fn vertical() -> Self {
@@ -165,16 +177,20 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
         }
     }
 
-    /// Returns a [`Block`] containing a horizontal [`Layout`] as its child.
+    /// Creates a new [`Block`] wrapping a horizontal [`Layout`].
     ///
-    /// Very often you want to have a layout inside of a [`Block`] widget. This
-    /// constructor makes it easier.
+    /// This is convenience constructor. A lot of the times you add [`Layout`]
+    /// inside of the [`Block`], so this eliminates the need to adding it
+    /// manually.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::widgets::{Block, Layout};
-    /// // Creates block with horizontal layout as its child
-    /// let block2: Block<(), _> = Block::horizontal();
+    /// use termint::prelude::*;
+    ///
+    /// // Block with horizontal layout without this constructor
+    /// let block = Block::<(), _>::new(Layout::horizontal());
+    /// // And using this constructor
+    /// let block = Block::<(), _>::horizontal();
     /// ```
     #[must_use]
     pub fn horizontal() -> Self {
@@ -227,6 +243,10 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
     }
 
     /// Sets the [`Padding`] of the [`Layout`].
+    ///
+    /// The `padding` can be any type convertible into [`Padding`], such as
+    /// `usize` (uniform), `(usize, usize)` (vertical, horizontal). You can
+    /// read more in the [`Padding`] documentation.
     #[must_use]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
@@ -246,27 +266,12 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
         self
     }
 
-    /// Adds child with its [`Constraint`] to [`Layout`]
-    #[deprecated(
-        since = "0.6.0",
-        note = "Kept for compatibility purposes; use `push` function instead"
-    )]
-    pub fn add_child<T, C>(&mut self, child: T, constraint: C)
-    where
-        T: Into<Element<M>>,
-        C: Into<Constraint>,
-    {
-        if let Some(layout) = self.child.downcast_mut::<Layout<M>>() {
-            layout.push(child, constraint);
-        }
-    }
-
     /// Adds a child widget with its contraint
     ///
-    /// # Parameters
-    /// - `child`: The widget to add (any type convertible to [`Element`])
-    /// - `contraint`: Widget's contraint (any type convertible to
-    ///   [`Constraint`])
+    /// The `child` can be any type convertible into [`Element`].
+    ///
+    /// The `constraint` can be any type convertible into [`Constraint`], such
+    /// as `5` (`Constraint::Length(5)`) and `1..` (`Constraint::Min(1)`).
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
         T: Into<Element<M>>,

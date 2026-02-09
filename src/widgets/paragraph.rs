@@ -113,18 +113,6 @@ impl Paragraph {
     }
 
     /// Adds a child element to the [`Paragraph`]
-    #[deprecated(
-        since = "0.6.0",
-        note = "Kept for compatibility purposes; use `push` function instead"
-    )]
-    pub fn add<T>(&mut self, child: T)
-    where
-        T: Into<Box<dyn Text>>,
-    {
-        self.children.push(child.into());
-    }
-
-    /// Adds a child element to the [`Paragraph`]
     pub fn push<T>(&mut self, child: T)
     where
         T: Into<Box<dyn Text>>,

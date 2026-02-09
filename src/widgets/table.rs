@@ -48,7 +48,6 @@ type TableHandler<M> = Box<dyn Fn(usize, usize) -> M>;
 /// use std::{cell::RefCell, rc::Rc};
 ///
 /// # fn get_people() -> Vec<Vec<Element>> { return vec![] }
-/// # fn example() -> Result<(), termint::Error> {
 /// let rows = get_people();
 /// let widths = [Unit::Fill(3), Unit::Fill(1), Unit::Fill(3)];
 /// let state = Rc::new(RefCell::new(TableState::new(0).selected(1)));
@@ -66,11 +65,6 @@ type TableHandler<M> = Box<dyn Fn(usize, usize) -> M>;
 ///     .selected_cell_style(Modifier::BOLD)
 ///     // Or enable auto scrolling, which assures the selected row is visible
 ///     .auto_scroll();
-///
-/// let mut term = Term::default();
-/// term.render(table)?;
-/// # Ok(())
-/// # }
 /// ```
 pub struct Table<M: 'static = ()> {
     header: Option<Row<M>>,
@@ -94,9 +88,9 @@ pub struct Table<M: 'static = ()> {
 impl<M> Table<M> {
     /// Creates new [`Table`] with given rows and columns widths.
     ///
-    /// The `rows` can be any type convertable into an iterator of [`Row`]s.
+    /// The `rows` can be any type convertible into an iterator of [`Row`]s.
     ///
-    /// The `widths` accepts any type convertable into an iterator of
+    /// The `widths` accepts any type convertible into an iterator of
     /// [`Unit`]s.
     ///
     /// ```rust
@@ -150,7 +144,7 @@ impl<M> Table<M> {
     ///
     /// Header is displayed at the top of the [`Table`] and always visible.
     ///
-    /// The `header` is type convertable into [`Row`].
+    /// The `header` is type convertible into [`Row`].
     #[must_use]
     pub fn header<H>(mut self, header: H) -> Self
     where
@@ -172,7 +166,7 @@ impl<M> Table<M> {
 
     /// Sets [`Table`] rows to the given value.
     ///
-    /// The `rows` can be any type convertable into an iterator of [`Row`]s.
+    /// The `rows` can be any type convertible into an iterator of [`Row`]s.
     #[must_use]
     pub fn rows<R, C>(mut self, rows: R) -> Self
     where
@@ -235,7 +229,7 @@ impl<M> Table<M> {
 
     /// Sets the widths of the [`Table`] columns.
     ///
-    /// The `widths` accepts any type convertable into an iterator of
+    /// The `widths` accepts any type convertible into an iterator of
     /// [`Unit`]s.
     #[must_use]
     pub fn widths<W>(mut self, widths: W) -> Self

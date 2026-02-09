@@ -43,7 +43,7 @@ impl TableState {
     ///
     /// Scroll offset is set to 0 and no column is selected.
     ///
-    /// The `selected` is any type convertable to `Option<usize>`.
+    /// The `selected` is any type convertible to `Option<usize>`.
     pub fn with_selected<T>(selected: T) -> Self
     where
         T: Into<Option<usize>>,
@@ -58,7 +58,7 @@ impl TableState {
     ///
     /// Scroll offset is set to 0 and no row is selected.
     ///
-    /// The `selected` is any type convertable to `Option<usize>`.
+    /// The `selected` is any type convertible to `Option<usize>`.
     pub fn with_selected_column<T>(selected: T) -> Self
     where
         T: Into<Option<usize>>,
@@ -71,7 +71,7 @@ impl TableState {
 
     /// Sets the selected row index.
     ///
-    /// The `selected` is any type convertable to `Option<usize>`. This allows
+    /// The `selected` is any type convertible to `Option<usize>`. This allows
     /// unselecting the row as well.
     #[must_use]
     pub fn selected<T>(mut self, selected: T) -> Self
@@ -84,7 +84,7 @@ impl TableState {
 
     /// Sets the selected column index.
     ///
-    /// The `selected` is any type convertable to `Option<usize>`. This allows
+    /// The `selected` is any type convertible to `Option<usize>`. This allows
     /// unselecting the column as well.
     #[must_use]
     pub fn selected_column<T>(mut self, selected: T) -> Self
