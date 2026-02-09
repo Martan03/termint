@@ -5,36 +5,51 @@
 //! rendering.
 //!
 //! # Available widgets:
-//! - [`BgGrad`](crate::widgets::BgGrad): A container widget that renders a
-//!   gradient background behind its child widget.
-//! - [`Block`](crate::widgets::Block): A widget that wrap another widget and
-//!   adds border and title.
-//! - [`Grad`](crate::widgets::Grad): A widget for rendering text with a
-//!   gradient foreground color.
-//! - [`Grid`](crate::widgets::Grid): A layout widget that arranges children in
-//!   a grid specified by rows and columns.
-//! - [`Layout`](crate::widgets::Layout): A container widget that arranges
-//!   child widgets in a single direction, flexing their sizes based on given
-//!   constraints.
-//! - [`List`](crate::widgets::List): A scrollable list widget with suuport for
-//!   item selection and highlighting.
-//! - [`Overlay`](crate::widgets::Overlay): A widget that stacks its children
-//!   in layers, from bottom to top.
-//! - [`Paragraph`](crate::widgets::Paragraph): A widget combining multiple
-//!   widgets implementing the [`Text`](crate::text::Text) trait into single
-//!   widget.
-//! - [`ProgressBar`](crate::widgets::ProgressBar): A widget that displays a
-//!   horizontal progress bar.
-//! - [`Scrollable`](crate::widgets::Scrollable): A wrapper widget that adds
-//!   scrollability to its child when content overflows.
-//! - [`Scrollbar`](crate::widgets::Scrollbar): A scrollbar widget that can be
-//!   either vertical or horizontal.
-//! - [`Spacer`](crate::widgets::Spacer): A spacer widget used for layout
-//!   spacing.
-//! - [`Span`](crate::widgets::Span): A widget for styling text where all
-//!   characters share the same style.
-//! - [`Table`](crate::widgets::Table): A widget that displays a table with
-//!   configurable column widths, optional header and scrollable row content.
+//!
+//! The widgets are categorized by their primary function:
+//!
+//! ## Layouts
+//!
+//! Widgets that organize other widgets.
+//!
+//! - [`Layout`](crate::widgets::Layout): Flex-box style arrangement
+//!   (row/column).
+//! - [`Grid`](crate::widgets::Grid): Align children in rows and columns.
+//! - [`Overlay`](crate::widgets::Overlay): Stack widgets on top of each other.
+//! - [`Spacer`](crate::widgets::Spacer): Empty widget for layout padding.
+//!
+//! ## Containers
+//!
+//! Widgets that wrap other widgets and add some functionality/style.
+//!
+//! - [`Block`](crate::widgets::Block): Wraps a widget and adds border and
+//!   title.
+//! - [`Button`](crate::widgets::Button): Wraps a widget and adds mouse click
+//!   handling.
+//! - [`Scrollable`](crate::widgets::Scrollable): Adds scrollbars to
+//!   overflowing content.
+//! - [`BgGrad`](crate::widgets::BgGrad): Wraps a widget and adds a background
+//!   gradient.
+//!
+//! ## Text
+//!
+//! Widgets for displaying text.
+//!
+//! - [`Span`](crate::widgets::Span): Styled text string.
+//! - [`Grad`](crate::widgets::Grad): Gradient-colored text.
+//! - [`Paragraph`](crate::widgets::Paragraph): Combines multiple styled texts
+//!   into one widget.
+//!
+//! ## Data
+//!
+//! Widgets that display data.
+//!
+//! - [`List`](crate::widgets::List): Selectable list of items with vertical
+//!   scrolling.
+//! - [`Table`](crate::widgets::Table): Selectable table of rows and multiple
+//!   columns with vertical scrolling.
+//! - [`Scrollbar`](crate::widgets::Scrollbar): Displays the scrolling
+//!   progress.
 
 mod bg_grad;
 mod block;
