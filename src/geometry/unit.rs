@@ -1,8 +1,10 @@
-/// Size unit enum, containing only some of the options from [`Constraint`]
+/// Size unit enum, containing only some of the options from
+/// [`Constraint`](crate::geometry::Unit)
 ///
-/// [`Unit`] is currently used for the [`Grid`] widget, since it doesn't
-/// support some of the [`Constraint`] options. This might be changed in the
-/// future.
+/// [`Unit`] is currently used for the [`Grid`](crate::widgets::Grid) widget,
+/// since it doesn't support some of the
+/// [`Constraint`](crate::geometry::Constraint) options. This might be changed
+/// in the future.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Unit {

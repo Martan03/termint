@@ -1,4 +1,4 @@
-/// Macro to combine [`Border`] sides
+/// Macro to combine [`Border`](crate::enums::Border) sides
 ///
 /// ## Usage:
 /// ```rust

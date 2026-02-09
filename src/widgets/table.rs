@@ -272,8 +272,9 @@ impl<M> Table<M> {
     /// horizontal scroll events.
     ///
     /// The step size of the scrolling can be configured using
-    /// [`Table::scroll_distance`], [`Table::scroll_distance_x`] and
-    /// [`Table::scroll_distance_y`].
+    /// [`Table::scroll_distance`](crate::widgets::Table::scroll_step),
+    /// [`Table::scroll_distance_x`](crate::widgets::Table::scroll_step_x)
+    /// and [`Table::scroll_distance_y`](crate::widgets::Table::scroll_step_y).
     #[must_use]
     pub fn scrollable(mut self, enabled: bool) -> Self {
         self.handle_scroll = enabled;
@@ -298,7 +299,7 @@ impl<M> Table<M> {
     /// size also determines the value returned in the Message if custom
     /// scroll handler is used.
     #[must_use]
-    pub fn scroll_distance_x(mut self, distance: usize) -> Self {
+    pub fn scroll_step_x(mut self, distance: usize) -> Self {
         self.scroll_step.x = distance;
         self
     }
@@ -309,7 +310,7 @@ impl<M> Table<M> {
     /// size also determines the value returned in the Message if custom
     /// scroll handler is used.
     #[must_use]
-    pub fn scroll_distance_y(mut self, distance: usize) -> Self {
+    pub fn scroll_step_y(mut self, distance: usize) -> Self {
         self.scroll_step.y = distance;
         self
     }

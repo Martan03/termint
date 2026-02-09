@@ -1,4 +1,4 @@
-/// Stores the state of the [`Table`].
+/// Stores the state of the [`Table`](crate::widgets::Table).
 ///
 /// It includes:
 /// - Scroll offset = based on rows, e.g. 5 means 5th row is first visible.

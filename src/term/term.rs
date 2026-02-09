@@ -293,7 +293,7 @@ where
     ///
     /// This is efficient way of updating UI, when you only update states of
     /// widgets that don't change the layout structure (such as
-    /// [`create::widgets::List`] selected item).
+    /// [`List`](crate::widgets::List) selected item).
     pub fn rerender(&mut self) -> Result<(), Error> {
         let wid = self.prev_widget.take().ok_or(Error::NoPreviousWidget)?;
 

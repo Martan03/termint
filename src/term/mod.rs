@@ -1,21 +1,24 @@
 //! Core terminal abstraction and application lifecycle.
 //!
 //! This module provides the [`Application`] trait, which allows building
-//! stateful apps easily. The [`Term`] is also provided by this module and
-//! provides rendering options together with running the provided app
-//! implementation and handling the basic lifecycle.
+//! stateful apps easily. The [`Term`](crate::term::Term) is also provided by
+//! this module and provides rendering options together with running the
+//! provided app implementation and handling the basic lifecycle.
 //!
 //! # Backend
 //!
-//! This module also contains backend module, which provides [`Event`] enum,
-//! [`Backend`] trait and backend implementations - currently those are
-//! [`CrosstermBackend`] and [`TermalBackend`] if you have the corresponding
-//! features enabled (`backend-crossterm` or `backend-termal`).
+//! This module also contains backend module, which provides
+//! [`Event`](crate::term::backend::Event) enum,
+//! [`Backend`](crate::term::backend::Backend) trait and backend
+//! implementations - currently those are
+//! [`CrosstermBackend`](crate::term::backend::CrosstermBackend) and
+//! [`TermalBackend`](crate::term::backend::TermalBackend) if you have the
+//! corresponding features enabled (`backend-crossterm` or `backend-termal`).
 //!
 //! # Example
 //!
 //! Implementing [`Application`] and running it in Framework mode using
-//! [`Term::run`].
+//! [`Term::run`](crate::term::Term::run).
 //!
 //! ```rust,no_run
 //! use termint::prelude::*;
@@ -43,6 +46,8 @@
 //!     Term::default().setup()?.run(&mut MyApp)
 //! }
 //! ```
+//!
+//! [`Application`]: crate::term::Application
 
 mod action;
 mod app;

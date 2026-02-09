@@ -56,25 +56,28 @@ impl<M> EventResult<M> {
 
 /// Trait implemented by all the widgets.
 ///
-/// A widget is a visual component that can render itself to a [`Buffer`] and
-/// report its size requirements for layout purposes.
+/// A widget is a visual component that can render itself to a
+/// [`Buffer`](crate::buffer::Buffer) and report its size requirements for
+/// layout purposes.
 ///
-/// Use [`Element`] to store and manipulate widgets in a uniform way.
+/// Use [`Element`](crate::widgets::Element) to store and manipulate widgets in
+/// a uniform way.
 ///
-/// Users will use [`Widget`] trait directly only when implementing custom
-/// widget, otherwise they will use built-in widgets like [`Span`], [`List`]
+/// Users will use [`Widget`](crate::widgets::Widget) trait directly only when
+/// implementing custom widget, otherwise they will use built-in widgets like
+/// [`Span`](crate::widgets::Span), [`List`](crate::widgets::List)
 /// and so on.
 pub trait Widget<Message: Clone + 'static = ()>: Any {
-    /// Renders the widget into the given [`Buffer`] within the provided
-    /// [`Rect`] bounds.
+    /// Renders the widget into the given [`Buffer`](crate::buffer::Buffer)
+    /// within the provided [`Rect`](crate::geometry::Rect) bounds.
     fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache);
 
-    /// Returns the height of the [`Widget`] based on the width of the given
-    /// size.
+    /// Returns the height of the [`Widget`](crate::widgets::Widget) based on
+    /// the width of the given size.
     fn height(&self, size: &Vec2) -> usize;
 
-    /// Returns the width of the [`Widget`] based on the height of the given
-    /// size.
+    /// Returns the width of the [`Widget`](crate::widgets::Widget) based on
+    /// the height of the given size.
     fn width(&self, size: &Vec2) -> usize;
 
     /// Gets widget's children
@@ -82,8 +85,8 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
         vec![]
     }
 
-    /// Handles the mouse event, returns None if outside of this widget or
-    /// no event handler set, otherwise returns corresponding Message.
+    /// Handles the mouse event, returns `None` if outside of this widget or
+    /// no event handler set, otherwise returns corresponding `Message`.
     fn on_event(
         &self,
         _area: Rect,

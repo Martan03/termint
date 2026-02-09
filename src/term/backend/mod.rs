@@ -3,13 +3,16 @@
 //! # Backend implementations
 //!
 //! Backend implements reading terminal events and is mainly used in
-//! combination of [`crate::term::Term`].
+//! combination of [`Term`](crate::term::Term).
 //!
 //! Currently two backends are supported:
-//! - [`CrosstermBackend`] - requires `backend-crossterm` feature (default).
-//! - [`TermalBackend`] - requires `backend-termal` feature.
+//! - [`CrosstermBackend`] - requires
+//!   `backend-crossterm` feature (default).
+//! - [`TermalBackend`] - requires
+//!   `backend-termal` feature.
 //!
-//! You can create new [`crate::term::Term`] with specified backend like this:
+//! You can create new [`Term`](crate::term::Term) with specified backend like
+//! this:
 //! ```rust
 //! use termint::prelude::*;
 //!
@@ -85,7 +88,7 @@ pub type DefaultBackend = TermalBackend;
 pub type DefaultBackend = NoBackend;
 
 /// Backend trait allows creating custom backends, which then can be used as
-/// a custom [`crate::term::Term`] backend in the Framework mode.
+/// a custom [`Term`](crate::term::Term) backend in the Framework mode.
 pub trait Backend: Default {
     /// Polls for an event and returns it if available within the timeout
     fn read_event(
@@ -94,13 +97,14 @@ pub trait Backend: Default {
     ) -> Result<Option<Event>, Error>;
 }
 
-/// This is used when no backend feature is enabled. When [`crate::term::Term`]
-/// has `NoBackend`, the Framework mode is disabled.
+/// This is used when no backend feature is enabled. When
+/// [`Term`](crate::term::Term) has `NoBackend`, the Framework mode is
+/// disabled.
 ///
 /// # Example
 ///
-/// If you want to use the `NoBackend` with [`crate::term::Term], you can
-/// create it like this:
+/// If you want to use the `NoBackend` with [`Term`](crate::term::Term), you
+/// can create it like this:
 ///
 /// ```rust
 /// use termint::prelude::*;

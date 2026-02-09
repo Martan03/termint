@@ -50,8 +50,9 @@ use super::{widget::Widget, Element};
 /// println!("{span}");
 /// ```
 ///
-/// To apply wrapping and ellipsis, render the span with a [`Term`] (or
-/// manually with [`Buffer`]):
+/// To apply wrapping and ellipsis, render the span with a
+/// [`Term`](crate::term::Term) (or manually with
+/// [`Buffer`](crate::buffer::Buffer)):
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,

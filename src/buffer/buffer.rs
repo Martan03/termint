@@ -18,9 +18,11 @@ use super::cell::Cell;
 /// A buffer that stores the result of the widget render method. Every widget
 /// interacts with the buffer, instead of printing to the terminal.
 ///
-/// [`Term`] struct automatically renders on the whole screen using the
-/// [`Buffer`], so you don't have to care about it. But if you would like to do
-/// it without the [`Term`] struct, you can do it like this:
+/// [`Term`](crate::term::Term) struct automatically renders on the whole
+/// screen using the [`Buffer`], so you don't have to care about it. But if you
+/// would like to do it without the [`Term`](crate::term::Term) struct, you can
+/// do it like this:
+/// 
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,

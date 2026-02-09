@@ -12,10 +12,10 @@ use super::{Element, Widget};
 /// A scrollbar widget that can be either vertical or horizontal.
 ///
 /// A [`Scrollbar`] is typically used in conjuction with another widget, such
-/// as [`Scrollable`], which determines the scroll state ([`ScrollbarState`])
-/// during rendering. The reason is the state contains content length, which is
-/// only known while rendering. The state is then used to compute the thumb
-/// size and position.
+/// as [`Scrollable`](crate::widgets::Scrollable), which determines the scroll
+/// state ([`ScrollbarState`]) during rendering. The reason is the state
+/// contains content length, which is only known while rendering. The state is
+/// then used to compute the thumb size and position.
 ///
 /// # Example:
 /// ```rust
