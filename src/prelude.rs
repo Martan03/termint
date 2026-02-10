@@ -4,12 +4,12 @@ pub use crate::geometry::{
 };
 pub use crate::style::Style;
 pub use crate::term::backend::{
-    Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
+    Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent,
 };
 pub use crate::term::{Action, Application, Frame, Term};
 pub use crate::widgets::{
-    Block, Element, Layout, List, ListState, Paragraph, ProgressBar, Row,
-    Spacer, Span, Table, TableState, ToSpan, Widget,
+    Block, Button, Element, Grid, Layout, List, ListState, Overlay, Paragraph,
+    ProgressBar, Row, Spacer, Span, Table, TableState, ToSpan, Widget,
 };
 pub use crate::Error;
 

@@ -19,51 +19,53 @@ use super::{span::ToSpan, widget::Widget, Element};
 
 type ListHandler<M> = Box<dyn Fn(usize) -> M>;
 
-/// A scrollable list widget with suuport for item selection and highlighting.
+/// A scrollable list widget with support for item selection and highlighting.
 ///
-/// The [`List`] widgets displays a list of strings with optional selection
-/// highlighting and vertical scrollbar. The scrollbar is only shown if needed.
+/// The [`List`] widget displays a list of strings, supporting vertical
+/// scrolling, item selection and custom highlighting. A scrollbar is
+/// automatically hidden when the content fits in the available height.
 ///
-/// # Features
-/// - **Scrollbar** (doesn't show when not necessary):
-///     - Custom scrollbar foreground color
-///     - Custom scrollbar thumb color
-/// - **Selected item styling**:
-///     - Highlight symbol
-///     - Custom style
+/// # Mouse support
+///
+/// List supports mouse event handling. In order to enable it, you have to
+/// enable mouse capture. You can do that by calling
+/// [`Term::with_mouse`](crate::term::Term::with_mouse) on
+/// [`Term`](crate::term::Term) struct or
+/// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not using
+/// the [`Term`](crate::term::Term).
+///
+/// By default [`List`] automatically handles scrolling. When you scroll up,
+/// previous item is selected and when you scroll down, the next item is
+/// selected. You can customize it using [`List::on_scroll`] or disable it
+/// using [`List::scrollable`].
+///
+/// You can setup click handlers reporting which item was clicked using
+/// [`List::on_click`] and [`List::on_press`].
 ///
 /// # Example
 /// ```rust
-/// # use std::{cell::RefCell, rc::Rc};
-/// # use termint::{
-/// #     term::Term,
-/// #     enums::Color,
-/// #     widgets::{List, ListState, Widget},
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
+/// use termint::prelude::*;
+/// use std::{cell::RefCell, rc::Rc};
+///
 /// // Creates list state with offset 0 and with selected item at index 1
 /// let state = Rc::new(RefCell::new(ListState::selected(0, 1)));
 ///
-/// // Creates a list, highlight the selected item in yellow with '*' prefix,
-/// // and automatically scroll to keep the selected item in view
+/// // Creates a list with given items.
 /// let items = vec!["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"];
-/// let list =
-///     List::<()>::new(items, state.clone())
-///         .selected_style((Color::Yellow))
-///         .highlight_symbol("*")
-///         .auto_scroll();
-///
-/// let mut term = Term::default();
-/// term.render(list)?;
-/// # Ok(())
-/// # }
+/// let list = List::<()>::new(items, state.clone())
+///     // Highlight the selected item in yellow.
+///     .selected_style(Color::Yellow)
+///     // Add `*` prefix before the selected item.
+///     .highlight_symbol("*")
+///     // Automatically scroll selected item into view.
+///     .auto_scroll();
 /// ```
 pub struct List<M: 'static = ()> {
     items: Vec<String>,
     state: Rc<RefCell<ListState>>,
     auto_scroll: bool,
     handle_scroll: bool,
-    scroll_dist: usize,
+    scroll_step: usize,
     style: Style,
     sel_style: Style,
     highlight: String,
@@ -75,15 +77,24 @@ pub struct List<M: 'static = ()> {
     on_scroll: Option<Box<dyn Fn(isize) -> M>>,
 }
 
-/// State of the [`List`] widget, including scroll offset and selected index.
-#[derive(Debug)]
+/// Stores the state of the [`List`] widget.
+///
+/// It includes:
+/// - Scroll offset = based on items, e.g. 5 means 5th item is first visible
+/// - Selected = optional ID of the selected item (zero-based)
+#[derive(Debug, Default)]
 pub struct ListState {
+    /// The index of the first item currently visible in the list.
     pub offset: usize,
+    /// The index of the currently selected item (if any).
     pub selected: Option<usize>,
 }
 
 impl<M> List<M> {
     /// Creates a new [`List`] with given items and given state.
+    ///
+    /// The `items` can be any iterable yielding strings (e.g. `Vec<String>` or
+    /// `&[&str]`).
     #[must_use]
     pub fn new<T>(items: T, state: Rc<RefCell<ListState>>) -> Self
     where
@@ -98,7 +109,7 @@ impl<M> List<M> {
             state,
             auto_scroll: false,
             handle_scroll: true,
-            scroll_dist: 1,
+            scroll_step: 1,
             style: Default::default(),
             sel_style: Default::default(),
             highlight: String::new(),
@@ -112,6 +123,9 @@ impl<M> List<M> {
     }
 
     /// Sets the currently selected item in the [`List`].
+    ///
+    /// This directly modifies the inner [`ListState`]. Generally you can
+    /// modify the state directly.
     #[must_use]
     pub fn selected<T>(self, current: T) -> Self
     where
@@ -121,7 +135,11 @@ impl<M> List<M> {
         self
     }
 
-    /// Enables automatic scrolling to ensure the selected item is visible.
+    /// Enables automatic scrolling to ensure the selected item is always
+    /// visible.
+    ///
+    /// If enabled, the list will automatically adjust its `offset` during
+    /// rendering to keep the `selected` item in the view.
     #[must_use]
     pub fn auto_scroll(mut self) -> Self {
         self.auto_scroll = true;
@@ -129,20 +147,34 @@ impl<M> List<M> {
     }
 
     /// Enables or disables automatic mouse scroll handling.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn scrollable(mut self, enabled: bool) -> Self {
         self.handle_scroll = enabled;
         self
     }
 
-    /// Sets the scroll distance used in the automatic mouse scroll handling.
+    /// Sets the numbers of items to scroll per mouse wheel step.
+    ///
+    /// It is mainly used in automatic mouse scroll handling, but the step
+    /// size also determines the value returned in the Message if custom
+    /// scroll handler is used.
+    ///
+    /// Default is `1`.
     #[must_use]
-    pub fn scroll_distance(mut self, distance: usize) -> Self {
-        self.scroll_dist = distance;
+    pub fn scroll_step(mut self, size: usize) -> Self {
+        self.scroll_step = size;
         self
     }
 
     /// Sets the base [`Style`] of the [`List`].
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
@@ -153,6 +185,8 @@ impl<M> List<M> {
     }
 
     /// Sets the [`Style`] of the selected item in the [`List`].
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn selected_style<T>(mut self, style: T) -> Self
     where
@@ -162,11 +196,18 @@ impl<M> List<M> {
         self
     }
 
-    /// Sets the highlight symbol of the selected item.
+    /// Sets the prefix string to be displayed before the selected item.
     ///
-    /// This symbol appears before the selected item and can be set, for
-    /// example, to `"*"`, which would result to selected item being shown as
-    /// `* Item`.
+    /// # Example
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    /// # fn get_items() -> Vec<String> { vec![] }
+    ///
+    /// // Selected item will look like: "> Item text".
+    /// let list = List::<()>::new(get_items(), Default::default())
+    ///     .highlight_symbol("> ");
+    /// ```
     #[must_use]
     pub fn highlight_symbol<T>(mut self, sel_char: T) -> Self
     where
@@ -176,8 +217,12 @@ impl<M> List<M> {
         self
     }
 
-    /// Sets the [`Style`] of the highlight symbol
-    /// (separate from the selected item style)
+    /// Sets the [`Style`] of the highlight symbol.
+    ///
+    /// This allows the prefix to have a different color than the selected
+    /// item itself.
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn highlight_style<T>(mut self, style: T) -> Self
     where
@@ -187,8 +232,7 @@ impl<M> List<M> {
         self
     }
 
-    /// Forces scrollbar to be always visible. By default the scrollbar hides
-    /// when the content doesn't overflow.
+    /// Forces scrollbar to be always visible, even if content fits.
     #[must_use]
     pub fn force_scrollbar(mut self) -> Self {
         self.force_scrollbar = true;
@@ -202,16 +246,28 @@ impl<M> List<M> {
         self
     }
 
-    /// Sets the foreground color of the scrollbar's thumb (draggable part).
+    /// Sets the foreground color of the scrollbar's thumb (the moving part).
     #[must_use]
     pub fn thumb_fg(mut self, fg: Color) -> Self {
         self.thumb_fg = fg;
         self
     }
 
-    /// Sets the response Message of the on click handler.
+    /// Sets the message to return when the left mouse button is clicked.
     ///
-    /// This overwrites any already set click response message.
+    /// The `response` is a closure that receives the index of the clicked
+    /// item and returns the corresponding message.
+    ///
+    /// If a handler for the left mouse button already exists, it will be
+    /// replaced.
+    ///
+    /// This is a convenience wrapper around [`List::on_press`].
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_click<F>(self, response: F) -> Self
     where
@@ -220,9 +276,29 @@ impl<M> List<M> {
         self.on_press(MouseButton::Left, response)
     }
 
-    /// Sets the response Message for the given button click handler.
+    /// Sets the message to return when the given [`MouseButton`] is clicked.
     ///
-    /// This overwrites any already set response message for the given button.
+    /// The `response` is a closure that receives the index of the clicked
+    /// item and returns the corresponding message.
+    ///
+    /// If a handler for the given mouse button already exists, it will be
+    /// replaced.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    /// # fn get_items() -> Vec<String> { vec![] }
+    ///
+    /// let btn = List::new(get_items(), Default::default())
+    ///     .on_press(MouseButton::Middle, |i| format!("Clicked {i}!"));
+    /// ```
     #[must_use]
     pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
     where
@@ -233,10 +309,19 @@ impl<M> List<M> {
         self
     }
 
-    /// Sets the response Message of the on scroll handler.
+    /// Sets the message to return when the mouse scroll event occures.
+    ///
+    /// The `response` is a closure that receives the scroll delta (e.g. -1
+    /// when scrolled up) and returns the corresponding message.
     ///
     /// This disables the default on scroll handler, so only the given response
     /// will be used.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_scroll<F>(mut self, response: F) -> Self
     where
@@ -468,8 +553,8 @@ impl<M: Clone + 'static> List<M> {
 
     fn handle_mouse(&self, event: &MouseEvent) -> EventResult<M> {
         let delta = match &event.kind {
-            MouseEventKind::ScrollDown => self.scroll_dist as isize,
-            MouseEventKind::ScrollUp => -(self.scroll_dist as isize),
+            MouseEventKind::ScrollDown => self.scroll_step as isize,
+            MouseEventKind::ScrollUp => -(self.scroll_step as isize),
             _ => return EventResult::None,
         };
 

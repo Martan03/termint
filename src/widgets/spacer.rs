@@ -21,11 +21,12 @@ use super::{widget::Widget, Element};
 /// you use it in), its size will be zero.
 ///
 /// # Example
+///
+/// In this example, there will be one line of space between the two texts.
+///
 /// ```rust
-/// # use termint::{
-/// #     geometry::Constraint,
-/// #     widgets::{Layout, Spacer, ToSpan},
-/// # };
+/// use termint::prelude::*;
+///
 /// let mut layout = Layout::<()>::vertical();
 /// layout.push("Top Widget", Constraint::Min(0));
 ///
@@ -34,8 +35,6 @@ use super::{widget::Widget, Element};
 ///
 /// layout.push("Bottom Widget", Constraint::Min(0));
 /// ```
-///
-/// In this example, there will be one line of space between the two texts.
 #[derive(Debug, Default)]
 pub struct Spacer {}
 

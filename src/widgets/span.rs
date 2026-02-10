@@ -20,53 +20,34 @@ use super::{widget::Widget, Element};
 /// - `ellipsis`: string shown when text overflows (default: '...')
 ///
 /// # Examples
+///
 /// There are multiple ways to create a [`Span`].
 /// ```rust
-/// # use termint::{
-/// #     enums::{Color, Modifier, Wrap},
-/// #     geometry::{TextAlign},
-/// #     modifiers,
-/// #     widgets::{Span, ToSpan},
-/// # };
-/// // Using `new` with red foreground:
+/// use termint::prelude::*;
+///
+/// // Using `new` constructor with red foreground:
 /// let span = Span::new("Red text").fg(Color::Red);
 ///
-/// // Cyan bold and italic text on yellow background (using `modifiers` macro)
+/// // Cyan bold and italic text on yellow background
 /// let span = "Cyan bold and italic on yellow"
 ///     .fg(Color::Cyan)
 ///     .bg(Color::Yellow)
+///     // Using `modifiers!` macro to combine the modifiers easier
 ///     .modifier(modifiers!(BOLD, ITALIC))
+///     // Center the text
 ///     .align(TextAlign::Center)
+///     // Wrap to new line after any character
 ///     .wrap(Wrap::Letter)
+///     // Display `...` if text doesn't fit
 ///     .ellipsis("...");
 /// ```
 ///
 /// Printing a [`Span`] applies styling but ignores wrapping and ellipsis:
 /// ```rust
-/// # use termint::{
-/// #     widgets::{ToSpan},
-/// # };
-/// # let span = "test".to_span();
+/// use termint::prelude::*;
+///
+/// let span = "Some text".fg(Color::Green);
 /// println!("{span}");
-/// ```
-///
-/// To apply wrapping and ellipsis, render the span with a
-/// [`Term`](crate::term::Term) (or manually with
-/// [`Buffer`](crate::buffer::Buffer)):
-/// ```rust
-/// # use termint::{
-/// #     buffer::Buffer,
-/// #     geometry::Rect,
-/// #     widgets::{ToSpan, Widget},
-/// #     term::Term,
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
-/// # let span = "test".to_span();
-///
-/// let mut term = Term::<(), _>::default();
-/// term.render(span)?;
-/// # Ok(())
-/// # }
 /// ```
 #[derive(Debug)]
 pub struct Span {
@@ -82,7 +63,8 @@ impl Span {
     ///
     /// # Example
     /// ```rust
-    /// # use termint::widgets::Span;
+    /// use termint::prelude::*;
+    ///
     /// let span = Span::new("Hello, World!");
     /// let span = Span::new(String::from("Hello, Termint!"));
     /// let span = Span::new(&String::from("Hello, All!"));
@@ -100,11 +82,12 @@ impl Span {
 
     /// Sets the base style of the [`Span`].
     ///
-    /// You can provide any type convertible to [`Style`].
+    /// The `style` can be any type convertible to [`Style`].
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::Span, style::Style, enums::{Color, Modifier}};
+    /// use termint::prelude::*;
+    ///
     /// let span = Span::new("style").style(Style::new().bg(Color::Red));
     /// let span = Span::new("style").style(Color::Blue);
     /// ```
@@ -119,7 +102,7 @@ impl Span {
 
     /// Sets the foreground color of the [`Span`].
     ///
-    /// You can provide any type convertible to [`Color`].
+    /// The `fg` can be any type convertible to `Option<Color>`.
     #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
@@ -131,7 +114,7 @@ impl Span {
 
     /// Sets the background color of the [`Span`].
     ///
-    /// You can provide any type convertible to [`Color`].
+    /// The `bg` can be any type convertible to `Option<Color>`.
     #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
@@ -141,17 +124,20 @@ impl Span {
         self
     }
 
-    /// Sets the modifier flags of the [`Span`].
+    /// Replaces the current text modifiers with the given modifers.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::Span, enums::Modifier, modifiers};
+    /// use termint::{prelude::*, modifiers};
+    ///
     /// // Single modifier
     /// let span = Span::new("modifier").modifier(Modifier::ITALIC);
     /// // Multiple modifiers
     /// let span = Span::new("modifier")
     ///     .modifier(Modifier::ITALIC | Modifier::BOLD);
-    /// let span = Span::new("modifier").modifier(modifiers!(BOLD, ITALIC));
+    /// // Or using modifiers macro
+    /// let span = Span::new("modifier")
+    ///     .modifier(modifiers!(BOLD, ITALIC));
     /// ```
     #[must_use]
     pub fn modifier(mut self, modifier: Modifier) -> Self {
@@ -159,12 +145,17 @@ impl Span {
         self
     }
 
-    /// Adds a modifier flag to the existing modifiers.
+    /// Adds a modifier to the existing set of modifiers.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::Span, enums::Modifier};
-    /// let span = Span::new("add_modifier").add_modifier(Modifier::ITALIC);
+    /// use termint::prelude::*
+    ///
+    /// let span = Span::new("add_modifier")
+    ///     // Sets modifiers to bold.
+    ///     .modifier(Modifier::BOLD)
+    ///     // Adds italic to the modifiers, resulting in italic bold text.
+    ///     .add_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
     pub fn add_modifier(mut self, flag: Modifier) -> Self {
@@ -172,12 +163,16 @@ impl Span {
         self
     }
 
-    /// Removes a modifier flag from the existing modifiers.
+    /// Removes a specific from the current set of modifiers.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::Span, enums::Modifier};
+    /// use termint::{prelude::*, widgets::Grad};
+    ///
     /// let span = Span::new("remove_modifier")
+    ///     // Makes text italic and bold.
+    ///     .modifier(Modifier::ITALIC | Modifier::BOLD)
+    ///     // Removes the italic modifier, resulting in only bold text.
     ///     .remove_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
@@ -195,9 +190,11 @@ impl Span {
         self
     }
 
-    /// Sets text wrapping style of the [`Span`].
+    /// Sets text wrapping strategy of the [`Span`].
     ///
-    /// Default value is [`Wrap::Word`].
+    /// The default wrapping is [`Wrap::Word`], which wraps text only after
+    /// a word. You can also use [`Wrap::Letter`], which wraps after any
+    /// character.
     #[must_use]
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
@@ -206,7 +203,7 @@ impl Span {
 
     /// Sets the ellipsis string to use when text overflows.
     ///
-    /// The default is `"..."``. Any custom string may be used.
+    /// The default value is `"..."`.
     #[must_use]
     pub fn ellipsis<T>(mut self, ellipsis: T) -> Self
     where

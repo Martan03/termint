@@ -13,17 +13,31 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 /// A wrapper widget that adds scrollability to its child when content
 /// overflows.
 ///
-/// Supports vertical, horizontal or bidirectional scrolling. It uses
-/// [`ScrollbarState`] for each scrollbar to save its state.
+/// It supports vertical, horizontal or bidirectional scrolling. Scrolling
+/// requires a [`ScrollbarState`] to track the offset. For single axis, you
+/// can construct [`Scrollable`] using [`Scrollable::new`],
+/// [`Scrollable::vertical`] or [`Scrollable::horizontal`]. For bidirectional
+/// scrolling, use [`Scrollable::both`] (requires two state).
+///
+/// # Mouse support
+///
+/// Scrollable supports mouse event handling. In order to enable it, you have
+/// to enable mouse capture. You can do that by calling
+/// [`Term::with_mouse`](crate::term::Term::with_mouse) on
+/// [`Term`](crate::term::Term) struct or
+/// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not using
+/// the [`Term`](crate::term::Term).
+///
+/// By default [`Scrollable`] automatically handles scrolling. You can
+/// customize it using [`Scrollable::on_scroll`] (vertical scrolling) and
+/// [`Scrollable::on_scroll_horizontal] (horizontal scrolling), or disable it
+/// using [`Scrollable::scrollable`].
 ///
 /// # Example
 /// ```rust
-/// # use std::{cell::Cell, rc::Rc};
-/// # use termint::{
-/// #     term::Term,
-/// #     widgets::{ToSpan, Span, Scrollable, Widget, ScrollbarState}
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
+/// use termint::{prelude::*, widgets::{Scrollable, ScrollbarState}};
+/// use std::{cell::Cell, rc::Rc};
+///
 /// // Content that may overflow
 /// let span = "Long text that cannot fit so scrolling is needed".to_span();
 ///
@@ -32,11 +46,6 @@ use super::{Element, Scrollbar, ScrollbarState, Widget};
 ///
 /// // Creates vertical scrollable widget
 /// let scrollable: Scrollable<(), Span> = Scrollable::vertical(span, state);
-///
-/// let mut term = Term::default();
-/// term.render(scrollable)?;
-/// # Ok(())
-/// # }
 /// ```
 pub struct Scrollable<M: 'static = (), W = Element<M>> {
     horizontal: Option<Element<M>>,
@@ -55,12 +64,11 @@ impl<M, W> Scrollable<M, W>
 where
     M: Clone + 'static,
 {
-    /// Creates a [`Scrollable`] that scrolls in given direction.
+    /// Creates a [`Scrollable`] that scrolls in a single direction.
     ///
-    /// # Parameters
-    /// - `child`: The widget to wrap with scrolling
-    /// - `state`: Shared state holding the scroll offset
-    /// - `dir`: Scrolling direction
+    /// The `child` can be any type convertible into [`Element`].
+    ///
+    /// To enable scrolling in both directions, use [`Scrollable::both`].
     pub fn new<T>(
         child: T,
         state: Rc<Cell<ScrollbarState>>,
@@ -75,11 +83,9 @@ where
         }
     }
 
-    /// Creates a [`Scrollable`] that scrolls vertically.
+    /// Creates a vertically scrolling [`Scrollable`].
     ///
-    /// # Parameters
-    /// - `child`: The widget to wrap with vertical scrolling
-    /// - `state`: Shared state holding the vertical scroll offset
+    /// The `child` can be any type convertible into [`Element`].
     pub fn vertical<T>(child: T, state: Rc<Cell<ScrollbarState>>) -> Self
     where
         T: Into<Element<M>>,
@@ -98,11 +104,9 @@ where
         }
     }
 
-    /// Creates a [`Scrollable`] that scrolls horizontally.
+    /// Creates a horizontally scrolling [`Scrollable`].
     ///
-    /// # Parameters
-    /// - `child`: The widget to wrap with horizontal scrolling
-    /// - `state`: Shared state holding the horizontal scroll offset
+    /// The `child` can be any type convertible into [`Element`].
     pub fn horizontal<T>(child: T, state: Rc<Cell<ScrollbarState>>) -> Self
     where
         T: Into<Element<M>>,
@@ -124,10 +128,7 @@ where
     /// Creates a [`Scrollable`] that supports both vertical and horizontal
     /// scrolling.
     ///
-    /// # Parameters
-    /// - `child`: The widget to wrap
-    /// - `ver_state`: Shared state holding the vertical scroll offset
-    /// - `hor_state`: Shared state holding the horizontal scroll offset
+    /// The `child` can be any type convertible into [`Element`].
     pub fn both<T>(
         child: T,
         ver_state: Rc<Cell<ScrollbarState>>,
@@ -151,14 +152,23 @@ where
     }
 
     /// Enables or disables automatic mouse scroll handling.
+    ///
+    /// If enabled (default), the widget will update the `state` automatically
+    /// on scroll events (if mouse capture is enabled). Otherwise default
+    /// scroll event handling is turned off.
     #[must_use]
     pub fn scrollable(mut self, enabled: bool) -> Self {
         self.handle_scroll = enabled;
         self
     }
 
-    /// Sets the scroll distance for both horizontal and vertical scrolling
-    /// used in the automatic mouse scroll handling.
+    /// Sets the numbers of units to scroll per mouse wheel step for both axes.
+    ///
+    /// It is mainly used in automatic mouse scroll handling, but the step
+    /// size also determines the value returned in the Message if custom
+    /// scroll handler is used.
+    ///
+    /// Default is `1`.
     #[must_use]
     pub fn scroll_distance(mut self, distance: usize) -> Self {
         self.scroll_dist.x = distance;
@@ -166,26 +176,47 @@ where
         self
     }
 
-    /// Sets the horizontal scroll distance used in the automatic mouse scroll
-    /// handling.
+    /// Sets the numbers of units to scroll per mouse wheel step for horizontal
+    /// axis.
+    ///
+    /// It is mainly used in automatic mouse scroll handling, but the step
+    /// size also determines the value returned in the Message if custom
+    /// scroll handler is used.
+    ///
+    /// Default is `1`.
     #[must_use]
     pub fn scroll_distance_x(mut self, distance: usize) -> Self {
         self.scroll_dist.x = distance;
         self
     }
 
-    /// Sets the vertical scroll distance used in the automatic mouse scroll
-    /// handling.
+    /// Sets the numbers of units to scroll per mouse wheel step for vertical
+    /// axis.
+    ///
+    /// It is mainly used in automatic mouse scroll handling, but the step
+    /// size also determines the value returned in the Message if custom
+    /// scroll handler is used.
+    ///
+    /// Default is `1`.
     #[must_use]
     pub fn scroll_distance_y(mut self, distance: usize) -> Self {
         self.scroll_dist.y = distance;
         self
     }
 
-    /// Sets the response Message of the vertical scroll handler.
+    /// Sets the response to the vertical mouse scroll event.
     ///
     /// This disables the default vertical scroll handler, so only the given
     /// response will be used.
+    ///
+    /// The `response` is closure accepting a `isize` value - scroll offset
+    /// based on the scroll direction and the set vertical scroll step size.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_scroll<F>(mut self, response: F) -> Self
     where
@@ -195,10 +226,19 @@ where
         self
     }
 
-    /// Sets the response Message of the horizontal scroll handler.
+    /// Sets the response to the horizontal mouse scroll event.
     ///
     /// This disables the default horizontal scroll handler, so only the given
     /// response will be used.
+    ///
+    /// The `response` is closure accepting a `isize` value - scroll offset
+    /// based on the scroll direction and the set horizontal scroll step size.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_scroll_horizontal<F>(mut self, response: F) -> Self
     where

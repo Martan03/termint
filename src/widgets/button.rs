@@ -7,6 +7,37 @@ use crate::{
     widgets::{cache::Cache, widget::EventResult, Element, Spacer, Widget},
 };
 
+/// A clickable wrapper widget that triggers a message when clicked.
+///
+/// In order to make the [`Button`] trigger the message, you have to enable
+/// mouse capture. You can do that by calling
+/// [`Term::with_mouse`](crate::term::Term::with_mouse) on
+/// [`Term`](crate::term::Term) struct or
+/// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not using
+/// the [`Term`](crate::term::Term).
+///
+/// # Example
+///
+/// ```rust
+/// use termint::prelude::*;
+///
+/// #[derive(Clone)]
+/// enum Msg { Submit, Cancel }
+///
+/// let submit_btn = Button::new("Submit")
+///     // Makes the button green with black text
+///     .style((Color::Black, Color::Green))
+///     // Adds 1 char vertical and 2 char horizontal padding
+///     .padding((1, 2))
+///     // Sets the left click trigger Message
+///     .on_click(Msg::Submit);
+///
+/// let cancel_btn = Button::new("Cancel")
+///     .style((Color::Black, Color::Red))
+///     .padding((1, 2))
+///     // Sets the right click trigger Message
+///     .on_press(MouseButton::Right, Msg::Cancel);
+/// ```
 pub struct Button<M: 'static> {
     child: Element<M>,
     padding: Padding,
@@ -15,7 +46,10 @@ pub struct Button<M: 'static> {
 }
 
 impl<M> Button<M> {
-    /// Creates new [`Button`] wrapping the given child widget
+    /// Creates a new [`Button`] wrapping the given child widget.
+    ///
+    /// The `child` can be any widget convertible into [`Element`]. You can
+    /// supply `&str` or `String` for example.
     #[must_use]
     pub fn new<T>(child: T) -> Self
     where
@@ -29,7 +63,12 @@ impl<M> Button<M> {
         }
     }
 
-    /// Sets the [`Padding`] of the [`Button`]
+    /// Sets the internal [`Padding`] between the [`Button`]'s edges and its
+    /// child.
+    ///
+    /// The `padding` can be any type convertible into [`Padding`], such as
+    /// `usize` (uniform), `(usize, usize)` (vertical, horizontal). You can
+    /// read more in the [`Padding`] documentation.
     #[must_use]
     pub fn padding<P>(mut self, padding: P) -> Self
     where
@@ -39,9 +78,9 @@ impl<M> Button<M> {
         self
     }
 
-    /// Sets the base [`Style`] of the [`Button`]
+    /// Sets the base [`Style`] of the [`Button`].
     ///
-    /// This overwrites any already set click response message.
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn style<S>(mut self, style: S) -> Self
     where
@@ -51,15 +90,42 @@ impl<M> Button<M> {
         self
     }
 
-    /// Sets the response Message of the on click handler.
+    /// Sets the message to return when the left mouse button is clicked.
+    ///
+    /// If a handler for the left mouse button already exists, it will be
+    /// replaced.
+    ///
+    /// This is a convenience wrapper around [`Button::on_press`].
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_click(self, response: M) -> Self {
         self.on_press(MouseButton::Left, response)
     }
 
-    /// Sets the response Message for the given button click handler.
+    /// Sets the message to return when the given [`MouseButton`] is clicked.
     ///
-    /// This overwrites any already set response message for the given button.
+    /// If a handler for the given mouse button already exists, it will be
+    /// replaced.
+    /// 
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    ///
+    /// let btn = Button::new("Middle click me!")
+    ///     .on_press(MouseButton::Middle, "Clicked!");
+    /// ```
     #[must_use]
     pub fn on_press(mut self, button: MouseButton, response: M) -> Self {
         self.handlers.retain(|(b, _)| *b != button);
@@ -69,7 +135,9 @@ impl<M> Button<M> {
 }
 
 impl<M: Clone + 'static> Button<M> {
-    /// Creates empty [`Button`]
+    /// Creates a new [`Button`] containing a [`Spacer`].
+    ///
+    /// This is useful if you want clickable area with no content.
     #[must_use]
     pub fn empty() -> Self {
         Self::new(Spacer::new())

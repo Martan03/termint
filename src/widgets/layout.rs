@@ -20,6 +20,7 @@ use super::{widget::Widget, Element};
 /// # Direction
 ///
 /// The layout can be horizontal (left-to-right) or vertical (top-to-bottom).
+/// This determines the axis along which the children are arranged.
 ///
 /// # Constraints
 ///
@@ -29,24 +30,16 @@ use super::{widget::Widget, Element};
 ///
 /// # Example
 /// ```rust
-/// # use termint::{
-/// #     term::Term,
-/// #     geometry::{Constraint, Rect},
-/// #     widgets::{Block, Layout, ToSpan, Widget},
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
-/// // Creates new horizontal layout containing two blocks each covering 50%
-/// let block1 = Block::vertical().title("Block 1");
-/// let block2 = Block::vertical().title("Block 2");
+/// use termint::prelude::*;
 ///
+/// # type AnyWidget = Spacer;
+/// # type OtherWidget = Spacer;
+/// // Creates a horizontal layout
 /// let mut layout = Layout::<()>::horizontal();
-/// layout.push(block1, Constraint::Percent(50));
-/// layout.push(block2, Constraint::Percent(50));
-///
-/// let mut term = Term::default();
-/// term.render(layout)?;
-/// # Ok(())
-/// # }
+/// // Pushes a child with minimum size 1
+/// layout.push("Left", 1..);
+/// // Pushes another child filling the rest of the space
+/// layout.push("Right", Constraint::Fill(1));
 /// ```
 #[derive(Debug)]
 pub struct Layout<M: 'static = ()> {
@@ -59,7 +52,18 @@ pub struct Layout<M: 'static = ()> {
 }
 
 impl<M> Layout<M> {
-    /// Creates new [`Layout`] that flexes in given [`Direction`].
+    /// Creates a new [`Layout`] that flexes in given [`Direction`].
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    ///
+    /// // Layout flexing horizontally
+    /// let h = Layout::<()>::new(Direction::Horizontal);
+    /// // Layout flexing vertically
+    /// let v = Layout::<()>::new(Direction::Vertical);
+    /// ```
     #[must_use]
     pub fn new(direction: Direction) -> Self {
         Self {
@@ -68,13 +72,19 @@ impl<M> Layout<M> {
         }
     }
 
-    /// Creates a [`Layout`] that flexes vertically.
+    /// Creates a new vertical [`Layout`] (top-to-bottom).
+    ///
+    /// This is a convenience constructor equivalent to
+    /// `Layout::new(Direction::Vertical)`.
     #[must_use]
     pub fn vertical() -> Self {
         Default::default()
     }
 
-    /// Creates a [`Layout`] that flexes horizontally.
+    /// Creates a new horizontal [`Layout`] (left-to-right).
+    ///
+    /// This is a convenience constructor equivalent to
+    /// `Layout::new(Direction::Horizontal)`.
     #[must_use]
     pub fn horizontal() -> Self {
         Self {
@@ -91,6 +101,8 @@ impl<M> Layout<M> {
     }
 
     /// Sets the base style of the [`Layout`].
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
@@ -101,6 +113,9 @@ impl<M> Layout<M> {
     }
 
     /// Sets base background color of the [`Layout`].
+    ///
+    /// The `bg` can be any type convertible into `Option<Color>`. If `None` is
+    /// supplied, the background is transparent.
     #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
@@ -111,6 +126,9 @@ impl<M> Layout<M> {
     }
 
     /// Sets base foreground color of the [`Layout`].
+    ///
+    /// The `fg` can be any type convertible into `Option<Color>`. If `None` is
+    /// supplied, it keeps the original foreground color.
     #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where
@@ -121,6 +139,10 @@ impl<M> Layout<M> {
     }
 
     /// Sets the [`Padding`] of the [`Layout`].
+    ///
+    /// The `padding` can be any type convertible into [`Padding`], such as
+    /// `usize` (uniform), `(usize, usize)` (vertical, horizontal). You can
+    /// read more in the [`Padding`] documentation.
     #[must_use]
     pub fn padding<T>(mut self, padding: T) -> Self
     where
@@ -130,22 +152,24 @@ impl<M> Layout<M> {
         self
     }
 
-    /// Makes [`Layout`] center its content in the direction it flexes.
+    /// Centers the content within the [`Layout`] in the flexing direction.
     ///
     /// If the layout is flexing its children horizontally, the content will
-    /// be centered horizontally. Otherwise it will be centered vertically.
+    /// be centered horizontally (left-to-right). Otherwise it will be centered
+    /// vertically (top-to-bottom).
     #[must_use]
     pub fn center(mut self) -> Self {
         self.center = true;
         self
     }
 
-    /// Adds a child widget with its contraint
+    /// Adds a child widget with its constraint.
     ///
-    /// # Parameters
-    /// - `child`: The widget to add (any type convertible to [`Element`])
-    /// - `contraint`: Widget's contraint (any type convertible to
-    ///   [`Constraint`])
+    /// The `child` is any type convertible into [`Element`].
+    ///
+    /// The `constraint` is any type convertible into [`Constraint`], such as
+    /// `usize` (fixed length), `RangeFrom` (e.g. `1..` equals to
+    /// `Constraint::Min(1)`).
     pub fn push<T, C>(&mut self, child: T, constraint: C)
     where
         T: Into<Element<M>>,

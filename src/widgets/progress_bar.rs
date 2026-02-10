@@ -16,25 +16,31 @@ type ProgressBarHandler<M> = Box<dyn Fn(f64) -> M>;
 /// A widget that displays a horizontal progress bar.
 ///
 /// The [`ProgressBar`] visually represents a percentage value in the range
-/// `0.0` to `100.0`. It can be styled and configured to use custom characters.
+/// `0.0` to `1.0`. It can be styled and configured to use custom characters.
+///
+/// # Terminology
+///
+/// - Thumb = the part of the bar representing completed progress.
+/// - Track = the empty part of the bar.
+///
+/// # Default settings
+///
+/// By default, the thumb chars are `'▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'`.
+/// This ensures that the progress bar feels smooth. The track is set to `' '`
+/// (space).
 ///
 /// # Example
 /// ```rust
-/// # use std::{cell::Cell, rc::Rc};
-/// # use termint::{widgets::ProgressBar, enums::Color, term::Term};
-/// # fn example() -> Result<(), termint::Error> {
-/// let state = Rc::new(Cell::new(69.0));
+/// use termint::prelude::*;
+/// use std::{cell::Cell, rc::Rc};
+///
+/// let state = Rc::new(Cell::new(0.69));
 /// let pb = ProgressBar::new(state.clone())
 ///     .thumb_chars(['▎', '▌', '▊', '█'])
 ///     .thumb_style(Color::Blue)
 ///     .track_char('=')
-///     .style(Color::White);
-///
-/// // You can then render it using Term
-/// let mut term = Term::<(), _>::default();
-/// term.render(pb)?;
-/// # Ok(())
-/// # }
+///     .style(Color::White)
+///     .on_click(|p| format!("Clicked at {p}!"));
 /// ```
 pub struct ProgressBar<M> {
     state: Rc<Cell<f64>>,
@@ -48,11 +54,15 @@ pub struct ProgressBar<M> {
 impl<M> ProgressBar<M> {
     /// Creates a new [`ProgressBar`] with given percentage state.
     ///
+    /// The `state` should contain a value between `0.0` and `1.0`. The value
+    /// will get clamped if outside of this range.
+    ///
     /// # Example
     /// ```rust
-    /// # use std::{cell::Cell, rc::Rc};
-    /// # use termint::widgets::ProgressBar;
-    /// let state = Rc::new(Cell::new(69.0));
+    /// use termint::prelude::*;
+    /// use std::{cell::Cell, rc::Rc};
+    ///
+    /// let state = Rc::new(Cell::new(0.69));
     /// let pb = ProgressBar::<()>::new(state.clone());
     /// ```
     #[must_use]
@@ -69,15 +79,25 @@ impl<M> ProgressBar<M> {
 
     /// Sets the thumb characters used for rendering the progress.
     ///
-    /// It can contain any number of character, but the iterator should start
-    /// with the least progress character and end with most progress character.
+    /// You should provide a sequence of characters representing increasing
+    /// levels of progress ("fullness"). The last character is used for the
+    /// fully filled sections, while the others are used for the fractional
+    /// part at the tip.
+    ///
+    /// The default is `vec!['▏', '▎', '▍', '▌', '▋', '▊', '▉', '█']`.
     ///
     /// # Example
     /// ```rust
-    /// # use std::{cell::Cell, rc::Rc};
-    /// # use termint::widgets::ProgressBar;
-    /// # let state = Rc::new(Cell::new(69.0));
-    /// let pb = ProgressBar::<()>::new(state.clone())
+    /// use termint::prelude::*;
+    /// use std::{cell::Cell, rc::Rc};
+    ///
+    /// // The progress bar bellow will look like this (incrementing progress):
+    /// // `█`
+    /// // `█▎`
+    /// // `█▌`
+    /// // `█▊`
+    /// // `██`
+    /// let pb = ProgressBar::<()>::new(Default::default())
     ///     .thumb_chars(['▎', '▌', '▊', '█']);
     /// ```
     #[must_use]
@@ -101,7 +121,9 @@ impl<M> ProgressBar<M> {
         self
     }
 
-    /// Sets the character used for the track of the [`ProgressBar`].§
+    /// Sets the character used for the track of the [`ProgressBar`].
+    ///
+    /// The default is a space (`' '`).
     #[must_use]
     pub fn track_char(mut self, track: char) -> Self {
         self.track_char = track;
@@ -120,9 +142,21 @@ impl<M> ProgressBar<M> {
         self
     }
 
-    /// Sets the response Message of the on click handler.
+    /// Sets the message to return when the left mouse button is clicked.
     ///
-    /// This overwrites any already set click response message.
+    /// The `response` is a closure that receives the progress at the click
+    /// (in range 0.0-1.0) and returns the corresponding message.
+    ///
+    /// If a handler for the left mouse button already exists, it will be
+    /// replaced.
+    ///
+    /// This is a convenience wrapper around [`ProgressBar::on_press`].
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_click<F>(self, response: F) -> Self
     where
@@ -131,9 +165,28 @@ impl<M> ProgressBar<M> {
         self.on_press(MouseButton::Left, response)
     }
 
-    /// Sets the response Message for the given button click handler.
+    /// Sets the message to return when the given [`MouseButton`] is clicked.
     ///
-    /// This overwrites any already set response message for the given button.
+    /// The `response` is a closure that receives the progress at the click
+    /// (in range 0.0-1.0) and returns the corresponding message.
+    ///
+    /// If a handler for the given mouse button already exists, it will be
+    /// replaced.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    ///
+    /// let pb = ProgressBar::new(Default::default())
+    ///     .on_press(MouseButton::Middle, |p| format!("Clicked at {p}!"));
+    /// ```
     #[must_use]
     pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
     where
@@ -214,7 +267,7 @@ impl<M> ProgressBar<M> {
     /// Calculates the size of full cells and head ID to get corresponding
     /// progress character with.
     fn calc_size(&self, rect: &Rect) -> (usize, usize) {
-        let progress = (self.state.get() / 100.0).clamp(0.0, 1.0);
+        let progress = self.state.get().clamp(0.0, 1.0);
         let len = rect.width() as f64 * progress;
         let full_cells = len.floor() as usize;
 

@@ -114,31 +114,35 @@ macro_rules! modifiers {
     };
 }
 
-/// Creates new paragraph in more simple way
+/// Creates new paragraph in simpler way, when using heterogeneous types.
 ///
 /// ## Usage:
 /// ```rust
-/// # use termint::{
-/// #     enums::Color,
-/// #     paragraph,
-/// #     widgets::{Paragraph, ToSpan},
-/// # };
-/// // Without macro:
-/// let p = Paragraph::new(vec![
-///     Box::new("Macro".to_span()),
-///     Box::new("test".fg(Color::Red))
-/// ]);
+/// use termint::{prelude::*, paragraph, text::Text, widgets::Grad};
+///
+/// // Without macro using multiple types
+/// let items: Vec<Box<dyn Text>> = vec![
+///     Box::new("Paragraph".to_span()),
+///     Box::new("macro".fg(Color::Red)),
+///     Box::new(Grad::new("showcase", (0, 0, 255), (0, 255, 0)))
+/// ];
+/// let p = Paragraph::new(items);
+///
 /// // With macro:
 /// let p = paragraph!(
-///     "Macro".to_span(),
-///     "test".fg(Color::Red)
+///     "Paragraph",
+///     "macro".fg(Color::Red),
+///     Grad::new("showcase", (0, 0, 255), (0, 255, 0))
 /// );
 /// ```
 #[macro_export]
 macro_rules! paragraph {
     ($($text:expr),* $(,)?) => {
         $crate::widgets::Paragraph::new(vec![
-            $(Box::new($text)),*
+            $({
+                let t: Box<dyn $crate::text::Text> = $text.into();
+                t
+            }),*
         ])
     };
 }

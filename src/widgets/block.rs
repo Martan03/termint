@@ -135,7 +135,10 @@ impl<M, W> Block<M, W> {
 }
 
 impl<M: Clone + 'static> Block<M, Spacer> {
-    /// Returns an empty [`Block`] with no title and all borders
+    /// Creates a new [`Block`] containing a [`Spacer`].
+    ///
+    /// By default all the borders are visible and no title is set. This is
+    /// useful for creating empty bordered areas.
     #[must_use]
     pub fn empty() -> Self {
         Self {
@@ -152,19 +155,8 @@ impl<M: Clone + 'static> Block<M, Spacer> {
 impl<M: Clone + 'static> Block<M, Layout<M>> {
     /// Creates a new [`Block`] wrapping a vertical [`Layout`].
     ///
-    /// This is convenience constructor. A lot of the times you add [`Layout`]
-    /// inside of the [`Block`], so this eliminates the need to adding it
-    /// manually.
-    ///
-    /// # Example
-    /// ```rust
-    /// use termint::prelude::*;
-    ///
-    /// // Block with vertical layout without this constructor
-    /// let block = Block::<(), _>::new(Layout::vertical());
-    /// // And using this constructor
-    /// let block = Block::<(), _>::vertical();
-    /// ```
+    /// This is convenience constructor equivalent to
+    /// `Block::new(Layout::vertical())`.
     #[must_use]
     pub fn vertical() -> Self {
         Self {
@@ -179,19 +171,8 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
 
     /// Creates a new [`Block`] wrapping a horizontal [`Layout`].
     ///
-    /// This is convenience constructor. A lot of the times you add [`Layout`]
-    /// inside of the [`Block`], so this eliminates the need to adding it
-    /// manually.
-    ///
-    /// # Example
-    /// ```rust
-    /// use termint::prelude::*;
-    ///
-    /// // Block with horizontal layout without this constructor
-    /// let block = Block::<(), _>::new(Layout::horizontal());
-    /// // And using this constructor
-    /// let block = Block::<(), _>::horizontal();
-    /// ```
+    /// This is convenience constructor equivalent to
+    /// `Block::new(Layout::horizontal())`.
     #[must_use]
     pub fn horizontal() -> Self {
         Self {
@@ -213,6 +194,8 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
     }
 
     /// Sets the base style of the [`Layout`].
+    ///
+    /// The `style` can be any type convertible to [`Style`].
     #[must_use]
     pub fn style<T>(mut self, style: T) -> Self
     where
@@ -223,6 +206,9 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
     }
 
     /// Sets base background color of the [`Layout`].
+    ///
+    /// The `bg` can be any type convertible into `Option<Color>`. If `None` is
+    /// supplied, the background is transparent.
     #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
@@ -233,6 +219,9 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
     }
 
     /// Sets base foreground color of the [`Layout`].
+    ///
+    /// The `fg` can be any type convertible into `Option<Color>`. If `None` is
+    /// supplied, it keeps the original foreground color.
     #[must_use]
     pub fn fg<T>(mut self, fg: T) -> Self
     where

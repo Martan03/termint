@@ -7,46 +7,61 @@ use crate::{
 
 use super::{Element, Widget};
 
-/// A widget that stacks its children in layers, from bottom to top.
+/// A container widget that stacks its children on top of each other (z-axis).
 ///
-/// The first child is rendered at the bottom, and each subsequent child is
-/// rendered on top of the previous one, making [`Overlay`] useful for building
-/// layered TUIs such as modal.
+/// [`Overlay`] is useful for creating layered interface, such as modals and
+/// popups, or floating elements.
+///
+/// # Layout behavior
+///
+/// [`Overlay`] passes the full available area to every child. The first child
+/// is rendered at the bottom, and each subsequent child is rendered on top of
+/// the previous one.
 ///
 /// # Example
 /// ```rust
-/// # use termint::{
-/// #     term::Term,
-/// #     geometry::Rect,
-/// #     widgets::{Element, Widget, Spacer, Overlay}
-/// # };
-/// # fn get_bottom_child() -> Element { Spacer::new().into() }
-/// # fn get_top_child() -> Element { Spacer::new().into() }
-/// # fn example() -> Result<(), termint::Error> {
+/// use termint::prelude::*;
+///
+/// # fn get_content() -> Element { Spacer::new().into() }
+/// # fn get_modal() -> Element { Spacer::new().into() }
 /// let overlay = Overlay::new(vec![
-///     get_bottom_child(),
-///     get_top_child(),
+///     get_content(),
+///     // Modal is rendered on top of the content
+///     get_modal(),
 /// ]);
-///
-/// let mut term = Term::default();
-/// term.render(overlay)?;
-/// # Ok(())
-/// # }
 /// ```
-///
-/// In this example, the second child (`get_top_child()`) is rendered on top of
-/// the first.
 pub struct Overlay<M: 'static = ()> {
     children: Vec<Element<M>>,
 }
 
 impl<M> Overlay<M> {
-    /// Creates a new [`Overlay`] from a list of child widgets.
+    /// Creates a new [`Overlay`] from a list of children.
     ///
     /// The first widget will be at the bottom, and the last on top.
+    ///
+    /// The `children` can be any type convertible into an iterator of
+    /// [`Element`]s.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    ///
+    /// let overlay = Overlay::<()>::new(vec![
+    ///     "Bottom",
+    ///     "Middle",
+    ///     "Top",
+    /// ]);
+    /// ```
     #[must_use]
-    pub fn new(children: Vec<Element<M>>) -> Self {
-        Self { children }
+    pub fn new<I>(children: I) -> Self
+    where
+        I: IntoIterator,
+        I::Item: Into<Element<M>>,
+    {
+        Self {
+            children: children.into_iter().map(|i| i.into()).collect(),
+        }
     }
 
     /// Creates an empty [`Overlay`] with no children.
@@ -55,8 +70,11 @@ impl<M> Overlay<M> {
         Self { children: vec![] }
     }
 
-    /// Adds a child to the [`Overlay`], playing it on top of the existing
-    /// children.
+    /// Pushes a new widget onto the top of the [`Overlay`] stack.
+    ///
+    /// The given widget will be rendered last, covering previous widgets.
+    ///
+    /// The `child` can be any type convertible into [`Element`].
     pub fn push<W>(&mut self, child: W)
     where
         W: Into<Element<M>>,

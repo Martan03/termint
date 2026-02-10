@@ -10,35 +10,30 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
-/// A [`Paragraph`] combines multiple widgets implementing the [`Text`] trait
-/// into single widget, displaying them sequantially with configurable
-/// separator.
+/// A widget that combines multiple text elements into a single flow.
 ///
-/// Unlike layout-based widgets, [`Paragraph`] places spans directly next to
-/// each other, allowing for more natural inline text composition.
+/// A [`Paragraph`] displays a list of widgets implementing the [`Text`] trait
+/// sequentially. Unlike the layout-based widgets, [`Paragraph`] places spans
+/// directly next to each other (inline), wrapping them based on the
+/// configuration.
+///
+/// It also supports a configurable separator which is inserted between
+/// elements.
 ///
 /// # Example
 /// ```
-/// # use termint::{
-/// #     term::Term,
-/// #     paragraph,
-/// #     text::Text,
-/// #     enums::{Color, Modifier, Wrap},
-/// #     widgets::{Paragraph, ToSpan, Widget},
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
-/// // Creates a Paragraph from a list of spans
-/// let items: Vec<Box<dyn Text>> = vec![
-///     Box::new("This is a text in".fg(Color::Yellow)),
-///     Box::new("paragraph".modifier(Modifier::BOLD).fg(Color::Cyan)),
-///     Box::new("and it adds".to_span()),
-///     Box::new("separator".modifier(Modifier::ITALIC)),
-/// ];
-/// let mut p = Paragraph::new(items)
-///     .wrap(Wrap::Letter)
-///     .separator("-");
+/// use termint::{prelude::*, text::Text, paragraph};
 ///
-/// // Alternatively, use the `paragraph!` macro for convenience
+/// // Using the constructor (requires homogeneous types)
+/// let mut p = Paragraph::new(vec![
+///     "This is a text in".fg(Color::Yellow),
+///     "paragraph".modifier(Modifier::BOLD),
+///     ". Cool, right?".to_span()
+/// ])
+/// .wrap(Wrap::Letter)
+/// .separator("-");
+///
+/// // Or using the `paragraph!` macro for convenience
 /// let mut p = paragraph!(
 ///     "This is a text in".fg(Color::Yellow),
 ///     "paragraph".modifier(Modifier::BOLD).fg(Color::Cyan),
@@ -50,12 +45,6 @@ use super::{widget::Widget, Element};
 ///
 /// // Print the Paragraph as a string
 /// println!("{p}");
-///
-/// // Or you can render it using `Term` (or manually using `Buffer`)
-/// let mut term = Term::<(), _>::default();
-/// term.render(p)?;
-/// # Ok(())
-/// # }
 /// ```
 #[derive(Debug)]
 pub struct Paragraph {
@@ -67,23 +56,27 @@ pub struct Paragraph {
 impl Paragraph {
     /// Creates a new [`Paragraph`] with the given child elements.
     #[must_use]
-    pub fn new(children: Vec<Box<dyn Text>>) -> Self {
+    pub fn new<I>(children: I) -> Self
+    where
+        I: IntoIterator,
+        I::Item: Into<Box<dyn Text>>,
+    {
         Self {
-            children,
+            children: children.into_iter().map(|i| i.into()).collect(),
             ..Default::default()
         }
     }
 
-    /// Creates an empty [`Paragraph`] with no children.
+    /// Creates an empty [`Paragraph`].
     #[must_use]
     pub fn empty() -> Self {
         Default::default()
     }
 
-    /// Gets the rendered content of the [`Paragraph`] as a [`String`], joining
-    /// all child elements with the configured separator.
+    /// Returns the raw text content as a [`String`].
     ///
-    /// It ignores wrapping and any other position based settings.
+    /// This joins all child elements using the configured separator, but
+    /// ignores the text wrapping.
     pub fn get(&self) -> String {
         let mut res = "".to_string();
         for child in self.children.iter() {
@@ -95,8 +88,15 @@ impl Paragraph {
         res
     }
 
-    /// Sets the separator used between child elements when rendering the
-    /// [`Paragraph`].
+    /// Sets the separator string inserted child elements.
+    ///
+    /// ```rust
+    /// use termint::prelude::*;
+    ///
+    /// // If the text fits on one line, it would be "Separator-showcase"
+    /// let mut p = Paragraph::new(vec!["Separator", "showcase"])
+    ///     .separator("-");
+    /// ```
     #[must_use]
     pub fn separator(mut self, sep: &str) -> Self {
         self.separator = sep.to_string();
@@ -112,7 +112,7 @@ impl Paragraph {
         self
     }
 
-    /// Adds a child element to the [`Paragraph`]
+    /// Appends a child element to the end of the [`Paragraph`].
     pub fn push<T>(&mut self, child: T)
     where
         T: Into<Box<dyn Text>>,

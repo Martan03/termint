@@ -12,30 +12,42 @@ use super::{widget::Widget, Element};
 /// A layout widget that arranges children in a grid specified by rows and
 /// columns.
 ///
-/// Each row and column is defined by a [`Unit`], which you can read more about
-/// in its documentation.
+/// The grid layout is defined by a sequence of columns (x-axis) and rows
+/// (y-axis). Each row and column is sized according to a [`Unit`] (e.g. fixed
+/// length, percentage).
 ///
-/// Children can be placed by specifying their zero-based column and row
-/// indices.
+/// # Coordinates
+///
+/// Children are placed using zero-based indices:
+/// - `col` (x-axis): 0 is the leftmost column.
+/// - `row` (y-axis): 0 is the topmost row.
+///
+/// # Visual representation
+///
+/// Each cell contains the column (x-axis) and row (y-axis) indices.
+///
+/// ```txt
+///         Col 0    Col 1
+///       +--------+--------+
+/// Row 0 | (0, 0) | (1, 0) |
+///       +--------+--------+
+/// Row 1 | (0, 1) | (1, 1) |
+///       +--------+--------+
+/// ```
 ///
 /// # Example
 /// ```rust
-/// # use termint::{
-/// #     geometry::{Rect, Unit},
-/// #     widgets::{Grid, Widget},
-/// #     term::Term,
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
-/// let mut grid = Grid::<()>::new(
-///     vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],
-///     vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
-/// );
-/// grid.push("Grid", 1, 1);
+/// use termint::prelude::*;
 ///
-/// let mut term = Term::default();
-/// term.render(grid)?;
-/// # Ok(())
-/// # }
+/// // Creates 3x2 grid
+/// let mut grid = Grid::<()>::new(
+///     // Columns sizes (x-axis)
+///     vec![Unit::Length(3), Unit::Length(5), Unit::Fill(1)],
+///     // Rows sizes (y-axis)
+///     vec![Unit::Fill(1), Unit::Length(1)],
+/// );
+/// // Pushes a widget into 2nd column (middle) and 1nd row (topmost).
+/// grid.push("Grid", 1, 0);
 /// ```
 #[derive(Debug)]
 pub struct Grid<M: 'static = ()> {
@@ -53,19 +65,23 @@ struct GridChild<M: 'static = ()> {
 }
 
 impl<M> Grid<M> {
-    /// Creates a new [`Grid`] from columns and rows specifications.
+    /// Creates a new [`Grid`] with the specified column and row definitions.
     ///
     /// Both `cols` and `rows` accept any iterable of types convertible into
     /// [`Unit`].
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{
-    /// #     geometry::{Rect, Unit},
-    /// #     widgets::{Grid, Widget},
-    /// #     term::Term,
-    /// # };
-    /// let mut grid = Grid::<()>::new([3, 5, 3], [3, 1, 1]);
+    /// use termint::prelude::*;
+    ///
+    /// // Creates 3x2 grid with only fixed lengths
+    /// let mut grid = Grid::<()>::new([3, 5, 3], [3, 1]);
+    ///
+    /// // Creates 3x3 grid which centers the middle column and row.
+    /// let mut grid = Grid::<()>::new(
+    ///     [Unit::Fill(1), Unit::Length(10), Unit::Fill(1)],
+    ///     [Unit::Fill(1), Unit::Length(5), Unit::Fill(1)],
+    /// );
     /// ```
     #[must_use]
     pub fn new<T1, T2>(cols: T1, rows: T2) -> Self
@@ -82,28 +98,27 @@ impl<M> Grid<M> {
         }
     }
 
-    /// Creates an new empty [`Grid`] with no rows or columns.
+    /// Creates a new empty [`Grid`] with no rows or columns.
     #[must_use]
     pub fn empty() -> Self {
         Self::default()
     }
 
-    /// Adds a new row definition to the [`Grid`].
+    /// Adds a new row definition to the bottom of the [`Grid`].
     pub fn row(&mut self, row: Unit) {
         self.rows.push(row);
     }
 
-    /// Adds given column to current columns
+    /// Appends a new column definition to the right of the [`Grid`].
     pub fn col(&mut self, col: Unit) {
         self.cols.push(col);
     }
 
     /// Adds a child widget at the specified column and row.
     ///
-    /// # Parameters
-    /// - `child`: The widget to add (any type convertible to [`Element`])
-    /// - `col`: Zero-based column index (x)
-    /// - `row`: Zero-based row index (y)
+    /// The `child` is any type convertible into [`Element`].
+    ///
+    /// The `col` (x-axis) and `row` (y-axis) are zero-based indices.
     pub fn push<T>(&mut self, child: T, col: usize, row: usize)
     where
         T: Into<Element<M>>,

@@ -275,11 +275,14 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the scroll step size for both horizontal and vertical scrolling.
+    /// Sets the number of rows/columns to scroll per mouse wheel step for both
+    /// horizontal and vertical scrolling.
     ///
     /// It is mainly used in automatic mouse scroll handling, but the step
     /// size also determines the value returned in the Message if custom
     /// scroll handler is used.
+    ///
+    /// Default is `1`.
     #[must_use]
     pub fn scroll_step(mut self, size: usize) -> Self {
         self.scroll_step.x = size;
@@ -287,22 +290,26 @@ impl<M> Table<M> {
         self
     }
 
-    /// Sets the scroll step size for horizontal scrolling.
+    /// Sets the number of columns to scroll per mouse wheel step.
     ///
     /// It is mainly used in automatic mouse scroll handling, but the step
     /// size also determines the value returned in the Message if custom
     /// scroll handler is used.
+    ///
+    /// Default is `1`.
     #[must_use]
     pub fn scroll_step_x(mut self, distance: usize) -> Self {
         self.scroll_step.x = distance;
         self
     }
 
-    /// Sets the scroll step size for vertical scrolling.
+    /// Sets the number of rows to scroll per mouse wheel step.
     ///
     /// It is mainly used in automatic mouse scroll handling, but the step
     /// size also determines the value returned in the Message if custom
     /// scroll handler is used.
+    ///
+    /// Default is `1`.
     #[must_use]
     pub fn scroll_step_y(mut self, distance: usize) -> Self {
         self.scroll_step.y = distance;
@@ -323,6 +330,12 @@ impl<M> Table<M> {
     ///
     /// The `response` is closure accepting two `usize` values - column and
     /// row clicked - and returns the corresponding message.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_click<F>(self, response: F) -> Self
     where
@@ -338,6 +351,12 @@ impl<M> Table<M> {
     ///
     /// The `response` is closure accepting two `usize` values - column and
     /// row clicked - and returns the corresponding message.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_press<F>(mut self, button: MouseButton, response: F) -> Self
     where
@@ -355,6 +374,12 @@ impl<M> Table<M> {
     ///
     /// The `response` is closure accepting a `isize` value - scroll offset
     /// based on the scroll direction and the set vertical scroll step size.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_scroll<F>(mut self, response: F) -> Self
     where
@@ -371,6 +396,12 @@ impl<M> Table<M> {
     ///
     /// The `response` is closure accepting a `isize` value - scroll offset
     /// based on the scroll direction and the set horizontal scroll step size.
+    ///
+    /// **Note:** This requires mouse capture to be enabled. You can do that by
+    /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
+    /// [`Term`](crate::term::Term) struct or
+    /// [`enable_mouse_capture`](crate::term::enable_mouse_capture) when not
+    /// using  the [`Term`](crate::term::Term).
     #[must_use]
     pub fn on_scroll_horizontal<F>(mut self, response: F) -> Self
     where

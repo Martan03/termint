@@ -16,34 +16,30 @@ use super::{widget::Widget, Element};
 ///
 /// # Example
 ///
-/// You can render text using the Term like this:
 /// ```rust
-/// # use termint::{
-/// #     enums::{Color, Wrap},
-/// #     geometry::{TextAlign},
-/// #     buffer::Buffer,
-/// #     widgets::{Grad, Widget},
-/// #     term::Term,
-/// # };
-/// # fn example() -> Result<(), termint::Error> {
-/// let grad = Grad::new("Hello Termint", (0, 220, 255), (200, 60, 255))
-///     .bg(Some(Color::White))
-///     .align(TextAlign::Center)
-///     .wrap(Wrap::Letter)
-///     .ellipsis("...");
+/// use termint::{prelude::*, widgets::Grad};
 ///
-/// let mut term = Term::<(), _>::default();
-/// term.render(grad)?;
-/// # Ok(())
-/// # }
+/// // Text with blue-green foreground gradient
+/// let grad = Grad::new("Hello Termint", (0, 0, 255), (0, 255, 0))
+///     // Adds a white background
+///     .bg(Color::White)
+///     // Centers the text
+///     .align(TextAlign::Center)
+///     // Sets the wrapping to letter (new line after any character)
+///     .wrap(Wrap::Letter)
+///     // Adds `...` ellipsis (text shown when text overflows)
+///     .ellipsis("...");
 /// ```
 ///
-/// You can also print the text directly to the terminal, but text wrapping
-/// and ellipsis won't work and the gradient will be generated for the whole
-/// text, not per line:
+/// [`Grad`] can also be used for printing the text directly to the terminal.
+///
+/// **Note**: text wrapping and ellipsis won't work in this mode, and the
+/// gradient will be interpolated across the entire string length, rather than
+/// per-line.
 ///
 /// ```rust
-/// # use termint::widgets::Grad;
+/// use termint::widgets::Grad;
+///
 /// let grad = Grad::new(
 ///     "Printing gradient also works",
 ///     (0, 220, 255),
@@ -65,20 +61,22 @@ pub struct Grad {
 }
 
 impl Grad {
-    /// Creates a new [`Grad`] with given text and gradient colors.
+    /// Creates a new [`Grad`] with the given text and start/end colors.
     ///
-    /// # Parameters
-    /// Accepts values convertible to [`RGB`].
-    /// - `start`: Starting color of the gradient
-    /// - `end`: Ending color of the gradient
+    /// The `start` and `end` colors can be any type convertible into [`RGB`],
+    /// such as `u32`, `(u8 ,u8, u8)`. You can read more in the [`RGB`]
+    /// documentation.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{enums::RGB, widgets::Grad};
+    /// use termint::{prelude::*, widgets::Grad, enums::RGB};
+    ///
+    /// // You can use RGB constructors for the colors.
     /// let grad = Grad::new("Hello, World!",
     ///     RGB::new(0, 220, 255),
     ///     RGB::from_hex(0xC83CFF)
     /// );
+    /// // Or any type convertible into `RGB`, such as tuple and `u32` (hex).
     /// let grad = Grad::new("Hello, Termint!", (0, 220, 255), 0xC83CFF);
     /// ```
     #[must_use]
@@ -101,7 +99,9 @@ impl Grad {
         }
     }
 
-    /// Sets text gradient direction (horizontal by default).
+    /// Sets the direction of the color gradient.
+    ///
+    /// The default direction is [`Direction::Horizontal`].
     #[must_use]
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
@@ -110,8 +110,8 @@ impl Grad {
 
     /// Sets the background color of the [`Grad`].
     ///
-    /// Accepts `None` for transparent background or any type convertible to
-    /// `Option<Color>`.
+    /// The `bg` can be any type convertible into `Option<Color>`. You can
+    /// supply `None` for transparent background.
     #[must_use]
     pub fn bg<T>(mut self, bg: T) -> Self
     where
@@ -121,14 +121,16 @@ impl Grad {
         self
     }
 
-    /// Sets [`Grad`] text modifiers to given modifiers, replacing any existing
-    /// ones.
+    /// Replaces the current text modifiers with the given modifers.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::Grad, enums::Modifier, modifiers};
+    /// use termint::{prelude::*, widgets::Grad, modifiers};
+    ///
+    /// // Italic and Bold modifiers using the bitwise or for chaining.
     /// let grad = Grad::new("modifier", (0, 220, 255), 0xC83CFF)
     ///     .modifier(Modifier::ITALIC | Modifier::BOLD);
+    /// // Or shorther using `modifiers!` macro
     /// let grad = Grad::new("modifier", (0, 220, 255), 0xC83CFF)
     ///     .modifier(modifiers!(BOLD, ITALIC));
     /// ```
@@ -139,12 +141,16 @@ impl Grad {
         self
     }
 
-    /// Adds a modifier without removing existing ones.
+    /// Adds a modifier to the existing set of modifiers.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::Grad, enums::Modifier};
+    /// use termint::{prelude::*, widgets::Grad};
+    ///
     /// let grad = Grad::new("add_modifier", (0, 220, 255), 0xC83CFF)
+    ///     // Sets modifiers to bold.
+    ///     .modifier(Modifier::BOLD)
+    ///     // Adds italic to the modifiers, resulting in italic bold text.
     ///     .add_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
@@ -153,12 +159,16 @@ impl Grad {
         self
     }
 
-    /// Removes a specific from current modifiers.
+    /// Removes a specific from the current set of modifiers.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::Grad, enums::Modifier};
+    /// use termint::{prelude::*, widgets::Grad};
+    ///
     /// let grad = Grad::new("remove_modifier", (0, 220, 255), 0xC83CFF)
+    ///     // Makes text italic and bold.
+    ///     .modifier(Modifier::ITALIC | Modifier::BOLD)
+    ///     // Removes the italic modifier, resulting in only bold text.
     ///     .remove_modifier(Modifier::ITALIC);
     /// ```
     #[must_use]
@@ -167,15 +177,20 @@ impl Grad {
         self
     }
 
-    /// Sets the text alignment of the [`Grad`] (default is
-    /// [`TextAlign::Left`]).
+    /// Sets the text alignment of the [`Grad`].
+    ///
+    /// The default alignment is [`TextAlign::Left`].
     #[must_use]
     pub fn align(mut self, align: TextAlign) -> Self {
         self.align = align;
         self
     }
 
-    /// Sets the wrapping strategy of the [`Grad`] (default is [`Wrap::Word`]).
+    /// Sets the wrapping strategy of the [`Grad`].
+    ///
+    /// The default wrapping is [`Wrap::Word`], which wraps text only after
+    /// a word. You can also use [`Wrap::Letter`], which wraps after any
+    /// character.
     #[must_use]
     pub fn wrap(mut self, wrap: Wrap) -> Self {
         self.wrap = wrap;
@@ -184,7 +199,7 @@ impl Grad {
 
     /// Sets the ellipsis string to use when text overflows.
     ///
-    /// The default is `"..."``. Any custom string may be used.
+    /// The default value is `"..."`.
     #[must_use]
     pub fn ellipsis(mut self, ellipsis: &str) -> Self {
         self.ellipsis = ellipsis.to_string();
