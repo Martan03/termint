@@ -1,5 +1,22 @@
 # Termint changelog
 
+## v0.8.0
+
+### Features:
+
+- Add mouse event handling (`Widget::on_event`)
+- Add `Application::message` to capture event messages
+- Add `Button` widget
+- Add default mouse event handling to some widgets
+    - `List`, `Table` and `Scrollable` implement scrolling
+- Add option to set custom event `Message` to some widgets
+    - `Button`, `ProgressBar`, `Scrollable`, `Table`
+
+### Changes:
+
+- Add `delta` argument (time between frames) to `Application::update`
+- Remove `BgGrad` layout forwarding (such as `BgGrad::center`,...)
+
 ## v0.7.0
 
 ### Features:
