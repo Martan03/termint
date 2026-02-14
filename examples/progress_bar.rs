@@ -71,7 +71,7 @@ impl Application for App {
 
     fn message(&mut self, message: Self::Message) -> Action {
         match message {
-            Message::Seek(id, p) => self.states[id].set(p * 100.),
+            Message::Seek(id, p) => self.states[id].set(p),
         }
         Action::RERENDER
     }
@@ -103,9 +103,9 @@ impl App {
         let mut complete = true;
         for (i, state) in self.states.iter().enumerate() {
             let speed = (len - i as f64) / len;
-            let val = state.get() + speed * delta.as_secs_f64() * 50.;
+            let val = state.get() + speed * delta.as_secs_f64() * 0.5;
             state.set(val);
-            if val < 120. {
+            if val < 1.20 {
                 complete = false;
             }
         }
