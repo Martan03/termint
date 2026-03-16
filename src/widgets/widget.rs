@@ -85,6 +85,11 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
         vec![]
     }
 
+    /// Hashes all the properties that effect the layout.
+    fn layout_hash(&self) -> u64 {
+        0
+    }
+
     /// Handles the mouse event, returns `None` if outside of this widget or
     /// no event handler set, otherwise returns corresponding `Message`.
     fn on_event(
