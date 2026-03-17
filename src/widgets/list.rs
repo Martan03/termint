@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     cmp::{max, min},
+    hash::{DefaultHasher, Hash, Hasher},
     rc::Rc,
 };
 
@@ -82,7 +83,7 @@ pub struct List<M: 'static = ()> {
 /// It includes:
 /// - Scroll offset = based on items, e.g. 5 means 5th item is first visible
 /// - Selected = optional ID of the selected item (zero-based)
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Hash)]
 pub struct ListState {
     /// The index of the first item currently visible in the list.
     pub offset: usize,
@@ -418,6 +419,17 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
             height += h;
         }
         width + self.highlight.len() + (height > size.y) as usize
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.items.hash(&mut hasher);
+        self.force_scrollbar.hash(&mut hasher);
+        self.highlight.hash(&mut hasher);
+        self.state.borrow().hash(&mut hasher);
+
+        hasher.finish()
     }
 
     fn on_event(

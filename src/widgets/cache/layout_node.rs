@@ -5,6 +5,7 @@ pub struct LayoutNode {
     pub area: Rect,
     pub children: Vec<LayoutNode>,
     pub is_dirty: bool,
+    pub has_dirty_child: bool,
 }
 
 impl LayoutNode {
@@ -25,11 +26,11 @@ impl LayoutNode {
             if let Some(old_child) = old_children.get(i) {
                 self.children[i].diff(*old_child, new_children[i]);
                 if self.children[i].is_dirty {
-                    self.is_dirty = true;
+                    self.has_dirty_child = true;
                 }
             } else {
                 self.children[i].is_dirty = true;
-                self.is_dirty = true;
+                self.has_dirty_child = true;
             }
         }
     }

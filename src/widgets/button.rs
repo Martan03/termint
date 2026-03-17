@@ -1,3 +1,5 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use crate::{
     buffer::Buffer,
     geometry::Padding,
@@ -111,7 +113,7 @@ impl<M> Button<M> {
     ///
     /// If a handler for the given mouse button already exists, it will be
     /// replaced.
-    /// 
+    ///
     /// **Note:** This requires mouse capture to be enabled. You can do that by
     /// calling [`Term::with_mouse`](crate::term::Term::with_mouse) on
     /// [`Term`](crate::term::Term) struct or
@@ -172,6 +174,12 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
 
     fn children(&self) -> Vec<&Element<M>> {
         vec![&self.child]
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.padding.hash(&mut hasher);
+        hasher.finish()
     }
 
     fn on_event(

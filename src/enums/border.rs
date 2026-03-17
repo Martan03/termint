@@ -31,7 +31,7 @@ bitflags! {
     /// # use termint::borders;
     /// let sides = borders!(TOP, LEFT);
     /// ```
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Border: u8 {
         const TOP = 0b0001;
         const RIGHT = 0b0010;
@@ -48,7 +48,7 @@ bitflags! {
 /// This enum specifies how borders are drawn. You can use different types of
 /// borders to adjust the style, such as with rounded corners, double lines or
 /// more.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Hash)]
 pub enum BorderType {
     /// Simple line
     #[default]

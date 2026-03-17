@@ -1,3 +1,5 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Unit, Vec2},
@@ -178,6 +180,15 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
 
     fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().map(|c| &c.child).collect()
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.rows.hash(&mut hasher);
+        self.cols.hash(&mut hasher);
+
+        hasher.finish()
     }
 
     fn on_event(

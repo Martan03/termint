@@ -1,7 +1,7 @@
 use std::ops::{Range, RangeFrom, RangeTo};
 
 /// Size constraints
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Constraint {
     /// Actual size

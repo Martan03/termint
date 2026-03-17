@@ -20,7 +20,7 @@
 /// // Wrap in Rc<RefCell<..>> for the table
 /// let wrapped_state = Rc::new(RefCell::new(state));
 /// ```
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct TableState {
     pub offset: usize,
     pub selected: Option<usize>,

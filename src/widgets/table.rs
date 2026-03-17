@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     cmp::{max, min},
+    hash::{DefaultHasher, Hash, Hasher},
     rc::Rc,
 };
 
@@ -525,6 +526,18 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         }
 
         result
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.header_separator.hash(&mut hasher);
+        self.widths.hash(&mut hasher);
+        self.column_spacing.hash(&mut hasher);
+        self.force_scrollbar.hash(&mut hasher);
+        self.state.borrow().hash(&mut hasher);
+
+        hasher.finish()
     }
 
     fn on_event(

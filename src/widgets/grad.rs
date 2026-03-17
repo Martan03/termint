@@ -1,5 +1,8 @@
 use core::fmt;
-use std::cmp::min;
+use std::{
+    cmp::min,
+    hash::{DefaultHasher, Hash, Hasher},
+};
 
 use crate::{
     buffer::Buffer,
@@ -210,6 +213,15 @@ impl Grad {
 impl<M: Clone + 'static> Widget<M> for Grad {
     fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
         _ = self.render_offset(buffer, rect, 0, None);
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.text.hash(&mut hasher);
+        self.wrap.hash(&mut hasher);
+
+        hasher.finish()
     }
 
     fn height(&self, size: &Vec2) -> usize {

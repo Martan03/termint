@@ -1,4 +1,7 @@
-use std::fmt;
+use std::{
+    fmt,
+    hash::{DefaultHasher, Hash, Hasher},
+};
 
 use crate::{
     buffer::Buffer,
@@ -231,6 +234,15 @@ impl<M: Clone + 'static> Widget<M> for Span {
             Wrap::Letter => self.width_letter_wrap(size),
             Wrap::Word => self.width_word_wrap(size),
         }
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.text.hash(&mut hasher);
+        self.wrap.hash(&mut hasher);
+
+        hasher.finish()
     }
 }
 

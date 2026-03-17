@@ -1,4 +1,9 @@
-use std::{cell::Cell, marker::PhantomData, rc::Rc};
+use std::{
+    cell::Cell,
+    hash::{DefaultHasher, Hash, Hasher},
+    marker::PhantomData,
+    rc::Rc,
+};
 
 use crate::{
     buffer::Buffer,
@@ -71,7 +76,7 @@ pub struct Scrollbar<M: 'static = ()> {
 /// state = state.retreat(3);
 /// assert_eq!(state.offset, 2);
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct ScrollbarState {
     pub content_len: usize,
     pub offset: usize,
@@ -266,6 +271,12 @@ impl<M: Clone + 'static> Widget<M> for Scrollbar<M> {
             Direction::Vertical => (total > size.x) as usize,
             Direction::Horizontal => size.x,
         }
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.direction.hash(&mut hasher);
+        hasher.finish()
     }
 }
 

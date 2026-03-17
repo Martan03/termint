@@ -1,4 +1,8 @@
-use std::{cmp::max, marker::PhantomData};
+use std::{
+    cmp::max,
+    hash::{DefaultHasher, Hash, Hasher},
+    marker::PhantomData,
+};
 
 use crate::{
     borders,
@@ -314,6 +318,15 @@ where
 
     fn children(&self) -> Vec<&Element<M>> {
         vec![&self.child]
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.title.get_text().hash(&mut hasher);
+        self.borders.hash(&mut hasher);
+
+        hasher.finish()
     }
 
     fn on_event(

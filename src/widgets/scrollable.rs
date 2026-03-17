@@ -1,4 +1,10 @@
-use std::{cell::Cell, cmp::min, marker::PhantomData, rc::Rc};
+use std::{
+    cell::Cell,
+    cmp::min,
+    hash::{DefaultHasher, Hash, Hasher},
+    marker::PhantomData,
+    rc::Rc,
+};
 
 use crate::{
     buffer::Buffer,
@@ -316,6 +322,22 @@ where
             .chain(self.vertical.iter())
             .chain(self.horizontal.iter())
             .collect()
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.horizontal.is_some().hash(&mut hasher);
+        self.vertical.is_some().hash(&mut hasher);
+
+        if let Some(state) = &self.hor_state {
+            state.get().hash(&mut hasher);
+        }
+        if let Some(state) = &self.ver_state {
+            state.get().hash(&mut hasher);
+        }
+
+        hasher.finish()
     }
 
     fn on_event(

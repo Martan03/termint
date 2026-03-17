@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    hash::{DefaultHasher, Hash, Hasher},
+};
 
 use crate::{
     buffer::Buffer,
@@ -225,6 +228,17 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
 
     fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().collect()
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        self.direction.hash(&mut hasher);
+        self.constraints.hash(&mut hasher);
+        self.padding.hash(&mut hasher);
+        self.center.hash(&mut hasher);
+
+        hasher.finish()
     }
 
     fn on_event(

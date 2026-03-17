@@ -1,3 +1,5 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
@@ -235,6 +237,12 @@ where
 
     fn children(&self) -> Vec<&Element<M>> {
         vec![&self.child]
+    }
+
+    fn layout_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.padding.hash(&mut hasher);
+        hasher.finish()
     }
 
     fn on_event(
