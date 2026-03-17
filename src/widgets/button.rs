@@ -6,7 +6,12 @@ use crate::{
     prelude::{MouseEvent, Rect, Vec2},
     style::Style,
     term::backend::{MouseButton, MouseEventKind},
-    widgets::{cache::Cache, widget::EventResult, Element, Spacer, Widget},
+    widgets::{
+        cache::{Cache, LayoutNode},
+        layout,
+        widget::EventResult,
+        Element, Spacer, Widget,
+    },
 };
 
 /// A clickable wrapper widget that triggers a message when clicked.
@@ -180,6 +185,12 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
         let mut hasher = DefaultHasher::new();
         self.padding.hash(&mut hasher);
         hasher.finish()
+    }
+
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+        layout::padded(node, area, self.padding, |n, a| {
+            self.child.layout(&mut n.children[0], a)
+        });
     }
 
     fn on_event(

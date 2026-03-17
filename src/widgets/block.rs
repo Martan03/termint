@@ -12,7 +12,12 @@ use crate::{
     prelude::MouseEvent,
     style::Style,
     text::Text,
-    widgets::{cache::Cache, span::Span, widget::EventResult},
+    widgets::{
+        cache::{Cache, LayoutNode},
+        layout,
+        span::Span,
+        widget::EventResult,
+    },
 };
 
 use super::{widget::Widget, Element, Layout, Spacer};
@@ -327,6 +332,12 @@ where
         self.borders.hash(&mut hasher);
 
         hasher.finish()
+    }
+
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+        layout::padded(node, area, self.borders, |n, a| {
+            self.child.layout(&mut n.children[0], a)
+        });
     }
 
     fn on_event(

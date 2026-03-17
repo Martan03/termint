@@ -5,7 +5,11 @@ use crate::{
     enums::{Color, RGB},
     geometry::{Direction, Padding, Rect, Vec2},
     prelude::MouseEvent,
-    widgets::{cache::Cache, widget::EventResult},
+    widgets::{
+        cache::{Cache, LayoutNode},
+        layout,
+        widget::EventResult,
+    },
 };
 
 use super::{widget::Widget, Element, Spacer};
@@ -243,6 +247,12 @@ where
         let mut hasher = DefaultHasher::new();
         self.padding.hash(&mut hasher);
         hasher.finish()
+    }
+
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+        layout::padded(node, area, self.padding, |n, a| {
+            self.child.layout(&mut n.children[0], a)
+        });
     }
 
     fn on_event(

@@ -1,3 +1,5 @@
+use crate::enums::Border;
+
 /// Defines padding struct
 #[derive(Debug, PartialEq, Clone, Copy, Default, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -150,6 +152,17 @@ impl From<(usize, usize, usize, usize)> for Padding {
             right: value.1,
             bottom: value.2,
             left: value.3,
+        }
+    }
+}
+
+impl From<Border> for Padding {
+    fn from(value: Border) -> Self {
+        Self {
+            top: value.contains(Border::TOP) as usize,
+            right: value.contains(Border::RIGHT) as usize,
+            bottom: value.contains(Border::BOTTOM) as usize,
+            left: value.contains(Border::LEFT) as usize,
         }
     }
 }

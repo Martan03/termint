@@ -17,6 +17,9 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
+mod layouting;
+pub use layouting::*;
+
 /// A container widget that arranges child widgets in a single direction
 /// (horizontal or vertical), flexing their sizes based on given constraints.
 ///
