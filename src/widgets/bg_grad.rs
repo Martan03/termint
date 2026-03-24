@@ -6,8 +6,8 @@ use crate::{
     geometry::{Direction, Padding, Rect, Vec2},
     prelude::MouseEvent,
     widgets::{
-        cache::{Cache, LayoutNode},
-        layout,
+        cache::Cache,
+        layout::{self, Node},
         widget::EventResult,
     },
 };
@@ -249,7 +249,7 @@ where
         hasher.finish()
     }
 
-    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+    fn layout(&self, node: &mut Node, area: Rect) {
         layout::padded(node, area, self.padding, |n, a| {
             self.child.layout(&mut n.children[0], a)
         });

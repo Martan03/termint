@@ -18,7 +18,10 @@ use crate::{
 use super::{widget::Widget, Element};
 
 mod layouting;
+mod node;
+
 pub use layouting::*;
+pub use node::Node;
 
 /// A container widget that arranges child widgets in a single direction
 /// (horizontal or vertical), flexing their sizes based on given constraints.
@@ -244,6 +247,21 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
         hasher.finish()
     }
 
+    fn layout(&self, node: &mut Node, area: Rect) {
+        if !node.is_dirty && !node.has_dirty_child {
+            return;
+        }
+
+        node.area = area;
+        match self.direction {
+            Direction::Vertical => self.layout_ver(node, area),
+            Direction::Horizontal => self.layout_hor(node, area),
+        };
+
+        node.is_dirty = false;
+        node.has_dirty_child = false;
+    }
+
     fn on_event(
         &self,
         area: Rect,
@@ -284,6 +302,34 @@ impl<M> Default for Layout<M> {
 }
 
 impl<M: Clone + 'static> Layout<M> {
+    fn layout_ver(&self, node: &mut Node, area: Rect) {
+        let (sizes, mut rect) = self.ver_sizes(area);
+
+        for (i, s) in sizes.iter().enumerate() {
+            let csize = min(*s, rect.height());
+            let crect =
+                Rect::from_coords(*rect.pos(), Vec2::new(rect.width(), csize));
+
+            self.children[i].layout(&mut node.children[i], crect);
+            rect = rect.inner(Padding::top(csize));
+        }
+    }
+
+    fn layout_hor(&self, node: &mut Node, area: Rect) {
+        let (sizes, mut rect) = self.hor_sizes(area);
+
+        for (i, s) in sizes.iter().enumerate() {
+            let csize = min(*s, rect.width());
+            let crect = Rect::from_coords(
+                *rect.pos(),
+                Vec2::new(csize, rect.height()),
+            );
+
+            self.children[i].layout(&mut node.children[i], crect);
+            rect = rect.inner(Padding::left(csize));
+        }
+    }
+
     /// Renders layout
     fn ver_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
         _ = self.ver_fn(rect, cache, |e, r, c| {

@@ -7,7 +7,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
     prelude::MouseEvent,
-    widgets::cache::{Cache, LayoutNode},
+    widgets::{cache::Cache, layout::Node},
 };
 
 /// The result of processing a mouse event within a widget.
@@ -91,7 +91,7 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
     }
 
     /// Calculates the layout of the widget.
-    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+    fn layout(&self, node: &mut Node, area: Rect) {
         if !node.is_dirty && !node.has_dirty_child {
             return;
         }
@@ -227,7 +227,7 @@ impl<Message: Clone + 'static> Widget<Message> for Element<Message> {
         self.widget.layout_hash()
     }
 
-    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+    fn layout(&self, node: &mut Node, area: Rect) {
         self.widget.layout(node, area);
     }
 

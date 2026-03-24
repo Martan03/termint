@@ -13,8 +13,8 @@ use crate::{
     style::Style,
     text::Text,
     widgets::{
-        cache::{Cache, LayoutNode},
-        layout,
+        cache::Cache,
+        layout::{self, Node},
         span::Span,
         widget::EventResult,
     },
@@ -334,7 +334,7 @@ where
         hasher.finish()
     }
 
-    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+    fn layout(&self, node: &mut Node, area: Rect) {
         layout::padded(node, area, self.borders, |n, a| {
             self.child.layout(&mut n.children[0], a)
         });
