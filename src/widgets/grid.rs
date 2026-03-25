@@ -5,6 +5,7 @@ use crate::{
     geometry::{Rect, Unit, Vec2},
     widgets::{
         cache::{Cache, GridCache},
+        layout::Node,
         widget::EventResult,
     },
 };
@@ -189,6 +190,26 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
         self.cols.hash(&mut hasher);
 
         hasher.finish()
+    }
+
+    fn layout(&self, node: &mut Node, area: Rect) {
+        if !node.is_dirty && !node.has_dirty_child {
+            return;
+        }
+
+        node.area = area;
+        let (cols, cols_pos) = Self::get_size(&self.cols, area.width());
+        let (rows, rows_pos) = Self::get_size(&self.rows, area.height());
+
+        for (i, item) in self.children.iter().enumerate() {
+            let crect = Rect::new(
+                area.x() + cols_pos[item.col],
+                area.y() + rows_pos[item.row],
+                cols[item.col],
+                rows[item.row],
+            );
+            item.child.layout(&mut node.children[i], crect);
+        }
     }
 
     fn on_event(
