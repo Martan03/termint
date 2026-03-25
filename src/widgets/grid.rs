@@ -198,6 +198,9 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
         }
 
         node.area = area;
+        node.is_dirty = false;
+        node.has_dirty_child = false;
+
         let (cols, cols_pos) = Self::get_size(&self.cols, area.width());
         let (rows, rows_pos) = Self::get_size(&self.rows, area.height());
 

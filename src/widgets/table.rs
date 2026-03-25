@@ -14,6 +14,7 @@ use crate::{
     term::backend::{MouseButton, MouseEventKind},
     widgets::{
         cache::{Cache, TableCache},
+        layout::Node,
         widget::EventResult,
     },
 };
@@ -84,6 +85,13 @@ pub struct Table<M: 'static = ()> {
     handlers: Vec<(MouseButton, TableHandler<M>)>,
     on_scroll_ver: Option<Box<dyn Fn(isize) -> M>>,
     on_scroll_hor: Option<Box<dyn Fn(isize) -> M>>,
+}
+
+struct TableMetrics {
+    widths: Vec<usize>,
+    heights: Vec<usize>,
+    header_height: usize,
+    rect: Rect,
 }
 
 impl<M> Table<M> {
@@ -540,6 +548,68 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         hasher.finish()
     }
 
+    fn layout(&self, node: &mut Node, area: Rect) {
+        if !node.is_dirty && !node.has_dirty_child {
+            return;
+        }
+
+        node.area = area;
+        node.is_dirty = false;
+        node.has_dirty_child = false;
+        if area.is_empty() || self.rows.is_empty() {
+            return;
+        }
+
+        let metrics = self.calc_metrics(area);
+
+        let offset = self.state.borrow().offset;
+        let mut cur_y = metrics.rect.y();
+        let mut child_idx = 0;
+
+        if let Some(header_row) = &self.header {
+            let mut cur_x = metrics.rect.x();
+            for (col_idx, cell) in header_row.cells.iter().enumerate() {
+                if let Some(cnode) = node.children.get_mut(child_idx) {
+                    let cell_area = Rect::new(
+                        cur_x,
+                        metrics.rect.y() - metrics.header_height,
+                        metrics.widths[col_idx],
+                        metrics.header_height,
+                    );
+                    cell.layout(cnode, cell_area);
+                }
+                cur_x += metrics.widths[col_idx];
+                child_idx += 1;
+            }
+        }
+
+        for (i, row) in self.rows.iter().enumerate() {
+            let row_height = metrics.widths[i];
+
+            let is_visible = i >= offset && cur_y <= metrics.rect.bottom();
+            let mut cur_x = metrics.rect.x();
+
+            for (j, cell) in row.cells.iter().enumerate() {
+                let cnode = &mut node.children[child_idx];
+                if is_visible {
+                    let w = metrics.widths[j];
+                    let cell_area = Rect::new(cur_x, cur_y, w, row_height);
+                    cell.layout(cnode, cell_area);
+                    cur_x += w;
+                } else {
+                    cnode.area = Rect::default();
+                    cnode.is_dirty = false;
+                    cnode.has_dirty_child = false;
+                }
+                child_idx += 1;
+            }
+
+            if is_visible {
+                cur_y += row_height;
+            }
+        }
+    }
+
     fn on_event(
         &self,
         area: Rect,
@@ -608,6 +678,29 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 }
 
 impl<M: Clone + 'static> Table<M> {
+    fn calc_metrics(&self, area: Rect) -> TableMetrics {
+        let mut widths = self.calc_widths(area.width());
+        let mut header_height = self.calc_header_height(&area, &widths);
+        let mut inner_rect = area.inner(Padding::top(header_height));
+        let (mut heights, total) = self.calc_heights(&widths);
+
+        let scrollbar = self.force_scrollbar || inner_rect.height() < total;
+        if scrollbar {
+            inner_rect = area.inner(Padding::right(1));
+            widths = self.calc_widths(inner_rect.width());
+            header_height = self.calc_header_height(&inner_rect, &widths);
+            (heights, _) = self.calc_heights(&widths);
+            inner_rect = inner_rect.inner(Padding::top(header_height));
+        }
+
+        TableMetrics {
+            widths,
+            heights,
+            header_height,
+            rect: inner_rect,
+        }
+    }
+
     fn calc_header_height(&self, rect: &Rect, widths: &[usize]) -> usize {
         let mut header_height = self.header_separator.is_some() as usize;
         if let Some(header) = &self.header {
