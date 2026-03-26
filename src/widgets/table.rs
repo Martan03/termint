@@ -584,7 +584,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         }
 
         for (i, row) in self.rows.iter().enumerate() {
-            let row_height = metrics.widths[i];
+            let row_height = metrics.heights[i];
 
             let is_visible = i >= offset && cur_y <= metrics.rect.bottom();
             let mut cur_x = metrics.rect.x();
