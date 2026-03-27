@@ -4,6 +4,7 @@ use std::{
     hash::{DefaultHasher, Hash, Hasher},
     marker::PhantomData,
     rc::Rc,
+    usize,
 };
 
 use crate::{
@@ -11,7 +12,7 @@ use crate::{
     geometry::{Direction, Rect, Vec2},
     prelude::{KeyModifiers, MouseEvent},
     term::backend::MouseEventKind,
-    widgets::{cache::Cache, widget::EventResult},
+    widgets::{cache::Cache, layout::LayoutNode, widget::EventResult},
 };
 
 use super::{Element, Scrollbar, ScrollbarState, Widget};
@@ -260,17 +261,62 @@ where
     M: Clone + 'static,
     W: Widget<M>,
 {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        match (self.vertical.as_ref(), self.horizontal.as_ref()) {
-            (None, None) => {
-                self.child.render(buffer, rect, &mut cache.children[0])
-            }
-            (None, Some(hor)) => self.hor_render(buffer, &rect, cache, hor),
-            (Some(ver), None) => self.ver_render(buffer, &rect, cache, ver),
-            (Some(ver), Some(hor)) => {
-                self.both_render(buffer, &rect, cache, ver, hor)
-            }
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    ) {
+        if layout.area.is_empty() {
+            return;
         }
+
+        let child_node = &layout.children[0];
+        let ver_active = child_node.area.height() > layout.area.height();
+        let hor_active = child_node.area.width() > layout.area.width();
+
+        let mut viewport = layout.area;
+        if ver_active {
+            viewport.size.x = viewport.size.x.saturating_sub(1);
+        }
+        if hor_active {
+            viewport.size.y = viewport.size.y.saturating_sub(1);
+        }
+
+        let h = child_node.area.height();
+        let offset_y = Self::process_state(&self.ver_state, ver_active, h);
+        let w = child_node.area.height();
+        let offset_x = Self::process_state(&self.hor_state, hor_active, w);
+
+        let mut cid = 1;
+        let mut draw_scrollbar = |a: bool, e: &Option<Element<M>>, r: Rect| {
+            if a && let Some(e) = e {
+                let snode = &layout.children[cid];
+                Self::scrollbar(buffer, snode, &mut cache.children[cid], e, r);
+                cid += 1;
+            }
+        };
+
+        let vrect = Rect::new(
+            layout.area.right(),
+            layout.area.y(),
+            1,
+            viewport.height(),
+        );
+        draw_scrollbar(ver_active, &self.vertical, vrect);
+
+        let hrect = Rect::new(
+            layout.area.x(),
+            layout.area.bottom(),
+            viewport.width(),
+            1,
+        );
+        draw_scrollbar(hor_active, &self.horizontal, hrect);
+
+        let cnode = &mut cache.children[cid];
+        self.render_content(
+            buffer, viewport, child_node, cnode, offset_x, offset_y,
+        );
     }
 
     /// TODO both direction scrolling not correct
@@ -340,6 +386,72 @@ where
         hasher.finish()
     }
 
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
+        if !node.is_dirty && !node.has_dirty_child {
+            return;
+        }
+
+        node.area = area;
+        node.is_dirty = false;
+        node.has_dirty_child = false;
+
+        let has_ver = self.ver_state.is_some();
+        let has_hor = self.hor_state.is_some();
+        if !has_ver && !has_hor {
+            self.child.layout(&mut node.children[0], area);
+            return;
+        }
+
+        let mut size = area.size;
+        let mut ver_scroll = false;
+        let mut hor_scroll = false;
+        let calc_size = |size: &mut Vec2| {
+            if has_ver {
+                size.y = self.child.height(size);
+            }
+            if has_hor {
+                size.x = self.child.width(size);
+            }
+        };
+
+        let mut test_size = Vec2::new(
+            if has_hor { usize::MAX } else { size.x },
+            if has_ver { usize::MAX } else { size.y },
+        );
+        calc_size(&mut test_size);
+
+        if has_ver && test_size.y > size.y {
+            ver_scroll = true;
+            size.x = size.x.saturating_sub(1);
+        }
+
+        if has_hor && test_size.x > size.x {
+            hor_scroll = true;
+            size.y = size.y.saturating_sub(1);
+
+            if has_ver && !ver_scroll && test_size.y > size.y {
+                ver_scroll = true;
+                size.x = size.x.saturating_sub(1);
+            }
+        }
+
+        test_size = Vec2::new(
+            if has_hor { usize::MAX } else { size.x },
+            if has_ver { usize::MAX } else { size.y },
+        );
+        if ver_scroll || hor_scroll {
+            calc_size(&mut test_size);
+        }
+
+        let child_rect = Rect::new(
+            area.x(),
+            area.y(),
+            if hor_scroll { test_size.x } else { size.x },
+            if ver_scroll { test_size.y } else { size.y },
+        );
+        self.child.layout(&mut node.children[0], child_rect);
+    }
+
     fn on_event(
         &self,
         area: Rect,
@@ -360,120 +472,27 @@ where
     M: Clone + 'static,
     W: Widget<M>,
 {
-    /// Renders vertical scrollable
-    fn ver_render(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        cache: &mut Cache,
-        vertical: &Element<M>,
-    ) {
-        let Some(state) = &self.ver_state else {
-            return;
-        };
-
-        let mut size =
-            Vec2::new(rect.width().saturating_sub(1), rect.height());
-        size.y = self.child.height(&Vec2::new(size.x, usize::MAX));
-
-        let srect = Rect::new(rect.right(), rect.y(), 1, rect.height());
-        let ccache = &mut cache.children[1];
-        Self::scrollbar(buffer, ccache, vertical, state, srect, size.y);
-
-        let crect = Rect::new(
-            rect.x(),
-            rect.y() + state.get().offset,
-            size.x,
-            rect.height(),
-        );
-        self.render_content(buffer, rect, cache, size, crect);
-    }
-
-    /// Renders horizontal scrollable
-    fn hor_render(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        cache: &mut Cache,
-        horizontal: &Element<M>,
-    ) {
-        let Some(state) = &self.hor_state else {
-            return;
-        };
-
-        let mut size =
-            Vec2::new(rect.width(), rect.height().saturating_sub(1));
-        size.x = self.child.width(&Vec2::new(usize::MAX, size.y));
-
-        let srect = Rect::new(rect.x(), rect.bottom(), rect.width(), 1);
-        let ccache = &mut cache.children[1];
-        Self::scrollbar(buffer, ccache, horizontal, state, srect, size.x);
-
-        let crect = Rect::new(
-            rect.x() + state.get().offset,
-            rect.y(),
-            rect.width(),
-            size.y,
-        );
-        self.render_content(buffer, rect, cache, size, crect);
-    }
-
-    /// Renders the both directions scrollable
-    fn both_render(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        cache: &mut Cache,
-        vertical: &Element<M>,
-        horizontal: &Element<M>,
-    ) {
-        let (Some(ver_state), Some(hor_state)) =
-            (&self.ver_state, &self.hor_state)
-        else {
-            return;
-        };
-
-        let mut size = rect.size().saturating_sub((1, 1));
-        size.x = self.child.width(&Vec2::new(usize::MAX, size.y));
-        size.y = self.child.height(&Vec2::new(size.x, usize::MAX));
-
-        let height = rect.height().saturating_sub(1);
-        let mut crect = Rect::new(rect.right(), rect.y(), 1, height);
-        let ccache = &mut cache.children[1];
-        Self::scrollbar(buffer, ccache, vertical, ver_state, crect, size.y);
-
-        let width = rect.width().saturating_sub(1);
-        crect = Rect::new(rect.x(), rect.bottom(), width, 1);
-        let ccache = &mut cache.children[2];
-        Self::scrollbar(buffer, ccache, horizontal, hor_state, crect, size.x);
-
-        let mask = Rect::new(
-            rect.x() + hor_state.get().offset,
-            rect.y() + ver_state.get().offset,
-            width,
-            height,
-        );
-        self.render_content(buffer, rect, cache, size, mask);
-    }
-
     /// Renders the scrollable content
     fn render_content(
         &self,
         buffer: &mut Buffer,
-        rect: &Rect,
+        rect: Rect,
+        node: &LayoutNode,
         cache: &mut Cache,
-        size: Vec2,
-        mut mask: Rect,
+        offset_x: usize,
+        offset_y: usize,
     ) {
-        let crect = Rect::from_coords(*rect.pos(), size);
-        let mut cbuffer = Buffer::empty(crect);
+        let mut cbuffer = Buffer::empty(node.area);
 
-        let mut cutout = buffer.subset(*rect);
+        let mut mask = rect;
+        mask.pos.x += offset_x;
+        mask.pos.y += offset_y;
+
+        let mut cutout = buffer.subset(rect);
         cutout.move_to(*mask.pos());
         cbuffer.merge(cutout);
 
-        self.child
-            .render(&mut cbuffer, crect, &mut cache.children[0]);
+        self.child.render(&mut cbuffer, node, cache);
 
         mask = mask.intersection(cbuffer.rect());
         let mut cutout = cbuffer.subset(mask);
@@ -484,16 +503,32 @@ where
     /// Renders the scrollbar
     fn scrollbar(
         buffer: &mut Buffer,
+        layout: &LayoutNode,
         cache: &mut Cache,
         scroll: &Element<M>,
-        state: &Rc<Cell<ScrollbarState>>,
         rect: Rect,
-        size: usize,
     ) {
-        let mut s = state.get();
-        s.content_len = size;
-        state.set(s);
-        scroll.render(buffer, rect, cache);
+        let mut temp_node = layout.clone();
+        temp_node.area = rect;
+        scroll.render(buffer, &temp_node, cache);
+    }
+
+    fn process_state(
+        state: &Option<Rc<Cell<ScrollbarState>>>,
+        is_active: bool,
+        content_len: usize,
+    ) -> usize {
+        let Some(st) = state else {
+            return 0;
+        };
+
+        if is_active {
+            let mut s = st.get();
+            s.content_len = content_len;
+            st.set(s);
+        }
+
+        st.get().offset
     }
 
     fn handle_mouse(&self, area: Rect, event: &MouseEvent) -> EventResult<M> {
@@ -566,7 +601,7 @@ where
         size: usize,
         delta: isize,
     ) {
-        if let Some(ref state) = scrollbar {
+        if let Some(state) = &scrollbar {
             let s = state.get();
             state.set(s.offset(Self::get_offset(&s, delta, size)));
         };
