@@ -17,11 +17,11 @@ use crate::{
 
 use super::{widget::Widget, Element};
 
+mod layout_node;
 mod layouting;
-mod node;
 
+pub use layout_node::LayoutNode;
 pub use layouting::*;
-pub use node::Node;
 
 /// A container widget that arranges child widgets in a single direction
 /// (horizontal or vertical), flexing their sizes based on given constraints.
@@ -190,17 +190,16 @@ impl<M> Layout<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Layout<M> {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        self.render_base_style(buffer, &rect);
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    ) {
+        self.render_base_style(buffer, &layout.area);
 
-        let rect = rect.inner(self.padding);
-        if rect.is_empty() || self.children.is_empty() {
-            return;
-        }
-
-        match self.direction {
-            Direction::Vertical => self.ver_render(buffer, rect, cache),
-            Direction::Horizontal => self.hor_render(buffer, rect, cache),
+        for (i, child) in self.children.iter().enumerate() {
+            child.render(buffer, &layout.children[i], &mut cache.children[i]);
         }
     }
 
@@ -247,7 +246,7 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
         hasher.finish()
     }
 
-    fn layout(&self, node: &mut Node, area: Rect) {
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
         if !node.is_dirty && !node.has_dirty_child {
             return;
         }
@@ -302,7 +301,7 @@ impl<M> Default for Layout<M> {
 }
 
 impl<M: Clone + 'static> Layout<M> {
-    fn layout_ver(&self, node: &mut Node, area: Rect) {
+    fn layout_ver(&self, node: &mut LayoutNode, area: Rect) {
         let (sizes, mut rect) = self.ver_sizes(area);
 
         for (i, s) in sizes.iter().enumerate() {
@@ -315,7 +314,7 @@ impl<M: Clone + 'static> Layout<M> {
         }
     }
 
-    fn layout_hor(&self, node: &mut Node, area: Rect) {
+    fn layout_hor(&self, node: &mut LayoutNode, area: Rect) {
         let (sizes, mut rect) = self.hor_sizes(area);
 
         for (i, s) in sizes.iter().enumerate() {
@@ -328,14 +327,6 @@ impl<M: Clone + 'static> Layout<M> {
             self.children[i].layout(&mut node.children[i], crect);
             rect = rect.inner(Padding::left(csize));
         }
-    }
-
-    /// Renders layout
-    fn ver_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        _ = self.ver_fn(rect, cache, |e, r, c| {
-            e.render(buffer, r, c);
-            EventResult::None
-        });
     }
 
     fn ver_fn<F>(
@@ -367,14 +358,6 @@ impl<M: Clone + 'static> Layout<M> {
             rect = rect.inner(Padding::top(csize));
         }
         EventResult::None
-    }
-
-    /// Renders layout
-    fn hor_render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        _ = self.hor_fn(rect, cache, |e, r, c| {
-            e.render(buffer, r, c);
-            EventResult::None
-        });
     }
 
     fn hor_fn<F>(

@@ -10,7 +10,7 @@ use crate::{
     geometry::{Direction, Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
-    widgets::cache::Cache,
+    widgets::{cache::Cache, layout::LayoutNode},
 };
 
 use super::{widget::Widget, Element};
@@ -211,8 +211,8 @@ impl Grad {
 }
 
 impl<M: Clone + 'static> Widget<M> for Grad {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
-        _ = self.render_offset(buffer, rect, 0, None);
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode, _: &mut Cache) {
+        _ = self.render_offset(buffer, layout.area, 0, None);
     }
 
     fn layout_hash(&self) -> u64 {

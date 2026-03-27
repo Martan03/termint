@@ -1,7 +1,7 @@
 use crate::{
     buffer::Buffer,
-    geometry::{Rect, Vec2},
-    widgets::cache::Cache,
+    geometry::Vec2,
+    widgets::{cache::Cache, layout::LayoutNode},
 };
 
 use super::{widget::Widget, Element};
@@ -47,7 +47,7 @@ impl Spacer {
 }
 
 impl<M: Clone + 'static> Widget<M> for Spacer {
-    fn render(&self, _buffer: &mut Buffer, _rect: Rect, _cache: &mut Cache) {}
+    fn render(&self, _buffer: &mut Buffer, _l: &LayoutNode, _c: &mut Cache) {}
 
     fn height(&self, _size: &Vec2) -> usize {
         0

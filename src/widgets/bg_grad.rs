@@ -7,7 +7,7 @@ use crate::{
     prelude::MouseEvent,
     widgets::{
         cache::Cache,
-        layout::{self, Node},
+        layout::{self, LayoutNode},
         widget::EventResult,
     },
 };
@@ -207,7 +207,13 @@ impl<M> Widget<M> for BgGrad<M>
 where
     M: Clone + 'static,
 {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    ) {
+        let rect = layout.area;
         if rect.is_empty() {
             return;
         }
@@ -216,11 +222,8 @@ where
             Direction::Vertical => self.ver_render(buffer, &rect),
             Direction::Horizontal => self.hor_render(buffer, &rect),
         };
-        self.child.render(
-            buffer,
-            rect.inner(self.padding),
-            &mut cache.children[0],
-        );
+        self.child
+            .render(buffer, &layout.children[0], &mut cache.children[0]);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -249,7 +252,7 @@ where
         hasher.finish()
     }
 
-    fn layout(&self, node: &mut Node, area: Rect) {
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
         layout::padded(node, area, self.padding, |n, a| {
             self.child.layout(&mut n.children[0], a)
         });

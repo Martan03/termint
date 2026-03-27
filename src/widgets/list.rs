@@ -13,7 +13,7 @@ use crate::{
     style::Style,
     term::backend::{MouseButton, MouseEventKind},
     text::Text,
-    widgets::{cache::Cache, widget::EventResult, Span},
+    widgets::{cache::Cache, layout::LayoutNode, widget::EventResult, Span},
 };
 
 use super::{span::ToSpan, widget::Widget, Element};
@@ -355,7 +355,13 @@ impl ListState {
 }
 
 impl<M: Clone + 'static> Widget<M> for List<M> {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        _cache: &mut Cache,
+    ) {
+        let rect = layout.area;
         let mut text_pos =
             Vec2::new(rect.x() + self.highlight.len(), rect.y());
         let mut text_size =

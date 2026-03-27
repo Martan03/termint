@@ -14,7 +14,7 @@ use crate::{
     text::Text,
     widgets::{
         cache::Cache,
-        layout::{self, Node},
+        layout::{self, LayoutNode},
         span::Span,
         widget::EventResult,
     },
@@ -286,21 +286,22 @@ where
     M: Clone + 'static,
     W: Widget<M>,
 {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        let (t, r, b, l) = self.render_border(buffer, &rect);
-        let mut pos = Vec2::new(rect.x() + l, rect.y());
-        let mut size = Vec2::new(rect.width().saturating_sub(l + r), 1);
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    ) {
+        let rect = layout.area;
+        let (_, r, _, l) = self.render_border(buffer, &rect);
+        let pos = Vec2::new(rect.x() + l, rect.y());
+        let size = Vec2::new(rect.width().saturating_sub(l + r), 1);
 
         let trect = Rect::from_coords(pos, size);
         _ = self.title.render_offset(buffer, trect, 0, None);
 
-        pos.y += t;
-        size.y = rect.height().saturating_sub(t + b);
-        let crect = Rect::from_coords(pos, size);
-        if !rect.contains(&crect) {
-            return;
-        }
-        self.child.render(buffer, crect, &mut cache.children[0]);
+        self.child
+            .render(buffer, &layout.children[0], &mut cache.children[0]);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -334,7 +335,7 @@ where
         hasher.finish()
     }
 
-    fn layout(&self, node: &mut Node, area: Rect) {
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
         layout::padded(node, area, self.borders, |n, a| {
             self.child.layout(&mut n.children[0], a)
         });

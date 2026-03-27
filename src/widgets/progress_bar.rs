@@ -6,7 +6,7 @@ use crate::{
     prelude::MouseEvent,
     style::Style,
     term::backend::{MouseButton, MouseEventKind},
-    widgets::{cache::Cache, EventResult},
+    widgets::{cache::Cache, layout::LayoutNode, EventResult},
 };
 
 use super::{Element, Widget};
@@ -199,7 +199,13 @@ impl<M> ProgressBar<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for ProgressBar<M> {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        _cache: &mut Cache,
+    ) {
+        let rect = layout.area;
         if rect.is_empty() || self.thumb_chars.is_empty() {
             return;
         }

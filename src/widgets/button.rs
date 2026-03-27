@@ -8,7 +8,7 @@ use crate::{
     term::backend::{MouseButton, MouseEventKind},
     widgets::{
         cache::Cache,
-        layout::{self, Node},
+        layout::{self, LayoutNode},
         widget::EventResult,
         Element, Spacer, Widget,
     },
@@ -152,13 +152,15 @@ impl<M: Clone + 'static> Button<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Button<M> {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        buffer.set_area_style(self.style, rect);
-        self.child.render(
-            buffer,
-            rect.inner(self.padding),
-            &mut cache.children[0],
-        );
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    ) {
+        buffer.set_area_style(self.style, layout.area);
+        self.child
+            .render(buffer, &layout.children[0], &mut cache.children[0]);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -187,7 +189,7 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
         hasher.finish()
     }
 
-    fn layout(&self, node: &mut Node, area: Rect) {
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
         layout::padded(node, area, self.padding, |n, a| {
             self.child.layout(&mut n.children[0], a)
         });

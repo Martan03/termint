@@ -7,7 +7,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
     prelude::MouseEvent,
-    widgets::{cache::Cache, layout::Node},
+    widgets::{cache::Cache, layout::LayoutNode},
 };
 
 /// The result of processing a mouse event within a widget.
@@ -70,7 +70,12 @@ impl<M> EventResult<M> {
 pub trait Widget<Message: Clone + 'static = ()>: Any {
     /// Renders the widget into the given [`Buffer`](crate::buffer::Buffer)
     /// within the provided [`Rect`](crate::geometry::Rect) bounds.
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache);
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    );
 
     /// Returns the height of the [`Widget`](crate::widgets::Widget) based on
     /// the width of the given size.
@@ -91,7 +96,7 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
     }
 
     /// Calculates the layout of the widget.
-    fn layout(&self, node: &mut Node, area: Rect) {
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
         if !node.is_dirty && !node.has_dirty_child {
             return;
         }
@@ -207,8 +212,8 @@ impl<Message: Clone + 'static> Element<Message> {
 }
 
 impl<Message: Clone + 'static> Widget<Message> for Element<Message> {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        self.widget.render(buffer, rect, cache)
+    fn render(&self, buffer: &mut Buffer, l: &LayoutNode, c: &mut Cache) {
+        self.widget.render(buffer, l, c)
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -227,7 +232,7 @@ impl<Message: Clone + 'static> Widget<Message> for Element<Message> {
         self.widget.layout_hash()
     }
 
-    fn layout(&self, node: &mut Node, area: Rect) {
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
         self.widget.layout(node, area);
     }
 

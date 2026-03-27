@@ -2,7 +2,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
     prelude::MouseEvent,
-    widgets::{cache::Cache, widget::EventResult},
+    widgets::{cache::Cache, layout::LayoutNode, widget::EventResult},
 };
 
 use super::{Element, Widget};
@@ -84,11 +84,15 @@ impl<M> Overlay<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Overlay<M> {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        self.children
-            .iter()
-            .enumerate()
-            .for_each(|(i, c)| c.render(buffer, rect, &mut cache.children[i]));
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    ) {
+        self.children.iter().enumerate().for_each(|(i, c)| {
+            c.render(buffer, &layout.children[i], &mut cache.children[i])
+        });
     }
 
     fn height(&self, size: &Vec2) -> usize {

@@ -5,7 +5,7 @@ use crate::{
     geometry::{Rect, Unit, Vec2},
     widgets::{
         cache::{Cache, GridCache},
-        layout::Node,
+        layout::LayoutNode,
         widget::EventResult,
     },
 };
@@ -135,23 +135,18 @@ impl<M> Grid<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Grid<M> {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, cache: &mut Cache) {
-        if rect.is_empty() || self.children.is_empty() {
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        cache: &mut Cache,
+    ) {
+        if layout.area.is_empty() || self.children.is_empty() {
             return;
         }
 
-        let (cols, cols_pos, rows, rows_pos) = self.get_sizes(&rect, cache);
-
-        for (i, GridChild { child, row, col }) in
-            self.children.iter().enumerate()
-        {
-            let crect = Rect::new(
-                rect.x() + cols_pos[*col],
-                rect.y() + rows_pos[*row],
-                cols[*col],
-                rows[*row],
-            );
-            child.render(buffer, crect, &mut cache.children[i]);
+        for (i, GridChild { child, .. }) in self.children.iter().enumerate() {
+            child.render(buffer, &layout.children[i], &mut cache.children[i]);
         }
     }
 
@@ -192,7 +187,7 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
         hasher.finish()
     }
 
-    fn layout(&self, node: &mut Node, area: Rect) {
+    fn layout(&self, node: &mut LayoutNode, area: Rect) {
         if !node.is_dirty && !node.has_dirty_child {
             return;
         }

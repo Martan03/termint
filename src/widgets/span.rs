@@ -9,7 +9,7 @@ use crate::{
     geometry::{Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
-    widgets::cache::Cache,
+    widgets::{cache::Cache, layout::LayoutNode},
 };
 
 use super::{widget::Widget, Element};
@@ -218,8 +218,13 @@ impl Span {
 }
 
 impl<M: Clone + 'static> Widget<M> for Span {
-    fn render(&self, buffer: &mut Buffer, rect: Rect, _cache: &mut Cache) {
-        _ = self.render_offset(buffer, rect, 0, None);
+    fn render(
+        &self,
+        buffer: &mut Buffer,
+        layout: &LayoutNode,
+        _cache: &mut Cache,
+    ) {
+        _ = self.render_offset(buffer, layout.area, 0, None);
     }
 
     fn height(&self, size: &Vec2) -> usize {
