@@ -11,7 +11,10 @@ pub struct LayoutNode {
 impl LayoutNode {
     /// Constructs new [`LayoutNode`] recursively based on the given [`Widget`]
     /// tree.
-    pub fn new(widget: &dyn Widget) -> Self {
+    pub fn new<M>(widget: &dyn Widget<M>) -> Self
+    where
+        M: Clone + 'static,
+    {
         let children = widget.children();
         Self {
             area: Rect::default(),
@@ -21,7 +24,10 @@ impl LayoutNode {
         }
     }
 
-    pub fn diff(&mut self, old: &dyn Widget, new: &dyn Widget) {
+    pub fn diff<M>(&mut self, old: &dyn Widget<M>, new: &dyn Widget<M>)
+    where
+        M: Clone + 'static,
+    {
         if old.layout_hash() != new.layout_hash() {
             self.is_dirty = true;
         }
@@ -29,7 +35,8 @@ impl LayoutNode {
         let old_children = old.children();
         let new_children = new.children();
         if old_children.len() != new_children.len() {
-            self.children.resize(new_children.len(), LayoutNode::default());
+            self.children
+                .resize(new_children.len(), LayoutNode::default());
             self.is_dirty = true;
         }
 

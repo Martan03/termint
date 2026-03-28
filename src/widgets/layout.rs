@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use super::{widget::Widget, Element};
+use super::{Element, widget::Widget};
 
 mod layout_node;
 mod layouting;
@@ -247,7 +247,7 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child {
+        if !node.is_dirty && !node.has_dirty_child && node.area == area {
             return;
         }
 

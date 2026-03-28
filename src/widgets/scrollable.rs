@@ -387,7 +387,7 @@ where
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child {
+        if !node.is_dirty && !node.has_dirty_child && node.area == area {
             return;
         }
 

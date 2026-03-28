@@ -1,11 +1,12 @@
 use std::{cell::Cell, rc::Rc};
 
-use criterion::{black_box, criterion_group, Criterion};
+use criterion::{Criterion, black_box, criterion_group};
 use termint::{
     buffer::Buffer,
     geometry::{Constraint, Rect},
     widgets::{
-        cache::Cache, Element, Layout, Scrollbar, ScrollbarState, Widget,
+        Element, Layout, LayoutNode, Scrollbar, ScrollbarState, Widget,
+        cache::Cache,
     },
 };
 
@@ -29,12 +30,13 @@ fn scrollbar_no_cache_render(c: &mut Criterion) {
     let layout: Element = layout.into();
     c.bench_function("scrollbar_no_cache_render", |b| {
         b.iter(|| {
+            let node = LayoutNode::new(&layout);
             let mut cache = Cache::new();
             cache.diff(&layout);
 
             layout.render(
                 black_box(&mut buffer.clone()),
-                black_box(rect),
+                black_box(&node),
                 black_box(&mut cache),
             );
         });

@@ -1,14 +1,14 @@
-use std::{cell::Cell, rc::Rc};
+// use std::{cell::Cell, rc::Rc};
 
-use termint::{
-    buffer::Buffer,
-    enums::{BorderType, Color},
-    geometry::{Constraint, Rect, Unit, Vec2},
-    widgets::{
-        cache::Cache, Block, Element, Grad, Grid, Layout, Scrollable,
-        Scrollbar, ScrollbarState, ToSpan, Widget,
-    },
-};
+// use termint::{
+//     buffer::Buffer,
+//     enums::{BorderType, Color},
+//     geometry::{Constraint, Rect, Unit, Vec2},
+//     widgets::{
+//         Block, Element, Grad, Grid, Layout, Scrollable, Scrollbar,
+//         ScrollbarState, ToSpan, Widget, cache::Cache,
+//     },
+// };
 
 fn main() {
     // test_block();
@@ -25,70 +25,70 @@ fn main() {
     // diff_render_test();
     // merge_test();
     // scrollbar_test();
-    scrollable_test();
+    // scrollable_test();
 }
 
-#[allow(unused)]
-fn test_block() {
-    let mut block = Block::horizontal().title("Not easy");
+// #[allow(unused)]
+// fn test_block() {
+//     let mut block = Block::horizontal().title("Not easy");
 
-    let block1 = Block::vertical().title("Test");
-    let mut block2 = Block::vertical();
-    let grad =
-        Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
-    block2.push(grad, Constraint::Percent(100));
-    let block3 = Block::vertical().title(Grad::new(
-        "Test",
-        (100, 200, 100),
-        (20, 160, 255),
-    ));
+//     let block1 = Block::vertical().title("Test");
+//     let mut block2 = Block::vertical();
+//     let grad =
+//         Grad::new("This is just a basic test", (0, 220, 255), (175, 80, 255));
+//     block2.push(grad, Constraint::Percent(100));
+//     let block3 = Block::vertical().title(Grad::new(
+//         "Test",
+//         (100, 200, 100),
+//         (20, 160, 255),
+//     ));
 
-    block.push(block1, 0..);
-    block.push(block2, 0..);
-    block.push(block3, Constraint::Fill(1));
+//     block.push(block1, 0..);
+//     block.push(block2, 0..);
+//     block.push(block3, Constraint::Fill(1));
 
-    let block: Element = block.into();
-    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
-    let mut buffer = Buffer::empty(rect);
+//     let block: Element = block.into();
+//     let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 9));
+//     let mut buffer = Buffer::empty(rect);
 
-    let mut cache = Cache::new();
-    cache.diff(&block);
-    block.render(&mut buffer, rect, &mut cache);
-    buffer.render();
+//     let mut cache = Cache::new();
+//     cache.diff(&block);
+//     block.render(&mut buffer, rect, &mut cache);
+//     buffer.render();
 
-    // println!("\x1b[7B");
-}
+//     // println!("\x1b[7B");
+// }
 
-#[allow(unused)]
-fn test_layout() {
-    println!("\x1b[2J");
-    let mut main = Block::horizontal()
-        .title("Termite".fg(Color::Red))
-        .border_type(BorderType::Double)
-        .border_color(Color::LightGray)
-        .padding((0, 1));
+// #[allow(unused)]
+// fn test_layout() {
+//     println!("\x1b[2J");
+//     let mut main = Block::horizontal()
+//         .title("Termite".fg(Color::Red))
+//         .border_type(BorderType::Double)
+//         .border_color(Color::LightGray)
+//         .padding((0, 1));
 
-    let mut block1 = Block::vertical().title("Sub block");
-    let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
-    block1.push(span1, Constraint::Percent(100));
-    main.push(block1, Constraint::Percent(50));
+//     let mut block1 = Block::vertical().title("Sub block");
+//     let span1 = "I like it!".fg(Color::Green).bg(Color::Yellow);
+//     block1.push(span1, Constraint::Percent(100));
+//     main.push(block1, Constraint::Percent(50));
 
-    let mut block2 = Block::vertical().title("Another");
-    let span2 =
-        "This is really cool, right? This is the best place for testing"
-            .fg(Color::Blue);
-    block2.push(span2, Constraint::Percent(100));
-    main.push(block2, Constraint::Percent(50));
+//     let mut block2 = Block::vertical().title("Another");
+//     let span2 =
+//         "This is really cool, right? This is the best place for testing"
+//             .fg(Color::Blue);
+//     block2.push(span2, Constraint::Percent(100));
+//     main.push(block2, Constraint::Percent(50));
 
-    let main: Element = main.into();
-    let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8));
-    let mut buffer = Buffer::empty(rect);
+//     let main: Element = main.into();
+//     let rect = Rect::from_coords(Vec2::new(1, 1), Vec2::new(30, 8));
+//     let mut buffer = Buffer::empty(rect);
 
-    let mut cache = Cache::new();
-    cache.diff(&main);
-    main.render(&mut buffer, rect, &mut cache);
-    buffer.render();
-}
+//     let mut cache = Cache::new();
+//     cache.diff(&main);
+//     main.render(&mut buffer, rect, &mut cache);
+//     buffer.render();
+// }
 
 // #[allow(unused)]
 // fn test_grad() {
@@ -273,28 +273,28 @@ fn test_layout() {
 //     term.render(layout);
 // }
 
-#[allow(unused)]
-fn grid_test() {
-    let mut grid = Grid::<()>::new(
-        vec![Unit::Length(3), Unit::Length(4), Unit::Fill(1)],
-        vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
-    );
+// #[allow(unused)]
+// fn grid_test() {
+//     let mut grid = Grid::<()>::new(
+//         vec![Unit::Length(3), Unit::Length(4), Unit::Fill(1)],
+//         vec![Unit::Fill(1), Unit::Length(1), Unit::Fill(1)],
+//     );
 
-    grid.push(Block::vertical(), 1, 0);
-    grid.push(Block::vertical(), 0, 1);
-    grid.push(Block::vertical(), 1, 2);
-    grid.push(Block::vertical(), 2, 1);
-    grid.push("Grid", 1, 1);
+//     grid.push(Block::vertical(), 1, 0);
+//     grid.push(Block::vertical(), 0, 1);
+//     grid.push(Block::vertical(), 1, 2);
+//     grid.push(Block::vertical(), 2, 1);
+//     grid.push("Grid", 1, 1);
 
-    let rect = Rect::new(1, 1, 15, 6);
-    let mut buffer = Buffer::empty(rect);
-    let grid = grid.into();
+//     let rect = Rect::new(1, 1, 15, 6);
+//     let mut buffer = Buffer::empty(rect);
+//     let grid = grid.into();
 
-    let mut cache = Cache::new();
-    cache.diff(&grid);
-    grid.render(&mut buffer, rect, &mut cache);
-    buffer.render();
-}
+//     let mut cache = Cache::new();
+//     cache.diff(&grid);
+//     grid.render(&mut buffer, rect, &mut cache);
+//     buffer.render();
+// }
 
 // #[allow(unused)]
 // fn diff_render_test() {
@@ -367,71 +367,71 @@ fn grid_test() {
 //     buffer.render();
 // }
 
-#[allow(unused)]
-fn scrollbar_test() {
-    println!("\x1b[2J");
+// #[allow(unused)]
+// fn scrollbar_test() {
+//     println!("\x1b[2J");
 
-    let state = Rc::new(Cell::new(ScrollbarState::new(5).content_len(30)));
+//     let state = Rc::new(Cell::new(ScrollbarState::new(5).content_len(30)));
 
-    let vertical = Scrollbar::<()>::vertical(state.clone());
-    let horizontal = Scrollbar::horizontal(state.clone());
+//     let vertical = Scrollbar::<()>::vertical(state.clone());
+//     let horizontal = Scrollbar::horizontal(state.clone());
 
-    let mut grid = Grid::new(
-        vec![Unit::Fill(1), Unit::Length(1)],
-        vec![Unit::Fill(1), Unit::Length(1)],
-    );
-    grid.push(vertical, 1, 0);
-    grid.push(horizontal, 0, 1);
+//     let mut grid = Grid::new(
+//         vec![Unit::Fill(1), Unit::Length(1)],
+//         vec![Unit::Fill(1), Unit::Length(1)],
+//     );
+//     grid.push(vertical, 1, 0);
+//     grid.push(horizontal, 0, 1);
 
-    let rect = Rect::new(1, 1, 12, 7);
-    let mut buffer = Buffer::empty(rect);
-    let grid = grid.into();
+//     let rect = Rect::new(1, 1, 12, 7);
+//     let mut buffer = Buffer::empty(rect);
+//     let grid = grid.into();
 
-    let mut cache = Cache::new();
-    cache.diff(&grid);
-    grid.render(&mut buffer, rect, &mut cache);
-    buffer.render();
-}
+//     let mut cache = Cache::new();
+//     cache.diff(&grid);
+//     grid.render(&mut buffer, rect, &mut cache);
+//     buffer.render();
+// }
 
-#[allow(unused)]
-fn scrollable_test() {
-    println!("\x1b[2J");
+// #[allow(unused)]
+// fn scrollable_test() {
+//     println!("\x1b[2J");
 
-    // Widget to wrap scrollable around
-    let span = "Long text that cannot fit so scrolling is needed".to_span();
-    // Scrollable state containing offset
-    let state = Rc::new(Cell::new(ScrollbarState::new(2)));
-    // Creates scrollable widget with vertical scrolling
-    let scrollable = Scrollable::<(), Layout>::vertical(span, state);
-    // Renders using the buffer
-    let rect = Rect::new(1, 1, 9, 5);
-    let mut buffer = Buffer::empty(rect);
-    let scrollable = scrollable.into();
+//     // Widget to wrap scrollable around
+//     let span = "Long text that cannot fit so scrolling is needed".to_span();
+//     // Scrollable state containing offset
+//     let state = Rc::new(Cell::new(ScrollbarState::new(2)));
+//     // Creates scrollable widget with vertical scrolling
+//     let scrollable = Scrollable::<(), Layout>::vertical(span, state);
+//     // Renders using the buffer
+//     let rect = Rect::new(1, 1, 9, 5);
+//     let mut buffer = Buffer::empty(rect);
+//     let scrollable = scrollable.into();
 
-    let mut cache = Cache::new();
-    cache.diff(&scrollable);
-    scrollable.render(&mut buffer, rect, &mut cache);
-    buffer.render();
+//     let mut cache = Cache::new();
+//     cache.diff(&scrollable);
+//     scrollable.render(&mut buffer, rect, &mut cache);
+//     buffer.render();
 
-    // let mut layout = Layout::horizontal();
-    // layout.push("Test", Constraint::Length(20));
+// let mut layout = Layout::horizontal();
+// layout.push("Test", Constraint::Length(20));
 
-    // let mut bg = BgGrad::vertical((10, 250, 30), (200, 60, 120))
-    //     .child(Layout::vertical());
-    // bg.push(layout, Constraint::Length(10));
+// let mut bg = BgGrad::vertical((10, 250, 30), (200, 60, 120))
+//     .child(Layout::vertical());
+// bg.push(layout, Constraint::Length(10));
 
-    // let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
-    // let hstate = Rc::new(Cell::new(ScrollbarState::new(10)));
-    // let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
+// let vstate = Rc::new(Cell::new(ScrollbarState::new(3)));
+// let hstate = Rc::new(Cell::new(ScrollbarState::new(10)));
+// let scrollable = Scrollable::both(bg, vstate.clone(), hstate.clone());
 
-    // // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));
-    // // let scrollable = Scrollable::horizontal(
-    // //     "This is a test of new widget with very long text".to_span(),
-    // //     vstate.clone(),
-    // // );
+// // let vstate = Rc::new(Cell::new(ScrollbarState::new(2)));
+// // let scrollable = Scrollable::horizontal(
+// //     "This is a test of new widget with very long text".to_span(),
+// //     vstate.clone(),
+// // );
 
-    // let rect = Rect::new(1, 1, 10, 5);
-    // let mut buffer = Buffer::empty(rect);
-    // scrollable.render(&mut buffer, rect);
-    // buffer.render();
-}
+// let rect = Rect::new(1, 1, 10, 5);
+// let mut buffer = Buffer::empty(rect);
+// scrollable.render(&mut buffer, rect);
+// buffer.render();
+// }

@@ -4,7 +4,7 @@ use crate::{
     widgets::{cache::Cache, layout::LayoutNode},
 };
 
-use super::{widget::Widget, Element};
+use super::{Element, widget::Widget};
 
 /// A spacer widget used for layout spacing.
 ///
@@ -36,7 +36,7 @@ use super::{widget::Widget, Element};
 /// layout.push("Bottom Widget", Constraint::Min(0));
 /// ```
 #[derive(Debug, Default)]
-pub struct Spacer {}
+pub struct Spacer;
 
 impl Spacer {
     /// Creates a new spacer widget.

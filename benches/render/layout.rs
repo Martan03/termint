@@ -1,8 +1,8 @@
-use criterion::{black_box, criterion_group, Criterion};
+use criterion::{Criterion, black_box, criterion_group};
 use termint::{
     buffer::Buffer,
     geometry::Rect,
-    widgets::{cache::Cache, Element, Layout, Widget},
+    widgets::{Element, Layout, LayoutNode, Widget, cache::Cache},
 };
 
 fn layout_cache_render(c: &mut Criterion) {
@@ -16,15 +16,17 @@ fn layout_cache_render(c: &mut Criterion) {
     let mut cache = Cache::new();
 
     let layout: Element = layout.into();
+    let mut node = LayoutNode::new(&layout);
     cache.diff(&layout);
-    layout.render(&mut buffer.clone(), rect, &mut cache);
+    layout.render(&mut buffer.clone(), &node, &mut cache);
 
     c.bench_function("layout_cache_render", |b| {
         b.iter(|| {
+            node.diff(&layout, &layout);
             cache.diff(&layout);
             layout.render(
                 black_box(&mut buffer.clone()),
-                black_box(rect),
+                black_box(&node),
                 black_box(&mut cache),
             );
         });
@@ -43,12 +45,13 @@ fn layout_no_cache_render(c: &mut Criterion) {
     let layout: Element = layout.into();
     c.bench_function("layout_no_cache_render", |b| {
         b.iter(|| {
+            let node = LayoutNode::new(&layout);
             let mut cache = Cache::new();
             cache.diff(&layout);
 
             layout.render(
                 black_box(&mut buffer.clone()),
-                black_box(rect),
+                black_box(&node),
                 black_box(&mut cache),
             );
         });

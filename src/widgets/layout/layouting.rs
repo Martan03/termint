@@ -12,7 +12,7 @@ pub fn padded<P, F>(
     P: Into<Padding>,
     F: FnMut(&mut LayoutNode, Rect),
 {
-    if !node.is_dirty && !node.has_dirty_child {
+    if !node.is_dirty && !node.has_dirty_child && node.area == area {
         return;
     }
 

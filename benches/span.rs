@@ -1,8 +1,8 @@
-use criterion::{black_box, criterion_group, Criterion};
+use criterion::{Criterion, black_box, criterion_group};
 use termint::{
     buffer::Buffer,
     geometry::Rect,
-    widgets::{cache::Cache, Element, ToSpan, Widget},
+    widgets::{Element, LayoutNode, ToSpan, Widget, cache::Cache},
 };
 
 fn benchmark_span(c: &mut Criterion) {
@@ -31,6 +31,8 @@ Nostra quisque tellus orci natoque malesuada. Sed feugiat cubilia sed consequat 
         .to_span();
 
     let lorem: Element<()> = lorem.into();
+
+    let layout = LayoutNode::new(&lorem);
     let mut cache = Cache::new();
     cache.diff(&lorem);
 
@@ -38,7 +40,7 @@ Nostra quisque tellus orci natoque malesuada. Sed feugiat cubilia sed consequat 
         b.iter(|| {
             lorem.render(
                 black_box(&mut buffer.clone()),
-                black_box(rect),
+                black_box(&layout),
                 black_box(&mut cache),
             )
         });

@@ -46,11 +46,7 @@ impl<M> EventResult<M> {
     where
         F: FnOnce() -> Self,
     {
-        if self.is_none() {
-            f()
-        } else {
-            self
-        }
+        if self.is_none() { f() } else { self }
     }
 }
 
@@ -97,7 +93,7 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
 
     /// Calculates the layout of the widget.
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child {
+        if !node.is_dirty && !node.has_dirty_child && node.area == area {
             return;
         }
 

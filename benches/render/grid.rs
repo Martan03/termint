@@ -1,8 +1,8 @@
-use criterion::{black_box, criterion_group, Criterion};
+use criterion::{Criterion, black_box, criterion_group};
 use termint::{
     buffer::Buffer,
     geometry::{Rect, Unit},
-    widgets::{cache::Cache, Element, Grid, Spacer, Widget},
+    widgets::{Element, Grid, LayoutNode, Spacer, Widget, cache::Cache},
 };
 
 fn grid_cache_render(c: &mut Criterion) {
@@ -24,15 +24,17 @@ fn grid_cache_render(c: &mut Criterion) {
     let mut cache = Cache::new();
 
     let grid: Element = grid.into();
+    let mut layout = LayoutNode::new(&grid);
     cache.diff(&grid);
-    grid.render(&mut buffer.clone(), rect, &mut cache);
+    grid.render(&mut buffer.clone(), &layout, &mut cache);
 
     c.bench_function("grid_cache_render", |b| {
         b.iter(|| {
+            layout.diff(&grid, &grid);
             cache.diff(&grid);
             grid.render(
                 black_box(&mut buffer.clone()),
-                black_box(rect),
+                black_box(&layout),
                 black_box(&mut cache),
             );
         });
@@ -59,11 +61,12 @@ fn grid_no_cache_render(c: &mut Criterion) {
     let grid: Element = grid.into();
     c.bench_function("grid_no_cache_render", |b| {
         b.iter(|| {
+            let layout = LayoutNode::new(&grid);
             let mut cache = Cache::new();
             cache.diff(&grid);
             grid.render(
                 black_box(&mut buffer.clone()),
-                black_box(rect),
+                black_box(&layout),
                 black_box(&mut cache),
             );
         });

@@ -75,7 +75,7 @@ pub use block::Block;
 pub use button::Button;
 pub use grad::Grad;
 pub use grid::Grid;
-pub use layout::Layout;
+pub use layout::*;
 pub use list::{List, ListState};
 pub use overlay::Overlay;
 pub use paragraph::Paragraph;

@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-use super::{widget::Widget, Element};
+use super::{Element, widget::Widget};
 
 /// A layout widget that arranges children in a grid specified by rows and
 /// columns.
@@ -188,7 +188,7 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child {
+        if !node.is_dirty && !node.has_dirty_child && node.area == area {
             return;
         }
 

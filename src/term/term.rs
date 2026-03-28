@@ -1,5 +1,5 @@
 use std::{
-    io::{stdout, Write},
+    io::{Write, stdout},
     panic::{set_hook, take_hook},
     sync::Once,
     time::Instant,
@@ -19,12 +19,14 @@ use crate::{
     geometry::{Padding, Rect, Vec2},
     prelude::MouseEvent,
     term::{
+        Action, Application, Frame,
         backend::{Backend, DefaultBackend, Event, NoBackend},
         disable_bracketed_paste, disable_mouse_capture,
-        enable_bracketed_paste, enable_mouse_capture, Action, Application,
-        Frame,
+        enable_bracketed_paste, enable_mouse_capture,
     },
-    widgets::{cache::Cache, Element, EventResult, Widget},
+    widgets::{
+        Element, EventResult, LayoutNode, Spacer, Widget, cache::Cache,
+    },
 };
 
 static HOOK_SET: Once = Once::new();
@@ -85,6 +87,7 @@ pub struct Term<M: 'static = (), B = NoBackend> {
     prev: Option<Buffer>,
     prev_widget: Option<Element<M>>,
     small: Option<Element<M>>,
+    layout: LayoutNode,
     cache: Cache,
     padding: Padding,
     setuped: bool,
@@ -117,6 +120,7 @@ impl<M, B> Term<M, B> {
             prev: None,
             prev_widget: None,
             small: None,
+            layout: LayoutNode::default(),
             cache: Cache::default(),
             padding: Padding::default(),
             setuped: false,
@@ -396,17 +400,24 @@ where
 {
     fn render_widget(&mut self, widget: Element<M>, rect: Rect) {
         let mut buffer = Buffer::empty(rect);
+
+        let dummy: Element<M> = Spacer::new().into();
+        let prev = self.prev_widget.as_ref().unwrap_or(&dummy);
         match &self.small {
             Some(small)
                 if rect.width() < widget.width(rect.size())
                     || rect.height() < widget.height(rect.size()) =>
             {
+                self.layout.diff(prev, small);
+                small.layout(&mut self.layout, rect);
                 self.cache.diff(small);
-                small.render(&mut buffer, rect, &mut self.cache);
+                small.render(&mut buffer, &self.layout, &mut self.cache);
             }
             _ => {
+                self.layout.diff(prev, &widget);
+                widget.layout(&mut self.layout, rect);
                 self.cache.diff(&widget);
-                widget.render(&mut buffer, rect, &mut self.cache);
+                widget.render(&mut buffer, &self.layout, &mut self.cache);
             }
         };
 
@@ -443,6 +454,7 @@ impl<M> Default for Term<M, DefaultBackend> {
             prev: Default::default(),
             prev_widget: Default::default(),
             small: Default::default(),
+            layout: Default::default(),
             cache: Default::default(),
             padding: Default::default(),
             setuped: false,
