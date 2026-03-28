@@ -88,7 +88,7 @@ impl<M> Scrollbar<M> {
     ///
     /// # Example
     /// ```rust
-    /// use termint::prelude::*;
+    /// use termint::widgets::Scrollbar;
     /// use std::{cell::Cell, rc::Rc};
     ///
     /// let scrollbar = Scrollbar::<()>::vertical(Default::default());
@@ -107,7 +107,7 @@ impl<M> Scrollbar<M> {
     ///
     /// # Example
     /// ```rust
-    /// use termint::prelude::*;
+    /// use termint::widgets::Scrollbar;
     /// use std::{cell::Cell, rc::Rc};
     ///
     /// let scrollbar = Scrollbar::<()>::horizontal(Default::default());

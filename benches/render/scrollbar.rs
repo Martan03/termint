@@ -6,7 +6,6 @@ use termint::{
     geometry::{Constraint, Rect},
     widgets::{
         Element, Layout, LayoutNode, Scrollbar, ScrollbarState, Widget,
-        cache::Cache,
     },
 };
 
@@ -31,14 +30,7 @@ fn scrollbar_no_cache_render(c: &mut Criterion) {
     c.bench_function("scrollbar_no_cache_render", |b| {
         b.iter(|| {
             let node = LayoutNode::new(&layout);
-            let mut cache = Cache::new();
-            cache.diff(&layout);
-
-            layout.render(
-                black_box(&mut buffer.clone()),
-                black_box(&node),
-                black_box(&mut cache),
-            );
+            layout.render(black_box(&mut buffer.clone()), black_box(&node));
         });
     });
 }

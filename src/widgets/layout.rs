@@ -242,9 +242,10 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
         }
 
         node.area = area;
+        let rect = area.inner(self.padding);
         match self.direction {
-            Direction::Vertical => self.layout_ver(node, area),
-            Direction::Horizontal => self.layout_hor(node, area),
+            Direction::Vertical => self.layout_ver(node, rect),
+            Direction::Horizontal => self.layout_hor(node, rect),
         };
 
         node.is_dirty = false;

@@ -7,18 +7,18 @@ mod tests {
         enums::{BorderType, Color, Modifier},
         geometry::Rect,
         style::Style,
-        widgets::{cache::Cache, Block, Element, Widget},
+        widgets::{Block, Element, LayoutNode, Widget},
     };
 
     #[test]
     fn border_title_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let bg: Element<()> = Block::empty().title("Test").into();
-        cache.diff(&bg);
-        bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
+        let mut layout = LayoutNode::new(&bg);
+        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &layout);
 
         let expected = formatc!(
             "          \n  ┌Test─┐ \n  │     │ \n  │     │ \n  └─────┘ {'_}"
@@ -30,15 +30,15 @@ mod tests {
     fn styled_border_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let style = Style::new()
             .fg(Color::Cyan)
             .bg(Color::Black)
             .modifier(Modifier::BOLD);
         let bg: Element<()> = Block::empty().border_style(style).into();
-        cache.diff(&bg);
-        bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
+        let mut layout = LayoutNode::new(&bg);
+        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &layout);
 
         let expected = formatc!(
             "          \n  {style}┌─────┐\x1b[0m \n  {style}│\x1b[0m     \
@@ -52,12 +52,12 @@ mod tests {
     fn border_type_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let bg: Element<()> =
             Block::empty().border_type(BorderType::Double).into();
-        cache.diff(&bg);
-        bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
+        let mut layout = LayoutNode::new(&bg);
+        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &layout);
 
         let expected = formatc!(
             "          \n  ╔═════╗ \n  ║     ║ \n  ║     ║ \n  ╚═════╝ {'_}"
@@ -69,12 +69,12 @@ mod tests {
     fn border_side_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let bg: Element<()> =
             Block::empty().borders(borders!(TOP, LEFT)).into();
-        cache.diff(&bg);
-        bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
+        let mut layout = LayoutNode::new(&bg);
+        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &layout);
 
         let expected = formatc!(
             "          \n  ┌────── \n  │       \n  │       \n  │       {'_}"
@@ -86,11 +86,11 @@ mod tests {
     fn content_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let bg: Element<()> = Block::vertical().bg(Color::Red).into();
-        cache.diff(&bg);
-        bg.render(&mut buffer, Rect::new(3, 2, 7, 4), &mut cache);
+        let mut layout = LayoutNode::new(&bg);
+        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &layout);
 
         let expected = formatc!(
             "          \n  ┌─────┐ \n  │{}     {}│ \n  │{}     {}│ \n  \

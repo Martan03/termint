@@ -24,7 +24,7 @@ use crate::{
 ///
 /// There are multiple ways to create a [`Span`].
 /// ```rust
-/// use termint::prelude::*;
+/// use termint::{prelude::*, modifiers};
 ///
 /// // Using `new` constructor with red foreground:
 /// let span = Span::new("Red text").fg(Color::Red);
@@ -150,7 +150,7 @@ impl Span {
     ///
     /// # Example
     /// ```rust
-    /// use termint::prelude::*
+    /// use termint::prelude::*;
     ///
     /// let span = Span::new("add_modifier")
     ///     // Sets modifiers to bold.

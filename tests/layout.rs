@@ -5,18 +5,18 @@ mod tests {
         buffer::Buffer,
         enums::Color,
         geometry::{Constraint, Rect},
-        widgets::{cache::Cache, Element, Layout, Widget},
+        widgets::{Element, Layout, LayoutNode, Widget},
     };
 
     #[test]
     fn background_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let layout: Element<()> = Layout::vertical().bg(Color::Red).into();
-        cache.diff(&layout);
-        layout.render(&mut buffer, Rect::new(3, 2, 6, 3), &mut cache);
+        let mut node = LayoutNode::new(&layout);
+        layout.layout(&mut node, Rect::new(3, 2, 6, 3));
+        layout.render(&mut buffer, &node);
 
         let bg =
             format!("{}      {}", Color::Red.to_bg(), Color::Default.to_bg());
@@ -30,14 +30,14 @@ mod tests {
     fn padding_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let mut layout = Layout::vertical().padding((1, 2, 2, 3));
         layout.push(Layout::vertical().bg(Color::Red), Constraint::Fill(1));
         let layout: Element<()> = layout.into();
 
-        cache.diff(&layout);
-        layout.render(&mut buffer, rect, &mut cache);
+        let mut node = LayoutNode::new(&layout);
+        layout.layout(&mut node, rect);
+        layout.render(&mut buffer, &node);
 
         let bg =
             format!("{}     {}", Color::Red.to_bg(), Color::Default.to_bg());
@@ -51,7 +51,6 @@ mod tests {
     fn center_render() {
         let rect = Rect::new(1, 1, 10, 5);
         let mut buffer = Buffer::empty(rect);
-        let mut cache = Cache::new();
 
         let mut layout = Layout::horizontal().center();
         let mut inner = Layout::vertical().center();
@@ -59,8 +58,9 @@ mod tests {
         layout.push(inner, Constraint::Length(2));
 
         let layout: Element<()> = layout.into();
-        cache.diff(&layout);
-        layout.render(&mut buffer, rect, &mut cache);
+        let mut node = LayoutNode::new(&layout);
+        layout.layout(&mut node, rect);
+        layout.render(&mut buffer, &node);
 
         let bg = format!("{}  {}", Color::Red.to_bg(), Color::Default.to_bg());
         let expected = formatc!(

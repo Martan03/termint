@@ -2,7 +2,7 @@ use criterion::{Criterion, black_box, criterion_group};
 use termint::{
     buffer::Buffer,
     geometry::Rect,
-    widgets::{Element, LayoutNode, ToSpan, Widget, cache::Cache},
+    widgets::{Element, LayoutNode, ToSpan, Widget},
 };
 
 fn benchmark_span(c: &mut Criterion) {
@@ -33,16 +33,10 @@ Nostra quisque tellus orci natoque malesuada. Sed feugiat cubilia sed consequat 
     let lorem: Element<()> = lorem.into();
 
     let layout = LayoutNode::new(&lorem);
-    let mut cache = Cache::new();
-    cache.diff(&lorem);
 
     c.bench_function("span_render", |b| {
         b.iter(|| {
-            lorem.render(
-                black_box(&mut buffer.clone()),
-                black_box(&layout),
-                black_box(&mut cache),
-            )
+            lorem.render(black_box(&mut buffer.clone()), black_box(&layout))
         });
     });
 }

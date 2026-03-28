@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    io::{stdout, Write},
+    io::{Write, stdout},
     ops::{Index, IndexMut},
 };
 
@@ -26,21 +26,20 @@ use super::cell::Cell;
 /// ```rust
 /// # use termint::{
 /// #     buffer::Buffer,
-/// #     widgets::{Block, Widget, Layout, cache::Cache},
+/// #     widgets::{Spacer, LayoutNode, Element, Widget},
 /// #     geometry::Rect,
 /// # };
-/// # fn get_your_widget() -> Block<(), Layout<()>> { Block::vertical() }
+/// # fn get_your_element() -> Element<()> { Spacer.into() }
 /// // Creates new buffer with desired position and size given by the [`Rect`]
 /// let rect = Rect::new(1, 1, 20, 9);
 /// let mut buffer = Buffer::empty(rect);
 ///
-/// // Gets widget and renders it to the [`Buffer`]
-/// let widget = get_your_widget().into();
+/// // Gets element and renders it to the [`Buffer`]
+/// let element = get_your_element();
 ///
-/// let mut cache = Cache::new();
-/// cache.diff(&widget);
-///
-/// widget.render(&mut buffer, rect, &mut cache);
+/// let mut layout = LayoutNode::new(&element);
+/// element.layout(&mut layout, rect);
+/// element.render(&mut buffer, &layout);
 ///
 /// // Renders [`Buffer`], which prints the result to the terminal
 /// buffer.render();
