@@ -3,25 +3,20 @@ use std::{
     hash::{DefaultHasher, Hash, Hasher},
 };
 
-use crate::{
-    buffer::Buffer,
-    enums::Color,
-    geometry::{Constraint, Direction, Padding, Rect, Vec2},
-    prelude::MouseEvent,
-    style::Style,
-    widgets::{
-        cache::{Cache, LayoutCache},
-        widget::EventResult,
-    },
-};
-
-use super::{Element, widget::Widget};
-
 mod layout_node;
 mod layouting;
 
 pub use layout_node::LayoutNode;
 pub use layouting::*;
+
+use crate::{
+    buffer::Buffer,
+    enums::Color,
+    geometry::Padding,
+    prelude::{Constraint, Direction, Rect, Vec2},
+    style::Style,
+    widgets::{Element, Widget},
+};
 
 /// A container widget that arranges child widgets in a single direction
 /// (horizontal or vertical), flexing their sizes based on given constraints.
@@ -190,16 +185,11 @@ impl<M> Layout<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Layout<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         self.render_base_style(buffer, &layout.area);
 
         for (i, child) in self.children.iter().enumerate() {
-            child.render(buffer, &layout.children[i], &mut cache.children[i]);
+            child.render(buffer, &layout.children[i]);
         }
     }
 
@@ -260,31 +250,6 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
         node.is_dirty = false;
         node.has_dirty_child = false;
     }
-
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
-            return EventResult::None;
-        }
-
-        let rect = area.inner(self.padding);
-        if rect.is_empty() || self.children.is_empty() {
-            return EventResult::None;
-        }
-
-        match self.direction {
-            Direction::Vertical => {
-                self.ver_fn(rect, cache, |e, r, c| e.on_event(r, c, event))
-            }
-            Direction::Horizontal => {
-                self.hor_fn(rect, cache, |e, r, c| e.on_event(r, c, event))
-            }
-        }
-    }
 }
 
 impl<M> Default for Layout<M> {
@@ -329,70 +294,6 @@ impl<M: Clone + 'static> Layout<M> {
         }
     }
 
-    fn ver_fn<F>(
-        &self,
-        rect: Rect,
-        cache: &mut Cache,
-        mut f: F,
-    ) -> EventResult<M>
-    where
-        F: FnMut(&Element<M>, Rect, &mut Cache) -> EventResult<M>,
-    {
-        let (sizes, mut rect) = self.get_sizes(
-            rect,
-            cache,
-            |r| self.ver_sizes(r),
-            rect.height(),
-            |r, v| r.inner((v, 0)),
-        );
-
-        for (i, s) in sizes.iter().enumerate() {
-            let csize = min(*s, rect.height());
-            let crect =
-                Rect::from_coords(*rect.pos(), Vec2::new(rect.width(), csize));
-
-            let m = f(&self.children[i], crect, &mut cache.children[i]);
-            if !m.is_none() {
-                return m;
-            }
-            rect = rect.inner(Padding::top(csize));
-        }
-        EventResult::None
-    }
-
-    fn hor_fn<F>(
-        &self,
-        rect: Rect,
-        cache: &mut Cache,
-        mut f: F,
-    ) -> EventResult<M>
-    where
-        F: FnMut(&Element<M>, Rect, &mut Cache) -> EventResult<M>,
-    {
-        let (sizes, mut rect) = self.get_sizes(
-            rect,
-            cache,
-            |r| self.hor_sizes(r),
-            rect.width(),
-            |r, v| r.inner((0, v)),
-        );
-
-        for (i, s) in sizes.iter().enumerate() {
-            let csize = min(*s, rect.width());
-            let crect = Rect::from_coords(
-                *rect.pos(),
-                Vec2::new(csize, rect.height()),
-            );
-
-            let m = f(&self.children[i], crect, &mut cache.children[i]);
-            if !m.is_none() {
-                return m;
-            }
-            rect = rect.inner(Padding::left(csize));
-        }
-        EventResult::None
-    }
-
     /// Gets child sizes of vertical layout
     fn ver_sizes(&self, rect: Rect) -> (Vec<usize>, Rect) {
         self.child_sizes(
@@ -415,32 +316,6 @@ impl<M: Clone + 'static> Layout<M> {
             |s| s.x,
             |r, s| r.inner(Padding::horizontal(s)),
         )
-    }
-
-    fn get_sizes<F, C>(
-        &self,
-        rect: Rect,
-        cache: &mut Cache,
-        calc_sizes: F,
-        dimension: usize,
-        inner_fn: C,
-    ) -> (Vec<usize>, Rect)
-    where
-        F: Fn(Rect) -> (Vec<usize>, Rect),
-        C: Fn(Rect, usize) -> Rect,
-    {
-        match self.get_cache(&rect, cache) {
-            Some(sizes) => {
-                let rect =
-                    self.content_rect(rect, &sizes, dimension, inner_fn);
-                (sizes, rect)
-            }
-            None => {
-                let (sizes, crect) = calc_sizes(rect);
-                self.create_cache(rect, cache, &sizes);
-                (sizes, crect)
-            }
-        }
     }
 
     /// Gets sizes of all the children
@@ -604,42 +479,6 @@ impl<M: Clone + 'static> Layout<M> {
             total_fills -= f;
         }
         height
-    }
-
-    fn get_cache(&self, rect: &Rect, cache: &mut Cache) -> Option<Vec<usize>> {
-        let lcache = cache.local::<LayoutCache>()?;
-        if !lcache.same_key(rect.size(), &self.direction, &self.constraints) {
-            return None;
-        }
-        Some(lcache.sizes.clone())
-    }
-
-    fn create_cache(&self, rect: Rect, cache: &mut Cache, sizes: &[usize]) {
-        let lcache = LayoutCache::new(
-            *rect.size(),
-            self.direction,
-            self.constraints.clone(),
-        )
-        .sizes(sizes.to_owned());
-        cache.local = Some(Box::new(lcache));
-    }
-
-    fn content_rect<F>(
-        &self,
-        rect: Rect,
-        sizes: &[usize],
-        size: usize,
-        inner: F,
-    ) -> Rect
-    where
-        F: Fn(Rect, usize) -> Rect,
-    {
-        if !self.center {
-            return rect;
-        }
-        let sum: usize = sizes.iter().sum();
-        let rest = size - sum;
-        inner(rect, rest / 2)
     }
 }
 

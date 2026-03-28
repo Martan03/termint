@@ -8,15 +8,13 @@ use std::{
 use crate::{
     buffer::Buffer,
     enums::Color,
-    geometry::{Padding, Rect, Vec2},
-    prelude::MouseEvent,
+    geometry::Padding,
+    prelude::{MouseButton, MouseEvent, Rect, Vec2},
     style::Style,
-    term::backend::{MouseButton, MouseEventKind},
+    term::backend::MouseEventKind,
     text::Text,
-    widgets::{cache::Cache, layout::LayoutNode, widget::EventResult, Span},
+    widgets::{Element, EventResult, LayoutNode, Span, ToSpan, Widget},
 };
-
-use super::{span::ToSpan, widget::Widget, Element};
 
 type ListHandler<M> = Box<dyn Fn(usize) -> M>;
 
@@ -355,12 +353,7 @@ impl ListState {
 }
 
 impl<M: Clone + 'static> Widget<M> for List<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        _cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
         let mut text_pos =
             Vec2::new(rect.x() + self.highlight.len(), rect.y());
@@ -438,17 +431,12 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
         hasher.finish()
     }
 
-    fn on_event(
-        &self,
-        area: Rect,
-        _cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
+    fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {
+        if !node.area.contains_pos(&e.pos) {
             return EventResult::None;
         }
 
-        let mut area = area.inner(Padding::left(self.highlight.len()));
+        let mut area = node.area.inner(Padding::left(self.highlight.len()));
         if self.force_scrollbar || !self.fits(area.size()) {
             area.size.x -= 1;
         }
@@ -459,17 +447,17 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
 
             let mut irect = Rect::from_coords(*area.pos(), *area.size());
             irect.size.y = height;
-            if !irect.contains_pos(&event.pos) {
+            if !irect.contains_pos(&e.pos) {
                 area = area.inner(Padding::top(height));
                 continue;
             }
 
-            let m = self.item_event(event, i);
+            let m = self.item_event(e, i);
             if !m.is_none() {
                 return m;
             }
         }
-        self.handle_mouse(event)
+        self.handle_mouse(e)
     }
 }
 

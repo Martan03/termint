@@ -2,15 +2,15 @@ use std::{cell::RefCell, process::ExitCode, rc::Rc};
 
 use termal::eprintcln;
 use termint::{
+    Error,
     enums::{BorderType, Color},
     geometry::{Constraint, Unit},
     style::Style,
     term::{
-        backend::{Event, KeyCode, KeyEvent},
         Action, Application, Frame, Term,
+        backend::{Event, KeyCode, KeyEvent},
     },
     widgets::{Block, Element, Row, Table, TableState, ToSpan},
-    Error,
 };
 
 const BG: Color = Color::Hex(0x02081e);

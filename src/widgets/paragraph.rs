@@ -4,12 +4,10 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::{
     buffer::Buffer,
     enums::Wrap,
-    geometry::{Rect, Vec2},
+    prelude::{Rect, Vec2},
     text::Text,
-    widgets::{cache::Cache, layout::LayoutNode},
+    widgets::{Element, LayoutNode, Widget},
 };
-
-use super::{widget::Widget, Element};
 
 /// A widget that combines multiple text elements into a single flow.
 ///
@@ -123,12 +121,7 @@ impl Paragraph {
 }
 
 impl<M: Clone + 'static> Widget<M> for Paragraph {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        _cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
         let mut pos = Vec2::new(rect.x(), rect.y());
         let mut size = Vec2::new(rect.width(), rect.height());

@@ -3,11 +3,8 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::{
     buffer::Buffer,
     geometry::{Rect, Unit, Vec2},
-    widgets::{
-        cache::{Cache, GridCache},
-        layout::LayoutNode,
-        widget::EventResult,
-    },
+    prelude::MouseEvent,
+    widgets::{layout::LayoutNode, widget::EventResult},
 };
 
 use super::{Element, widget::Widget};
@@ -135,18 +132,13 @@ impl<M> Grid<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Grid<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         if layout.area.is_empty() || self.children.is_empty() {
             return;
         }
 
         for (i, GridChild { child, .. }) in self.children.iter().enumerate() {
-            child.render(buffer, &layout.children[i], &mut cache.children[i]);
+            child.render(buffer, &layout.children[i]);
         }
     }
 
@@ -210,27 +202,13 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
         }
     }
 
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &crate::prelude::MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
+    fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {
+        if !node.area.contains_pos(&e.pos) {
             return EventResult::None;
         }
 
-        let (cols, cols_pos, rows, rows_pos) = self.get_sizes(&area, cache);
-        for (i, GridChild { child, row, col }) in
-            self.children.iter().enumerate()
-        {
-            let crect = Rect::new(
-                area.x() + cols_pos[*col],
-                area.y() + rows_pos[*row],
-                cols[*col],
-                rows[*row],
-            );
-            let m = child.on_event(crect, &mut cache.children[i], event);
+        for (i, GridChild { child, .. }) in self.children.iter().enumerate() {
+            let m = child.on_event(&node.children[i], e);
             if !m.is_none() {
                 return m;
             }
@@ -240,27 +218,6 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
 }
 
 impl<M> Grid<M> {
-    /// Gets sizes and starting positions of each row and column
-    fn get_sizes(
-        &self,
-        rect: &Rect,
-        cache: &mut Cache,
-    ) -> (Vec<usize>, Vec<usize>, Vec<usize>, Vec<usize>) {
-        match self.get_cache(rect, cache) {
-            Some((cols, rows)) => {
-                let cols_pos = Self::get_positions(&cols);
-                let rows_pos = Self::get_positions(&rows);
-                (cols, cols_pos, rows, rows_pos)
-            }
-            None => {
-                let cols = Self::get_size(&self.cols, rect.width());
-                let rows = Self::get_size(&self.rows, rect.height());
-                self.create_cache(rect, cache, &cols.0, &rows.0);
-                (cols.0, cols.1, rows.0, rows.1)
-            }
-        }
-    }
-
     /// Gets sizes and positions of given units
     fn get_size(units: &[Unit], size: usize) -> (Vec<usize>, Vec<usize>) {
         let mut total = 0;
@@ -305,41 +262,6 @@ impl<M> Grid<M> {
         }
 
         (sizes, positions)
-    }
-
-    fn get_positions(sizes: &[usize]) -> Vec<usize> {
-        let mut total = 0;
-        let mut pos = vec![];
-        for size in sizes {
-            pos.push(total);
-            total += size;
-        }
-        pos
-    }
-
-    fn get_cache(
-        &self,
-        rect: &Rect,
-        cache: &mut Cache,
-    ) -> Option<(Vec<usize>, Vec<usize>)> {
-        let lcache = cache.local::<GridCache>()?;
-        if !lcache.same_key(rect.size(), &self.cols, &self.rows) {
-            return None;
-        }
-        Some((lcache.col_sizes.clone(), lcache.row_sizes.clone()))
-    }
-
-    fn create_cache(
-        &self,
-        rect: &Rect,
-        cache: &mut Cache,
-        cols: &[usize],
-        rows: &[usize],
-    ) {
-        let lcache =
-            GridCache::new(*rect.size(), self.cols.clone(), self.rows.clone())
-                .sizes(cols.to_owned(), rows.to_owned());
-        cache.local = Some(Box::new(lcache));
     }
 }
 

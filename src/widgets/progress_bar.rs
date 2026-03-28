@@ -2,14 +2,11 @@ use std::{cell::Cell, rc::Rc};
 
 use crate::{
     buffer::Buffer,
-    geometry::{Rect, Vec2},
-    prelude::MouseEvent,
+    prelude::{MouseButton, MouseEvent, Rect, Vec2},
     style::Style,
-    term::backend::{MouseButton, MouseEventKind},
-    widgets::{cache::Cache, layout::LayoutNode, EventResult},
+    term::backend::MouseEventKind,
+    widgets::{Element, EventResult, LayoutNode, Widget},
 };
-
-use super::{Element, Widget};
 
 type ProgressBarHandler<M> = Box<dyn Fn(f64) -> M>;
 
@@ -199,12 +196,7 @@ impl<M> ProgressBar<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for ProgressBar<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        _cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
         if rect.is_empty() || self.thumb_chars.is_empty() {
             return;
@@ -244,19 +236,15 @@ impl<M: Clone + 'static> Widget<M> for ProgressBar<M> {
         size.x
     }
 
-    fn on_event(
-        &self,
-        area: Rect,
-        _cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
+    fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {
+        let area = node.area;
+        if !area.contains_pos(&e.pos) {
             return EventResult::None;
         }
 
-        match &event.kind {
+        match &e.kind {
             MouseEventKind::Down(button) => {
-                let rx = event.pos.x.saturating_sub(area.x());
+                let rx = e.pos.x.saturating_sub(area.x());
                 let progress = (rx as f64 / area.width() as f64).clamp(0., 1.);
                 self.handlers
                     .iter()

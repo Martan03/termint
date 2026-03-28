@@ -24,9 +24,7 @@ use crate::{
         disable_bracketed_paste, disable_mouse_capture,
         enable_bracketed_paste, enable_mouse_capture,
     },
-    widgets::{
-        Element, EventResult, LayoutNode, Spacer, Widget, cache::Cache,
-    },
+    widgets::{Element, EventResult, LayoutNode, Spacer, Widget},
 };
 
 static HOOK_SET: Once = Once::new();
@@ -88,7 +86,6 @@ pub struct Term<M: 'static = (), B = NoBackend> {
     prev_widget: Option<Element<M>>,
     small: Option<Element<M>>,
     layout: LayoutNode,
-    cache: Cache,
     padding: Padding,
     setuped: bool,
     mouse_enabled: bool,
@@ -121,7 +118,6 @@ impl<M, B> Term<M, B> {
             prev_widget: None,
             small: None,
             layout: LayoutNode::default(),
-            cache: Cache::default(),
             padding: Padding::default(),
             setuped: false,
             mouse_enabled: false,
@@ -209,13 +205,13 @@ impl<M, B> Term<M, B> {
         self
     }
 
-    /// Clears the cache of the [`Term`].
+    /// Clears the layout cache of the [`Term`].
     ///
-    /// This is useful when a widget's state changes, but the cache doesn't
-    /// automatically update. After clearing the cache, the next rendering will
-    /// recalculate the sizes and positions of widgets.
-    pub fn clear_cache(&mut self) {
-        self.cache = Cache::default();
+    /// This is useful when the widget's layout changes, but the layout doesn't
+    /// update. This shouldn't happen though, so use it only when really
+    /// needed.
+    pub fn clear_layout(&mut self) {
+        self.layout = LayoutNode::default();
     }
 
     /// Restores the terminal: disables the alternate buffer and shows cursor
@@ -385,8 +381,7 @@ where
         let Some(root) = &self.prev_widget else {
             return Action::NONE;
         };
-        let rect = Rect::from_coords(Vec2::new(1, 1), self.last_size);
-        match root.on_event(rect, &mut self.cache, event) {
+        match root.on_event(&self.layout, event) {
             EventResult::None => Action::NONE,
             EventResult::Consumed => Action::RERENDER,
             EventResult::Response(m) => app.message(m),
@@ -410,14 +405,12 @@ where
             {
                 self.layout.diff(prev, small);
                 small.layout(&mut self.layout, rect);
-                self.cache.diff(small);
-                small.render(&mut buffer, &self.layout, &mut self.cache);
+                small.render(&mut buffer, &self.layout);
             }
             _ => {
                 self.layout.diff(prev, &widget);
                 widget.layout(&mut self.layout, rect);
-                self.cache.diff(&widget);
-                widget.render(&mut buffer, &self.layout, &mut self.cache);
+                widget.render(&mut buffer, &self.layout);
             }
         };
 
@@ -439,7 +432,6 @@ where
         );
 
         if size != self.last_size {
-            self.clear_cache();
             self.last_size = size;
         }
 
@@ -455,7 +447,6 @@ impl<M> Default for Term<M, DefaultBackend> {
             prev_widget: Default::default(),
             small: Default::default(),
             layout: Default::default(),
-            cache: Default::default(),
             padding: Default::default(),
             setuped: false,
             mouse_enabled: false,

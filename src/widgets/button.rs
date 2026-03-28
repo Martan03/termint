@@ -3,15 +3,10 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::{
     buffer::Buffer,
     geometry::Padding,
-    prelude::{MouseEvent, Rect, Vec2},
+    prelude::{MouseButton, MouseEvent, Rect, Vec2},
     style::Style,
-    term::backend::{MouseButton, MouseEventKind},
-    widgets::{
-        cache::Cache,
-        layout::{self, LayoutNode},
-        widget::EventResult,
-        Element, Spacer, Widget,
-    },
+    term::backend::MouseEventKind,
+    widgets::{Element, EventResult, LayoutNode, Spacer, Widget, layout},
 };
 
 /// A clickable wrapper widget that triggers a message when clicked.
@@ -152,15 +147,9 @@ impl<M: Clone + 'static> Button<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Button<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         buffer.set_area_style(self.style, layout.area);
-        self.child
-            .render(buffer, &layout.children[0], &mut cache.children[0]);
+        self.child.render(buffer, &layout.children[0]);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -195,20 +184,14 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
         });
     }
 
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
+    fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {
+        if !node.area.contains_pos(&e.pos) {
             return EventResult::None;
         }
 
-        let cr = area.inner(self.padding);
         self.child
-            .on_event(cr, &mut cache.children[0], event)
-            .or_else(|| self.handle_click(event))
+            .on_event(&node.children[0], e)
+            .or_else(|| self.handle_click(e))
     }
 }
 

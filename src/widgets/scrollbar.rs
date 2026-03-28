@@ -7,12 +7,11 @@ use std::{
 
 use crate::{
     buffer::Buffer,
-    geometry::{Direction, Rect, Vec2, Vec2Range},
+    geometry::Vec2Range,
+    prelude::{Direction, Rect, Vec2},
     style::Style,
-    widgets::{cache::Cache, layout::LayoutNode},
+    widgets::{Element, LayoutNode, Widget},
 };
-
-use super::{Element, Widget};
 
 /// A scrollbar widget that can be either vertical or horizontal.
 ///
@@ -250,12 +249,7 @@ impl ScrollbarState {
 }
 
 impl<M: Clone + 'static> Widget<M> for Scrollbar<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        _cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
         match self.direction {
             Direction::Vertical => self.ver_render(buffer, &rect),

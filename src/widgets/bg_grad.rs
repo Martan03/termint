@@ -3,16 +3,10 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
-    geometry::{Direction, Padding, Rect, Vec2},
-    prelude::MouseEvent,
-    widgets::{
-        cache::Cache,
-        layout::{self, LayoutNode},
-        widget::EventResult,
-    },
+    geometry::Padding,
+    prelude::{Direction, Rect, Vec2},
+    widgets::{Element, LayoutNode, Spacer, Widget, layout},
 };
-
-use super::{widget::Widget, Element, Spacer};
 
 /// A container widget that renders a gradient background behind child.
 ///
@@ -207,12 +201,7 @@ impl<M> Widget<M> for BgGrad<M>
 where
     M: Clone + 'static,
 {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
         if rect.is_empty() {
             return;
@@ -222,8 +211,7 @@ where
             Direction::Vertical => self.ver_render(buffer, &rect),
             Direction::Horizontal => self.hor_render(buffer, &rect),
         };
-        self.child
-            .render(buffer, &layout.children[0], &mut cache.children[0]);
+        self.child.render(buffer, &layout.children[0]);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -256,22 +244,6 @@ where
         layout::padded(node, area, self.padding, |n, a| {
             self.child.layout(&mut n.children[0], a)
         });
-    }
-
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
-            return EventResult::None;
-        }
-        self.child.on_event(
-            area.inner(self.padding),
-            &mut cache.children[0],
-            event,
-        )
     }
 }
 

@@ -1,10 +1,8 @@
 use crate::{
     buffer::Buffer,
-    geometry::Vec2,
-    widgets::{cache::Cache, layout::LayoutNode},
+    prelude::Vec2,
+    widgets::{Element, LayoutNode, Widget},
 };
-
-use super::{Element, widget::Widget};
 
 /// A spacer widget used for layout spacing.
 ///
@@ -47,7 +45,7 @@ impl Spacer {
 }
 
 impl<M: Clone + 'static> Widget<M> for Spacer {
-    fn render(&self, _buffer: &mut Buffer, _l: &LayoutNode, _c: &mut Cache) {}
+    fn render(&self, _buffer: &mut Buffer, _l: &LayoutNode) {}
 
     fn height(&self, _size: &Vec2) -> usize {
         0

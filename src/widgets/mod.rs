@@ -68,8 +68,6 @@ mod span;
 mod table;
 mod widget;
 
-pub mod cache;
-
 pub use bg_grad::BgGrad;
 pub use block::Block;
 pub use button::Button;

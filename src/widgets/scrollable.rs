@@ -1,21 +1,18 @@
 use std::{
     cell::Cell,
-    cmp::min,
     hash::{DefaultHasher, Hash, Hasher},
     marker::PhantomData,
     rc::Rc,
-    usize,
 };
 
 use crate::{
     buffer::Buffer,
-    geometry::{Direction, Rect, Vec2},
-    prelude::{KeyModifiers, MouseEvent},
+    prelude::{Direction, KeyModifiers, MouseEvent, Rect, Vec2},
     term::backend::MouseEventKind,
-    widgets::{cache::Cache, layout::LayoutNode, widget::EventResult},
+    widgets::{
+        Element, EventResult, LayoutNode, Scrollbar, ScrollbarState, Widget,
+    },
 };
-
-use super::{Element, Scrollbar, ScrollbarState, Widget};
 
 /// A wrapper widget that adds scrollability to its child when content
 /// overflows.
@@ -261,12 +258,7 @@ where
     M: Clone + 'static,
     W: Widget<M>,
 {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         if layout.area.is_empty() {
             return;
         }
@@ -292,7 +284,7 @@ where
         let mut draw_scrollbar = |a: bool, e: &Option<Element<M>>, r: Rect| {
             if a && let Some(e) = e {
                 let snode = &layout.children[cid];
-                Self::scrollbar(buffer, snode, &mut cache.children[cid], e, r);
+                Self::scrollbar(buffer, snode, e, r);
                 cid += 1;
             }
         };
@@ -313,10 +305,7 @@ where
         );
         draw_scrollbar(hor_active, &self.horizontal, hrect);
 
-        let cnode = &mut cache.children[cid];
-        self.render_content(
-            buffer, viewport, child_node, cnode, offset_x, offset_y,
-        );
+        self.render_content(buffer, viewport, child_node, offset_x, offset_y);
     }
 
     /// TODO both direction scrolling not correct
@@ -326,8 +315,7 @@ where
                 size.x.saturating_sub(1),
                 size.y.saturating_sub(1),
             )),
-            (true, false) => min(
-                size.y,
+            (true, false) => size.y.min(
                 self.child
                     .height(&Vec2::new(size.x.saturating_sub(1), size.y))
                     + 1,
@@ -353,8 +341,7 @@ where
                     .width(&Vec2::new(size.x.saturating_sub(1), size.y))
                     + 1
             }
-            (false, true) => min(
-                size.x,
+            (false, true) => size.x.min(
                 self.child
                     .width(&Vec2::new(size.x, size.y.saturating_sub(1)))
                     + 1,
@@ -452,18 +439,13 @@ where
         self.child.layout(&mut node.children[0], child_rect);
     }
 
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
+    fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {
+        if !node.area.contains_pos(&e.pos) {
             return EventResult::None;
         }
         self.child
-            .on_event(area, &mut cache.children[0], event)
-            .or_else(|| self.handle_mouse(area, event))
+            .on_event(&node.children[0], e)
+            .or_else(|| self.handle_mouse(node.area, e))
     }
 }
 
@@ -478,7 +460,6 @@ where
         buffer: &mut Buffer,
         rect: Rect,
         node: &LayoutNode,
-        cache: &mut Cache,
         offset_x: usize,
         offset_y: usize,
     ) {
@@ -492,7 +473,7 @@ where
         cutout.move_to(*mask.pos());
         cbuffer.merge(cutout);
 
-        self.child.render(&mut cbuffer, node, cache);
+        self.child.render(&mut cbuffer, node);
 
         mask = mask.intersection(cbuffer.rect());
         let mut cutout = cbuffer.subset(mask);
@@ -504,13 +485,12 @@ where
     fn scrollbar(
         buffer: &mut Buffer,
         layout: &LayoutNode,
-        cache: &mut Cache,
         scroll: &Element<M>,
         rect: Rect,
     ) {
         let mut temp_node = layout.clone();
         temp_node.area = rect;
-        scroll.render(buffer, &temp_node, cache);
+        scroll.render(buffer, &temp_node);
     }
 
     fn process_state(

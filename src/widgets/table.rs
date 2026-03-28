@@ -5,28 +5,21 @@ use std::{
     rc::Rc,
 };
 
-use crate::{
-    buffer::{Buffer, Cell},
-    enums::{Border, BorderType},
-    geometry::{Padding, Rect, Unit, Vec2},
-    prelude::{KeyModifiers, MouseEvent},
-    style::Style,
-    term::backend::{MouseButton, MouseEventKind},
-    widgets::{
-        Spacer,
-        cache::{Cache, TableCache},
-        layout::LayoutNode,
-        widget::EventResult,
-    },
-};
-
-use super::{Element, Widget};
-
 mod row;
 pub use row::Row;
 
 mod table_state;
 pub use table_state::TableState;
+
+use crate::{
+    buffer::{Buffer, Cell},
+    enums::{Border, BorderType},
+    geometry::Padding,
+    prelude::{KeyModifiers, MouseButton, MouseEvent, Rect, Unit, Vec2},
+    style::Style,
+    term::backend::MouseEventKind,
+    widgets::{Element, EventResult, LayoutNode, Spacer, Widget},
+};
 
 type TableHandler<M> = Box<dyn Fn(usize, usize) -> M>;
 
@@ -426,12 +419,7 @@ impl<M: Clone> Table<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Table<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let mut rect = layout.area;
         if rect.is_empty() || self.rows.is_empty() {
             return;
@@ -444,7 +432,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 
         let mut cid = 1;
         let header_height =
-            self.render_header(buffer, layout, cache, &mut rect, &mut cid);
+            self.render_header(buffer, layout, &mut rect, &mut cid);
 
         let offset = self.state.borrow().offset;
         let selected = self.state.borrow().selected;
@@ -474,9 +462,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             }
 
             let row_height = layout.children[cid].area.height();
-            self.render_clipped(
-                buffer, layout, cache, row, &mut rect, &mut cid,
-            );
+            self.render_clipped(buffer, layout, row, &mut rect, &mut cid);
 
             if let Some(sel) = selected
                 && sel == i
@@ -621,68 +607,39 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         }
     }
 
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &crate::prelude::MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
+    fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {
+        if !node.area.contains_pos(&e.pos) {
             return EventResult::None;
         }
 
-        let (widths, heights, header_height, scrollbar) =
-            self.get_sizes(&area, cache);
-        let crect = area.inner((header_height, scrollbar as usize, 0, 0));
-
-        let m =
-            self.on_event_header(&area, cache, event, header_height, &widths);
+        let m = self.on_event_header(node, e);
         if !m.is_none() {
             return m;
         }
 
-        let mut pos = *crect.pos();
-        let mut id = 0;
+        let offset = self.state.borrow().offset;
+        let mut cid = 1 + offset * self.widths.len();
         if self.header.is_some() {
-            id += self.widths.len();
+            cid += self.widths.len();
         }
 
-        let offset = self.state.borrow().offset;
-        let mut row_id = offset;
-        id += row_id * widths.len();
-        for (i, height) in heights.iter().enumerate().skip(offset) {
-            if area.bottom() < pos.y {
-                break;
-            }
+        let scrollbar = node.children[0].area.width();
+        let width = node.area.width().saturating_sub(scrollbar);
+        for (row_id, row) in self.rows.iter().enumerate().skip(offset) {
+            let mut rrect = node.children[cid].area;
+            let bot_diff = rrect.bottom().saturating_sub(node.area.bottom());
 
-            let row_height = *height;
-            if row_height == 0 {
+            rrect.size.x = width;
+            rrect.size.y = rrect.height().saturating_sub(bot_diff);
+            if !rrect.contains_pos(&e.pos) {
+                cid += self.widths.len();
                 continue;
             }
 
-            let row = &self.rows[i];
-            let rrect = Rect::new(pos.x, pos.y, crect.width(), row_height);
-
-            if pos.y + row_height > area.bottom() + 1 {
-                let bot = crect.bottom();
-                let m = self.on_event_last(
-                    rrect, bot, cache, event, &mut id, row_id, row, &widths,
-                );
-                if !m.is_none() {
-                    return m;
-                }
-            } else {
-                let m = self.on_event_row(
-                    &rrect, cache, event, &mut id, row_id, row, &widths,
-                );
-                if !m.is_none() {
-                    return m;
-                }
+            let m = self.on_event_row(node, e, &mut cid, row_id, row);
+            if !m.is_none() {
+                return m;
             }
-
-            pos.x = area.x();
-            pos.y += row_height;
-            row_id += 1;
         }
         EventResult::None
     }
@@ -768,33 +725,6 @@ impl<M: Clone + 'static> Table<M> {
         (heights, total)
     }
 
-    /// Gets sizes of each row and column and whether scrollbar is needed.
-    fn get_sizes(
-        &self,
-        rect: &Rect,
-        cache: &mut Cache,
-    ) -> (Vec<usize>, Vec<usize>, usize, bool) {
-        if let Some(sizes) = self.get_cache(rect, cache) {
-            return sizes;
-        };
-
-        let mut w = self.calc_widths(rect.width());
-        let mut header = self.calc_header_height(rect, &w);
-
-        let mut crect = rect.inner(Padding::top(header));
-        let (mut h, total) = self.calc_heights(&w);
-        let scrollbar = self.force_scrollbar || crect.height() < total;
-        if scrollbar {
-            crect = rect.inner(Padding::right(1));
-            w = self.calc_widths(crect.width());
-            header = self.calc_header_height(&crect, &w);
-            (h, _) = self.calc_heights(&w);
-        }
-
-        self.create_cache(rect, cache, &w, &h, header, scrollbar);
-        (w, h, header, scrollbar)
-    }
-
     /// Renders [`Table`] scrollbar
     fn render_scrollbar(&self, buffer: &mut Buffer, rect: &Rect) {
         let rat = self.rows.len() as f32 / rect.height() as f32;
@@ -826,14 +756,13 @@ impl<M: Clone + 'static> Table<M> {
         &self,
         buffer: &mut Buffer,
         layout: &LayoutNode,
-        cache: &mut Cache,
         row: &Row<M>,
         rect: &mut Rect,
         cid: &mut usize,
     ) {
         let row_height = layout.children[*cid].area.height();
         if rect.height() >= row_height {
-            self.render_row(buffer, layout, cache, row, cid);
+            self.render_row(buffer, layout, row, cid);
             return;
         }
 
@@ -845,7 +774,7 @@ impl<M: Clone + 'static> Table<M> {
         let mut temp_buffer = Buffer::filled(trect, cell);
         temp_buffer.merge(buffer.subset(*rect));
 
-        self.render_row(&mut temp_buffer, layout, cache, row, cid);
+        self.render_row(&mut temp_buffer, layout, row, cid);
         buffer.merge(temp_buffer.subset(*rect));
     }
 
@@ -853,74 +782,54 @@ impl<M: Clone + 'static> Table<M> {
         &self,
         buffer: &mut Buffer,
         layout: &LayoutNode,
-        cache: &mut Cache,
         row: &Row<M>,
         cid: &mut usize,
     ) {
         for cell in row.cells.iter() {
             let cnode = &layout.children[*cid];
-            cell.render(buffer, cnode, &mut cache.children[*cid]);
+            cell.render(buffer, cnode);
             *cid += 1;
         }
     }
 
     fn on_event_row(
         &self,
-        rect: &Rect,
-        cache: &mut Cache,
+        node: &LayoutNode,
         event: &MouseEvent,
         id: &mut usize,
         row_id: usize,
         row: &Row<M>,
-        widths: &[usize],
     ) -> EventResult<M> {
-        if !rect.contains_pos(&event.pos) {
-            return EventResult::None;
-        }
-
-        let mut pos = *rect.pos();
-        let mut size = *rect.size();
         for (i, child) in row.cells.iter().enumerate() {
-            size.x = widths.get(i).copied().unwrap_or_default();
-            if size.x != 0 {
-                let crect = Rect::from_coords(pos, size);
-                pos.x += size.x;
-                if !crect.contains_pos(&event.pos) {
-                    continue;
-                }
-
-                let m = child.on_event(crect, &mut cache.children[*id], event);
-                if !m.is_none() {
-                    return m;
-                }
-
-                return self.handle_mouse(i, row_id, event);
+            let cnode = &node.children[*id];
+            *id += 1;
+            if !cnode.area.contains_pos(&event.pos) {
+                continue;
             }
 
-            pos.x += self.column_spacing;
-            *id += 1;
+            return child
+                .on_event(cnode, event)
+                .or_else(|| self.handle_mouse(i, row_id, event));
         }
         EventResult::None
     }
 
-    fn on_event_last(
-        &self,
-        rect: Rect,
-        bottom: usize,
-        cache: &mut Cache,
-        event: &MouseEvent,
-        id: &mut usize,
-        row_id: usize,
-        row: &Row<M>,
-        widths: &[usize],
-    ) -> EventResult<M> {
-        let mut crect = rect;
-        crect.size.y = rect.height() - (rect.bottom().saturating_sub(bottom));
-        if !crect.contains_pos(&event.pos) {
-            return EventResult::None;
-        }
-        self.on_event_row(&rect, cache, event, id, row_id, row, widths)
-    }
+    // fn on_event_last(
+    //     &self,
+    //     rect: Rect,
+    //     bottom: usize,
+    //     event: &MouseEvent,
+    //     id: &mut usize,
+    //     row_id: usize,
+    //     row: &Row<M>,
+    // ) -> EventResult<M> {
+    //     let mut crect = rect;
+    //     crect.size.y = rect.height() - (rect.bottom().saturating_sub(bottom));
+    //     if !crect.contains_pos(&event.pos) {
+    //         return EventResult::None;
+    //     }
+    //     self.on_event_row(&rect, event, id, row_id, row)
+    // }
 
     fn set_sel_style(
         &self,
@@ -930,21 +839,21 @@ impl<M: Clone + 'static> Table<M> {
         col_w: usize,
         rrect: Option<Rect>,
     ) {
-        if let Some(rrect) = rrect {
-            buffer.set_area_style(self.selected_row_style, rrect);
+        if let Some(r) = rrect {
+            buffer.set_area_style(self.selected_row_style, r);
         }
 
-        if self.state.borrow().selected_column.is_none() || col_w == 0 {
+        if col_w == 0 || self.state.borrow().selected_column.is_none() {
             return;
         };
 
         let column_rect = Rect::new(col_x, rect.y(), col_w, rect.height());
         buffer.set_area_style(self.selected_column_style, column_rect);
 
-        if let Some(rrect) = rrect {
+        if let Some(r) = rrect {
             buffer.set_area_style(
                 self.selected_cell_style,
-                rrect.intersection(&column_rect),
+                r.intersection(&column_rect),
             )
         }
     }
@@ -953,7 +862,6 @@ impl<M: Clone + 'static> Table<M> {
         &self,
         buffer: &mut Buffer,
         node: &LayoutNode,
-        cache: &mut Cache,
         rect: &mut Rect,
         cid: &mut usize,
     ) -> usize {
@@ -965,7 +873,7 @@ impl<M: Clone + 'static> Table<M> {
         let mut most_right = rect.x();
         for child in header.cells.iter() {
             let cnode = &node.children[*cid];
-            child.render(buffer, cnode, &mut cache.children[*cid]);
+            child.render(buffer, cnode);
             most_right = cnode.area.right();
             *cid += 1;
         }
@@ -983,31 +891,20 @@ impl<M: Clone + 'static> Table<M> {
 
     fn on_event_header(
         &self,
-        rect: &Rect,
-        cache: &mut Cache,
+        node: &LayoutNode,
         event: &MouseEvent,
-        height: usize,
-        widths: &[usize],
     ) -> EventResult<M> {
         let Some(header) = &self.header else {
             return EventResult::None;
         };
 
-        let height =
-            height.saturating_sub(self.header_separator.is_some() as usize);
-        let mut pos = *rect.pos();
-        for (i, child) in header.cells.iter().enumerate() {
-            let width = widths.get(i).copied().unwrap_or_default();
-            if width == 0 {
-                continue;
-            }
-
-            let crect = Rect::from_coords(pos, Vec2::new(width, height));
-            let m = child.on_event(crect, &mut cache.children[i], event);
+        let mut cid = 1;
+        for child in header.cells.iter() {
+            let m = child.on_event(&node.children[cid], event);
             if !m.is_none() {
                 return m;
             }
-            pos.x += width + self.column_spacing;
+            cid += 1;
         }
         EventResult::None
     }
@@ -1046,39 +943,6 @@ impl<M: Clone + 'static> Table<M> {
                 break;
             }
         }
-    }
-
-    fn get_cache(
-        &self,
-        rect: &Rect,
-        cache: &mut Cache,
-    ) -> Option<(Vec<usize>, Vec<usize>, usize, bool)> {
-        let lcache = cache.local::<TableCache>()?;
-        if !lcache.same_key(rect.size(), &self.widths) {
-            return None;
-        }
-        Some((
-            lcache.col_sizes.clone(),
-            lcache.row_sizes.clone(),
-            lcache.header_height,
-            lcache.scrollbar,
-        ))
-    }
-
-    fn create_cache(
-        &self,
-        rect: &Rect,
-        cache: &mut Cache,
-        cols: &[usize],
-        rows: &[usize],
-        header_height: usize,
-        scrollbar: bool,
-    ) {
-        let lcache = TableCache::new(*rect.size(), self.widths.clone())
-            .sizes(cols.to_owned(), rows.to_owned())
-            .scrollbar(scrollbar)
-            .header_height(header_height);
-        cache.local = Some(Box::new(lcache));
     }
 
     fn handle_mouse(

@@ -7,7 +7,7 @@ use crate::{
     buffer::Buffer,
     geometry::{Rect, Vec2},
     prelude::MouseEvent,
-    widgets::{cache::Cache, layout::LayoutNode},
+    widgets::layout::LayoutNode,
 };
 
 /// The result of processing a mouse event within a widget.
@@ -66,12 +66,7 @@ impl<M> EventResult<M> {
 pub trait Widget<Message: Clone + 'static = ()>: Any {
     /// Renders the widget into the given [`Buffer`](crate::buffer::Buffer)
     /// within the provided [`Rect`](crate::geometry::Rect) bounds.
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    );
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode);
 
     /// Returns the height of the [`Widget`](crate::widgets::Widget) based on
     /// the width of the given size.
@@ -111,10 +106,19 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
     /// no event handler set, otherwise returns corresponding `Message`.
     fn on_event(
         &self,
-        _area: Rect,
-        _cache: &mut Cache,
-        _event: &MouseEvent,
+        node: &LayoutNode,
+        e: &MouseEvent,
     ) -> EventResult<Message> {
+        if !node.area.contains_pos(&e.pos) {
+            return EventResult::None;
+        }
+
+        for (i, child) in self.children().iter().enumerate() {
+            let m = child.on_event(&node.children[i], e);
+            if !m.is_none() {
+                return m;
+            }
+        }
         EventResult::None
     }
 }
@@ -208,8 +212,8 @@ impl<Message: Clone + 'static> Element<Message> {
 }
 
 impl<Message: Clone + 'static> Widget<Message> for Element<Message> {
-    fn render(&self, buffer: &mut Buffer, l: &LayoutNode, c: &mut Cache) {
-        self.widget.render(buffer, l, c)
+    fn render(&self, buffer: &mut Buffer, l: &LayoutNode) {
+        self.widget.render(buffer, l)
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -234,10 +238,9 @@ impl<Message: Clone + 'static> Widget<Message> for Element<Message> {
 
     fn on_event(
         &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &MouseEvent,
+        node: &LayoutNode,
+        e: &MouseEvent,
     ) -> EventResult<Message> {
-        self.widget.on_event(area, cache, event)
+        self.widget.on_event(node, e)
     }
 }

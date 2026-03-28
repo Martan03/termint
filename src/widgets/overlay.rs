@@ -1,11 +1,8 @@
 use crate::{
     buffer::Buffer,
-    geometry::{Rect, Vec2},
-    prelude::MouseEvent,
-    widgets::{cache::Cache, layout::LayoutNode, widget::EventResult},
+    prelude::Vec2,
+    widgets::{Element, LayoutNode, Widget},
 };
-
-use super::{Element, Widget};
 
 /// A container widget that stacks its children on top of each other (z-axis).
 ///
@@ -84,15 +81,10 @@ impl<M> Overlay<M> {
 }
 
 impl<M: Clone + 'static> Widget<M> for Overlay<M> {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
-        self.children.iter().enumerate().for_each(|(i, c)| {
-            c.render(buffer, &layout.children[i], &mut cache.children[i])
-        });
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
+        for (i, child) in self.children.iter().enumerate() {
+            child.render(buffer, &layout.children[i]);
+        }
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -113,25 +105,6 @@ impl<M: Clone + 'static> Widget<M> for Overlay<M> {
 
     fn children(&self) -> Vec<&Element<M>> {
         self.children.iter().collect()
-    }
-
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
-            return EventResult::None;
-        }
-
-        for (i, child) in self.children.iter().rev().enumerate() {
-            let m = child.on_event(area, &mut cache.children[i], event);
-            if !m.is_none() {
-                return m;
-            }
-        }
-        EventResult::None
     }
 }
 

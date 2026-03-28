@@ -6,14 +6,14 @@ use std::{
 
 use crate::{
     buffer::Buffer,
-    enums::{Color, Modifier, Wrap, RGB},
+    enums::{Color, Modifier, RGB, Wrap},
     geometry::{Direction, Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
-    widgets::{cache::Cache, layout::LayoutNode},
+    widgets::layout::LayoutNode,
 };
 
-use super::{widget::Widget, Element};
+use super::{Element, widget::Widget};
 
 /// A widget for rendering text with a gradient foreground color.
 ///
@@ -211,7 +211,7 @@ impl Grad {
 }
 
 impl<M: Clone + 'static> Widget<M> for Grad {
-    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode, _: &mut Cache) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         _ = self.render_offset(buffer, layout.area, 0, None);
     }
 

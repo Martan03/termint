@@ -8,19 +8,12 @@ use crate::{
     borders,
     buffer::Buffer,
     enums::{Border, BorderType, Color},
-    geometry::{Constraint, Direction, Padding, Rect, Vec2},
-    prelude::MouseEvent,
+    geometry::Padding,
+    prelude::{Constraint, Direction, Rect, Vec2},
     style::Style,
     text::Text,
-    widgets::{
-        cache::Cache,
-        layout::{self, LayoutNode},
-        span::Span,
-        widget::EventResult,
-    },
+    widgets::{Element, Layout, LayoutNode, Spacer, Span, Widget, layout},
 };
-
-use super::{widget::Widget, Element, Layout, Spacer};
 
 /// A widget that wraps another widget and adds border and title.
 ///
@@ -286,12 +279,7 @@ where
     M: Clone + 'static,
     W: Widget<M>,
 {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
         let (_, r, _, l) = self.render_border(buffer, &rect);
         let pos = Vec2::new(rect.x() + l, rect.y());
@@ -300,8 +288,7 @@ where
         let trect = Rect::from_coords(pos, size);
         _ = self.title.render_offset(buffer, trect, 0, None);
 
-        self.child
-            .render(buffer, &layout.children[0], &mut cache.children[0]);
+        self.child.render(buffer, &layout.children[0]);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -339,24 +326,6 @@ where
         layout::padded(node, area, self.borders, |n, a| {
             self.child.layout(&mut n.children[0], a)
         });
-    }
-
-    fn on_event(
-        &self,
-        area: Rect,
-        cache: &mut Cache,
-        event: &MouseEvent,
-    ) -> EventResult<M> {
-        if !area.contains_pos(&event.pos) {
-            return EventResult::None;
-        }
-
-        let l = self.borders.contains(Border::LEFT) as usize;
-        let r = self.borders.contains(Border::RIGHT) as usize;
-        let t = self.borders.contains(Border::TOP) as usize;
-        let b = self.borders.contains(Border::BOTTOM) as usize;
-        let rect = area.inner((t, r, l, b));
-        self.child.on_event(rect, &mut cache.children[0], event)
     }
 }
 

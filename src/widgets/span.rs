@@ -6,13 +6,11 @@ use std::{
 use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap},
-    geometry::{Rect, TextAlign, Vec2},
+    prelude::{Rect, TextAlign, Vec2},
     style::Style,
     text::{Text, TextParser},
-    widgets::{cache::Cache, layout::LayoutNode},
+    widgets::{Element, LayoutNode, Widget},
 };
-
-use super::{widget::Widget, Element};
 
 /// A widget for styling text where all characters share the same style.
 ///
@@ -218,12 +216,7 @@ impl Span {
 }
 
 impl<M: Clone + 'static> Widget<M> for Span {
-    fn render(
-        &self,
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        _cache: &mut Cache,
-    ) {
+    fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         _ = self.render_offset(buffer, layout.area, 0, None);
     }
 
