@@ -426,6 +426,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         }
 
         let snode = &layout.children[0];
+        rect.size.x = rect.width().saturating_sub(snode.area.width());
         if snode.area.width() > 0 {
             self.render_scrollbar(buffer, &snode.area);
         }
@@ -454,7 +455,6 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         }
 
         let mut row_rect = None;
-
         cid += offset * self.widths.len();
         for (i, row) in self.rows.iter().enumerate().skip(offset) {
             if rect.is_empty() {
@@ -475,7 +475,8 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             rect = rect.inner(Padding::top(row_height));
         }
 
-        let crect = layout.area.inner(Padding::top(header_height));
+        let crect =
+            layout.area.inner((header_height, snode.area.width(), 0, 0));
         self.set_sel_style(buffer, &crect, col_x, col_w, row_rect);
     }
 
@@ -508,18 +509,10 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
     }
 
     fn children(&self) -> Vec<&Element<M>> {
-        let mut result = Vec::new();
-
-        result.push(&self.dummy);
-        if let Some(header) = &self.header {
-            result.extend(header.cells.iter());
-        }
-
-        for row in &self.rows {
-            result.extend(row.cells.iter());
-        }
-
-        result
+        std::iter::once(&self.dummy)
+            .chain(self.header.iter().flat_map(|h| h.cells.iter()))
+            .chain(self.rows.iter().flat_map(|r| r.cells.iter()))
+            .collect()
     }
 
     fn layout_hash(&self) -> u64 {
@@ -627,10 +620,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         let width = node.area.width().saturating_sub(scrollbar);
         for (row_id, row) in self.rows.iter().enumerate().skip(offset) {
             let mut rrect = node.children[cid].area;
-            let bot_diff = rrect.bottom().saturating_sub(node.area.bottom());
-
             rrect.size.x = width;
-            rrect.size.y = rrect.height().saturating_sub(bot_diff);
             if !rrect.contains_pos(&e.pos) {
                 cid += self.widths.len();
                 continue;
@@ -679,7 +669,8 @@ impl<M: Clone + 'static> Table<M> {
     }
 
     /// Gets calculated column widths based on the given size
-    fn calc_widths(&self, width: usize) -> Vec<usize> {
+    fn calc_widths(&self, mut width: usize) -> Vec<usize> {
+        width -= self.column_spacing * self.widths.len().saturating_sub(1);
         let mut calc_widths = Vec::new();
         let mut total = 0;
 
@@ -813,23 +804,6 @@ impl<M: Clone + 'static> Table<M> {
         }
         EventResult::None
     }
-
-    // fn on_event_last(
-    //     &self,
-    //     rect: Rect,
-    //     bottom: usize,
-    //     event: &MouseEvent,
-    //     id: &mut usize,
-    //     row_id: usize,
-    //     row: &Row<M>,
-    // ) -> EventResult<M> {
-    //     let mut crect = rect;
-    //     crect.size.y = rect.height() - (rect.bottom().saturating_sub(bottom));
-    //     if !crect.contains_pos(&event.pos) {
-    //         return EventResult::None;
-    //     }
-    //     self.on_event_row(&rect, event, id, row_id, row)
-    // }
 
     fn set_sel_style(
         &self,
@@ -976,28 +950,20 @@ impl<M: Clone + 'static> Table<M> {
 
     fn move_row(&self, delta: isize) -> EventResult<M> {
         let scroll = || {
-            let mut state = self.state.borrow_mut();
-            if let Some(selected) = state.selected {
-                state.selected = Some(Self::move_selection(
-                    selected,
-                    delta,
-                    self.rows.len(),
-                ));
-            }
+            let mut s = self.state.borrow_mut();
+            s.selected = s
+                .selected
+                .map(|sel| Self::move_selection(sel, delta, self.rows.len()));
         };
         self.handle_scroll(&self.on_scroll_ver, scroll, delta)
     }
 
     fn move_col(&self, delta: isize) -> EventResult<M> {
         let scroll = || {
-            let mut state = self.state.borrow_mut();
-            if let Some(selected) = state.selected_column {
-                state.selected_column = Some(Self::move_selection(
-                    selected,
-                    delta,
-                    self.widths.len(),
-                ));
-            }
+            let mut s = self.state.borrow_mut();
+            s.selected_column = s.selected_column.map(|sel| {
+                Self::move_selection(sel, delta, self.widths.len())
+            });
         };
         self.handle_scroll(&self.on_scroll_hor, scroll, delta)
     }

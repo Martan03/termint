@@ -40,13 +40,13 @@ impl LayoutNode {
             self.is_dirty = true;
         }
 
-        for i in 0..new_children.len() {
+        for (i, child) in new_children.iter().enumerate() {
             let Some(old_child) = old_children.get(i) else {
-                self.children[i] = LayoutNode::new(new_children[i]);
+                self.children[i] = LayoutNode::new(*child);
                 continue;
             };
 
-            self.children[i].diff(*old_child, new_children[i]);
+            self.children[i].diff(*old_child, *child);
             if self.children[i].is_dirty || self.children[i].has_dirty_child {
                 self.has_dirty_child = true;
             }
