@@ -3,9 +3,11 @@ use std::{
     hash::{DefaultHasher, Hash, Hasher},
 };
 
+mod layout_bounds;
 mod layout_node;
 mod layouting;
 
+pub use layout_bounds::LayoutBounds;
 pub use layout_node::LayoutNode;
 pub use layouting::*;
 

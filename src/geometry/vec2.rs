@@ -18,7 +18,7 @@ pub struct Vec2<T = usize> {
 
 impl<T> Vec2<T> {
     /// Creates new [`Vec2`] containing given x and y coordinates
-    pub fn new(x: T, y: T) -> Self {
+    pub const fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
 }

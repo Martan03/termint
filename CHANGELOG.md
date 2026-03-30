@@ -11,11 +11,13 @@
     - `List`, `Table` and `Scrollable` implement scrolling
 - Add option to set custom event `Message` to some widgets
     - `Button`, `ProgressBar`, `Scrollable`, `Table`
+- Add `LayoutNode` for layout caching (replaces `Cache`)
 
 ### Changes:
 
 - Add `delta` argument (time between frames) to `Application::update`
 - Remove `BgGrad` layout forwarding (such as `BgGrad::center`,...)
+- Remove `Cache` - changes the `Widget` API
 
 ## v0.7.0
 
