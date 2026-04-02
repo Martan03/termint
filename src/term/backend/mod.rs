@@ -16,7 +16,7 @@
 //! ```rust
 //! use termint::prelude::*;
 //!
-//! let term = Term::<(), TermalBackend>::new();
+//! let term = Term::<(), CrosstermBackend>::new();
 //! ```
 //!
 //! # Backend trait

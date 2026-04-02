@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use termal::raw::events::{
-    mouse::Button as TermalButton, mouse::Event as TermalMouseEvent,
-    mouse::Mouse, Event as TermalEvent, Key, KeyCode as TermalKeyCode,
-    Modifiers as TermalMod,
+    Event as TermalEvent, Key, KeyCode as TermalKeyCode,
+    Modifiers as TermalMod, mouse::Button as TermalButton,
+    mouse::Event as TermalMouseEvent, mouse::Mouse,
 };
 use termal::raw::events::{StateChange, Status};
 use termal::raw::{StdioProvider, Terminal};
@@ -14,8 +14,8 @@ use crate::term::backend::event::{
     MouseEvent, MouseEventKind,
 };
 use crate::{
-    term::backend::{Backend, Event},
     Error,
+    term::backend::{Backend, Event},
 };
 
 /// An event-reading backend powered by the `termal` crate. It is used as a
@@ -23,7 +23,7 @@ use crate::{
 /// backend.
 ///
 /// # Usage:
-/// ```rust
+/// ```rust,no_run
 /// use termint::prelude::*;
 ///
 /// # fn main() -> Result<(), Error> {

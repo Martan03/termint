@@ -1,16 +1,16 @@
 use std::time::Duration;
 
 use crate::{
+    Error,
     prelude::Vec2,
     term::backend::{
+        Backend, Event,
         event::{
             KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
             MediaKeyCode, ModifierKeyCode, MouseButton, MouseEvent,
             MouseEventKind,
         },
-        Backend, Event,
     },
-    Error,
 };
 
 use crossterm::event::{
@@ -26,7 +26,7 @@ use crossterm::event::{
 /// backend.
 ///
 /// # Usage:
-/// ```rust
+/// ```rust,no_run
 /// use termint::prelude::*;
 ///
 /// # fn main() -> Result<(), Error> {

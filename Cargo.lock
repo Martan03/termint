@@ -37,9 +37,9 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bitflags"
-version = "2.10.0"
+version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
+checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 
 [[package]]
 name = "bumpalo"
@@ -347,9 +347,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.180"
+version = "0.2.184"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcc35a38544a891a5f7c865aca548a982ccb3b8650a5b06d0fd33a10283c56fc"
+checksum = "48f5d2a454e16a5ea0f4ced81bd44e4cfc7bd3a507b61887c99fd3538b28e4af"
 
 [[package]]
 name = "linux-raw-sys"
@@ -735,9 +735,9 @@ dependencies = [
 
 [[package]]
 name = "termal"
-version = "4.1.1"
+version = "4.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f566edd01ea8f15a40834a48fcdc1388a195b9fd204e725d9116de5f4d9b745e"
+checksum = "e91e75933be6651d6945ffe998215db5562f2b40e65071149a184d93ad5484b5"
 dependencies = [
  "termal_core",
  "termal_proc",
@@ -745,9 +745,9 @@ dependencies = [
 
 [[package]]
 name = "termal_core"
-version = "4.1.1"
+version = "4.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8538332f7366aace8c0f5189c1607b1d10d3a7ae9fbe9f5b79015deffe2ba76"
+checksum = "7a766a6fe27d8a55afd9db7201c14c65712843ce74b9683cec2fa6e2e72805e0"
 dependencies = [
  "base64",
  "bitflags",
@@ -762,9 +762,9 @@ dependencies = [
 
 [[package]]
 name = "termal_proc"
-version = "4.1.1"
+version = "4.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d9c9f042d42860d2fa3d4827811e45d3f923cee4d0e34224a06e2551424ace4"
+checksum = "1aeefcc81ae1a51bcd9b7a027420c6504a2dd8b0688743b34cea81007bc8a165"
 dependencies = [
  "termal_core",
 ]
