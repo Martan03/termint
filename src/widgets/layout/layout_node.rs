@@ -71,9 +71,10 @@ impl LayoutNode {
         }
 
         self.area = area;
-        self.is_dirty = false;
-        self.has_dirty_child = false;
 
         widget.layout(self, self.area);
+
+        self.is_dirty = false;
+        self.has_dirty_child = false;
     }
 }

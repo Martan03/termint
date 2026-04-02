@@ -16,5 +16,10 @@ bitflags! {
         const RENDER = 0b0010;
         /// Quits the main loop
         const QUIT = 0b0100;
+        /// Dumps the entire layout cache and forces a full recalculation.
+        ///
+        /// Use it only if changing layout doesn't take effect - which hopefuly
+        /// shouldn't happen (often).
+        const RELAYOUT = 0b1000;
     }
 }

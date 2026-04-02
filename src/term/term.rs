@@ -83,6 +83,7 @@ pub struct Term<M: 'static = (), B: Backend = DefaultBackend> {
     prev_widget: Option<Element<M>>,
     small: Option<Element<M>>,
     layout: LayoutNode,
+    relayout: bool,
     padding: Padding,
     setuped: bool,
     mouse_enabled: bool,
@@ -145,6 +146,7 @@ where
             prev_widget: None,
             small: None,
             layout: LayoutNode::default(),
+            relayout: false,
             padding: Padding::default(),
             setuped: false,
             mouse_enabled: false,
@@ -324,6 +326,7 @@ where
                     _ => {}
                 }
                 action |= app.event(event);
+                action |= Action::RELAYOUT;
             }
 
             let now = Instant::now();
@@ -333,7 +336,12 @@ where
 
             if action.contains(Action::QUIT) {
                 break;
-            } else if action.contains(Action::RENDER) {
+            }
+            if action.contains(Action::RELAYOUT) {
+                self.relayout = true;
+            }
+
+            if action.contains(Action::RENDER) {
                 self.draw(|f| app.view(f))?;
             } else if action.contains(Action::RERENDER) {
                 self.rerender()?;
@@ -380,7 +388,13 @@ where
         let mut buffer = Buffer::empty(rect);
 
         let dummy: Element<M> = Spacer::new().into();
-        let prev = self.prev_widget.as_ref().unwrap_or(&dummy);
+        let prev = if self.relayout {
+            self.relayout = false;
+            &dummy
+        } else {
+            self.prev_widget.as_ref().unwrap_or(&dummy)
+        };
+
         match &self.small {
             Some(small)
                 if rect.width() < widget.width(rect.size())
@@ -430,6 +444,7 @@ impl<M> Default for Term<M, DefaultBackend> {
             prev_widget: Default::default(),
             small: Default::default(),
             layout: Default::default(),
+            relayout: false,
             padding: Default::default(),
             setuped: false,
             mouse_enabled: false,
