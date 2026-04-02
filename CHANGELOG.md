@@ -1,5 +1,22 @@
 # Termint changelog
 
+## v0.8.1
+
+### Features:
+
+- Add dummy `TestBackend` (blank `Backend` implementation)
+    - `Backend::get_size` returns configured terminal size
+- Add `LayoutNode::layout`, which simplifies `Widget::layout` implementations
+
+### Changes:
+
+- `Term` now cannot be used without `Backend`
+- Remove `NoBackend` type
+
+### Fixes:
+
+- Fix MacOS compile error by removing `termal/raw` from default features
+
 ## v0.8.0
 
 ### Features:
