@@ -27,7 +27,7 @@ use crate::{
 /// use termint::prelude::*;
 ///
 /// # fn main() -> Result<(), Error> {
-/// Term::<TermalBackend>::init()?;
+/// Term::<(), TermalBackend>::init()?;
 /// # Ok(())
 /// # }
 /// ```
@@ -70,6 +70,24 @@ impl Backend for TermalBackend {
             }
             other => Ok(other.try_into().ok()),
         }
+    }
+
+    fn enable_raw_mode() -> Result<(), Error> {
+        termal::raw::enable_raw_mode().map_err(Into::into)
+    }
+
+    fn disable_raw_mode() -> Result<(), Error> {
+        termal::raw::disable_raw_mode().map_err(Into::into)
+    }
+
+    fn is_raw_mode_enabled() -> bool {
+        termal::raw::is_raw_mode_enabled()
+    }
+
+    fn get_size(&self) -> Result<(usize, usize), Error> {
+        termal::raw::term_size()
+            .map(|s| (s.char_width, s.char_height))
+            .map_err(Into::into)
     }
 }
 

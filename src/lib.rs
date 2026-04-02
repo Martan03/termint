@@ -50,7 +50,7 @@
 //!
 //! `backend-crossterm` is enabled by default. If both `backend-crossterm` and
 //! `backend-termal` are enabled, Termint defaults to **Crossterm**, unless
-//! specified otherwise via `Term::<Backend>::init()`.
+//! specified otherwise via `Term::<Message, Backend>::init()`.
 //!
 //! ## Examples
 //!

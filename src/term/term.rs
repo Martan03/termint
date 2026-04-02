@@ -5,12 +5,9 @@ use std::{
     time::Instant,
 };
 
-use termal::{
-    codes::{
-        DISABLE_ALTERNATIVE_BUFFER, ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN,
-        HIDE_CURSOR, SHOW_CURSOR,
-    },
-    raw::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, term_size},
+use termal::codes::{
+    DISABLE_ALTERNATIVE_BUFFER, ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN,
+    HIDE_CURSOR, SHOW_CURSOR,
 };
 
 use crate::{
@@ -20,7 +17,7 @@ use crate::{
     prelude::MouseEvent,
     term::{
         Action, Application, Frame,
-        backend::{Backend, DefaultBackend, Event, NoBackend},
+        backend::{Backend, DefaultBackend, Event},
         disable_bracketed_paste, disable_mouse_capture,
         enable_bracketed_paste, enable_mouse_capture,
     },
@@ -80,7 +77,7 @@ static HOOK_SET: Once = Once::new();
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Term<M: 'static = (), B = NoBackend> {
+pub struct Term<M: 'static = (), B: Backend = DefaultBackend> {
     backend: B,
     prev: Option<Buffer>,
     prev_widget: Option<Element<M>>,
@@ -93,7 +90,10 @@ pub struct Term<M: 'static = (), B = NoBackend> {
     last_size: Vec2,
 }
 
-impl<M: 'static, B: Default> Term<M, B> {
+impl<M, B: Backend> Term<M, B>
+where
+    M: Clone + 'static,
+{
     /// Creates new [`Term`] with the specified backend
     pub fn new() -> Self {
         Self::custom(B::default())
@@ -107,24 +107,6 @@ impl<M: 'static, B: Default> Term<M, B> {
         term = term.setup()?;
         Ok(term)
     }
-}
-
-impl<M, B> Term<M, B> {
-    /// Creates new [`Term`] with the given backend
-    pub fn custom(backend: B) -> Self {
-        Self {
-            backend,
-            prev: None,
-            prev_widget: None,
-            small: None,
-            layout: LayoutNode::default(),
-            padding: Padding::default(),
-            setuped: false,
-            mouse_enabled: false,
-            paste_enabled: false,
-            last_size: Vec2::default(),
-        }
-    }
 
     /// Prepares the terminal: enables the alternate buffer, clears screen,
     /// hides cursor and enable raw mode.
@@ -135,7 +117,7 @@ impl<M, B> Term<M, B> {
     /// The terminal is restored automatically when [`Term`] is dropped.
     pub fn setup(mut self) -> Result<Self, Error> {
         if !self.setuped {
-            enable_raw_mode()?;
+            B::enable_raw_mode()?;
             print!(
                 "{}{}{}",
                 ENABLE_ALTERNATIVE_BUFFER, ERASE_SCREEN, HIDE_CURSOR
@@ -153,6 +135,22 @@ impl<M, B> Term<M, B> {
             self.setuped = true;
         }
         Ok(self)
+    }
+
+    /// Creates new [`Term`] with the given backend
+    pub fn custom(backend: B) -> Self {
+        Self {
+            backend,
+            prev: None,
+            prev_widget: None,
+            small: None,
+            layout: LayoutNode::default(),
+            padding: Padding::default(),
+            setuped: false,
+            mouse_enabled: false,
+            paste_enabled: false,
+            last_size: Vec2::default(),
+        }
     }
 
     /// Enables mouse events backend capture ([`Event::Mouse`]).
@@ -214,30 +212,6 @@ impl<M, B> Term<M, B> {
         self.layout = LayoutNode::default();
     }
 
-    /// Restores the terminal: disables the alternate buffer and shows cursor
-    ///
-    /// Note restore is done automatically and should be used only when you
-    /// want to restore the buffer before the [`Term`] is dropped.
-    pub fn restore() {
-        if is_raw_mode_enabled() {
-            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
-            _ = disable_raw_mode();
-        }
-        disable_mouse_capture();
-        disable_bracketed_paste();
-        _ = stdout().flush();
-    }
-
-    /// Gets size of the terminal
-    pub fn get_size() -> Option<(usize, usize)> {
-        term_size().ok().map(|s| (s.char_width, s.char_height))
-    }
-}
-
-impl<M, B> Term<M, B>
-where
-    M: Clone + 'static,
-{
     /// Renders given widget on full screen with set padding. Displays small
     /// screen when cannot fit (only when `small_screen` is set).
     pub fn render<T>(&mut self, widget: T) -> Result<(), Error>
@@ -301,12 +275,7 @@ where
         self.render_widget(wid, rect);
         Ok(())
     }
-}
 
-impl<M, B: Backend> Term<M, B>
-where
-    M: Clone + 'static,
-{
     /// Starts the application main loop and handles the terminal state.
     ///
     /// This method does the following:
@@ -374,6 +343,25 @@ where
         Ok(())
     }
 
+    /// Restores the terminal: disables the alternate buffer and shows cursor
+    ///
+    /// Note restore is done automatically and should be used only when you
+    /// want to restore the buffer before the [`Term`] is dropped.
+    pub fn restore() {
+        if B::is_raw_mode_enabled() {
+            print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
+            _ = B::disable_raw_mode();
+        }
+        disable_mouse_capture();
+        disable_bracketed_paste();
+        _ = stdout().flush();
+    }
+
+    /// Gets size of the terminal
+    pub fn get_size(&self) -> Option<(usize, usize)> {
+        self.backend.get_size().ok()
+    }
+
     fn handle_mouse<A>(&mut self, app: &mut A, event: &MouseEvent) -> Action
     where
         A: Application<Message = M>,
@@ -387,12 +375,7 @@ where
             EventResult::Response(m) => app.message(m),
         }
     }
-}
 
-impl<M, B> Term<M, B>
-where
-    M: Clone + 'static,
-{
     fn render_widget(&mut self, widget: Element<M>, rect: Rect) {
         let mut buffer = Buffer::empty(rect);
 
@@ -423,7 +406,7 @@ where
     }
 
     fn get_rect(&mut self) -> Result<Rect, Error> {
-        let (w, h) = Self::get_size().ok_or(Error::UnknownTerminalSize)?;
+        let (w, h) = self.get_size().ok_or(Error::UnknownTerminalSize)?;
 
         let pos = Vec2::new(1 + self.padding.left, 1 + self.padding.top);
         let size = Vec2::new(
@@ -456,7 +439,7 @@ impl<M> Default for Term<M, DefaultBackend> {
     }
 }
 
-impl<M, B> Drop for Term<M, B> {
+impl<M, B: Backend> Drop for Term<M, B> {
     fn drop(&mut self) {
         if self.mouse_enabled {
             disable_mouse_capture();
@@ -467,7 +450,7 @@ impl<M, B> Drop for Term<M, B> {
         if self.setuped {
             print!("{}{}", DISABLE_ALTERNATIVE_BUFFER, SHOW_CURSOR);
             _ = stdout().flush();
-            _ = disable_raw_mode();
+            _ = B::disable_raw_mode();
         }
     }
 }

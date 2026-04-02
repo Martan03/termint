@@ -1,17 +1,17 @@
 use std::{io::Write, time::Duration};
 
-use termal::raw::{disable_raw_mode, enable_raw_mode};
 use termint::{
     prelude::*,
     term::{
-        backend::Backend, disable_bracketed_paste, disable_mouse_capture,
+        backend::{Backend, DefaultBackend},
+        disable_bracketed_paste, disable_mouse_capture,
         enable_bracketed_paste, enable_mouse_capture,
     },
 };
 
 fn main() -> Result<(), Error> {
-    enable_raw_mode()?;
-    let mut backend = CrosstermBackend::default();
+    DefaultBackend::enable_raw_mode()?;
+    let mut backend = DefaultBackend::default();
 
     enable_bracketed_paste();
     enable_mouse_capture();
@@ -25,7 +25,7 @@ fn main() -> Result<(), Error> {
                     if key.code == KeyCode::Char('c')
                         && key.modifiers.contains(KeyModifiers::CONTROL) =>
                 {
-                    break
+                    break;
                 }
                 _ => {
                     print!("{:?}\n\r", event);
@@ -36,6 +36,6 @@ fn main() -> Result<(), Error> {
     }
     disable_bracketed_paste();
     disable_mouse_capture();
-    disable_raw_mode()?;
+    DefaultBackend::disable_raw_mode()?;
     Ok(())
 }

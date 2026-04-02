@@ -30,7 +30,7 @@ use crossterm::event::{
 /// use termint::prelude::*;
 ///
 /// # fn main() -> Result<(), Error> {
-/// Term::<CrosstermBackend>::init()?;
+/// Term::<(), CrosstermBackend>::init()?;
 /// # Ok(())
 /// # }
 /// ```
@@ -52,6 +52,24 @@ impl Backend for CrosstermBackend {
         } else {
             Ok(None)
         }
+    }
+
+    fn enable_raw_mode() -> Result<(), Error> {
+        crossterm::terminal::enable_raw_mode().map_err(Into::into)
+    }
+
+    fn disable_raw_mode() -> Result<(), Error> {
+        crossterm::terminal::disable_raw_mode().map_err(Into::into)
+    }
+
+    fn is_raw_mode_enabled() -> bool {
+        crossterm::terminal::is_raw_mode_enabled().unwrap_or(false)
+    }
+
+    fn get_size(&self) -> Result<(usize, usize), Error> {
+        crossterm::terminal::size()
+            .map(|(w, h)| (w as usize, h as usize))
+            .map_err(Into::into)
     }
 }
 

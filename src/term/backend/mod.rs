@@ -13,10 +13,15 @@
 //!
 //! You can create new [`Term`](crate::term::Term) with specified backend like
 //! this:
-//! ```rust
+//! ```rust,no_run
+//! # fn main() {
+//! # #[cfg(feature = "backend-crossterm")]
+//! # {
 //! use termint::prelude::*;
 //!
 //! let term = Term::<(), CrosstermBackend>::new();
+//! # }
+//! # }
 //! ```
 //!
 //! # Backend trait
@@ -32,14 +37,14 @@
 //! use termint::{
 //!     prelude::*,
 //!     term::{
-//!         backend::Backend, enable_bracketed_paste, enable_mouse_capture,
+//!         backend::{Backend, DefaultBackend},
+//!         enable_bracketed_paste, enable_mouse_capture,
 //!         disable_bracketed_paste, disable_mouse_capture
 //!     }
 //! };
-//! use termal::raw::{disable_raw_mode, enable_raw_mode};
 //!
 //! fn print_events<B: Backend>(mut backend: B) -> Result<(), Error> {
-//!     enable_raw_mode()?;
+//!     DefaultBackend::enable_raw_mode()?;
 //!     enable_bracketed_paste();
 //!     enable_mouse_capture();
 //!
@@ -54,7 +59,7 @@
 //!
 //!     disable_bracketed_paste();
 //!     disable_mouse_capture();
-//!     disable_raw_mode()?;
+//!     DefaultBackend::disable_raw_mode()?;
 //!     Ok(())
 //! }
 //! ```
@@ -66,12 +71,14 @@ mod crossterm;
 mod event;
 #[cfg(feature = "backend-termal")]
 mod termal;
+mod test;
 
 #[cfg(feature = "backend-crossterm")]
 pub use crossterm::CrosstermBackend;
 pub use event::*;
 #[cfg(feature = "backend-termal")]
 pub use termal::TermalBackend;
+pub use test::TestBackend;
 
 use crate::Error;
 
@@ -85,7 +92,7 @@ pub type DefaultBackend = TermalBackend;
     not(feature = "backend-termal"),
     not(feature = "backend-crossterm")
 ))]
-pub type DefaultBackend = NoBackend;
+pub type DefaultBackend = TestBackend;
 
 /// Backend trait allows creating custom backends, which then can be used as
 /// a custom [`Term`](crate::term::Term) backend in the Framework mode.
@@ -95,22 +102,16 @@ pub trait Backend: Default {
         &mut self,
         timeout: Duration,
     ) -> Result<Option<Event>, Error>;
-}
 
-/// This is used when no backend feature is enabled. When
-/// [`Term`](crate::term::Term) has `NoBackend`, the Framework mode is
-/// disabled.
-///
-/// # Example
-///
-/// If you want to use the `NoBackend` with [`Term`](crate::term::Term), you
-/// can create it like this:
-///
-/// ```rust
-/// use termint::prelude::*;
-/// use termint::term::backend::NoBackend;
-///
-/// Term::<NoBackend>::new();
-/// ```
-#[derive(Debug, Default)]
-pub struct NoBackend;
+    /// Enables terminal raw mode.
+    fn enable_raw_mode() -> Result<(), Error>;
+
+    /// Disables terminal raw mode.
+    fn disable_raw_mode() -> Result<(), Error>;
+
+    /// Checks if terminal raw mode is enabled.
+    fn is_raw_mode_enabled() -> bool;
+
+    /// Gets the size of the terminal.
+    fn get_size(&self) -> Result<(usize, usize), Error>;
+}
