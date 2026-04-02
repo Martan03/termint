@@ -24,6 +24,10 @@ impl LayoutNode {
         }
     }
 
+    /// Updates the layout tree to match the new widget tree.
+    ///
+    /// When there's a change compared to the old widget tree, it sets the
+    /// node as dirty so that it relayouts itself later.
     pub fn diff<M>(&mut self, old: &dyn Widget<M>, new: &dyn Widget<M>)
     where
         M: Clone + 'static,
@@ -51,5 +55,25 @@ impl LayoutNode {
                 self.has_dirty_child = true;
             }
         }
+    }
+
+    /// Wraps the widget layouting, but also adds required checks and sets the
+    /// node attributes.
+    ///
+    /// Widgets should call this when layouting its children, since without the
+    /// checks it would layout every time, instead of only when needed.
+    pub fn layout<M>(&mut self, widget: &dyn Widget<M>, area: Rect)
+    where
+        M: Clone + 'static,
+    {
+        if !self.is_dirty && !self.has_dirty_child && self.area == area {
+            return;
+        }
+
+        self.area = area;
+        self.is_dirty = false;
+        self.has_dirty_child = false;
+
+        widget.layout(self, self.area);
     }
 }

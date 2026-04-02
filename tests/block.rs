@@ -16,9 +16,9 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
 
         let bg: Element<()> = Block::empty().title("Test").into();
-        let mut layout = LayoutNode::new(&bg);
-        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
-        bg.render(&mut buffer, &layout);
+        let mut node = LayoutNode::new(&bg);
+        node.layout(&bg, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &node);
 
         let expected = formatc!(
             "          \n  ┌Test─┐ \n  │     │ \n  │     │ \n  └─────┘ {'_}"
@@ -36,9 +36,9 @@ mod tests {
             .bg(Color::Black)
             .modifier(Modifier::BOLD);
         let bg: Element<()> = Block::empty().border_style(style).into();
-        let mut layout = LayoutNode::new(&bg);
-        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
-        bg.render(&mut buffer, &layout);
+        let mut node = LayoutNode::new(&bg);
+        node.layout(&bg, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &node);
 
         let expected = formatc!(
             "          \n  {style}┌─────┐\x1b[0m \n  {style}│\x1b[0m     \
@@ -55,9 +55,9 @@ mod tests {
 
         let bg: Element<()> =
             Block::empty().border_type(BorderType::Double).into();
-        let mut layout = LayoutNode::new(&bg);
-        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
-        bg.render(&mut buffer, &layout);
+        let mut node = LayoutNode::new(&bg);
+        node.layout(&bg, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &node);
 
         let expected = formatc!(
             "          \n  ╔═════╗ \n  ║     ║ \n  ║     ║ \n  ╚═════╝ {'_}"
@@ -72,9 +72,9 @@ mod tests {
 
         let bg: Element<()> =
             Block::empty().borders(borders!(TOP, LEFT)).into();
-        let mut layout = LayoutNode::new(&bg);
-        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
-        bg.render(&mut buffer, &layout);
+        let mut node = LayoutNode::new(&bg);
+        node.layout(&bg, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &node);
 
         let expected = formatc!(
             "          \n  ┌────── \n  │       \n  │       \n  │       {'_}"
@@ -88,9 +88,9 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
 
         let bg: Element<()> = Block::vertical().bg(Color::Red).into();
-        let mut layout = LayoutNode::new(&bg);
-        bg.layout(&mut layout, Rect::new(3, 2, 7, 4));
-        bg.render(&mut buffer, &layout);
+        let mut node = LayoutNode::new(&bg);
+        node.layout(&bg, Rect::new(3, 2, 7, 4));
+        bg.render(&mut buffer, &node);
 
         let expected = formatc!(
             "          \n  ┌─────┐ \n  │{}     {}│ \n  │{}     {}│ \n  \

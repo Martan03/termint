@@ -528,13 +528,6 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child && node.area == area {
-            return;
-        }
-
-        node.area = area;
-        node.is_dirty = false;
-        node.has_dirty_child = false;
         if area.is_empty() || self.rows.is_empty() {
             return;
         }
@@ -553,7 +546,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 
         let offset = self.state.borrow().offset;
         let mut cur_y = metrics.rect.y();
-        let mut child_idx = 1;
+        let mut cid = 1;
 
         if let Some(header_row) = &self.header {
             let mut cur_x = metrics.rect.x();
@@ -567,9 +560,9 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
                     metrics.widths[col_idx],
                     height,
                 );
-                cell.layout(&mut node.children[child_idx], cell_area);
+                node.children[cid].layout(cell, cell_area);
                 cur_x += metrics.widths[col_idx] + self.column_spacing;
-                child_idx += 1;
+                cid += 1;
             }
         }
 
@@ -580,18 +573,18 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             let mut cur_x = metrics.rect.x();
 
             for (j, cell) in row.cells.iter().enumerate() {
-                let cnode = &mut node.children[child_idx];
+                let cnode = &mut node.children[cid];
                 if is_visible {
                     let w = metrics.widths[j];
                     let cell_area = Rect::new(cur_x, cur_y, w, row_height);
-                    cell.layout(cnode, cell_area);
+                    cnode.layout(cell, cell_area);
                     cur_x += w + self.column_spacing;
                 } else {
                     cnode.area = Rect::default();
                     cnode.is_dirty = false;
                     cnode.has_dirty_child = false;
                 }
-                child_idx += 1;
+                cid += 1;
             }
 
             if is_visible {

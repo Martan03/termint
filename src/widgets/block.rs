@@ -12,7 +12,7 @@ use crate::{
     prelude::{Constraint, Direction, Rect, Vec2},
     style::Style,
     text::Text,
-    widgets::{Element, Layout, LayoutNode, Spacer, Span, Widget, layout},
+    widgets::{Element, Layout, LayoutNode, Spacer, Span, Widget},
 };
 
 /// A widget that wraps another widget and adds border and title.
@@ -323,9 +323,7 @@ where
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        layout::padded(node, area, self.borders, |n, a| {
-            self.child.layout(&mut n.children[0], a)
-        });
+        node.children[0].layout(&self.child, area.inner(self.borders));
     }
 }
 

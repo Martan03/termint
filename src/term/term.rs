@@ -387,12 +387,12 @@ where
                     || rect.height() < widget.height(rect.size()) =>
             {
                 self.layout.diff(prev, small);
-                small.layout(&mut self.layout, rect);
+                self.layout.layout(small, rect);
                 small.render(&mut buffer, &self.layout);
             }
             _ => {
                 self.layout.diff(prev, &widget);
-                widget.layout(&mut self.layout, rect);
+                self.layout.layout(&widget, rect);
                 widget.render(&mut buffer, &self.layout);
             }
         };

@@ -237,19 +237,11 @@ impl<M: Clone + 'static> Widget<M> for Layout<M> {
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child && node.area == area {
-            return;
-        }
-
-        node.area = area;
         let rect = area.inner(self.padding);
         match self.direction {
             Direction::Vertical => self.layout_ver(node, rect),
             Direction::Horizontal => self.layout_hor(node, rect),
         };
-
-        node.is_dirty = false;
-        node.has_dirty_child = false;
     }
 }
 
@@ -275,7 +267,7 @@ impl<M: Clone + 'static> Layout<M> {
             let crect =
                 Rect::from_coords(*rect.pos(), Vec2::new(rect.width(), csize));
 
-            self.children[i].layout(&mut node.children[i], crect);
+            node.children[i].layout(&self.children[i], crect);
             rect = rect.inner(Padding::top(csize));
         }
     }
@@ -290,7 +282,7 @@ impl<M: Clone + 'static> Layout<M> {
                 Vec2::new(csize, rect.height()),
             );
 
-            self.children[i].layout(&mut node.children[i], crect);
+            node.children[i].layout(&self.children[i], crect);
             rect = rect.inner(Padding::left(csize));
         }
     }

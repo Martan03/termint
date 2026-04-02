@@ -88,18 +88,10 @@ pub trait Widget<Message: Clone + 'static = ()>: Any {
 
     /// Calculates the layout of the widget.
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child && node.area == area {
-            return;
-        }
-
         self.children()
             .iter()
             .enumerate()
-            .for_each(|(i, c)| c.layout(&mut node.children[i], area));
-
-        node.area = area;
-        node.is_dirty = false;
-        node.has_dirty_child = false;
+            .for_each(|(i, c)| node.children[i].layout(*c, area));
     }
 
     /// Handles the mouse event, returns `None` if outside of this widget or

@@ -15,7 +15,7 @@ mod tests {
 
         let layout: Element<()> = Layout::vertical().bg(Color::Red).into();
         let mut node = LayoutNode::new(&layout);
-        layout.layout(&mut node, Rect::new(3, 2, 6, 3));
+        node.layout(&layout, Rect::new(3, 2, 6, 3));
         layout.render(&mut buffer, &node);
 
         let bg =
@@ -36,7 +36,7 @@ mod tests {
         let layout: Element<()> = layout.into();
 
         let mut node = LayoutNode::new(&layout);
-        layout.layout(&mut node, rect);
+        node.layout(&layout, rect);
         layout.render(&mut buffer, &node);
 
         let bg =
@@ -59,7 +59,7 @@ mod tests {
 
         let layout: Element<()> = layout.into();
         let mut node = LayoutNode::new(&layout);
-        layout.layout(&mut node, rect);
+        node.layout(&layout, rect);
         layout.render(&mut buffer, &node);
 
         let bg = format!("{}  {}", Color::Red.to_bg(), Color::Default.to_bg());

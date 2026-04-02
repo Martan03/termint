@@ -37,9 +37,9 @@ use super::cell::Cell;
 /// // Gets element and renders it to the [`Buffer`]
 /// let element = get_your_element();
 ///
-/// let mut layout = LayoutNode::new(&element);
-/// element.layout(&mut layout, rect);
-/// element.render(&mut buffer, &layout);
+/// let mut node = LayoutNode::new(&element);
+/// node.layout(&element, rect);
+/// element.render(&mut buffer, &node);
 ///
 /// // Renders [`Buffer`], which prints the result to the terminal
 /// buffer.render();

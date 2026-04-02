@@ -180,14 +180,6 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child && node.area == area {
-            return;
-        }
-
-        node.area = area;
-        node.is_dirty = false;
-        node.has_dirty_child = false;
-
         let (cols, cols_pos) = Self::get_size(&self.cols, area.width());
         let (rows, rows_pos) = Self::get_size(&self.rows, area.height());
 
@@ -198,7 +190,7 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
                 cols[item.col],
                 rows[item.row],
             );
-            item.child.layout(&mut node.children[i], crect);
+            node.children[i].layout(&item.child, crect);
         }
     }
 

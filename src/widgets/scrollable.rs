@@ -374,18 +374,10 @@ where
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        if !node.is_dirty && !node.has_dirty_child && node.area == area {
-            return;
-        }
-
-        node.area = area;
-        node.is_dirty = false;
-        node.has_dirty_child = false;
-
         let has_ver = self.ver_state.is_some();
         let has_hor = self.hor_state.is_some();
         if !has_ver && !has_hor {
-            self.child.layout(&mut node.children[0], area);
+            node.children[0].layout(&self.child, area);
             return;
         }
 
@@ -436,7 +428,7 @@ where
             if hor_scroll { test_size.x } else { size.x },
             if ver_scroll { test_size.y } else { size.y },
         );
-        self.child.layout(&mut node.children[0], child_rect);
+        node.children[0].layout(&self.child, child_rect);
     }
 
     fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {

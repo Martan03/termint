@@ -6,7 +6,7 @@ use crate::{
     prelude::{MouseButton, MouseEvent, Rect, Vec2},
     style::Style,
     term::backend::MouseEventKind,
-    widgets::{Element, EventResult, LayoutNode, Spacer, Widget, layout},
+    widgets::{Element, EventResult, LayoutNode, Spacer, Widget},
 };
 
 /// A clickable wrapper widget that triggers a message when clicked.
@@ -179,9 +179,7 @@ impl<M: Clone + 'static> Widget<M> for Button<M> {
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        layout::padded(node, area, self.padding, |n, a| {
-            self.child.layout(&mut n.children[0], a)
-        });
+        node.children[0].layout(&self.child, area.inner(self.padding));
     }
 
     fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {

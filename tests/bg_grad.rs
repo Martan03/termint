@@ -13,9 +13,9 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
 
         let bg: Element<()> = BgGrad::horizontal(0x0088FF, 0xFF8800).into();
-        let mut layout = LayoutNode::new(&bg);
-        bg.layout(&mut layout, Rect::new(3, 2, 4, 2));
-        bg.render(&mut buffer, &layout);
+        let mut node = LayoutNode::new(&bg);
+        node.layout(&bg, Rect::new(3, 2, 4, 2));
+        bg.render(&mut buffer, &node);
 
         let grad =
             formatc!("{'#0088FF_} {'#5588AA_} {'#AA8855_} {'#FF8800_} ");
@@ -32,9 +32,9 @@ mod tests {
         let mut buffer = Buffer::empty(rect);
 
         let bg: Element<()> = BgGrad::vertical(0x0088FE, 0xFE8800).into();
-        let mut layout = LayoutNode::new(&bg);
-        bg.layout(&mut layout, Rect::new(3, 2, 4, 3));
-        bg.render(&mut buffer, &layout);
+        let mut node = LayoutNode::new(&bg);
+        node.layout(&bg, Rect::new(3, 2, 4, 3));
+        bg.render(&mut buffer, &node);
 
         let expected = formatc!(
             "          \n  {'#0088FE_}{}\x1b[49m    \n  {'#7F887F_}{}\

@@ -5,7 +5,7 @@ use crate::{
     enums::{Color, RGB},
     geometry::Padding,
     prelude::{Direction, Rect, Vec2},
-    widgets::{Element, LayoutNode, Spacer, Widget, layout},
+    widgets::{Element, LayoutNode, Spacer, Widget},
 };
 
 /// A container widget that renders a gradient background behind child.
@@ -241,9 +241,7 @@ where
     }
 
     fn layout(&self, node: &mut LayoutNode, area: Rect) {
-        layout::padded(node, area, self.padding, |n, a| {
-            self.child.layout(&mut n.children[0], a)
-        });
+        node.children[0].layout(&self.child, area.inner(self.padding));
     }
 }
 

@@ -12,14 +12,5 @@ pub fn padded<P, F>(
     P: Into<Padding>,
     F: FnMut(&mut LayoutNode, Rect),
 {
-    if !node.is_dirty && !node.has_dirty_child && node.area == area {
-        return;
-    }
-
-    let rect = area.inner(padding.into());
-    layout_children(node, rect);
-
-    node.area = area;
-    node.is_dirty = false;
-    node.has_dirty_child = false;
+    layout_children(node, area.inner(padding.into()));
 }
