@@ -771,7 +771,7 @@ dependencies = [
 
 [[package]]
 name = "termint"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "bitflags",
  "compact_str",
