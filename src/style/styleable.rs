@@ -3,13 +3,13 @@ use crate::style::Style;
 /// The trait for widgets to support better styling via `Stylize` trait.
 ///
 /// By implementing `Styleable`, widget automatically gains access to the
-/// [`Stylize`] trait, which provided builder methods for more natural styling,
-/// such as `.red()`, '.on_blue()` and `.bold()`.
+/// [`Stylize`](crate::style::Stylize) trait, which provided builder methods
+/// for more natural styling, such as `.red()`, '.on_blue()` and `.bold()`.
 ///
 /// # Example
 ///
 /// ```rust
-/// use termint::prelude::*;
+/// use termint::{prelude::*, style::Styleable};
 ///
 /// #[derive(Default)]
 /// pub struct CustomWidget {

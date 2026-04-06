@@ -1,8 +1,9 @@
+pub use crate::Error;
 pub use crate::enums::{Border, BorderType, Color, Modifier, Wrap};
 pub use crate::geometry::{
     Constraint, Direction, Rect, TextAlign, Unit, Vec2,
 };
-pub use crate::style::Style;
+pub use crate::style::{Style, Stylize};
 pub use crate::term::backend::{
     Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent,
 };
@@ -11,7 +12,6 @@ pub use crate::widgets::{
     Block, Button, Element, Grid, Layout, List, ListState, Overlay, Paragraph,
     ProgressBar, Row, Spacer, Span, Table, TableState, ToSpan, Widget,
 };
-pub use crate::Error;
 
 #[cfg(feature = "backend-crossterm")]
 pub use crate::term::backend::CrosstermBackend;
