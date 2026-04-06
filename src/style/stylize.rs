@@ -1,22 +1,48 @@
+use crate::style::Styleable;
+
 macro_rules! generate_stylize_trait {
     (
         $($cname:ident => $color:ident),* $(,)?
         ;
         $($mname:ident => $modifier:ident),* $(,)?
     ) => {
-        pub trait Stylize {
+        pub trait Stylize: Sized {
             type Output;
 
+            fn fg<T>(self, color: T) -> Self::Output
+            where
+                T: Into<Option<crate::enums::Color>>;
+
+            fn bg<T>(self, color: T) -> Self::Output
+            where
+                T: Into<Option<crate::enums::Color>>;
+
+            fn add_modifier(
+                self,
+                modifier: crate::enums::Modifier
+            ) -> Self::Output;
+
+            fn remove_modifier(
+                self,
+                modifier: crate::enums::Modifier
+            ) -> Self::Output;
+
             $(
-                fn $cname(self) -> Self::Output;
+                fn $cname(self) -> Self::Output {
+                    self.fg(crate::enums::Color::$color)
+                }
 
                 paste::paste! {
-                    fn [<on_ $cname>](self) -> Self::Output;
+                    fn [<on_ $cname>](self) -> Self::Output {
+                        self.bg(crate::enums::Color::$color)
+                    }
                 }
             )*
 
             $(
-                fn $mname(self) -> Self::Output;
+                fn $mname(self) -> Self::Output {
+                    self.add_modifier(crate::enums::Modifier::$modifier)
+                }
             )*
         }
 
@@ -26,30 +52,90 @@ macro_rules! generate_stylize_trait {
         {
             type Output = W;
 
-            $(
-                fn $cname(mut self) -> Self::Output {
-                    self.style_mut().fg = Some(crate::enums::Color::$color);
-                    self
-                }
+            fn fg<T>(mut self, color: T) -> Self::Output
+            where
+                T: Into<Option<crate::enums::Color>>
+            {
+                self.style_mut().fg = color.into();
+                self
+            }
 
-                paste::paste! {
-                    fn [<on_ $cname>](mut self) -> Self::Output {
-                        self.style_mut().bg =
-                            Some(crate::enums::Color::$color);
-                        self
-                    }
-                }
-            )*
+            fn bg<T>(mut self, color: T) -> Self::Output
+            where
+                T: Into<Option<crate::enums::Color>>
+            {
+                self.style_mut().bg = color.into();
+                self
+            }
 
-            $(
-                fn $mname(mut self) -> Self::Output {
-                    self.style_mut().modifier.insert(
-                        crate::enums::Modifier::$modifier
-                    );
-                    self
-                }
-            )*
+            fn add_modifier(
+                mut self,
+                modifier: crate::enums::Modifier
+            ) -> Self::Output
+            {
+                self.style_mut().modifier.insert(modifier);
+                self
+            }
+
+            fn remove_modifier(
+                mut self,
+                modifier: crate::enums::Modifier
+            ) -> Self::Output
+            {
+                self.style_mut().modifier.remove(modifier);
+                self
+            }
         }
+    };
+}
+
+macro_rules! impl_stylize {
+    (
+        $($from:ty => $to:ty),* $(,)?
+    ) => {
+        $(
+            impl Stylize for $from {
+                type Output = $to;
+
+                fn fg<T>(self, color: T) -> Self::Output
+                where
+                    T: Into<Option<crate::enums::Color>>
+                {
+                    let mut widget: $to = self.into();
+                    widget.style_mut().fg = color.into();
+                    widget
+                }
+
+                fn bg<T>(self, color: T) -> Self::Output
+                where
+                    T: Into<Option<crate::enums::Color>>
+                {
+                    let mut widget: $to = self.into();
+                    widget.style_mut().fg = color.into();
+                    widget
+                }
+
+                fn add_modifier(
+                    self,
+                    modifier: crate::enums::Modifier
+                ) -> Self::Output
+                {
+                    let mut widget: $to = self.into();
+                    widget.style_mut().modifier.insert(modifier);
+                    widget
+                }
+
+                fn remove_modifier(
+                    self,
+                    modifier: crate::enums::Modifier
+                ) -> Self::Output
+                {
+                    let mut widget: $to = self.into();
+                    widget.style_mut().modifier.remove(modifier);
+                    widget
+                }
+            }
+        )*
     };
 }
 
@@ -80,4 +166,9 @@ generate_stylize_trait! {
     inverse => INVERSED,
     hidden => HIDDEN,
     strike => STRIKED,
+}
+
+impl_stylize! {
+    &str => crate::widgets::Span,
+    String => crate::widgets::Span,
 }
