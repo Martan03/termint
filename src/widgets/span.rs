@@ -7,7 +7,7 @@ use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap},
     prelude::{Rect, TextAlign, Vec2},
-    style::Style,
+    style::{Style, Styleable},
     text::{Text, TextParser},
     widgets::{Element, LayoutNode, Widget},
 };
@@ -486,6 +486,12 @@ where
 
     fn to_span(self) -> Span {
         Span::new(self.to_string())
+    }
+}
+
+impl Styleable for Span {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 }
 
