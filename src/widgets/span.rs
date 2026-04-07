@@ -26,8 +26,14 @@ use crate::{
 /// ```rust
 /// use termint::{prelude::*, modifiers};
 ///
-/// // Using `new` constructor with red foreground:
-/// let span = Span::new("Red text").fg(Color::Red);
+/// // Using `new` constructor with red foreground and bold modifier:
+/// let span = Span::new("Red text").fg(Color::Red).modifier(Modifier::BOLD);
+///
+/// // Using the `Stylize` trait to get colored span
+/// let span = Span::new("Bold white text on black")
+///     .white()
+///     .on_black()
+///     .bold();
 ///
 /// // Cyan bold and italic text on yellow background
 /// let span = "Cyan bold and italic on yellow"
