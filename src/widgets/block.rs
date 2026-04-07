@@ -10,7 +10,7 @@ use crate::{
     enums::{Border, BorderType, Color},
     geometry::Padding,
     prelude::{Constraint, Direction, Rect, Vec2},
-    style::Style,
+    style::{Style, Stylize},
     text::Text,
     widgets::{Element, Layout, LayoutNode, Spacer, Span, Widget},
 };

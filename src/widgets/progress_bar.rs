@@ -3,7 +3,7 @@ use std::{cell::Cell, rc::Rc};
 use crate::{
     buffer::Buffer,
     prelude::{MouseButton, MouseEvent, Rect, Vec2},
-    style::Style,
+    style::{Style, Styleable},
     term::backend::MouseEventKind,
     widgets::{Element, EventResult, LayoutNode, Widget},
 };
@@ -38,6 +38,12 @@ type ProgressBarHandler<M> = Box<dyn Fn(f64) -> M>;
 ///     .track_char('=')
 ///     .style(Color::White)
 ///     .on_click(|p| format!("Clicked at {p}!"));
+///
+/// // Setting general style can be done also using `Stylize` trait
+/// let pb = ProgressBar::<()>::new(state.clone())
+///     .red()
+///     .on_black()
+///     .underline();
 /// ```
 pub struct ProgressBar<M> {
     state: Rc<Cell<f64>>,
@@ -268,6 +274,12 @@ impl<M> ProgressBar<M> {
         let frac = len - full_cells as f64;
         let head_id = (frac * (self.thumb_chars.len() - 1) as f64).round();
         (full_cells, head_id as usize)
+    }
+}
+
+impl<M> Styleable for ProgressBar<M> {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 }
 

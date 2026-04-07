@@ -4,7 +4,7 @@ use crate::{
     buffer::Buffer,
     geometry::Padding,
     prelude::{MouseButton, MouseEvent, Rect, Vec2},
-    style::Style,
+    style::{Style, Styleable},
     term::backend::MouseEventKind,
     widgets::{Element, EventResult, LayoutNode, Spacer, Widget},
 };
@@ -35,7 +35,10 @@ use crate::{
 ///     .on_click(Msg::Submit);
 ///
 /// let cancel_btn = Button::new("Cancel")
-///     .style((Color::Black, Color::Red))
+///     // For `Button` styling you can also use `Stylize` trait
+///     .black()
+///     .on_red()
+///     .bold()
 ///     .padding((1, 2))
 ///     // Sets the right click trigger Message
 ///     .on_press(MouseButton::Right, Msg::Cancel);
@@ -204,6 +207,12 @@ impl<M: Clone> Button<M> {
                 .unwrap_or(EventResult::None),
             _ => EventResult::None,
         }
+    }
+}
+
+impl<M> Styleable for Button<M> {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 }
 

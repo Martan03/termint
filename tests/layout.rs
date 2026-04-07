@@ -5,6 +5,7 @@ mod tests {
         buffer::Buffer,
         enums::Color,
         geometry::{Constraint, Rect},
+        style::Stylize,
         widgets::{Element, Layout, LayoutNode, Widget},
     };
 
