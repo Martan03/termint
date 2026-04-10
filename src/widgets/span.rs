@@ -7,7 +7,7 @@ use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap},
     prelude::{Rect, TextAlign, Vec2},
-    style::Style,
+    style::{Style, Styleable},
     text::{Text, TextParser},
     widgets::{Element, LayoutNode, Widget},
 };
@@ -26,8 +26,14 @@ use crate::{
 /// ```rust
 /// use termint::{prelude::*, modifiers};
 ///
-/// // Using `new` constructor with red foreground:
-/// let span = Span::new("Red text").fg(Color::Red);
+/// // Using `new` constructor with red foreground and bold modifier:
+/// let span = Span::new("Red text").fg(Color::Red).modifier(Modifier::BOLD);
+///
+/// // Using the `Stylize` trait to get colored span
+/// let span = Span::new("Bold white text on black")
+///     .white()
+///     .on_black()
+///     .bold();
 ///
 /// // Cyan bold and italic text on yellow background
 /// let span = "Cyan bold and italic on yellow"
@@ -486,6 +492,12 @@ where
 
     fn to_span(self) -> Span {
         Span::new(self.to_string())
+    }
+}
+
+impl Styleable for Span {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 }
 

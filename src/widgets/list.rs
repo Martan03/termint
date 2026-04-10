@@ -10,7 +10,7 @@ use crate::{
     enums::Color,
     geometry::Padding,
     prelude::{MouseButton, MouseEvent, Rect, Vec2},
-    style::Style,
+    style::{Style, Styleable},
     term::backend::MouseEventKind,
     text::Text,
     widgets::{Element, EventResult, LayoutNode, Span, ToSpan, Widget},
@@ -206,6 +206,12 @@ impl<M> List<M> {
     /// // Selected item will look like: "> Item text".
     /// let list = List::<()>::new(get_items(), Default::default())
     ///     .highlight_symbol("> ");
+    ///
+    /// // You can also set general style using `Stylize` trait
+    /// let list = List::<()>::new(get_items(), Default::default())
+    ///     .black()
+    ///     .on_white()
+    ///     .strike();
     /// ```
     #[must_use]
     pub fn highlight_symbol<T>(mut self, sel_char: T) -> Self
@@ -574,6 +580,12 @@ impl<M: Clone + 'static> List<M> {
         }
 
         EventResult::None
+    }
+}
+
+impl<M> Styleable for List<M> {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 }
 

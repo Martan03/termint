@@ -1,5 +1,16 @@
 # Termint changelog
 
+## v0.8.2
+
+### Features
+
+- Add `Stylize` and `Styleable` traits for better styling
+    - Such as `.red()`, `.on_white()` and `.bold()`
+
+### Fixes
+
+- Fix table row style not being applied
+
 ## v0.8.1
 
 ### Features:

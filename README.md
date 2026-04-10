@@ -70,7 +70,7 @@ struct MyApp;
 
 impl Application for MyApp {
     type Message = ();
-    
+
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let mut main = Block::vertical().title("Termint App");
         main.push("Hello from the Application trait!".fg(Color::Cyan), 0..);
@@ -122,9 +122,11 @@ Here is an example of using `Span` widget:
 ```rust
 use termint::prelude::*;
 
-println!("{}", "Cyan text".fg(Color::Cyan));
-println!("{}", "Cyan text on white".fg(Color::Cyan).bg(Color::White));
-println!("{}", "Bold red text".fg(Color::Red).modifier(Modifier::BOLD));
+println!("{}", "Italic white text on black".white().on_black().italic());
+println!("{}", "Bold blue text on white").blue().on_white().bold();
+
+println!("{}", "Bold cyan text".fg(Color::Cyan).modifier(Modifier::BOLD));
+println!("{}", "Red text on white".fg(Color::Red).bg(Color::White));
 println!("{}", "Text with RGB value".fg(Color::Rgb(0, 249, 210)));
 ```
 

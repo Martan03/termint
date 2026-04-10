@@ -11,10 +11,9 @@ pub use layouting::*;
 
 use crate::{
     buffer::Buffer,
-    enums::Color,
     geometry::Padding,
     prelude::{Constraint, Direction, Rect, Vec2},
-    style::Style,
+    style::{Style, Styleable},
     widgets::{Element, Widget},
 };
 
@@ -44,6 +43,12 @@ use crate::{
 /// layout.push("Left", 1..);
 /// // Pushes another child filling the rest of the space
 /// layout.push("Right", Constraint::Fill(1));
+/// 
+/// // You can also set general style using `Stylize` trait
+/// let mut layout = Layout::<()>::vertical()
+///     .blue()
+///     .on_yellow()
+///     .italic();
 /// ```
 #[derive(Debug)]
 pub struct Layout<M: 'static = ()> {
@@ -113,32 +118,6 @@ impl<M> Layout<M> {
         T: Into<Style>,
     {
         self.style = style.into();
-        self
-    }
-
-    /// Sets base background color of the [`Layout`].
-    ///
-    /// The `bg` can be any type convertible into `Option<Color>`. If `None` is
-    /// supplied, the background is transparent.
-    #[must_use]
-    pub fn bg<T>(mut self, bg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.style = self.style.bg(bg);
-        self
-    }
-
-    /// Sets base foreground color of the [`Layout`].
-    ///
-    /// The `fg` can be any type convertible into `Option<Color>`. If `None` is
-    /// supplied, it keeps the original foreground color.
-    #[must_use]
-    pub fn fg<T>(mut self, fg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.style = self.style.fg(fg);
         self
     }
 
@@ -472,6 +451,12 @@ impl<M: Clone + 'static> Layout<M> {
             total_fills -= f;
         }
         height
+    }
+}
+
+impl<M> Styleable for Layout<M> {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 }
 
