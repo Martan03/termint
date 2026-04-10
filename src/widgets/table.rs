@@ -426,7 +426,6 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         }
 
         let snode = &layout.children[0];
-        rect.size.x = rect.width().saturating_sub(snode.area.width());
         if snode.area.width() > 0 {
             self.render_scrollbar(buffer, &snode.area);
         }
@@ -434,6 +433,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         let mut cid = 1;
         let header_height =
             self.render_header(buffer, layout, &mut rect, &mut cid);
+        rect.size.x = rect.width().saturating_sub(snode.area.width());
 
         let offset = self.state.borrow().offset;
         let selected = self.state.borrow().selected;
@@ -535,9 +535,9 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         let metrics = self.calc_metrics(area);
         node.children[0].area = Rect::new(
             area.right(),
-            area.y(),
+            area.y() + metrics.header_height,
             metrics.scrollbar as usize,
-            area.height(),
+            area.height().saturating_sub(metrics.header_height),
         );
 
         if self.auto_scroll {
@@ -663,7 +663,8 @@ impl<M: Clone + 'static> Table<M> {
 
     /// Gets calculated column widths based on the given size
     fn calc_widths(&self, mut width: usize) -> Vec<usize> {
-        width -= self.column_spacing * self.widths.len().saturating_sub(1);
+        let spaces = self.column_spacing * self.widths.len().saturating_sub(1);
+        width = width.saturating_sub(spaces);
         let mut calc_widths = Vec::new();
         let mut total = 0;
 
@@ -685,8 +686,6 @@ impl<M: Clone + 'static> Table<M> {
             calc_widths.push(csize);
         }
 
-        total = total
-            .saturating_sub(self.column_spacing * (calc_widths.len() - 1));
         let mut left = width.saturating_sub(total);
         for f in fills {
             let fill = calc_widths[f];
@@ -839,17 +838,15 @@ impl<M: Clone + 'static> Table<M> {
         };
 
         let mut height = node.children[*cid].area.height();
-        let mut most_right = rect.x();
         for child in header.cells.iter() {
             let cnode = &node.children[*cid];
             child.render(buffer, cnode);
-            most_right = cnode.area.right();
             *cid += 1;
         }
 
         if let Some(separator) = &self.header_separator {
-            let w = most_right.saturating_sub(rect.x() + 1);
-            let line = separator.get(Border::TOP).to_string().repeat(w);
+            let line =
+                separator.get(Border::TOP).to_string().repeat(rect.width());
             buffer.set_str(line, &Vec2::new(rect.x(), rect.y() + height));
             height += 1;
         }
@@ -886,8 +883,8 @@ impl<M: Clone + 'static> Table<M> {
                 continue;
             }
 
-            let height = child.height(&Vec2::new(width, height));
-            row_height = row_height.max(height);
+            let cheight = child.height(&Vec2::new(width, height));
+            row_height = row_height.max(cheight);
         }
         row_height
     }

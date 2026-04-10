@@ -25,6 +25,7 @@ unicode-width = "0.2.2"
 
 [dev-dependencies]
 criterion = "0.5.1"
+fake = "5.1.0"
 
 [features]
 default = ["backend-crossterm"]

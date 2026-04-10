@@ -1,11 +1,12 @@
 use std::{cell::RefCell, process::ExitCode, rc::Rc};
 
+use fake::Fake;
 use termal::eprintcln;
 use termint::{
     Error,
     enums::{BorderType, Color},
     geometry::{Constraint, Unit},
-    style::Style,
+    style::{Style, Stylize},
     term::{
         Action, Application, Frame, Term,
         backend::{Event, KeyCode, KeyEvent},
@@ -40,7 +41,7 @@ enum Message {
 
 struct App {
     table_state: Rc<RefCell<TableState>>,
-    songs: Vec<Vec<&'static str>>,
+    employees: Vec<Employee>,
 }
 
 impl Application for App {
@@ -48,11 +49,16 @@ impl Application for App {
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let table = Table::new(
-            get_rows(),
-            vec![Unit::Fill(1); 3],
+            get_rows(&self.employees),
+            [
+                Unit::Length(6),
+                Unit::Fill(1),
+                Unit::Fill(1),
+                Unit::Length(10),
+            ],
             self.table_state.clone(),
         )
-        .header(vec!["Title", "Artist", "Album"])
+        .header(vec!["ID", "Name", "Email", "Status"])
         .header_separator(BorderType::Normal)
         .selected_row_style(SELL)
         .selected_column_style(SELL)
@@ -93,6 +99,27 @@ impl Application for App {
     }
 }
 
+#[derive(Clone)]
+struct Employee {
+    id: usize,
+    name: String,
+    email: String,
+    active: bool,
+}
+
+impl Employee {
+    fn generate(count: usize) -> Vec<Self> {
+        (0..count)
+            .map(|i| Employee {
+                id: i + 1,
+                name: fake::faker::name::en::Name().fake(),
+                email: fake::faker::internet::en::SafeEmail().fake(),
+                active: (0..10).fake::<u8>() > 2,
+            })
+            .collect()
+    }
+}
+
 impl App {
     fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
@@ -102,7 +129,7 @@ impl App {
                     return Action::NONE;
                 };
 
-                if sel + 1 < self.songs.len() {
+                if sel + 1 < self.employees.len() {
                     state.selected = Some(sel + 1);
                 }
             }
@@ -128,7 +155,7 @@ impl App {
                     return Action::NONE;
                 };
 
-                if sel + 1 < 3 {
+                if sel + 1 < 4 {
                     state.selected_column = Some(sel + 1);
                 }
             }
@@ -145,36 +172,28 @@ impl Default for App {
             table_state: Rc::new(RefCell::new(
                 TableState::new(0).selected(0).selected_column(0),
             )),
-            songs: get_songs(),
+            employees: Employee::generate(100),
         }
     }
 }
 
-fn get_songs() -> Vec<Vec<&'static str>> {
-    vec![
-        vec!["Emptiness Machine", "Linkin Park", "From Zero"],
-        vec!["Numb", "Linkin Park", "Meteora"],
-        vec!["Radioactive", "Imagine Dragons", "Night Visions"],
-        vec!["Believer", "Imagine Dragons", "Evolve"],
-        vec!["Stressed Out", "Twenty One Pilots", "Blurryface"],
-        vec!["Ride", "Twenty One Pilots", "Blurryface"],
-        vec!["Counting Stars", "OneRepublic", "Native"],
-        vec!["Secrets", "OneRepublic", "Waking Up"],
-        vec!["High Hopes", "Panic! At The Disco", "Pray for the Wicked"],
-        vec![
-            "I Write Sins Not Tragedies",
-            "Panic! At The Disco",
-            "A Fever You Can't Sweat Out",
-        ],
-    ]
-}
-
-fn get_rows<M: Clone>() -> Vec<Row<M>> {
-    let rows = get_songs()
+fn get_rows<M: Clone>(data: &[Employee]) -> Vec<Row<M>> {
+    let rows = data
         .iter()
         .enumerate()
-        .map(|(i, s)| {
-            let mut row = Row::new(s);
+        .map(|(i, e)| {
+            let status = if e.active {
+                "\nActive\n".green()
+            } else {
+                "\nOffline\n".gray()
+            };
+
+            let mut row = Row::new(vec![
+                format!("\n{}\n", e.id).to_span(),
+                format!("\n{}\n", e.name).to_span(),
+                format!("\n{}\n", e.email).to_span(),
+                status.into(),
+            ]);
             if i % 2 == 0 {
                 row = row.style(Style::new().bg(BGL));
             }
