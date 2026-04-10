@@ -745,7 +745,11 @@ impl<M: Clone + 'static> Table<M> {
         cid: &mut usize,
     ) {
         let row_height = layout.children[*cid].area.height();
+        let mut rrect = *rect;
+        rrect.size.y = row_height;
+
         if rect.height() >= row_height {
+            buffer.set_area_style(row.style, rrect);
             self.render_row(buffer, layout, row, cid);
             return;
         }
@@ -753,9 +757,7 @@ impl<M: Clone + 'static> Table<M> {
         let mut cell = Cell::empty();
         cell.style(row.style);
 
-        let mut trect = *rect;
-        trect.size.y = row_height;
-        let mut temp_buffer = Buffer::filled(trect, cell);
+        let mut temp_buffer = Buffer::filled(rrect, cell);
         temp_buffer.merge(buffer.subset(*rect));
 
         self.render_row(&mut temp_buffer, layout, row, cid);
