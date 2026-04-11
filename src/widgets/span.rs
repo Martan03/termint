@@ -1,7 +1,11 @@
 use std::{
+    borrow::Cow,
     fmt,
     hash::{DefaultHasher, Hash, Hasher},
 };
+
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 use crate::{
     buffer::Buffer,
@@ -263,8 +267,7 @@ impl Text for Span {
         }
 
         let wrap = wrap.unwrap_or(self.wrap);
-        let mut chars = self.text.chars();
-        let mut parser = TextParser::new(&mut chars).wrap(wrap);
+        let mut parser = TextParser::new(&self.text).wrap(wrap);
 
         let mut pos = Vec2::new(rect.x() + offset, rect.y());
         let mut fin_pos = pos;
@@ -276,8 +279,9 @@ impl Text for Span {
                 break;
             };
 
-            fin_pos.x =
-                self.render_line(buffer, &rect, &parser, text, len, &pos);
+            fin_pos.x = self.render_line(
+                buffer, &rect, &parser, text, len, &pos, line_len,
+            );
             fin_pos.y = pos.y;
             pos.x = rect.x();
             pos.y += 1;
@@ -323,18 +327,32 @@ impl Span {
         buffer: &mut Buffer,
         rect: &Rect,
         parser: &TextParser,
-        mut line: String,
+        line: &str,
         mut len: usize,
         pos: &Vec2,
+        line_len: usize,
     ) -> usize {
+        let mut text = Cow::Borrowed(line);
         if pos.y >= rect.bottom() && !parser.is_end() {
-            len += self.ellipsis.len();
-            if len > rect.width() {
-                len = rect.width();
-                let end = rect.width().saturating_sub(self.ellipsis.len());
-                line = line[..end].to_string();
+            let el_width = self.ellipsis.width();
+            let target = line_len.saturating_sub(el_width);
+
+            let mut width = len;
+            let mut sid = line.len();
+
+            for (idx, grapheme) in line.grapheme_indices(true).rev() {
+                if width <= target
+                    && !grapheme.starts_with(char::is_whitespace)
+                {
+                    break;
+                }
+                width -= grapheme.width();
+                sid = idx;
             }
-            line.push_str(&self.ellipsis);
+
+            let trunc = &line[..sid];
+            text = Cow::Owned(format!("{}{}", trunc, self.ellipsis));
+            len = width + el_width;
         }
 
         let x = match self.align {
@@ -342,14 +360,13 @@ impl Span {
             TextAlign::Center => rect.width().saturating_sub(len) >> 1,
             TextAlign::Right => rect.width().saturating_sub(len),
         };
-        buffer.set_str_styled(line, &Vec2::new(pos.x + x, pos.y), self.style);
+        buffer.set_str_styled(&text, &Vec2::new(pos.x + x, pos.y), self.style);
         pos.x + x + len - 1
     }
 
     /// Gets height of the [`Span`] when using word wrap
     fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut chars = self.text.chars();
-        let mut parser = TextParser::new(&mut chars);
+        let mut parser = TextParser::new(&self.text);
 
         let mut pos = Vec2::new(0, 0);
         loop {

@@ -1,17 +1,7 @@
 use std::{cell::Cell, process::ExitCode, rc::Rc, time::Duration};
 
 use termal::eprintcln;
-use termint::{
-    enums::{BorderType, Color},
-    geometry::Constraint,
-    style::Style,
-    term::{
-        backend::{Event, KeyCode, KeyEvent},
-        Action, Application, Frame, Term,
-    },
-    widgets::{Block, Element, ProgressBar, Spacer, ToSpan},
-    Error,
-};
+use termint::prelude::*;
 
 const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
@@ -37,6 +27,7 @@ enum Message {
 
 struct App {
     states: Vec<Rc<Cell<f64>>>,
+    running: bool,
 }
 
 impl Application for App {
@@ -49,15 +40,39 @@ impl Application for App {
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
 
+        let tasks = [
+            ("Fetching Repo", Color::Hex(0xF4F8D3)),
+            ("Downloading deps", Color::Hex(0xA6D6D6)),
+            ("Compiling termint", Color::Hex(0xF7CFD8)),
+            ("Running tests", Color::Hex(0x8E7DBE)),
+            ("Building docs", Color::Hex(0xB0DB9C)),
+        ];
+
+        let mut label_layout = Layout::vertical();
+        let mut pb_layout = Layout::vertical();
         for (i, state) in self.states.iter().enumerate() {
+            let (name, color) = tasks[i];
+
+            label_layout.push(name.fg(color).bold(), 1);
+            label_layout.push(Spacer, 1);
+
             let bar = ProgressBar::new(state.clone())
+                .style(Style::new().bg(color).fg(color))
                 .on_click(move |p| Message::Seek(i, p));
-            block.push(bar, Constraint::Min(0));
-            block.push(Spacer::new(), 1);
+            pb_layout.push(bar, 1);
+            pb_layout.push(Spacer, 1);
         }
 
-        block.push(Spacer::new(), Constraint::Fill(1));
-        let help = "[Esc|q]Quit".fg(BORDER);
+        let mut wrapper = Layout::horizontal();
+        wrapper.push(label_layout, 0..);
+        wrapper.push(Spacer, 1);
+        wrapper.push(pb_layout, 0..);
+
+        block.push(wrapper, 0..);
+        block.push(Spacer, Constraint::Fill(1));
+        let help =
+            "[Click] Seek Bar  [Space] Play/pause  [r] Reset  [Esc|q] Quit"
+                .fg(BORDER);
         block.push(help, 1..);
         block.into()
     }
@@ -77,6 +92,10 @@ impl Application for App {
     }
 
     fn update(&mut self, delta: Duration) -> Action {
+        if !self.running {
+            return Action::NONE;
+        }
+
         if self.increase_states(delta) {
             self.reset_states();
         }
@@ -92,6 +111,14 @@ impl Application for App {
 impl App {
     fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
+            KeyCode::Char(' ') => {
+                self.running = !self.running;
+                Action::NONE
+            }
+            KeyCode::Char('r') => {
+                self.reset_states();
+                Action::RERENDER
+            }
             KeyCode::Esc | KeyCode::Char('q') => Action::QUIT,
             _ => Action::NONE,
         }
@@ -123,6 +150,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             states: (0..5).map(|_| Rc::new(Cell::new(0.))).collect(),
+            running: true,
         }
     }
 }

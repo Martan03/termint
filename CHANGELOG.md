@@ -10,6 +10,8 @@
 ### Fixes
 
 - Fix table row style not being applied
+- Fix text parser ignoring whitespaces when `Wrap::Word`
+- Fix text parser incorrectly measuring width
 
 ## v0.8.1
 
