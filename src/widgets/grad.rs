@@ -1,8 +1,12 @@
 use core::fmt;
 use std::{
+    borrow::Cow,
     cmp::min,
     hash::{DefaultHasher, Hash, Hasher},
 };
+
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 use crate::{
     buffer::Buffer,
@@ -367,7 +371,7 @@ impl Grad {
         F: Fn(
             &mut Buffer,
             &Rect,
-            String,
+            &str,
             usize,
             &Vec2,
             (u8, u8, u8),
@@ -375,8 +379,7 @@ impl Grad {
         ),
     {
         let wrap = wrap.unwrap_or(self.wrap);
-        let mut chars = self.text.chars();
-        let mut parser = TextParser::new(&mut chars).wrap(wrap);
+        let mut parser = TextParser::new(&self.text).wrap(wrap);
 
         let mut pos = Vec2::new(rect.x() + offset, rect.y());
         let mut fin_pos = pos;
@@ -391,21 +394,34 @@ impl Grad {
         let right_end = rect.x() + rect.width();
         while pos.y <= rect.bottom() {
             let line_len = right_end.saturating_sub(pos.x);
-            let Some((mut text, mut len)) = parser.next_line(line_len) else {
+            let Some((raw_text, mut len)) = parser.next_line(line_len) else {
                 break;
             };
 
+            let mut text = Cow::Borrowed(raw_text);
             if pos.y >= rect.bottom() && !parser.is_end() {
-                len += self.ellipsis.len();
-                if len > rect.width() {
-                    len = rect.width();
-                    let end = rect.width().saturating_sub(self.ellipsis.len());
-                    text = text[..end].to_string();
+                let el_width = self.ellipsis.width();
+                let target = line_len.saturating_sub(el_width);
+
+                let mut width = len;
+                let mut sid = raw_text.len();
+
+                for (idx, grapheme) in raw_text.grapheme_indices(true).rev() {
+                    if width <= target
+                        && !grapheme.starts_with(char::is_whitespace)
+                    {
+                        break;
+                    }
+                    width -= grapheme.width();
+                    sid = idx;
                 }
-                text.push_str(&self.ellipsis);
+
+                let trunc = &raw_text[..sid];
+                text = Cow::Owned(format!("{}{}", trunc, self.ellipsis));
+                len = width + el_width;
             }
 
-            render_line(buffer, rect, text, len, &pos, rgb, step_x);
+            render_line(buffer, rect, &text, len, &pos, rgb, step_x);
             (fin_pos.x, fin_pos.y) =
                 ((pos.x + len).saturating_sub(rect.x()), pos.y);
             (pos.x, pos.y) = (rect.x(), pos.y + 1);
@@ -420,7 +436,7 @@ impl Grad {
         &self,
         buffer: &mut Buffer,
         rect: &Rect,
-        line: String,
+        line: &str,
         len: usize,
         pos: &Vec2,
         (mut r, mut g, mut b): (u8, u8, u8),
@@ -452,7 +468,7 @@ impl Grad {
         &self,
         buffer: &mut Buffer,
         rect: &Rect,
-        line: String,
+        line: &str,
         len: usize,
         pos: &Vec2,
         (r, g, b): (u8, u8, u8),
@@ -496,8 +512,7 @@ impl Grad {
 
     /// Gets height of the [`Grad`] when using word wrap
     fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut chars = self.text.chars();
-        let mut parser = TextParser::new(&mut chars);
+        let mut parser = TextParser::new(&self.text);
 
         let mut pos = Vec2::new(0, 0);
         loop {
