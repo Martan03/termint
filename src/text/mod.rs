@@ -17,6 +17,8 @@ mod parser;
 /// next line (or word) from the text using either word wrap or letter wrap.
 pub use parser::TextParser;
 
-mod text_token;
-/// Text token used by the `TextParser`
-pub use text_token::TextToken;
+mod line;
+pub use line::Line;
+
+mod styled_str;
+pub use styled_str::{StrStyle, StyledStr};
