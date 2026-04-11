@@ -1,17 +1,7 @@
 use std::process::ExitCode;
 
 use termal::eprintcln;
-use termint::{
-    enums::{BorderType, Color},
-    geometry::{Constraint, Direction},
-    style::Style,
-    term::{
-        backend::{Event, KeyCode, KeyEvent},
-        Action, Application, Frame, Term,
-    },
-    widgets::{BgGrad, Block, Element, Layout, Spacer, ToSpan},
-    Error,
-};
+use termint::{prelude::*, widgets::BgGrad};
 
 const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
@@ -46,14 +36,18 @@ impl Application for App {
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let mut block = Block::vertical()
-            .title("Centering")
+            .title("BgGrad Example")
             .border_type(BorderType::Thicker)
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
 
+        let mut content = Layout::vertical().center();
+        content.push("Hello BgGrad".fg(BG).align(TextAlign::Center), 1);
+
         let mut center = Layout::horizontal().center();
         let (start, end) = COLORS[self.cur];
-        center.push(BgGrad::new(self.dir, start, end), 50);
+        let bg_grad = BgGrad::new(self.dir, start, end).child(content);
+        center.push(bg_grad, 50);
 
         block.push(Spacer::new(), Constraint::Fill(1));
         block.push(center, 25);
@@ -76,10 +70,12 @@ impl App {
     fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
             KeyCode::Esc | KeyCode::Char('q') => return Action::QUIT,
-            KeyCode::Left => {
+            KeyCode::Left | KeyCode::Char('h') => {
                 self.cur = self.cur.checked_sub(1).unwrap_or(COLORS.len() - 1)
             }
-            KeyCode::Right => self.cur = (self.cur + 1) % COLORS.len(),
+            KeyCode::Right | KeyCode::Char('l') => {
+                self.cur = (self.cur + 1) % COLORS.len()
+            }
             KeyCode::Char('r') => self.toggle_dir(),
             _ => return Action::NONE,
         }

@@ -2,15 +2,16 @@ use std::process::ExitCode;
 
 use termal::eprintcln;
 use termint::{
+    Error,
     enums::{BorderType, Color},
     geometry::Constraint,
-    style::Style,
+    prelude::TextAlign,
+    style::{Style, Stylize},
     term::{
-        backend::{Event, KeyCode, KeyEvent, MouseButton},
         Action, Application, Frame, Term,
+        backend::{Event, KeyCode, KeyEvent, MouseButton},
     },
     widgets::{Block, Button, Element, Layout, Spacer, ToSpan},
-    Error,
 };
 
 const BG: Color = Color::Hex(0x02081e);
@@ -32,39 +33,55 @@ fn run() -> Result<(), Error> {
 
 #[derive(Clone)]
 enum Message {
+    Increment,
+    Decrement,
+    Reset,
     Quit,
 }
 
 #[derive(Default)]
-struct App;
+struct App {
+    count: isize,
+}
 
 impl Application for App {
     type Message = Message;
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let mut block = Block::vertical()
-            .title("Centering")
+            .title("Button Example")
             .border_type(BorderType::Thicker)
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
 
-        let left = Button::new("Left Click")
-            .style(Style::new().bg(Color::Cyan).fg(BG))
+        let counter = format!("Counter: {}", self.count).bold();
+
+        let inc_btn = Button::new("+".align(TextAlign::Center))
+            .style((BG, Color::Green))
             .padding((1, 2))
-            .on_click(Message::Quit);
-        let right = Button::new("Right Click")
-            .style(Style::new().bg(Color::Cyan).fg(BG))
+            .on_click(Message::Increment);
+        let dec_btn = Button::new("-".align(TextAlign::Center))
+            .style((BG, Color::Red))
             .padding((1, 2))
+            .on_click(Message::Decrement);
+
+        let btn = Button::new("Left = Reset, Right = Quit")
+            .style((BG, Color::Cyan))
+            .padding((1, 2))
+            .on_click(Message::Reset)
             .on_press(MouseButton::Right, Message::Quit);
-        let mut buttons = Layout::horizontal();
-        buttons.push(left, 14);
+
+        let mut buttons = Layout::horizontal().center();
+        buttons.push(inc_btn, 10);
         buttons.push(Spacer::new(), 2);
-        buttons.push(right, 15);
+        buttons.push(dec_btn, 10);
 
         let mut wrapper = Layout::vertical();
-        wrapper.push("Press a button to quit...", 0..);
+        wrapper.push(counter, 0..);
         wrapper.push(Spacer::new(), 1);
         wrapper.push(buttons, 0..);
+        wrapper.push(Spacer::new(), 1);
+        wrapper.push(btn, 0..);
 
         let mut center = Layout::horizontal().center();
         center.push(wrapper, 0..);
@@ -86,8 +103,12 @@ impl Application for App {
 
     fn message(&mut self, message: Self::Message) -> Action {
         match message {
-            Message::Quit => Action::QUIT,
+            Message::Increment => self.count += 1,
+            Message::Decrement => self.count -= 1,
+            Message::Reset => self.count = 0,
+            Message::Quit => return Action::QUIT,
         }
+        Action::RENDER
     }
 }
 

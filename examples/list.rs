@@ -1,17 +1,8 @@
 use std::{cell::RefCell, process::ExitCode, rc::Rc};
 
+use fake::Fake;
 use termal::eprintcln;
-use termint::{
-    enums::{BorderType, Color},
-    geometry::Constraint,
-    style::Style,
-    term::{
-        backend::{Event, KeyCode, KeyEvent},
-        Action, Application, Frame, Term,
-    },
-    widgets::{Block, Element, List, ListState, ToSpan},
-    Error,
-};
+use termint::prelude::*;
 
 const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
@@ -81,7 +72,7 @@ impl Application for App {
 impl App {
     fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
-            KeyCode::Down => {
+            KeyCode::Down | KeyCode::Char('j') => {
                 let mut state = self.list_state.borrow_mut();
                 let Some(sel) = state.selected else {
                     return Action::NONE;
@@ -91,7 +82,7 @@ impl App {
                     state.selected = Some(sel + 1);
                 }
             }
-            KeyCode::Up => {
+            KeyCode::Up | KeyCode::Char('k') => {
                 let mut state = self.list_state.borrow_mut();
                 let Some(sel) = state.selected else {
                     return Action::NONE;
@@ -115,22 +106,13 @@ impl Default for App {
     fn default() -> Self {
         Self {
             list_state: Rc::new(RefCell::new(ListState::selected(0, 0))),
-            people: get_people(),
+            people: get_people(100),
         }
     }
 }
 
-fn get_people() -> Vec<String> {
-    vec![
-        "Alice Johnson".to_string(),
-        "Bob Smith".to_string(),
-        "Carol Davis".to_string(),
-        "David Thompson".to_string(),
-        "Emma Wilson".to_string(),
-        "Frank Miller".to_string(),
-        "Grace Lee".to_string(),
-        "Henry Clark".to_string(),
-        "Isla Lewis".to_string(),
-        "Jack Martin".to_string(),
-    ]
+fn get_people(count: usize) -> Vec<String> {
+    (1..count)
+        .map(|_| fake::faker::name::en::Name().fake())
+        .collect()
 }

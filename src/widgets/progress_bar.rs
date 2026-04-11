@@ -34,9 +34,9 @@ type ProgressBarHandler<M> = Box<dyn Fn(f64) -> M>;
 /// let state = Rc::new(Cell::new(0.69));
 /// let pb = ProgressBar::new(state.clone())
 ///     .thumb_chars(['▎', '▌', '▊', '█'])
-///     .thumb_style(Color::Blue)
+///     .blue()
 ///     .track_char('=')
-///     .style(Color::White)
+///     .track_style(Color::White)
 ///     .on_click(|p| format!("Clicked at {p}!"));
 ///
 /// // Setting general style can be done also using `Stylize` trait
@@ -48,9 +48,9 @@ type ProgressBarHandler<M> = Box<dyn Fn(f64) -> M>;
 pub struct ProgressBar<M> {
     state: Rc<Cell<f64>>,
     thumb_chars: Vec<char>,
-    thumb_style: Style,
-    track_char: char,
     style: Style,
+    track_char: char,
+    track_style: Style,
     handlers: Vec<(MouseButton, ProgressBarHandler<M>)>,
 }
 
@@ -72,10 +72,10 @@ impl<M> ProgressBar<M> {
     pub fn new(state: Rc<Cell<f64>>) -> Self {
         Self {
             state,
-            thumb_style: Default::default(),
+            style: Default::default(),
             thumb_chars: vec!['▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'],
             track_char: ' ',
-            style: Default::default(),
+            track_style: Default::default(),
             handlers: vec![],
         }
     }
@@ -116,11 +116,11 @@ impl<M> ProgressBar<M> {
     ///
     /// You can provide any type convertible to [`Style`].
     #[must_use]
-    pub fn thumb_style<S>(mut self, style: S) -> Self
+    pub fn style<S>(mut self, style: S) -> Self
     where
         S: Into<Style>,
     {
-        self.thumb_style = style.into();
+        self.style = style.into();
         self
     }
 
@@ -137,11 +137,11 @@ impl<M> ProgressBar<M> {
     ///
     /// You can provide any type convertible to [`Style`].
     #[must_use]
-    pub fn style<S>(mut self, style: S) -> Self
+    pub fn track_style<S>(mut self, style: S) -> Self
     where
         S: Into<Style>,
     {
-        self.style = style.into();
+        self.track_style = style.into();
         self
     }
 
@@ -216,7 +216,7 @@ impl<M: Clone + 'static> Widget<M> for ProgressBar<M> {
             rest_len = rest_len.saturating_sub(1);
             buffer[track_pos]
                 .char(self.thumb_chars[head_id])
-                .style(self.thumb_style);
+                .style(self.style);
             track_pos.x += 1;
         }
 
@@ -224,13 +224,13 @@ impl<M: Clone + 'static> Widget<M> for ProgressBar<M> {
         buffer.set_str_styled(
             thumb.to_string().repeat(full_cells),
             rect.pos(),
-            self.thumb_style,
+            self.style,
         );
 
         buffer.set_str_styled(
             self.track_char.to_string().repeat(rest_len),
             &track_pos,
-            self.style,
+            self.track_style,
         );
     }
 

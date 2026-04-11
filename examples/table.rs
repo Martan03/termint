@@ -2,17 +2,7 @@ use std::{cell::RefCell, process::ExitCode, rc::Rc};
 
 use fake::Fake;
 use termal::eprintcln;
-use termint::{
-    Error,
-    enums::{BorderType, Color},
-    geometry::{Constraint, Unit},
-    style::{Style, Stylize},
-    term::{
-        Action, Application, Frame, Term,
-        backend::{Event, KeyCode, KeyEvent},
-    },
-    widgets::{Block, Element, Row, Table, TableState, ToSpan},
-};
+use termint::prelude::*;
 
 const BG: Color = Color::Hex(0x02081e);
 const BGL: Color = Color::Hex(0x061038);
@@ -51,7 +41,7 @@ impl Application for App {
         let table = Table::new(
             get_rows(&self.employees),
             [
-                Unit::Length(6),
+                Unit::Length(4),
                 Unit::Fill(1),
                 Unit::Fill(1),
                 Unit::Length(10),
@@ -60,9 +50,10 @@ impl Application for App {
         )
         .header(vec!["ID", "Name", "Email", "Status"])
         .header_separator(BorderType::Normal)
-        .selected_row_style(SELL)
+        .selected_row_style((BG, SELL))
         .selected_column_style(SELL)
-        .selected_cell_style(SEL)
+        .selected_cell_style((BGL, SEL))
+        .column_spacing(2)
         .on_click(Message::CellClicked)
         .auto_scroll();
 
@@ -71,7 +62,7 @@ impl Application for App {
                 .fg(BORDER);
 
         let mut block = Block::vertical()
-            .title("Songs List")
+            .title("Employees")
             .border_type(BorderType::Thicker)
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));
@@ -123,7 +114,7 @@ impl Employee {
 impl App {
     fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
-            KeyCode::Down => {
+            KeyCode::Down | KeyCode::Char('j') => {
                 let mut state = self.table_state.borrow_mut();
                 let Some(sel) = state.selected else {
                     return Action::NONE;
@@ -133,7 +124,7 @@ impl App {
                     state.selected = Some(sel + 1);
                 }
             }
-            KeyCode::Up => {
+            KeyCode::Up | KeyCode::Char('k') => {
                 let mut state = self.table_state.borrow_mut();
                 let Some(sel) = state.selected else {
                     return Action::NONE;
@@ -141,7 +132,7 @@ impl App {
 
                 state.selected = Some(sel.saturating_sub(1));
             }
-            KeyCode::Left => {
+            KeyCode::Left | KeyCode::Char('h') => {
                 let mut state = self.table_state.borrow_mut();
                 let Some(sel) = state.selected_column else {
                     return Action::NONE;
@@ -149,7 +140,7 @@ impl App {
 
                 state.selected_column = Some(sel.saturating_sub(1));
             }
-            KeyCode::Right => {
+            KeyCode::Right | KeyCode::Char('l') => {
                 let mut state = self.table_state.borrow_mut();
                 let Some(sel) = state.selected_column else {
                     return Action::NONE;
