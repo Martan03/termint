@@ -17,6 +17,9 @@ use termint::{
 const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
 const FG: Color = Color::Hex(0xc3c1f4);
+const INC: Color = Color::Hex(0xA3DC9A);
+const DEC: Color = Color::Hex(0xEA7B7B);
+const BTN: Color = Color::Hex(0x98A1BC);
 
 fn main() -> ExitCode {
     if let Err(e) = run() {
@@ -57,24 +60,24 @@ impl Application for App {
         let counter = format!("Counter: {}", self.count).bold();
 
         let inc_btn = Button::new("+".align(TextAlign::Center))
-            .style((BG, Color::Green))
+            .style((BG, INC))
             .padding((1, 2))
             .on_click(Message::Increment);
         let dec_btn = Button::new("-".align(TextAlign::Center))
-            .style((BG, Color::Red))
+            .style((BG, DEC))
             .padding((1, 2))
             .on_click(Message::Decrement);
 
         let btn = Button::new("Left = Reset, Right = Quit")
-            .style((BG, Color::Cyan))
+            .style((BG, BTN))
             .padding((1, 2))
             .on_click(Message::Reset)
             .on_press(MouseButton::Right, Message::Quit);
 
         let mut buttons = Layout::horizontal().center();
-        buttons.push(inc_btn, 10);
-        buttons.push(Spacer::new(), 2);
-        buttons.push(dec_btn, 10);
+        buttons.push(inc_btn, 11);
+        buttons.push(Spacer::new(), 8);
+        buttons.push(dec_btn, 11);
 
         let mut wrapper = Layout::vertical();
         wrapper.push(counter, 0..);
