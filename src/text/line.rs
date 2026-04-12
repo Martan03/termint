@@ -48,7 +48,7 @@ impl<'a> Line<'a> {
         let mut pos = *rect.pos();
         pos.x += x_offset;
         for frag in self.parts.iter() {
-            frag.render(buffer, &pos);
+            frag.render(buffer, &pos, &rect);
             pos.x += frag.width;
         }
     }

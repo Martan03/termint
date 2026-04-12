@@ -6,14 +6,15 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     buffer::Buffer,
     enums::{Color, RGB},
-    prelude::Vec2,
+    prelude::{Rect, Vec2},
     style::Style,
 };
 
 #[derive(Debug, Clone)]
 pub enum StrStyle {
     Static(Style),
-    Grad(RGB, RGB),
+    LocalGrad(RGB, RGB),
+    GlobalGrad(RGB, RGB),
 }
 
 #[derive(Debug, Clone)]
@@ -63,40 +64,61 @@ impl<'a> StyledStr<'a> {
     /// Sets the style into a gradient style.
     ///
     /// The `start` and `end` are types convertible into [`RGB`].
-    pub fn gradient<S, E>(mut self, start: S, end: E) -> Self
+    pub fn gradient<S, E>(mut self, start: S, end: E, local: bool) -> Self
     where
         S: Into<RGB>,
         E: Into<RGB>,
     {
-        self.style = StrStyle::Grad(start.into(), end.into());
+        self.style = if local {
+            StrStyle::LocalGrad(start.into(), end.into())
+        } else {
+            StrStyle::GlobalGrad(start.into(), end.into())
+        };
         self
     }
 
     /// Renders the current [`StyledStr`] into the [`Buffer`].
-    pub fn render(&self, buffer: &mut Buffer, pos: &Vec2) {
+    pub fn render(&self, buffer: &mut Buffer, pos: &Vec2, rect: &Rect) {
         match &self.style {
             StrStyle::Static(style) => {
                 buffer.set_str_styled(&self.text, pos, *style)
             }
-            StrStyle::Grad(start, end) => {
-                self.render_grad(buffer, *pos, start, end)
+            StrStyle::LocalGrad(start, end) => {
+                self.local_grad(buffer, *pos, start, end)
+            }
+            StrStyle::GlobalGrad(start, end) => {
+                self.global_grad(buffer, rect, *pos, start, end)
             }
         }
+    }
+
+    fn local_grad(&self, buf: &mut Buffer, pos: Vec2, start: &RGB, end: &RGB) {
+        let (color, step) = get_step(start, end, self.width);
+        self.render_grad(buf, pos, color, step);
+    }
+
+    fn global_grad(
+        &self,
+        buf: &mut Buffer,
+        area: &Rect,
+        pos: Vec2,
+        start: &RGB,
+        end: &RGB,
+    ) {
+        let ((r, g, b), (rs, gs, bs)) = get_step(start, end, area.width());
+        let ox = (pos.x - area.x()) as f32;
+        let color = (r + rs * ox, g + gs * ox, b + bs * ox);
+
+        self.render_grad(buf, pos, color, (rs, gs, bs));
     }
 
     fn render_grad(
         &self,
         buffer: &mut Buffer,
         mut pos: Vec2,
-        start: &RGB,
-        end: &RGB,
+        (mut r, mut g, mut b): (f32, f32, f32),
+        (rs, gs, bs): (f32, f32, f32),
     ) {
-        let width = self.width.saturating_sub(1) as f32;
-
-        let (mut r, mut g, mut b) =
-            (start.r as f32, start.g as f32, start.b as f32);
-        let (rs, gs, bs) = get_step(start, end, width);
-
         for grapheme in self.text.graphemes(true) {
             let gw = grapheme.width();
             if gw == 0 {
@@ -129,12 +151,6 @@ where
     }
 }
 
-impl From<(RGB, RGB)> for StrStyle {
-    fn from((start, end): (RGB, RGB)) -> Self {
-        Self::Grad(start, end)
-    }
-}
-
 impl<'a, T> From<(T, usize)> for StyledStr<'a>
 where
     T: Into<Cow<'a, str>>,
@@ -144,13 +160,22 @@ where
     }
 }
 
-fn get_step(start: &RGB, end: &RGB, width: f32) -> (f32, f32, f32) {
+fn get_step(
+    start: &RGB,
+    end: &RGB,
+    width: usize,
+) -> ((f32, f32, f32), (f32, f32, f32)) {
+    let width = width.saturating_sub(1) as f32;
+    let (r, g, b) = (start.r as f32, start.g as f32, start.b as f32);
     if width <= 0. {
-        return (0., 0., 0.);
+        return ((r, g, b), (0., 0., 0.));
     }
     (
-        (end.r as f32 - start.r as f32) / width,
-        (end.g as f32 - start.g as f32) / width,
-        (end.b as f32 - start.b as f32) / width,
+        (r, g, b),
+        (
+            (end.r as f32 - r) / width,
+            (end.g as f32 - g) / width,
+            (end.b as f32 - b) / width,
+        ),
     )
 }
