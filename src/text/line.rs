@@ -1,5 +1,8 @@
 use std::borrow::Cow;
 
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
+
 use crate::{
     buffer::Buffer,
     prelude::{Rect, TextAlign},
@@ -51,5 +54,48 @@ impl<'a> Line<'a> {
             frag.render(buffer, &pos, &rect);
             pos.x += frag.width;
         }
+    }
+
+    /// Adds given ellipsis after the text.
+    ///
+    /// If not enough space, it removes characters from the back until the
+    /// ellipsis fit or the last character is not a whitespace.
+    pub fn add_ellipsis<S>(
+        &mut self,
+        max_width: usize,
+        ellipsis: &str,
+        style: S,
+    ) where
+        S: Into<StrStyle>,
+    {
+        let width = ellipsis.width();
+        let target = max_width.saturating_sub(width);
+
+        while let Some(mut frag) = self.parts.pop() {
+            self.width -= frag.width;
+            let mut fwidth = frag.width;
+            let mut sid = frag.text.len();
+
+            for (idx, grapheme) in frag.text.grapheme_indices(true).rev() {
+                if self.width + fwidth <= target
+                    && !grapheme.starts_with(char::is_whitespace)
+                {
+                    break;
+                }
+                fwidth -= grapheme.width();
+                sid = idx;
+            }
+
+            if sid > 0 {
+                let trunc = frag.text[..sid].to_string();
+                frag.text = Cow::Owned(trunc);
+                frag.width = fwidth;
+
+                self.parts.push(frag);
+                self.width += fwidth;
+                break;
+            }
+        }
+        self.push(ellipsis.to_string(), width, style)
     }
 }

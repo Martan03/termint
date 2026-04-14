@@ -4,11 +4,12 @@ use crate::{
     buffer::Buffer,
     enums::Wrap,
     geometry::{Rect, Vec2},
+    text::Line,
 };
 
 /// A trait implemented by all the widgets that render styled or formatted
 /// text.
-pub trait Text {
+pub trait Text<'a> {
     /// Renders the [`Text`] into the given buffer within the provided [`Rect`]
     /// bounds, starting at the given offset and applying the specified
     /// wrapping strategy.
@@ -37,6 +38,13 @@ pub trait Text {
         wrap: Option<Wrap>,
     ) -> Vec2;
 
+    fn append_lines(
+        &'a self,
+        lines: &mut Vec<Line<'a>>,
+        size: Vec2,
+        wrap: Option<Wrap>,
+    );
+
     /// Returns the formatted representation of the text as a `String`.
     fn get(&self) -> String;
 
@@ -48,7 +56,7 @@ pub trait Text {
     fn get_mods(&self) -> String;
 }
 
-impl fmt::Debug for dyn Text {
+impl<'a> fmt::Debug for dyn Text<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Converted text")
     }

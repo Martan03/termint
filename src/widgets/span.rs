@@ -10,9 +10,10 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap},
+    geometry::Padding,
     prelude::{Rect, TextAlign, Vec2},
-    style::{Style, Styleable},
-    text::{Text, TextParser},
+    style::{Style, Styleable, Stylize},
+    text::{Line, Text, TextParser},
     widgets::{Element, LayoutNode, Widget},
 };
 
@@ -111,30 +112,6 @@ impl Span {
         self
     }
 
-    /// Sets the foreground color of the [`Span`].
-    ///
-    /// The `fg` can be any type convertible to `Option<Color>`.
-    #[must_use]
-    pub fn fg<T>(mut self, fg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.style = self.style.fg(fg);
-        self
-    }
-
-    /// Sets the background color of the [`Span`].
-    ///
-    /// The `bg` can be any type convertible to `Option<Color>`.
-    #[must_use]
-    pub fn bg<T>(mut self, bg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.style = self.style.bg(bg);
-        self
-    }
-
     /// Replaces the current text modifiers with the given modifers.
     ///
     /// # Example
@@ -227,7 +204,24 @@ impl Span {
 
 impl<M: Clone + 'static> Widget<M> for Span {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        _ = self.render_offset(buffer, layout.area, 0, None);
+        let mut rect = layout.area;
+        let mut size = *rect.size();
+        size.y += 1;
+
+        let mut lines = vec![];
+        self.append_lines(&mut lines, *rect.size(), None);
+
+        if lines.len() > rect.height() {
+            lines.truncate(rect.height());
+            lines.last_mut().map(|l| {
+                l.add_ellipsis(rect.width(), &self.ellipsis, self.style)
+            });
+        }
+
+        for line in lines {
+            line.render(buffer, rect, self.align);
+            rect = rect.inner(Padding::top(1));
+        }
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -254,7 +248,7 @@ impl<M: Clone + 'static> Widget<M> for Span {
     }
 }
 
-impl Text for Span {
+impl<'a> Text<'a> for Span {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
@@ -287,6 +281,31 @@ impl Text for Span {
             pos.y += 1;
         }
         fin_pos
+    }
+
+    fn append_lines(
+        &'a self,
+        lines: &mut Vec<Line<'a>>,
+        size: Vec2,
+        wrap: Option<Wrap>,
+    ) {
+        let wrap = wrap.unwrap_or(self.wrap);
+        let mut parser = TextParser::new(&self.text).wrap(wrap);
+        if size.x == 0 || size.y == 0 || parser.is_end() {
+            return;
+        }
+
+        let mut line = lines.pop().unwrap_or(Line::empty());
+        for _ in 0..size.y {
+            let line_len = size.x.saturating_sub(line.width);
+            let Some((text, len)) = parser.next_line(line_len) else {
+                break;
+            };
+
+            line.push(text, len, self.style);
+            lines.push(line);
+            line = Line::empty();
+        }
     }
 
     fn get(&self) -> String {
@@ -474,14 +493,14 @@ where
     where
         C: Into<Option<Color>>,
     {
-        Span::new(self.to_string()).fg(fg)
+        Stylize::fg(Span::new(self.to_string()), fg)
     }
 
     fn bg<C>(self, bg: C) -> Span
     where
         C: Into<Option<Color>>,
     {
-        Span::new(self.to_string()).bg(bg)
+        Stylize::bg(Span::new(self.to_string()), bg)
     }
 
     fn modifier(self, modifier: Modifier) -> Span {
@@ -537,7 +556,7 @@ where
     }
 }
 
-impl<T> From<T> for Box<dyn Text>
+impl<'a, T> From<T> for Box<dyn Text<'a>>
 where
     T: AsRef<str>,
 {
@@ -562,7 +581,7 @@ impl<M: Clone + 'static> From<Span> for Box<dyn Widget<M>> {
     }
 }
 
-impl From<Span> for Box<dyn Text> {
+impl<'a> From<Span> for Box<dyn Text<'a>> {
     fn from(value: Span) -> Self {
         Box::new(value)
     }
