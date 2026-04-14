@@ -381,14 +381,14 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
 
         let selected = self.state.borrow().selected;
         for i in self.state.borrow().offset..self.items.len() {
-            let mut span = self.items[i].style(self.style);
+            let mut span = self.items[i].as_str().style(self.style);
             if Some(i) == selected {
                 buffer.set_str_styled(
                     &self.highlight,
                     &Vec2::new(rect.x(), text_pos.y),
                     self.highlight_style,
                 );
-                span = self.items[i].style(self.sel_style);
+                span = self.items[i].as_str().style(self.sel_style);
             }
 
             let irect = Rect::from_coords(text_pos, text_size);
@@ -407,7 +407,7 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
     fn height(&self, size: &Vec2) -> usize {
         self.items
             .iter()
-            .map(|i| <Span as Widget<M>>::height(&i.to_span(), size))
+            .map(|i| <Span as Widget<M>>::height(&i.as_str().to_span(), size))
             .sum()
     }
 
@@ -415,7 +415,7 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
         let mut width = 0;
         let mut height = 0;
         for item in self.items.iter() {
-            let span = item.to_span();
+            let span = item.as_str().to_span();
             let h = <Span as Widget<M>>::height(&span, size);
             width = max(
                 <Span as Widget<M>>::width(&span, &Vec2::new(size.x, h)),
@@ -448,7 +448,7 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
         }
 
         for i in self.state.borrow().offset..self.items.len() {
-            let span: Element<M> = self.items[i].to_span().into();
+            let span: Element<M> = self.items[i].as_str().to_span().into();
             let height = span.height(area.size());
 
             let mut irect = Rect::from_coords(*area.pos(), *area.size());
@@ -533,8 +533,10 @@ impl<M: Clone + 'static> List<M> {
     fn is_visible(&self, item: usize, offset: usize, size: &Vec2) -> bool {
         let mut height = 0;
         for i in offset..self.items.len() {
-            height +=
-                <Span as Widget<M>>::height(&self.items[i].to_span(), size);
+            height += <Span as Widget<M>>::height(
+                &self.items[i].as_str().to_span(),
+                size,
+            );
             if height > size.y {
                 return false;
             }

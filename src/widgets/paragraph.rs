@@ -46,19 +46,19 @@ use crate::{
 /// println!("{p}");
 /// ```
 #[derive(Debug)]
-pub struct Paragraph {
-    children: Vec<Box<dyn Text>>,
+pub struct Paragraph<'a> {
+    children: Vec<Box<dyn Text<'a>>>,
     separator: String,
     wrap: Wrap,
 }
 
-impl Paragraph {
+impl<'a> Paragraph<'a> {
     /// Creates a new [`Paragraph`] with the given child elements.
     #[must_use]
     pub fn new<I>(children: I) -> Self
     where
         I: IntoIterator,
-        I::Item: Into<Box<dyn Text>>,
+        I::Item: Into<Box<dyn Text<'a>>>,
     {
         Self {
             children: children.into_iter().map(|i| i.into()).collect(),
@@ -114,13 +114,13 @@ impl Paragraph {
     /// Appends a child element to the end of the [`Paragraph`].
     pub fn push<T>(&mut self, child: T)
     where
-        T: Into<Box<dyn Text>>,
+        T: Into<Box<dyn Text<'a>>>,
     {
         self.children.push(child.into());
     }
 }
 
-impl<M: Clone + 'static> Widget<M> for Paragraph {
+impl<M: Clone + 'static> Widget<M> for Paragraph<'static> {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
         let mut pos = Vec2::new(rect.x(), rect.y());
@@ -178,13 +178,13 @@ impl<M: Clone + 'static> Widget<M> for Paragraph {
     }
 }
 
-impl fmt::Display for Paragraph {
+impl<'a> fmt::Display for Paragraph<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }
 }
 
-impl Default for Paragraph {
+impl<'a> Default for Paragraph<'a> {
     /// Creates [`Paragraph`] filled with default values
     fn default() -> Self {
         Self {
@@ -195,7 +195,7 @@ impl Default for Paragraph {
     }
 }
 
-impl Paragraph {
+impl<'a> Paragraph<'a> {
     /// Gets [`Paragraph`] height when using word wrap
     fn height_word_wrap(&self, size: &Vec2) -> usize {
         let mut coords = Vec2::new(0, 0);
@@ -242,14 +242,14 @@ impl Paragraph {
 }
 
 // From implementations
-impl<M: Clone + 'static> From<Paragraph> for Box<dyn Widget<M>> {
-    fn from(value: Paragraph) -> Self {
+impl<M: Clone + 'static> From<Paragraph<'static>> for Box<dyn Widget<M>> {
+    fn from(value: Paragraph<'static>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M: Clone + 'static> From<Paragraph> for Element<M> {
-    fn from(value: Paragraph) -> Self {
+impl<M: Clone + 'static> From<Paragraph<'static>> for Element<M> {
+    fn from(value: Paragraph<'static>) -> Self {
         Element::new(value)
     }
 }

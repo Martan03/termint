@@ -8,6 +8,7 @@ mod tests {
     use termint::{
         enums::{Color, Modifier},
         modifiers,
+        style::Stylize,
         text::Text,
         widgets::{Span, ToSpan},
     };

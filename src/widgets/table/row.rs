@@ -42,7 +42,8 @@ impl<M> Row<M> {
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{widgets::{Row, ToSpan}, enums::Color};
+    /// use termint::prelude::*;
+    ///
     /// let row = Row::<()>::new(["First", "Second", "Third"]);
     /// let row = Row::<()>::new(vec![
     ///     "First".fg(Color::Red),

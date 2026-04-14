@@ -9,12 +9,15 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     buffer::Buffer,
-    enums::{Color, Modifier, Wrap},
+    enums::{Modifier, Wrap},
     prelude::{Rect, TextAlign, Vec2},
-    style::{Style, Styleable, Stylize},
+    style::{Style, Styleable},
     text::{Line, Text, TextParser, text_render},
     widgets::{Element, LayoutNode, Widget},
 };
+
+mod to_span;
+pub use to_span::ToSpan;
 
 /// A widget for styling text where all characters share the same style.
 ///
@@ -416,101 +419,6 @@ impl Span {
     /// Gets size of the [`Span`] when using letter wrap
     fn size_letter_wrap(&self, size: usize) -> usize {
         (self.text.chars().count() as f32 / size as f32).ceil() as usize
-    }
-}
-
-/// Enables creating [`Span`] by calling one of the functions on type
-/// implementing this trait.
-///
-/// It's recommended to use `std::fmt::Display` trait. Types implementing this
-/// trait will contain `ToSpan` as well and can be converted to `Span`.
-pub trait ToSpan {
-    /// Creates [`Span`] from string and sets its style to given value
-    fn style<T>(self, style: T) -> Span
-    where
-        T: Into<Style>;
-
-    /// Creates [`Span`] from string and sets its fg to given color
-    fn fg<T>(self, fg: T) -> Span
-    where
-        T: Into<Option<Color>>;
-
-    /// Creates [`Span`] from string and sets its bg to given color
-    fn bg<T>(self, bg: T) -> Span
-    where
-        T: Into<Option<Color>>;
-
-    /// Creates [`Span`] from string and sets its modifier to given value
-    fn modifier(self, modifier: Modifier) -> Span;
-
-    /// Creates [`Span`] from string and add given modifier to it
-    fn add_modifier(self, flag: Modifier) -> Span;
-
-    /// Creates [`Span`] from string and sets its alignment to given value
-    fn align(self, align: TextAlign) -> Span;
-
-    /// Creates [`Span`] from string and sets its wrapping to given value
-    fn wrap(self, wrap: Wrap) -> Span;
-
-    /// Creates [`Span`] from string and sets its ellipsis to given value
-    fn ellipsis<T>(self, ellipsis: T) -> Span
-    where
-        T: AsRef<str>;
-
-    /// Converts type to [`Span`]
-    fn to_span(self) -> Span;
-}
-
-impl<T> ToSpan for &T
-where
-    T: std::fmt::Display,
-{
-    fn style<S>(self, style: S) -> Span
-    where
-        S: Into<Style>,
-    {
-        Span::new(self.to_string()).style(style)
-    }
-
-    fn fg<C>(self, fg: C) -> Span
-    where
-        C: Into<Option<Color>>,
-    {
-        Stylize::fg(Span::new(self.to_string()), fg)
-    }
-
-    fn bg<C>(self, bg: C) -> Span
-    where
-        C: Into<Option<Color>>,
-    {
-        Stylize::bg(Span::new(self.to_string()), bg)
-    }
-
-    fn modifier(self, modifier: Modifier) -> Span {
-        Span::new(self.to_string()).modifier(modifier)
-    }
-
-    fn add_modifier(self, flag: Modifier) -> Span {
-        Span::new(self.to_string()).add_modifier(flag)
-    }
-
-    fn align(self, align: TextAlign) -> Span {
-        Span::new(self.to_string()).align(align)
-    }
-
-    fn wrap(self, wrap: Wrap) -> Span {
-        Span::new(self.to_string()).wrap(wrap)
-    }
-
-    fn ellipsis<R>(self, ellipsis: R) -> Span
-    where
-        R: AsRef<str>,
-    {
-        Span::new(self.to_string()).ellipsis(ellipsis.as_ref())
-    }
-
-    fn to_span(self) -> Span {
-        Span::new(self.to_string())
     }
 }
 
