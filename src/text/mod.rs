@@ -10,7 +10,7 @@
 mod text_trait;
 /// A trait implemented by all the widgets that render styled or formatted
 /// text.
-pub use text_trait::Text;
+pub use text_trait::{Text, text_render};
 
 mod parser;
 /// Parses the text so it can be rendered more easily. It can be used to get

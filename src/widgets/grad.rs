@@ -13,7 +13,7 @@ use crate::{
     enums::{Color, Modifier, RGB, Wrap},
     geometry::{Direction, Rect, TextAlign, Vec2},
     style::Style,
-    text::{Text, TextParser},
+    text::{Line, StrStyle, Text, TextParser, text_render},
     widgets::layout::LayoutNode,
 };
 
@@ -216,7 +216,7 @@ impl Grad {
 
 impl<M: Clone + 'static> Widget<M> for Grad {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        _ = self.render_offset(buffer, layout.area, 0, None);
+        text_render(self, buffer, layout.area, &self.ellipsis, self.align);
     }
 
     fn layout_hash(&self) -> u64 {
@@ -237,7 +237,7 @@ impl<M: Clone + 'static> Widget<M> for Grad {
     }
 }
 
-impl Text for Grad {
+impl<'a> Text<'a> for Grad {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
@@ -257,6 +257,29 @@ impl Text for Grad {
                 self.render_horizontal(buffer, &rect, offset, wrap)
             }
         }
+    }
+
+    fn append_lines(
+        &'a self,
+        lines: &mut Vec<Line<'a>>,
+        size: Vec2,
+        wrap: Option<Wrap>,
+    ) -> bool {
+        let wrap = wrap.unwrap_or(self.wrap);
+        let mut parser = TextParser::new(&self.text).wrap(wrap);
+        let frags = self.get_frags(&mut parser, lines, size);
+        if frags.is_empty() {
+            return true;
+        }
+
+        let fit = parser.is_end();
+        match self.direction {
+            Direction::Vertical => {
+                self.get_lines_vert(lines, frags, parser, size)
+            }
+            Direction::Horizontal => self.get_lines_hor(lines, frags, fit),
+        }
+        fit
     }
 
     fn get(&self) -> String {
@@ -306,6 +329,81 @@ impl Grad {
         match self.wrap {
             Wrap::Letter => self.width_letter_wrap(size),
             Wrap::Word => self.width_word_wrap(size),
+        }
+    }
+
+    fn get_frags<'a>(
+        &self,
+        parser: &mut TextParser<'a>,
+        lines: &mut Vec<Line<'a>>,
+        size: Vec2,
+    ) -> Vec<(&'a str, usize)> {
+        if size.x == 0 || size.y == 0 || parser.is_end() {
+            return vec![];
+        }
+
+        let mut frags = Vec::new();
+        let last_width = lines.last().map(|l| l.width).unwrap_or_default();
+        let mut fwidth = size.x.saturating_sub(last_width);
+
+        for _ in 0..size.y {
+            let Some(line) = parser.next_line(fwidth) else {
+                break;
+            };
+            frags.push(line);
+            fwidth = size.x;
+        }
+        frags
+    }
+
+    /// Assumes frags is not empty, otherwise it will not work.
+    fn get_lines_vert<'a>(
+        &self,
+        lines: &mut Vec<Line<'a>>,
+        frags: Vec<(&'a str, usize)>,
+        mut parser: TextParser<'a>,
+        size: Vec2,
+    ) {
+        let mut height = frags.len().saturating_sub(1);
+        while let Some(_) = parser.next_line(size.x) {
+            height += 1;
+        }
+
+        let step = self.get_step(height as i16);
+
+        let (mut r, mut g, mut b) =
+            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        let base_style = Style::new().bg(self.bg);
+
+        let mut line = lines.pop().unwrap_or_else(Line::empty);
+        for (text, len) in frags {
+            let style = StrStyle::Static(base_style.fg(Color::Rgb(r, g, b)));
+            line.push(text, len, style);
+            lines.push(line);
+
+            line = Line::empty();
+            (r, g, b) = self.add_step((r, g, b), step);
+        }
+    }
+
+    /// Assumes frags is not empty, otherwise it will not work.
+    fn get_lines_hor<'a>(
+        &self,
+        lines: &mut Vec<Line<'a>>,
+        frags: Vec<(&'a str, usize)>,
+        fits: bool,
+    ) {
+        let style = if frags.len() <= 1 && fits {
+            StrStyle::LocalGrad(self.fg_start, self.fg_end)
+        } else {
+            StrStyle::GlobalGrad(self.fg_start, self.fg_end)
+        };
+
+        let mut line = lines.pop().unwrap_or_else(Line::empty);
+        for (text, len) in frags {
+            line.push(text, len, style.clone());
+            lines.push(line);
+            line = Line::empty();
         }
     }
 
@@ -573,7 +671,7 @@ impl<M: Clone + 'static> From<Grad> for Element<M> {
     }
 }
 
-impl From<Grad> for Box<dyn Text> {
+impl<'a> From<Grad> for Box<dyn Text<'a>> {
     fn from(value: Grad) -> Self {
         Box::new(value)
     }

@@ -10,10 +10,9 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, Wrap},
-    geometry::Padding,
     prelude::{Rect, TextAlign, Vec2},
     style::{Style, Styleable, Stylize},
-    text::{Line, Text, TextParser},
+    text::{Line, Text, TextParser, text_render},
     widgets::{Element, LayoutNode, Widget},
 };
 
@@ -204,24 +203,7 @@ impl Span {
 
 impl<M: Clone + 'static> Widget<M> for Span {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        let mut rect = layout.area;
-        let mut size = *rect.size();
-        size.y += 1;
-
-        let mut lines = vec![];
-        self.append_lines(&mut lines, *rect.size(), None);
-
-        if lines.len() > rect.height() {
-            lines.truncate(rect.height());
-            lines.last_mut().map(|l| {
-                l.add_ellipsis(rect.width(), &self.ellipsis, self.style)
-            });
-        }
-
-        for line in lines {
-            line.render(buffer, rect, self.align);
-            rect = rect.inner(Padding::top(1));
-        }
+        text_render(self, buffer, layout.area, &self.ellipsis, self.align);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -288,14 +270,14 @@ impl<'a> Text<'a> for Span {
         lines: &mut Vec<Line<'a>>,
         size: Vec2,
         wrap: Option<Wrap>,
-    ) {
+    ) -> bool {
         let wrap = wrap.unwrap_or(self.wrap);
         let mut parser = TextParser::new(&self.text).wrap(wrap);
         if size.x == 0 || size.y == 0 || parser.is_end() {
-            return;
+            return true;
         }
 
-        let mut line = lines.pop().unwrap_or(Line::empty());
+        let mut line = lines.pop().unwrap_or_else(Line::empty);
         for _ in 0..size.y {
             let line_len = size.x.saturating_sub(line.width);
             let Some((text, len)) = parser.next_line(line_len) else {
@@ -306,6 +288,7 @@ impl<'a> Text<'a> for Span {
             lines.push(line);
             line = Line::empty();
         }
+        parser.is_end()
     }
 
     fn get(&self) -> String {

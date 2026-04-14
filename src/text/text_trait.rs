@@ -3,7 +3,8 @@ use core::fmt;
 use crate::{
     buffer::Buffer,
     enums::Wrap,
-    geometry::{Rect, Vec2},
+    geometry::{Padding, Rect, Vec2},
+    prelude::TextAlign,
     text::Line,
 };
 
@@ -38,12 +39,19 @@ pub trait Text<'a> {
         wrap: Option<Wrap>,
     ) -> Vec2;
 
+    /// Appends the lines of the [`Text`] into the given lines.
+    ///
+    /// It tries to append the text to the last line first before adding a new
+    /// line.
+    ///
+    /// Returns `true` when the entire text fit within the size, otherwise
+    /// returns `false`.
     fn append_lines(
         &'a self,
         lines: &mut Vec<Line<'a>>,
         size: Vec2,
         wrap: Option<Wrap>,
-    );
+    ) -> bool;
 
     /// Returns the formatted representation of the text as a `String`.
     fn get(&self) -> String;
@@ -54,6 +62,30 @@ pub trait Text<'a> {
     /// Returns ANSI escape sequences representing the current style
     /// (e.g., foreground/background colors, modifiers).
     fn get_mods(&self) -> String;
+}
+
+/// Generic text render function, which uses the `Text::append_lines` to get
+/// the lines and render them.
+pub fn text_render<'a>(
+    text: &'a dyn Text<'a>,
+    buffer: &mut Buffer,
+    mut rect: Rect,
+    ellipsis: &str,
+    align: TextAlign,
+) {
+    let mut lines = vec![];
+    let fit = text.append_lines(&mut lines, *rect.size(), None);
+
+    if !fit {
+        lines
+            .last_mut()
+            .map(|l| l.add_ellipsis(rect.width(), ellipsis));
+    }
+
+    for line in lines {
+        line.render(buffer, rect, align);
+        rect = rect.inner(Padding::top(1));
+    }
 }
 
 impl<'a> fmt::Debug for dyn Text<'a> {

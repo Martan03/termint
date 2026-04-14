@@ -60,14 +60,7 @@ impl<'a> Line<'a> {
     ///
     /// If not enough space, it removes characters from the back until the
     /// ellipsis fit or the last character is not a whitespace.
-    pub fn add_ellipsis<S>(
-        &mut self,
-        max_width: usize,
-        ellipsis: &str,
-        style: S,
-    ) where
-        S: Into<StrStyle>,
-    {
+    pub fn add_ellipsis(&mut self, max_width: usize, ellipsis: &str) {
         let width = ellipsis.width();
         let target = max_width.saturating_sub(width);
 
@@ -87,15 +80,14 @@ impl<'a> Line<'a> {
             }
 
             if sid > 0 {
-                let trunc = frag.text[..sid].to_string();
+                let trunc = format!("{}{}", &frag.text[..sid], ellipsis);
                 frag.text = Cow::Owned(trunc);
-                frag.width = fwidth;
+                frag.width = fwidth + width;
 
+                self.width += frag.width;
                 self.parts.push(frag);
-                self.width += fwidth;
                 break;
             }
         }
-        self.push(ellipsis.to_string(), width, style)
     }
 }
