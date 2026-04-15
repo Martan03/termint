@@ -11,34 +11,6 @@ use crate::{
 /// A trait implemented by all the widgets that render styled or formatted
 /// text.
 pub trait Text {
-    /// Renders the [`Text`] into the given buffer within the provided [`Rect`]
-    /// bounds, starting at the given offset and applying the specified
-    /// wrapping strategy.
-    ///
-    /// Returns the final position where the rendering ends.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use termint::{
-    /// #     geometry::Rect, text::Text, widgets::ToSpan,
-    /// #     enums::Wrap, buffer::Buffer
-    /// # };
-    /// let span = "Hello, Termint!".to_span();
-    ///
-    /// let rect = Rect::new(1, 1, 20, 1);
-    /// let mut buffer = Buffer::empty(rect);
-    ///
-    /// // Renders text with offset of 3 with word wrapping
-    /// span.render_offset(&mut buffer, rect, 3, Some(Wrap::Word));
-    /// ```
-    fn render_offset(
-        &self,
-        buffer: &mut Buffer,
-        rect: Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-    ) -> Vec2;
-
     /// Appends the lines of the [`Text`] into the given lines.
     ///
     /// It tries to append the text to the last line first before adding a new
@@ -49,6 +21,17 @@ pub trait Text {
     ///
     /// Returns `true` when the entire text fit within the size, otherwise
     /// returns `false`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use termint::prelude::*;
+    /// # fn get_text() -> Span { Span::new("Example") }
+    ///
+    /// let text = get_text();
+    ///
+    /// let mut lines = vec![];
+    /// text.append_lines(&mut lines, &Vec2::new(20, 3), Some(Wrap::Word));
+    /// ```
     fn append_lines<'a>(
         &'a self,
         lines: &mut Vec<Line<'a>>,
@@ -62,9 +45,8 @@ pub trait Text {
     /// Returns the raw, unformatted string content.
     fn get_text(&self) -> &str;
 
-    /// Returns ANSI escape sequences representing the current style
-    /// (e.g., foreground/background colors, modifiers).
-    fn get_mods(&self) -> String;
+    /// Gets the set [`TextAlign`]ment of the text.
+    fn get_align(&self) -> TextAlign;
 }
 
 /// Generic text render function, which uses the `Text::append_lines` to get

@@ -1,16 +1,12 @@
 use std::{
-    borrow::Cow,
     fmt,
     hash::{DefaultHasher, Hash, Hasher},
 };
 
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
-
 use crate::{
     buffer::Buffer,
     enums::{Modifier, Wrap},
-    prelude::{Rect, TextAlign, Vec2},
+    prelude::{TextAlign, Vec2},
     style::{Style, Styleable},
     text::{Line, Text, TextParser, text_render},
     widgets::{Element, LayoutNode, Widget},
@@ -234,40 +230,6 @@ impl<M: Clone + 'static> Widget<M> for Span {
 }
 
 impl Text for Span {
-    fn render_offset(
-        &self,
-        buffer: &mut Buffer,
-        rect: Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-    ) -> Vec2 {
-        if rect.is_empty() {
-            return Vec2::new(0, rect.y());
-        }
-
-        let wrap = wrap.unwrap_or(self.wrap);
-        let mut parser = TextParser::new(&self.text).wrap(wrap);
-
-        let mut pos = Vec2::new(rect.x() + offset, rect.y());
-        let mut fin_pos = pos;
-
-        let right_end = rect.x() + rect.width();
-        while pos.y <= rect.bottom() {
-            let line_len = right_end.saturating_sub(pos.x);
-            let Some((text, len)) = parser.next_line(line_len) else {
-                break;
-            };
-
-            fin_pos.x = self.render_line(
-                buffer, &rect, &parser, text, len, &pos, line_len,
-            );
-            fin_pos.y = pos.y;
-            pos.x = rect.x();
-            pos.y += 1;
-        }
-        fin_pos
-    }
-
     fn append_lines<'a>(
         &'a self,
         lines: &mut Vec<Line<'a>>,
@@ -298,15 +260,15 @@ impl Text for Span {
     }
 
     fn get(&self) -> String {
-        format!("{}{}\x1b[0m", self.get_mods(), self.text)
+        format!("{}{}\x1b[0m", self.style, self.text)
     }
 
     fn get_text(&self) -> &str {
         &self.text
     }
 
-    fn get_mods(&self) -> String {
-        self.style.to_string()
+    fn get_align(&self) -> TextAlign {
+        self.align
     }
 }
 
@@ -329,49 +291,6 @@ impl fmt::Display for Span {
 }
 
 impl Span {
-    /// Renders one line of text and aligns it based on set alignment
-    fn render_line(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        parser: &TextParser,
-        line: &str,
-        mut len: usize,
-        pos: &Vec2,
-        line_len: usize,
-    ) -> usize {
-        let mut text = Cow::Borrowed(line);
-        if pos.y >= rect.bottom() && !parser.is_end() {
-            let el_width = self.ellipsis.width();
-            let target = line_len.saturating_sub(el_width);
-
-            let mut width = len;
-            let mut sid = line.len();
-
-            for (idx, grapheme) in line.grapheme_indices(true).rev() {
-                if width <= target
-                    && !grapheme.starts_with(char::is_whitespace)
-                {
-                    break;
-                }
-                width -= grapheme.width();
-                sid = idx;
-            }
-
-            let trunc = &line[..sid];
-            text = Cow::Owned(format!("{}{}", trunc, self.ellipsis));
-            len = width + el_width;
-        }
-
-        let x = match self.align {
-            TextAlign::Left => 0,
-            TextAlign::Center => rect.width().saturating_sub(len) >> 1,
-            TextAlign::Right => rect.width().saturating_sub(len),
-        };
-        buffer.set_str_styled(&text, &Vec2::new(pos.x + x, pos.y), self.style);
-        pos.x + x + len - 1
-    }
-
     /// Gets height of the [`Span`] when using word wrap
     fn height_word_wrap(&self, size: &Vec2) -> usize {
         let mut parser = TextParser::new(&self.text);

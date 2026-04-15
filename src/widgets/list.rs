@@ -391,11 +391,16 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
                 span = self.items[i].as_str().style(self.sel_style);
             }
 
-            let irect = Rect::from_coords(text_pos, text_size);
-            let res_pos = span.render_offset(buffer, irect, 0, None);
+            let mut irect = Rect::from_coords(text_pos, text_size);
+            let mut lines = vec![];
+            span.append_lines(&mut lines, irect.size(), None);
+            for line in lines {
+                line.render(buffer, irect, span.get_align());
+                irect = irect.inner(Padding::top(1));
+            }
 
-            text_size.y = text_size.y.saturating_sub(res_pos.y - text_pos.y);
-            text_pos.y = res_pos.y + 1;
+            text_size.y = irect.height();
+            text_pos.y = irect.y();
 
             if rect.y() + rect.height() <= text_pos.y {
                 break;

@@ -1,9 +1,5 @@
 use core::fmt;
-use std::{
-    borrow::Cow,
-    cmp::min,
-    hash::{DefaultHasher, Hash, Hasher},
-};
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -11,7 +7,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, RGB, Wrap},
-    geometry::{Direction, Rect, TextAlign, Vec2},
+    geometry::{Direction, TextAlign, Vec2},
     style::Style,
     text::{Line, StrStyle, Text, TextParser, get_step, text_render},
     widgets::layout::LayoutNode,
@@ -238,27 +234,6 @@ impl<M: Clone + 'static> Widget<M> for Grad {
 }
 
 impl Text for Grad {
-    fn render_offset(
-        &self,
-        buffer: &mut Buffer,
-        rect: Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-    ) -> Vec2 {
-        if rect.is_empty() {
-            return Vec2::new(0, rect.y());
-        }
-
-        match self.direction {
-            Direction::Vertical => {
-                self.render_vertical(buffer, &rect, offset, wrap)
-            }
-            Direction::Horizontal => {
-                self.render_horizontal(buffer, &rect, offset, wrap)
-            }
-        }
-    }
-
     fn append_lines<'a>(
         &'a self,
         lines: &mut Vec<Line<'a>>,
@@ -283,17 +258,30 @@ impl Text for Grad {
     }
 
     fn get(&self) -> String {
-        let step = self.get_step(self.text.len() as i16 - 1);
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        let len = self.text.len().saturating_sub(1);
+        let ((mut r, mut g, mut b), (rs, gs, bs)) =
+            get_step(&self.fg_start, &self.fg_end, len);
 
-        let mut res = self.get_mods();
-        for c in self.text.chars() {
-            res += &format!("{}{c}", Color::Rgb(r, g, b).to_fg());
-            (r, g, b) = self.add_step((r, g, b), step);
+        let mut res = format!(
+            "{}{}",
+            self.modifier,
+            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_bg())
+        );
+
+        for grapheme in self.text.graphemes(true) {
+            let gw = grapheme.width();
+            if gw == 0 {
+                continue;
+            }
+
+            let color = Color::Rgb(r as u8, g as u8, b as u8);
+            res += &color.to_fg();
+            res += grapheme;
+
+            let ssize = gw as f32;
+            (r, g, b) = (r + rs * ssize, g + gs * ssize, b + bs * ssize);
         }
         res += "\x1b[0m";
-
         res
     }
 
@@ -301,12 +289,8 @@ impl Text for Grad {
         &self.text
     }
 
-    fn get_mods(&self) -> String {
-        format!(
-            "{}{}",
-            self.modifier,
-            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_bg()),
-        )
+    fn get_align(&self) -> TextAlign {
+        self.align
     }
 }
 
@@ -405,207 +389,6 @@ impl Grad {
             lines.push(line);
             line = Line::empty();
         }
-    }
-
-    fn render_vertical(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-    ) -> Vec2 {
-        let height = min(
-            self.inner_height(rect.size()).saturating_sub(1),
-            rect.height(),
-        );
-        let step = self.get_step(height as i16);
-        self._render(
-            buffer,
-            rect,
-            offset,
-            wrap,
-            (0, 0, 0),
-            step,
-            |b, a, t, l, p, r, s| self.render_ver_line(b, a, t, l, p, r, s),
-        )
-    }
-
-    fn render_horizontal(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-    ) -> Vec2 {
-        let width = if self.inner_height(rect.size()) <= 1 {
-            self.text.chars().count()
-        } else {
-            rect.width()
-        };
-        let step = self.get_step(width as i16);
-        self._render(
-            buffer,
-            rect,
-            offset,
-            wrap,
-            step,
-            (0, 0, 0),
-            |b, a, t, l, p, r, s| self.render_hor_line(b, a, t, l, p, r, s),
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn _render<F>(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-        step_x: (i16, i16, i16),
-        step_y: (i16, i16, i16),
-        render_line: F,
-    ) -> Vec2
-    where
-        F: Fn(
-            &mut Buffer,
-            &Rect,
-            &str,
-            usize,
-            &Vec2,
-            (u8, u8, u8),
-            (i16, i16, i16),
-        ),
-    {
-        let wrap = wrap.unwrap_or(self.wrap);
-        let mut parser = TextParser::new(&self.text).wrap(wrap);
-
-        let mut pos = Vec2::new(rect.x() + offset, rect.y());
-        let mut fin_pos = pos;
-
-        let mut rgb = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        if self.text.chars().count() + offset >= rect.width() {
-            for _ in 0..offset {
-                rgb = self.add_step(rgb, step_x);
-            }
-        }
-
-        let right_end = rect.x() + rect.width();
-        while pos.y <= rect.bottom() {
-            let line_len = right_end.saturating_sub(pos.x);
-            let Some((raw_text, mut len)) = parser.next_line(line_len) else {
-                break;
-            };
-
-            let mut text = Cow::Borrowed(raw_text);
-            if pos.y >= rect.bottom() && !parser.is_end() {
-                let el_width = self.ellipsis.width();
-                let target = line_len.saturating_sub(el_width);
-
-                let mut width = len;
-                let mut sid = raw_text.len();
-
-                for (idx, grapheme) in raw_text.grapheme_indices(true).rev() {
-                    if width <= target
-                        && !grapheme.starts_with(char::is_whitespace)
-                    {
-                        break;
-                    }
-                    width -= grapheme.width();
-                    sid = idx;
-                }
-
-                let trunc = &raw_text[..sid];
-                text = Cow::Owned(format!("{}{}", trunc, self.ellipsis));
-                len = width + el_width;
-            }
-
-            render_line(buffer, rect, &text, len, &pos, rgb, step_x);
-            (fin_pos.x, fin_pos.y) =
-                ((pos.x + len).saturating_sub(rect.x()), pos.y);
-            (pos.x, pos.y) = (rect.x(), pos.y + 1);
-            rgb = self.add_step(rgb, step_y);
-        }
-        fin_pos
-    }
-
-    /// Renders line with horizontal gradient
-    #[allow(clippy::too_many_arguments)]
-    fn render_hor_line(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        line: &str,
-        len: usize,
-        pos: &Vec2,
-        (mut r, mut g, mut b): (u8, u8, u8),
-        step: (i16, i16, i16),
-    ) {
-        let offset = self.get_align_offset(rect, len);
-        for _ in 0..offset {
-            (r, g, b) = self.add_step((r, g, b), step);
-        }
-
-        let mut style = Style::new()
-            .fg(Color::Rgb(r, g, b))
-            .bg(self.bg)
-            .modifier(self.modifier);
-
-        let mut coords = Vec2::new(pos.x + offset, pos.y);
-        for c in line.chars() {
-            buffer[coords].char(c).style(style);
-
-            coords.x += 1;
-            (r, g, b) = self.add_step((r, g, b), step);
-            style = style.fg(Color::Rgb(r, g, b));
-        }
-    }
-
-    /// Renders line with vertical gradient
-    #[allow(clippy::too_many_arguments)]
-    fn render_ver_line(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        line: &str,
-        len: usize,
-        pos: &Vec2,
-        (r, g, b): (u8, u8, u8),
-        _step: (i16, i16, i16),
-    ) {
-        let offset = self.get_align_offset(rect, len);
-        let style = Style::new().fg(Color::Rgb(r, g, b)).bg(self.bg);
-        buffer.set_str_styled(line, &Vec2::new(pos.x + offset, pos.y), style);
-    }
-
-    /// Gets text alignment offset
-    fn get_align_offset(&self, rect: &Rect, len: usize) -> usize {
-        match self.align {
-            TextAlign::Left => 0,
-            TextAlign::Center => rect.width().saturating_sub(len) >> 1,
-            TextAlign::Right => rect.width().saturating_sub(len),
-        }
-    }
-
-    /// Gets step per character based on start and end foreground color
-    fn get_step(&self, len: i16) -> (i16, i16, i16) {
-        (
-            (self.fg_end.r as i16 - self.fg_start.r as i16) / len,
-            (self.fg_end.g as i16 - self.fg_start.g as i16) / len,
-            (self.fg_end.b as i16 - self.fg_start.b as i16) / len,
-        )
-    }
-
-    /// Adds given step to RGB value in tuple
-    fn add_step(
-        &self,
-        rgb: (u8, u8, u8),
-        step: (i16, i16, i16),
-    ) -> (u8, u8, u8) {
-        (
-            (rgb.0 as i16 + step.0) as u8,
-            (rgb.1 as i16 + step.1) as u8,
-            (rgb.2 as i16 + step.2) as u8,
-        )
     }
 
     /// Gets height of the [`Grad`] when using word wrap

@@ -286,7 +286,11 @@ where
         let size = Vec2::new(rect.width().saturating_sub(l + r), 1);
 
         let trect = Rect::from_coords(pos, size);
-        _ = self.title.render_offset(buffer, trect, 0, None);
+        let mut lines = vec![];
+        self.title.append_lines(&mut lines, trect.size(), None);
+        if let Some(line) = lines.first() {
+            line.render(buffer, trect, self.title.get_align());
+        }
 
         self.child.render(buffer, &layout.children[0]);
     }
