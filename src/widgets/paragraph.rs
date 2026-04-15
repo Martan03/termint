@@ -117,6 +117,27 @@ impl Paragraph {
         self
     }
 
+    /// Sets the [`Paragraph`] text alignment.
+    ///
+    /// Default value is [`TextAlign::Left`].
+    #[must_use]
+    pub fn align(mut self, align: TextAlign) -> Self {
+        self.align = align;
+        self
+    }
+
+    /// Sets the ellipsis string to use when text overflows.
+    ///
+    /// The default value is `"..."`.
+    #[must_use]
+    pub fn ellipsis<T>(mut self, ellipsis: T) -> Self
+    where
+        T: AsRef<str>,
+    {
+        self.ellipsis = ellipsis.as_ref().to_string();
+        self
+    }
+
     /// Appends a child element to the end of the [`Paragraph`].
     pub fn push<T>(&mut self, child: T)
     where

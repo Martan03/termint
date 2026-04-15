@@ -13,7 +13,7 @@ use crate::{
     enums::{Color, Modifier, RGB, Wrap},
     geometry::{Direction, Rect, TextAlign, Vec2},
     style::Style,
-    text::{Line, StrStyle, Text, TextParser, text_render},
+    text::{Line, StrStyle, Text, TextParser, get_step, text_render},
     widgets::layout::LayoutNode,
 };
 
@@ -370,20 +370,19 @@ impl Grad {
             height += 1;
         }
 
-        let step = self.get_step(height as i16);
-
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
+        let ((mut r, mut g, mut b), (rs, gs, bs)) =
+            get_step(&self.fg_start, &self.fg_end, height);
         let base_style = Style::new().bg(self.bg);
 
         let mut line = lines.pop().unwrap_or_else(Line::empty);
         for (text, len) in frags {
-            let style = StrStyle::Static(base_style.fg(Color::Rgb(r, g, b)));
+            let col = Color::Rgb(r as u8, g as u8, b as u8);
+            let style = StrStyle::Static(base_style.fg(col));
             line.push(text, len, style);
             lines.push(line);
 
             line = Line::empty();
-            (r, g, b) = self.add_step((r, g, b), step);
+            (r, g, b) = (r + rs, g + gs, b + bs);
         }
     }
 

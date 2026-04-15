@@ -160,7 +160,7 @@ where
     }
 }
 
-fn get_step(
+pub(crate) fn get_step(
     start: &RGB,
     end: &RGB,
     width: usize,
