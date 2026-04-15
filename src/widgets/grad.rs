@@ -225,11 +225,13 @@ impl<M: Clone + 'static> Widget<M> for Grad {
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        self.inner_height(size)
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.height(size)
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        self.inner_width(size)
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.width(size)
     }
 }
 
@@ -258,9 +260,8 @@ impl Text for Grad {
     }
 
     fn get(&self) -> String {
-        let len = self.text.len().saturating_sub(1);
         let ((mut r, mut g, mut b), (rs, gs, bs)) =
-            get_step(&self.fg_start, &self.fg_end, len);
+            get_step(&self.fg_start, &self.fg_end, self.text.width());
 
         let mut res = format!(
             "{}{}",
@@ -302,20 +303,6 @@ impl fmt::Display for Grad {
 }
 
 impl Grad {
-    fn inner_height(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.height_letter_wrap(size),
-            Wrap::Word => self.height_word_wrap(size),
-        }
-    }
-
-    fn inner_width(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => self.width_word_wrap(size),
-        }
-    }
-
     fn get_frags<'a>(
         &self,
         parser: &mut TextParser<'a>,
@@ -349,7 +336,7 @@ impl Grad {
         mut parser: TextParser<'a>,
         size: &Vec2,
     ) {
-        let mut height = frags.len().saturating_sub(1);
+        let mut height = frags.len();
         while let Some(_) = parser.next_line(size.x) {
             height += 1;
         }
@@ -389,55 +376,6 @@ impl Grad {
             lines.push(line);
             line = Line::empty();
         }
-    }
-
-    /// Gets height of the [`Grad`] when using word wrap
-    fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut parser = TextParser::new(&self.text);
-
-        let mut pos = Vec2::new(0, 0);
-        loop {
-            if parser.next_line(size.x).is_none() {
-                break;
-            }
-            pos.y += 1;
-        }
-        pos.y
-    }
-
-    /// Gets width of the [`Grad`] when using word wrap
-    fn width_word_wrap(&self, size: &Vec2) -> usize {
-        let mut guess =
-            Vec2::new(self.size_letter_wrap(size.y).saturating_sub(1), 0);
-
-        while self.height_word_wrap(&guess) > size.y {
-            guess.x += 1;
-        }
-        guess.x
-    }
-
-    /// Gets height of the [`Grad`] when using letter wrap
-    fn height_letter_wrap(&self, size: &Vec2) -> usize {
-        self.text
-            .lines()
-            .map(|l| {
-                (l.chars().count() as f32 / size.x as f32).ceil() as usize
-            })
-            .sum()
-    }
-
-    /// Gets width of the [`Grad`] when using letter wrap
-    fn width_letter_wrap(&self, size: &Vec2) -> usize {
-        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
-        while self.height_letter_wrap(&guess) > size.y {
-            guess.x += 1;
-        }
-        guess.x
-    }
-
-    /// Gets size of the [`Grad`] when using letter wrap
-    fn size_letter_wrap(&self, size: usize) -> usize {
-        (self.text.chars().count() as f32 / size as f32).ceil() as usize
     }
 }
 

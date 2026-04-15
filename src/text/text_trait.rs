@@ -24,7 +24,7 @@ pub trait Text {
     ///
     /// # Example
     /// ```rust
-    /// use termint::prelude::*;
+    /// use termint::{prelude::*, text::Text};
     /// # fn get_text() -> Span { Span::new("Example") }
     ///
     /// let text = get_text();

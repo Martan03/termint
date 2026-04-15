@@ -1,7 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-use crate::enums::Wrap;
+use crate::{enums::Wrap, prelude::Vec2};
 
 /// Parses the text so it can be rendered more easily. It can be used to get
 /// next line (or word, but it's mainly for line) from the text using either
@@ -36,6 +36,7 @@ use crate::enums::Wrap;
 ///     println!("{} ({} chars)", line, len);
 /// }
 /// ```
+#[derive(Debug, Clone)]
 pub struct TextParser<'a> {
     text: Option<&'a str>,
     wrap: Wrap,
@@ -97,6 +98,41 @@ impl<'a> TextParser<'a> {
             Wrap::Letter => self.lw_next_line(max_width),
             Wrap::Word => self.ww_next_line(max_width),
         }
+    }
+
+    /// Gets the minimum width of the text based on the height.
+    pub fn width(&mut self, size: &Vec2) -> usize {
+        if size.x == 0 || size.y == 0 {
+            return 0;
+        }
+
+        let width = self.text.unwrap_or_default().width();
+        if width == 0 {
+            return 0;
+        }
+
+        let mut low = ((width + size.y - 1) / size.y).max(1);
+        let mut high = width;
+        while low < high {
+            let mid = low + (high - low) / 2;
+            let mut parser = self.clone();
+            let height = parser.inner_height(mid);
+
+            if height <= size.y {
+                high = mid;
+            } else {
+                low = mid + 1
+            }
+        }
+        low
+    }
+
+    /// Gets the minimum height of the text based on the width.
+    pub fn height(&mut self, size: &Vec2) -> usize {
+        if size.x == 0 || size.y == 0 {
+            return 0;
+        }
+        self.inner_height(size.x)
     }
 
     /// Gets next line from the text using word wrap. Same as calling
@@ -210,6 +246,16 @@ impl<'a> TextParser<'a> {
     /// Checks if text was read to the end.
     pub fn is_end(&self) -> bool {
         self.text.is_none()
+    }
+}
+
+impl<'a> TextParser<'a> {
+    fn inner_height(&mut self, width: usize) -> usize {
+        let mut height = 0;
+        while let Some(_) = self.next_line(width) {
+            height += 1;
+        }
+        height
     }
 }
 

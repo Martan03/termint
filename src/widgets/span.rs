@@ -206,17 +206,13 @@ impl<M: Clone + 'static> Widget<M> for Span {
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.height_letter_wrap(size),
-            Wrap::Word => self.height_word_wrap(size),
-        }
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.height(size)
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => self.width_word_wrap(size),
-        }
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.width(size)
     }
 
     fn layout_hash(&self) -> u64 {
@@ -287,60 +283,6 @@ impl Default for Span {
 impl fmt::Display for Span {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
-    }
-}
-
-impl Span {
-    /// Gets height of the [`Span`] when using word wrap
-    fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut parser = TextParser::new(&self.text);
-
-        let mut pos = Vec2::new(0, 0);
-        loop {
-            if parser.next_line(size.x).is_none() {
-                break;
-            }
-            pos.y += 1;
-        }
-        pos.y
-    }
-
-    /// Gets width of the [`Span`] when using word wrap
-    fn width_word_wrap(&self, size: &Vec2) -> usize {
-        let mut guess =
-            Vec2::new(self.size_letter_wrap(size.y).saturating_sub(1), 0);
-
-        while self.height_word_wrap(&guess) > size.y {
-            let Some(val) = guess.x.checked_add(1) else {
-                break;
-            };
-            guess.x = val;
-        }
-        guess.x
-    }
-
-    /// Gets height of the [`Span`] when using letter wrap
-    fn height_letter_wrap(&self, size: &Vec2) -> usize {
-        self.text
-            .lines()
-            .map(|l| {
-                (l.chars().count() as f32 / size.x as f32).ceil() as usize
-            })
-            .sum()
-    }
-
-    /// Gets width of the [`Span`] when using letter wrap
-    fn width_letter_wrap(&self, size: &Vec2) -> usize {
-        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
-        while self.height_letter_wrap(&guess) > size.y {
-            guess.x += 1;
-        }
-        guess.x
-    }
-
-    /// Gets size of the [`Span`] when using letter wrap
-    fn size_letter_wrap(&self, size: usize) -> usize {
-        (self.text.chars().count() as f32 / size as f32).ceil() as usize
     }
 }
 
