@@ -39,8 +39,8 @@ use crate::{
 /// main.push("Content", Constraint::Fill(1))
 /// ```
 #[derive(Debug)]
-pub struct Block<'a, M: 'static = (), W = Element<M>> {
-    title: Box<dyn Text<'a>>,
+pub struct Block<M: 'static = (), W = Element<M>> {
+    title: Box<dyn Text>,
     borders: Border,
     border_type: BorderType,
     border_style: Style,
@@ -48,7 +48,7 @@ pub struct Block<'a, M: 'static = (), W = Element<M>> {
     child_type: PhantomData<W>,
 }
 
-impl<'a, M> Block<'a, M, Element<M>> {
+impl<M> Block<M, Element<M>> {
     /// Creates a new [`Block`] wrapping the given widget.
     ///
     /// By default all the borders are visible and no title is set.
@@ -70,7 +70,7 @@ impl<'a, M> Block<'a, M, Element<M>> {
     }
 }
 
-impl<'a, M, W> Block<'a, M, W> {
+impl<M, W> Block<M, W> {
     /// Sets the title at the top of the [`Block`].
     ///
     /// This is typically used for section labels in your TUI.
@@ -79,7 +79,7 @@ impl<'a, M, W> Block<'a, M, W> {
     #[must_use]
     pub fn title<T>(mut self, title: T) -> Self
     where
-        T: Into<Box<dyn Text<'a>>>,
+        T: Into<Box<dyn Text>>,
     {
         self.title = title.into();
         self
@@ -136,7 +136,7 @@ impl<'a, M, W> Block<'a, M, W> {
     }
 }
 
-impl<'a, M: Clone + 'static> Block<'a, M, Spacer> {
+impl<M: Clone + 'static> Block<M, Spacer> {
     /// Creates a new [`Block`] containing a [`Spacer`].
     ///
     /// By default all the borders are visible and no title is set. This is
@@ -154,7 +154,7 @@ impl<'a, M: Clone + 'static> Block<'a, M, Spacer> {
     }
 }
 
-impl<'a, M: Clone + 'static> Block<'a, M, Layout<M>> {
+impl<M: Clone + 'static> Block<M, Layout<M>> {
     /// Creates a new [`Block`] wrapping a vertical [`Layout`].
     ///
     /// This is convenience constructor equivalent to
@@ -274,7 +274,7 @@ impl<'a, M: Clone + 'static> Block<'a, M, Layout<M>> {
     }
 }
 
-impl<M, W> Widget<M> for Block<'static, M, W>
+impl<M, W> Widget<M> for Block<M, W>
 where
     M: Clone + 'static,
     W: Widget<M>,
@@ -327,7 +327,7 @@ where
     }
 }
 
-impl<'a, M, W> Block<'a, M, W> {
+impl<M, W> Block<M, W> {
     /// Renders [`Block`] border
     fn render_border(
         &self,
@@ -424,22 +424,22 @@ impl<'a, M, W> Block<'a, M, W> {
 }
 
 // From implementations
-impl<M, W> From<Block<'static, M, W>> for Box<dyn Widget<M>>
+impl<M, W> From<Block<M, W>> for Box<dyn Widget<M>>
 where
     M: Clone + 'static,
     W: Widget<M> + 'static,
 {
-    fn from(value: Block<'static, M, W>) -> Self {
+    fn from(value: Block<M, W>) -> Self {
         Box::new(value)
     }
 }
 
-impl<M, W> From<Block<'static, M, W>> for Element<M>
+impl<M, W> From<Block<M, W>> for Element<M>
 where
     M: Clone + 'static,
     W: Widget<M> + 'static,
 {
-    fn from(value: Block<'static, M, W>) -> Self {
+    fn from(value: Block<M, W>) -> Self {
         Element::new(value)
     }
 }

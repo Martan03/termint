@@ -233,7 +233,7 @@ impl<M: Clone + 'static> Widget<M> for Span {
     }
 }
 
-impl<'a> Text<'a> for Span {
+impl Text for Span {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
@@ -268,20 +268,23 @@ impl<'a> Text<'a> for Span {
         fin_pos
     }
 
-    fn append_lines(
+    fn append_lines<'a>(
         &'a self,
         lines: &mut Vec<Line<'a>>,
-        size: Vec2,
+        size: &Vec2,
         wrap: Option<Wrap>,
     ) -> bool {
         let wrap = wrap.unwrap_or(self.wrap);
         let mut parser = TextParser::new(&self.text).wrap(wrap);
-        if size.x == 0 || size.y == 0 || parser.is_end() {
-            return true;
+
+        let height = lines.len().saturating_sub(1);
+        let is_end = parser.is_end();
+        if size.x == 0 || height >= size.y || is_end {
+            return is_end;
         }
 
         let mut line = lines.pop().unwrap_or_else(Line::empty);
-        for _ in 0..size.y {
+        for _ in height..size.y {
             let line_len = size.x.saturating_sub(line.width);
             let Some((text, len)) = parser.next_line(line_len) else {
                 break;
@@ -447,7 +450,7 @@ where
     }
 }
 
-impl<'a, T> From<T> for Box<dyn Text<'a>>
+impl<'a, T> From<T> for Box<dyn Text>
 where
     T: AsRef<str>,
 {
@@ -472,7 +475,7 @@ impl<M: Clone + 'static> From<Span> for Box<dyn Widget<M>> {
     }
 }
 
-impl<'a> From<Span> for Box<dyn Text<'a>> {
+impl<'a> From<Span> for Box<dyn Text> {
     fn from(value: Span) -> Self {
         Box::new(value)
     }

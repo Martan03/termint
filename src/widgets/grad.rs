@@ -237,7 +237,7 @@ impl<M: Clone + 'static> Widget<M> for Grad {
     }
 }
 
-impl<'a> Text<'a> for Grad {
+impl Text for Grad {
     fn render_offset(
         &self,
         buffer: &mut Buffer,
@@ -259,10 +259,10 @@ impl<'a> Text<'a> for Grad {
         }
     }
 
-    fn append_lines(
+    fn append_lines<'a>(
         &'a self,
         lines: &mut Vec<Line<'a>>,
-        size: Vec2,
+        size: &Vec2,
         wrap: Option<Wrap>,
     ) -> bool {
         let wrap = wrap.unwrap_or(self.wrap);
@@ -336,9 +336,10 @@ impl Grad {
         &self,
         parser: &mut TextParser<'a>,
         lines: &mut Vec<Line<'a>>,
-        size: Vec2,
+        size: &Vec2,
     ) -> Vec<(&'a str, usize)> {
-        if size.x == 0 || size.y == 0 || parser.is_end() {
+        let height = lines.len().saturating_sub(1);
+        if size.x == 0 || height >= size.y || parser.is_end() {
             return vec![];
         }
 
@@ -346,7 +347,7 @@ impl Grad {
         let last_width = lines.last().map(|l| l.width).unwrap_or_default();
         let mut fwidth = size.x.saturating_sub(last_width);
 
-        for _ in 0..size.y {
+        for _ in height..size.y {
             let Some(line) = parser.next_line(fwidth) else {
                 break;
             };
@@ -362,7 +363,7 @@ impl Grad {
         lines: &mut Vec<Line<'a>>,
         frags: Vec<(&'a str, usize)>,
         mut parser: TextParser<'a>,
-        size: Vec2,
+        size: &Vec2,
     ) {
         let mut height = frags.len().saturating_sub(1);
         while let Some(_) = parser.next_line(size.x) {
@@ -671,7 +672,7 @@ impl<M: Clone + 'static> From<Grad> for Element<M> {
     }
 }
 
-impl<'a> From<Grad> for Box<dyn Text<'a>> {
+impl<'a> From<Grad> for Box<dyn Text> {
     fn from(value: Grad) -> Self {
         Box::new(value)
     }

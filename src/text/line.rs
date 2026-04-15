@@ -40,6 +40,13 @@ impl<'a> Line<'a> {
         self.width += width;
     }
 
+    /// Pops the last text fragment from the current [`Line`].
+    pub fn pop(&mut self) {
+        if let Some(frag) = self.parts.pop() {
+            self.width -= frag.width;
+        }
+    }
+
     /// Renders the current [`Line`] into the [`Buffer`].
     pub fn render(&self, buffer: &mut Buffer, rect: Rect, align: TextAlign) {
         let x_offset = match align {

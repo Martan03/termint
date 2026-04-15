@@ -10,7 +10,7 @@ use crate::{
 
 /// A trait implemented by all the widgets that render styled or formatted
 /// text.
-pub trait Text<'a> {
+pub trait Text {
     /// Renders the [`Text`] into the given buffer within the provided [`Rect`]
     /// bounds, starting at the given offset and applying the specified
     /// wrapping strategy.
@@ -44,12 +44,15 @@ pub trait Text<'a> {
     /// It tries to append the text to the last line first before adding a new
     /// line.
     ///
+    /// The `size` represents the whole size allocated for the lines, so
+    /// widget takes into account how many lines are already in the `lines`.
+    ///
     /// Returns `true` when the entire text fit within the size, otherwise
     /// returns `false`.
-    fn append_lines(
+    fn append_lines<'a>(
         &'a self,
         lines: &mut Vec<Line<'a>>,
-        size: Vec2,
+        size: &Vec2,
         wrap: Option<Wrap>,
     ) -> bool;
 
@@ -66,15 +69,15 @@ pub trait Text<'a> {
 
 /// Generic text render function, which uses the `Text::append_lines` to get
 /// the lines and render them.
-pub fn text_render<'a>(
-    text: &'a dyn Text<'a>,
+pub fn text_render(
+    text: &dyn Text,
     buffer: &mut Buffer,
     mut rect: Rect,
     ellipsis: &str,
     align: TextAlign,
 ) {
     let mut lines = vec![];
-    let fit = text.append_lines(&mut lines, *rect.size(), None);
+    let fit = text.append_lines(&mut lines, rect.size(), None);
 
     if !fit {
         lines
@@ -88,7 +91,7 @@ pub fn text_render<'a>(
     }
 }
 
-impl<'a> fmt::Debug for dyn Text<'a> {
+impl fmt::Debug for dyn Text {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Converted text")
     }

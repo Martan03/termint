@@ -1,11 +1,15 @@
 use core::fmt;
 use std::hash::{DefaultHasher, Hash, Hasher};
 
+use unicode_width::UnicodeWidthStr;
+
 use crate::{
     buffer::Buffer,
     enums::Wrap,
-    prelude::{Rect, Vec2},
-    text::Text,
+    geometry::Padding,
+    prelude::{TextAlign, Vec2},
+    style::Style,
+    text::{Line, Text},
     widgets::{Element, LayoutNode, Widget},
 };
 
@@ -46,19 +50,21 @@ use crate::{
 /// println!("{p}");
 /// ```
 #[derive(Debug)]
-pub struct Paragraph<'a> {
-    children: Vec<Box<dyn Text<'a>>>,
+pub struct Paragraph {
+    children: Vec<Box<dyn Text>>,
     separator: String,
     wrap: Wrap,
+    align: TextAlign,
+    ellipsis: String,
 }
 
-impl<'a> Paragraph<'a> {
+impl Paragraph {
     /// Creates a new [`Paragraph`] with the given child elements.
     #[must_use]
     pub fn new<I>(children: I) -> Self
     where
         I: IntoIterator,
-        I::Item: Into<Box<dyn Text<'a>>>,
+        I::Item: Into<Box<dyn Text>>,
     {
         Self {
             children: children.into_iter().map(|i| i.into()).collect(),
@@ -114,40 +120,59 @@ impl<'a> Paragraph<'a> {
     /// Appends a child element to the end of the [`Paragraph`].
     pub fn push<T>(&mut self, child: T)
     where
-        T: Into<Box<dyn Text<'a>>>,
+        T: Into<Box<dyn Text>>,
     {
         self.children.push(child.into());
     }
 }
 
-impl<M: Clone + 'static> Widget<M> for Paragraph<'static> {
+impl<M: Clone + 'static> Widget<M> for Paragraph {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        let rect = layout.area;
-        let mut pos = Vec2::new(rect.x(), rect.y());
-        let mut size = Vec2::new(rect.width(), rect.height());
-        let mut offset = 0;
+        let mut lines = vec![];
+        let size = *layout.area.size();
+        let mut fit = true;
 
-        for child in self.children.iter() {
-            let crect = Rect::from_coords(pos, size);
-            let end =
-                child.render_offset(buffer, crect, offset, Some(self.wrap));
+        let mut sep: Option<(usize, usize)> = None;
+        for (i, child) in self.children.iter().enumerate() {
+            fit = child.append_lines(&mut lines, &size, Some(self.wrap));
 
-            size.y = size.y.saturating_sub(end.y - pos.y);
-            pos.y = end.y;
-            offset = end.x + self.separator.len();
-
-            if end.y >= rect.y() + rect.height()
-                && end.x >= rect.x() + rect.width()
+            if let Some((Some(line), w)) =
+                sep.take().map(|(i, w)| (lines.get_mut(i), w))
+                && line.width == w
             {
+                line.pop();
+            }
+
+            if !fit || lines.len() > size.y {
                 break;
             }
 
-            if offset + self.separator.len() <= rect.width() && offset != 0 {
-                buffer.set_str(
-                    &self.separator,
-                    &Vec2::new(rect.x() + offset - 1, pos.y),
-                );
+            if i < self.children.len() - 1 && !self.separator.is_empty() {
+                let last_id = lines.len().saturating_sub(1);
+                if let Some(line) = lines.last_mut() {
+                    let sep_w = self.separator.width();
+
+                    if line.width + sep_w <= size.x {
+                        // TODO: Add style?
+                        line.push(&self.separator, sep_w, Style::default());
+                        sep = Some((last_id, line.width));
+                    } else {
+                        lines.push(Line::empty());
+                    }
+                }
             }
+        }
+
+        if !fit {
+            lines
+                .last_mut()
+                .map(|l| l.add_ellipsis(size.x, &self.ellipsis));
+        }
+
+        let mut rect = layout.area;
+        for line in lines {
+            line.render(buffer, rect, self.align);
+            rect = rect.inner(Padding::top(1));
         }
     }
 
@@ -178,24 +203,26 @@ impl<M: Clone + 'static> Widget<M> for Paragraph<'static> {
     }
 }
 
-impl<'a> fmt::Display for Paragraph<'a> {
+impl fmt::Display for Paragraph {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }
 }
 
-impl<'a> Default for Paragraph<'a> {
+impl Default for Paragraph {
     /// Creates [`Paragraph`] filled with default values
     fn default() -> Self {
         Self {
             children: Vec::new(),
             separator: " ".to_string(),
             wrap: Wrap::Word,
+            align: TextAlign::Left,
+            ellipsis: "...".to_string(),
         }
     }
 }
 
-impl<'a> Paragraph<'a> {
+impl Paragraph {
     /// Gets [`Paragraph`] height when using word wrap
     fn height_word_wrap(&self, size: &Vec2) -> usize {
         let mut coords = Vec2::new(0, 0);
@@ -242,14 +269,14 @@ impl<'a> Paragraph<'a> {
 }
 
 // From implementations
-impl<M: Clone + 'static> From<Paragraph<'static>> for Box<dyn Widget<M>> {
-    fn from(value: Paragraph<'static>) -> Self {
+impl<M: Clone + 'static> From<Paragraph> for Box<dyn Widget<M>> {
+    fn from(value: Paragraph) -> Self {
         Box::new(value)
     }
 }
 
-impl<M: Clone + 'static> From<Paragraph<'static>> for Element<M> {
-    fn from(value: Paragraph<'static>) -> Self {
+impl<M: Clone + 'static> From<Paragraph> for Element<M> {
+    fn from(value: Paragraph) -> Self {
         Element::new(value)
     }
 }
