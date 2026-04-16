@@ -5,6 +5,8 @@ use std::{
     rc::Rc,
 };
 
+use unicode_width::UnicodeWidthStr;
+
 use crate::{
     buffer::Buffer,
     enums::Color,
@@ -12,8 +14,8 @@ use crate::{
     prelude::{MouseButton, MouseEvent, Rect, Vec2},
     style::{Style, Styleable},
     term::backend::MouseEventKind,
-    text::Text,
-    widgets::{Element, EventResult, LayoutNode, Span, ToSpan, Widget},
+    text::{StrStyle, Text},
+    widgets::{Element, EventResult, LayoutNode, Widget},
 };
 
 type ListHandler<M> = Box<dyn Fn(usize) -> M>;
@@ -60,7 +62,7 @@ type ListHandler<M> = Box<dyn Fn(usize) -> M>;
 ///     .auto_scroll();
 /// ```
 pub struct List<M: 'static = ()> {
-    items: Vec<String>,
+    items: Vec<Box<dyn Text>>,
     state: Rc<RefCell<ListState>>,
     auto_scroll: bool,
     handle_scroll: bool,
@@ -98,10 +100,9 @@ impl<M> List<M> {
     pub fn new<T>(items: T, state: Rc<RefCell<ListState>>) -> Self
     where
         T: IntoIterator,
-        T::Item: AsRef<str>,
+        T::Item: Into<Box<dyn Text>>,
     {
-        let items =
-            items.into_iter().map(|i| i.as_ref().to_string()).collect();
+        let items = items.into_iter().map(|i| i.into()).collect();
 
         Self {
             items,
@@ -361,18 +362,17 @@ impl ListState {
 impl<M: Clone + 'static> Widget<M> for List<M> {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
         let rect = layout.area;
-        let mut text_pos =
-            Vec2::new(rect.x() + self.highlight.len(), rect.y());
-        let mut text_size =
-            Vec2::new(rect.width() - self.highlight.len(), rect.height());
 
-        let has_bar = self.force_scrollbar || !self.fits(&text_size);
+        let hwidth = self.highlight.width();
+        let mut crect = rect.inner(Padding::left(hwidth));
+
+        let has_bar = self.force_scrollbar || !self.fits(crect.size());
         if has_bar {
-            text_size.x = text_size.x.saturating_sub(1);
+            crect.size.x = crect.width().saturating_sub(1);
         }
 
         if self.auto_scroll {
-            self.scroll_offset(&text_size);
+            self.scroll_offset(crect.size());
         }
 
         if has_bar {
@@ -381,51 +381,47 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
 
         let selected = self.state.borrow().selected;
         for i in self.state.borrow().offset..self.items.len() {
-            let mut span = self.items[i].as_str().style(self.style);
             if Some(i) == selected {
                 buffer.set_str_styled(
                     &self.highlight,
-                    &Vec2::new(rect.x(), text_pos.y),
+                    &Vec2::new(rect.x(), crect.y()),
                     self.highlight_style,
                 );
-                span = self.items[i].as_str().style(self.sel_style);
             }
 
-            let mut irect = Rect::from_coords(text_pos, text_size);
+            let item = &self.items[i];
             let mut lines = vec![];
-            span.append_lines(&mut lines, irect.size(), None);
-            for line in lines {
-                line.render(buffer, irect, span.get_align());
-                irect = irect.inner(Padding::top(1));
+            item.append_lines(&mut lines, crect.size(), None);
+
+            if Some(i) == selected {
+                for line in &mut lines {
+                    for part in &mut line.parts {
+                        part.style = StrStyle::Static(self.sel_style);
+                    }
+                }
             }
 
-            text_size.y = irect.height();
-            text_pos.y = irect.y();
+            for line in lines {
+                line.render(buffer, crect, item.get_align());
+                crect = crect.inner(Padding::top(1));
+            }
 
-            if rect.y() + rect.height() <= text_pos.y {
+            if rect.y() + rect.height() <= crect.y() {
                 break;
             }
-            text_size.y = rect.y() + rect.height() - text_pos.y;
         }
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        self.items
-            .iter()
-            .map(|i| <Span as Widget<M>>::height(&i.as_str().to_span(), size))
-            .sum()
+        self.items.iter().map(|i| i.height(size)).sum()
     }
 
     fn width(&self, size: &Vec2) -> usize {
         let mut width = 0;
         let mut height = 0;
         for item in self.items.iter() {
-            let span = item.as_str().to_span();
-            let h = <Span as Widget<M>>::height(&span, size);
-            width = max(
-                <Span as Widget<M>>::width(&span, &Vec2::new(size.x, h)),
-                width,
-            );
+            let h = item.height(size);
+            width = max(item.width(&Vec2::new(size.x, h)), width);
             height += h;
         }
         width + self.highlight.len() + (height > size.y) as usize
@@ -434,7 +430,9 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
     fn layout_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
 
-        self.items.hash(&mut hasher);
+        for item in &self.items {
+            item.layout_hash().hash(&mut hasher);
+        }
         self.force_scrollbar.hash(&mut hasher);
         self.highlight.hash(&mut hasher);
         self.state.borrow().hash(&mut hasher);
@@ -453,7 +451,7 @@ impl<M: Clone + 'static> Widget<M> for List<M> {
         }
 
         for i in self.state.borrow().offset..self.items.len() {
-            let span: Element<M> = self.items[i].as_str().to_span().into();
+            let span = self.items[i].as_ref();
             let height = span.height(area.size());
 
             let mut irect = Rect::from_coords(*area.pos(), *area.size());
@@ -538,10 +536,7 @@ impl<M: Clone + 'static> List<M> {
     fn is_visible(&self, item: usize, offset: usize, size: &Vec2) -> bool {
         let mut height = 0;
         for i in offset..self.items.len() {
-            height += <Span as Widget<M>>::height(
-                &self.items[i].as_str().to_span(),
-                size,
-            );
+            height += self.items[i].height(size);
             if height > size.y {
                 return false;
             }

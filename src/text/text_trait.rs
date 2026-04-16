@@ -6,11 +6,12 @@ use crate::{
     geometry::{Padding, Rect, Vec2},
     prelude::TextAlign,
     text::Line,
+    widgets::Widget,
 };
 
 /// A trait implemented by all the widgets that render styled or formatted
 /// text.
-pub trait Text {
+pub trait Text: Widget {
     /// Appends the lines of the [`Text`] into the given lines.
     ///
     /// It tries to append the text to the last line first before adding a new

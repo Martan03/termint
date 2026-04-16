@@ -8,6 +8,7 @@ const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
 const FG: Color = Color::Hex(0xc3c1f4);
 const SELECTED: Color = Color::Hex(0xea4bfc);
+const HIGHLIGHT: Color = Color::Hex(0x891296);
 
 fn main() -> ExitCode {
     if let Err(e) = run() {
@@ -40,6 +41,8 @@ impl Application for App {
             .auto_scroll()
             .selected_style(SELECTED)
             .scrollbar_fg(BORDER)
+            .highlight_symbol(" > ")
+            .highlight_style(HIGHLIGHT)
             .on_click(Message::Select)
             .thumb_fg(FG);
         let help = "[↑]Move up [↓]Move down [Esc|q]Quit".fg(BORDER);
