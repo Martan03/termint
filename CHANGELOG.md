@@ -6,6 +6,13 @@
 
 - Add `Stylize` and `Styleable` traits for better styling
     - Such as `.red()`, `.on_white()` and `.bold()`
+- Add `Line` and `StyledStr` for better text parsing
+- Add `Text::append_lines` to the `Text` trait
+- Add text alignment and ellipsis into `Paragraph`
+
+### Changes:
+
+- Remove `Text::render_offset` (`Text::append_lines` should be used instead)
 
 ### Fixes
 
