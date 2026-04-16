@@ -259,10 +259,6 @@ impl Text for Span {
         format!("{}{}\x1b[0m", self.style, self.text)
     }
 
-    fn get_text(&self) -> &str {
-        &self.text
-    }
-
     fn get_align(&self) -> TextAlign {
         self.align
     }

@@ -43,9 +43,6 @@ pub trait Text: Widget {
     /// Returns the formatted representation of the text as a `String`.
     fn get(&self) -> String;
 
-    /// Returns the raw, unformatted string content.
-    fn get_text(&self) -> &str;
-
     /// Gets the set [`TextAlign`]ment of the text.
     fn get_align(&self) -> TextAlign;
 }

@@ -286,10 +286,6 @@ impl Text for Grad {
         res
     }
 
-    fn get_text(&self) -> &str {
-        &self.text
-    }
-
     fn get_align(&self) -> TextAlign {
         self.align
     }
