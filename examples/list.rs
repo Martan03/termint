@@ -2,7 +2,7 @@ use std::{cell::RefCell, process::ExitCode, rc::Rc};
 
 use fake::Fake;
 use termal::eprintcln;
-use termint::prelude::*;
+use termint::{prelude::*, text::Text};
 
 const BG: Color = Color::Hex(0x02081e);
 const BORDER: Color = Color::Hex(0x535C91);
@@ -30,14 +30,27 @@ pub enum Message {
 
 struct App {
     list_state: Rc<RefCell<ListState>>,
-    people: Vec<String>,
+    people: Vec<(String, String)>,
 }
 
 impl Application for App {
     type Message = Message;
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
-        let list = List::new(&self.people, self.list_state.clone())
+        let items: Vec<Box<dyn Text>> = self
+            .people
+            .iter()
+            .enumerate()
+            .map(|(i, (n, d))| {
+                let mut text = Paragraph::empty();
+                text.push(format!("{:02}.", i + 1).fg(BORDER));
+                text.push(n.clone().fg(Color::White));
+                text.push(format!("\n  - {}", d));
+                text.into()
+            })
+            .collect();
+
+        let list = List::new(items, self.list_state.clone())
             .auto_scroll()
             .selected_style(SELECTED)
             .scrollbar_fg(BORDER)
@@ -114,8 +127,13 @@ impl Default for App {
     }
 }
 
-fn get_people(count: usize) -> Vec<String> {
+fn get_people(count: usize) -> Vec<(String, String)> {
     (1..count)
-        .map(|_| fake::faker::name::en::Name().fake())
+        .map(|_| {
+            (
+                fake::faker::name::en::Name().fake(),
+                fake::faker::lorem::en::Sentence(3..8).fake(),
+            )
+        })
         .collect()
 }
