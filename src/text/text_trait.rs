@@ -62,10 +62,8 @@ pub fn text_render(
     let mut lines = vec![];
     let fit = text.append_lines(&mut lines, rect.size(), None);
 
-    if !fit {
-        lines
-            .last_mut()
-            .map(|l| l.add_ellipsis(rect.width(), ellipsis));
+    if !fit && let Some(l) = lines.last_mut() {
+        l.add_ellipsis(rect.width(), ellipsis);
     }
 
     for line in lines {

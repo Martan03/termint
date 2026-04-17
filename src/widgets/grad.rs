@@ -1,9 +1,6 @@
 use core::fmt;
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
-
 use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, RGB, Wrap},
@@ -260,30 +257,13 @@ impl Text for Grad {
     }
 
     fn get(&self) -> String {
-        let ((mut r, mut g, mut b), (rs, gs, bs)) =
-            get_step(&self.fg_start, &self.fg_end, self.text.width());
+        let mut lines = vec![];
+        self.append_lines(&mut lines, &Vec2::new(usize::MAX, 1), None);
 
-        let mut res = format!(
-            "{}{}",
-            self.modifier,
-            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_bg())
-        );
-
-        for grapheme in self.text.graphemes(true) {
-            let gw = grapheme.width();
-            if gw == 0 {
-                continue;
-            }
-
-            let color = Color::Rgb(r as u8, g as u8, b as u8);
-            res += &color.to_fg();
-            res += grapheme;
-
-            let ssize = gw as f32;
-            (r, g, b) = (r + rs * ssize, g + gs * ssize, b + bs * ssize);
-        }
-        res += "\x1b[0m";
-        res
+        lines
+            .first()
+            .map(|l| l.to_string())
+            .unwrap_or(String::new())
     }
 
     fn get_align(&self) -> TextAlign {
@@ -333,7 +313,7 @@ impl Grad {
         size: &Vec2,
     ) {
         let mut height = frags.len();
-        while let Some(_) = parser.next_line(size.x) {
+        while parser.next_line(size.x).is_some() {
             height += 1;
         }
 
@@ -388,7 +368,7 @@ impl<M: Clone + 'static> From<Grad> for Element<M> {
     }
 }
 
-impl<'a> From<Grad> for Box<dyn Text> {
+impl From<Grad> for Box<dyn Text> {
     fn from(value: Grad) -> Self {
         Box::new(value)
     }

@@ -307,7 +307,7 @@ where
     }
 }
 
-impl<'a, T> From<T> for Box<dyn Text>
+impl<T> From<T> for Box<dyn Text>
 where
     T: AsRef<str>,
 {
@@ -332,7 +332,7 @@ impl<M: Clone + 'static> From<Span> for Box<dyn Widget<M>> {
     }
 }
 
-impl<'a> From<Span> for Box<dyn Text> {
+impl From<Span> for Box<dyn Text> {
     fn from(value: Span) -> Self {
         Box::new(value)
     }

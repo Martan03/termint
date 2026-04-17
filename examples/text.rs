@@ -40,8 +40,12 @@ impl Application for App {
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
         let (start_col, end_col) = COLORS[self.grad_id];
 
+        let mut title = Paragraph::empty().align(self.align);
+        title.push(Grad::new("Text", start_col, end_col));
+        title.push("Example".italic());
+
         let mut block = Block::vertical()
-            .title("Text Example")
+            .title(title)
             .border_type(BorderType::Thicker)
             .border_style(Style::new().bg(BG).fg(BORDER))
             .style(Style::new().bg(BG).fg(FG));

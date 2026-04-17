@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Display};
 
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -96,5 +96,11 @@ impl<'a> Line<'a> {
                 break;
             }
         }
+    }
+}
+
+impl<'a> Display for Line<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.parts.iter().try_for_each(|p| write!(f, "{p}"))
     }
 }

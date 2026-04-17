@@ -90,10 +90,7 @@ impl<'a> TextParser<'a> {
     /// }
     /// ```
     pub fn next_line(&mut self, max_width: usize) -> Option<(&'a str, usize)> {
-        if self.text.is_none() {
-            return None;
-        }
-
+        self.text?;
         match self.wrap {
             Wrap::Letter => self.lw_next_line(max_width),
             Wrap::Word => self.ww_next_line(max_width),
@@ -111,7 +108,7 @@ impl<'a> TextParser<'a> {
             return 0;
         }
 
-        let mut low = ((width + size.y - 1) / size.y).max(1);
+        let mut low = width.div_ceil(size.y).max(1);
         let mut high = width;
         while low < high {
             let mid = low + (high - low) / 2;
@@ -168,7 +165,7 @@ impl<'a> TextParser<'a> {
             }
 
             if grapheme == "\n" {
-                let (idx, w) = last.unwrap_or_else(|| {
+                let (idx, w) = last.unwrap_or({
                     if was_whitespace { (0, 0) } else { (id, width) }
                 });
                 let line = &text[..idx];
@@ -190,9 +187,11 @@ impl<'a> TextParser<'a> {
             was_whitespace = is_whitespace;
         }
 
-        let (idx, w) = was_whitespace
-            .then(|| last.unwrap_or((0, 0)))
-            .unwrap_or((text.len(), width));
+        let (idx, w) = if was_whitespace {
+            last.unwrap_or((0, 0))
+        } else {
+            (text.len(), width)
+        };
         let line = &text[..idx];
 
         self.text = None;
@@ -252,7 +251,7 @@ impl<'a> TextParser<'a> {
 impl<'a> TextParser<'a> {
     fn inner_height(&mut self, width: usize) -> usize {
         let mut height = 0;
-        while let Some(_) = self.next_line(width) {
+        while self.next_line(width).is_some() {
             height += 1;
         }
         height

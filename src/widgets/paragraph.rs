@@ -175,7 +175,7 @@ impl<M: Clone + 'static> Widget<M> for Paragraph {
             return max_width;
         }
 
-        let mut low = (max_width + size.y - 1) / size.y;
+        let mut low = max_width.div_ceil(size.y);
         let mut high = max_width;
         while low < high {
             let mid = low + (high - low) / 2;
@@ -217,7 +217,7 @@ impl Text for Paragraph {
         let mut fit = true;
         let mut sep: Option<(usize, usize)> = None;
         for (i, child) in self.children.iter().enumerate() {
-            fit = child.append_lines(lines, &size, Some(wrap));
+            fit = child.append_lines(lines, size, Some(wrap));
 
             if let Some((Some(line), w)) =
                 sep.take().map(|(i, w)| (lines.get_mut(i), w))
@@ -288,5 +288,11 @@ impl<M: Clone + 'static> From<Paragraph> for Box<dyn Widget<M>> {
 impl<M: Clone + 'static> From<Paragraph> for Element<M> {
     fn from(value: Paragraph) -> Self {
         Element::new(value)
+    }
+}
+
+impl From<Paragraph> for Box<dyn Text> {
+    fn from(value: Paragraph) -> Self {
+        Box::new(value)
     }
 }
