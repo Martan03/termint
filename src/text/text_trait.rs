@@ -41,6 +41,9 @@ pub trait Text: Widget {
     ) -> bool;
 
     /// Returns the formatted representation of the text as a `String`.
+    ///
+    /// It ignores the layout engine, ignoring text alignment, ellipsis,
+    /// wrapping and other layout specific features.
     fn get(&self) -> String;
 
     /// Gets the set [`TextAlign`]ment of the text.

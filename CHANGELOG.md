@@ -9,6 +9,7 @@
 - Add `Line` and `StyledStr` for better text parsing
 - Add `Text::append_lines` to the `Text` trait
 - Add text alignment and ellipsis into `Paragraph`
+- Add `Text` trait implementation for `Paragraph`
 
 ### Changes:
 

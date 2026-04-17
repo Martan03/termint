@@ -6,10 +6,9 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     buffer::Buffer,
     enums::Wrap,
-    geometry::Padding,
     prelude::{TextAlign, Vec2},
     style::Style,
-    text::{Line, Text},
+    text::{Line, Text, text_render},
     widgets::{Element, LayoutNode, Widget},
 };
 
@@ -149,21 +148,7 @@ impl Paragraph {
 
 impl<M: Clone + 'static> Widget<M> for Paragraph {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        let mut lines = vec![];
-        let size = layout.area.size();
-        let fit = self.append_lines(&mut lines, size, None);
-
-        if !fit {
-            lines
-                .last_mut()
-                .map(|l| l.add_ellipsis(size.x, &self.ellipsis));
-        }
-
-        let mut rect = layout.area;
-        for line in lines {
-            line.render(buffer, rect, self.align);
-            rect = rect.inner(Padding::top(1));
-        }
+        text_render(self, buffer, layout.area, &self.ellipsis, self.align);
     }
 
     fn height(&self, size: &Vec2) -> usize {
@@ -264,7 +249,9 @@ impl Text for Paragraph {
     }
 
     fn get(&self) -> String {
-        todo!()
+        let texts: Vec<String> =
+            self.children.iter().map(|c| c.get()).collect();
+        texts.join(&self.separator)
     }
 
     fn get_align(&self) -> TextAlign {
