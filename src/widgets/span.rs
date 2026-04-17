@@ -1,7 +1,4 @@
-use std::{
-    fmt,
-    hash::{DefaultHasher, Hash, Hasher},
-};
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::{
     buffer::Buffer,
@@ -255,10 +252,6 @@ impl Text for Span {
         parser.is_end()
     }
 
-    fn get(&self) -> String {
-        format!("{}{}\x1b[0m", self.style, self.text)
-    }
-
     fn get_align(&self) -> TextAlign {
         self.align
     }
@@ -273,12 +266,6 @@ impl Default for Span {
             wrap: Default::default(),
             ellipsis: "...".to_string(),
         }
-    }
-}
-
-impl fmt::Display for Span {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
     }
 }
 

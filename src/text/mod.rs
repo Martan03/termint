@@ -21,5 +21,8 @@ mod line;
 pub use line::Line;
 
 mod styled_str;
+pub use styled_str::StyledStr;
 pub(crate) use styled_str::get_step;
-pub use styled_str::{StrStyle, StyledStr};
+
+mod styles;
+pub use styles::{GradStyle, StrStyle};

@@ -1,4 +1,3 @@
-use core::fmt;
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::{
@@ -6,7 +5,9 @@ use crate::{
     enums::{Color, Modifier, RGB, Wrap},
     geometry::{Direction, TextAlign, Vec2},
     style::Style,
-    text::{Line, StrStyle, Text, TextParser, get_step, text_render},
+    text::{
+        GradStyle, Line, StrStyle, Text, TextParser, get_step, text_render,
+    },
     widgets::layout::LayoutNode,
 };
 
@@ -256,25 +257,8 @@ impl Text for Grad {
         fit
     }
 
-    fn get(&self) -> String {
-        let mut lines = vec![];
-        self.append_lines(&mut lines, &Vec2::new(usize::MAX, 1), None);
-
-        lines
-            .first()
-            .map(|l| l.to_string())
-            .unwrap_or(String::new())
-    }
-
     fn get_align(&self) -> TextAlign {
         self.align
-    }
-}
-
-impl fmt::Display for Grad {
-    /// Automatically converts [`Grad`] to String when printing
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
     }
 }
 
@@ -319,7 +303,7 @@ impl Grad {
 
         let ((mut r, mut g, mut b), (rs, gs, bs)) =
             get_step(&self.fg_start, &self.fg_end, height);
-        let base_style = Style::new().bg(self.bg);
+        let base_style = Style::new().bg(self.bg).modifier(self.modifier);
 
         let mut line = lines.pop().unwrap_or_else(Line::empty);
         for (text, len) in frags {
@@ -340,10 +324,13 @@ impl Grad {
         frags: Vec<(&'a str, usize)>,
         fits: bool,
     ) {
+        let gstyle = GradStyle::new(self.fg_start, self.fg_end)
+            .bg(self.bg)
+            .modifier(self.modifier);
         let style = if frags.len() <= 1 && fits {
-            StrStyle::LocalGrad(self.fg_start, self.fg_end)
+            StrStyle::LocalGrad(gstyle)
         } else {
-            StrStyle::GlobalGrad(self.fg_start, self.fg_end)
+            StrStyle::GlobalGrad(gstyle)
         };
 
         let mut line = lines.pop().unwrap_or_else(Line::empty);

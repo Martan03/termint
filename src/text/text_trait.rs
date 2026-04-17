@@ -40,12 +40,6 @@ pub trait Text: Widget {
         wrap: Option<Wrap>,
     ) -> bool;
 
-    /// Returns the formatted representation of the text as a `String`.
-    ///
-    /// It ignores the layout engine, ignoring text alignment, ellipsis,
-    /// wrapping and other layout specific features.
-    fn get(&self) -> String;
-
     /// Gets the set [`TextAlign`]ment of the text.
     fn get_align(&self) -> TextAlign;
 }
@@ -77,3 +71,30 @@ impl fmt::Debug for dyn Text {
         write!(f, "Converted text")
     }
 }
+
+macro_rules! impl_display_for_text {
+    ($($type:ty),* $(,)?) => {
+        $(impl std::fmt::Display for $type {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+            {
+                let mut lines = vec![];
+                let size = Vec2::new(usize::MAX, usize::MAX);
+                self.append_lines(&mut lines, &size, None);
+
+                for (i, line) in lines.iter().enumerate() {
+                    if i > 0 {
+                        writeln!(f)?;
+                    }
+                    write!(f, "{}", line)?;
+                }
+                Ok(())
+            }
+        })*
+    };
+}
+
+impl_display_for_text!(
+    crate::widgets::Span,
+    crate::widgets::Grad,
+    crate::widgets::Paragraph,
+);

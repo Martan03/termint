@@ -8,14 +8,8 @@ use crate::{
     enums::{Color, RGB},
     prelude::{Rect, Vec2},
     style::Style,
+    text::{GradStyle, StrStyle},
 };
-
-#[derive(Debug, Clone)]
-pub enum StrStyle {
-    Static(Style),
-    LocalGrad(RGB, RGB),
-    GlobalGrad(RGB, RGB),
-}
 
 #[derive(Debug, Clone)]
 pub struct StyledStr<'a> {
@@ -64,15 +58,14 @@ impl<'a> StyledStr<'a> {
     /// Sets the style into a gradient style.
     ///
     /// The `start` and `end` are types convertible into [`RGB`].
-    pub fn gradient<S, E>(mut self, start: S, end: E, local: bool) -> Self
+    pub fn gradient<S, E>(mut self, style: S, local: bool) -> Self
     where
-        S: Into<RGB>,
-        E: Into<RGB>,
+        S: Into<GradStyle>,
     {
         self.style = if local {
-            StrStyle::LocalGrad(start.into(), end.into())
+            StrStyle::LocalGrad(style.into())
         } else {
-            StrStyle::GlobalGrad(start.into(), end.into())
+            StrStyle::GlobalGrad(style.into())
         };
         self
     }
@@ -97,11 +90,11 @@ impl<'a> StyledStr<'a> {
     {
         match &self.style {
             StrStyle::Static(style) => set_str(&self.text, pos, *style),
-            StrStyle::LocalGrad(start, end) => {
-                self.local_grad(set_str, *pos, start, end)
+            StrStyle::LocalGrad(style) => {
+                self.local_grad(set_str, *pos, style)
             }
-            StrStyle::GlobalGrad(start, end) => {
-                self.global_grad(set_str, rect, *pos, start, end)
+            StrStyle::GlobalGrad(style) => {
+                self.global_grad(set_str, rect, *pos, style)
             }
         }
     }
@@ -110,14 +103,13 @@ impl<'a> StyledStr<'a> {
         &self,
         set_str: F,
         pos: Vec2,
-        start: &RGB,
-        end: &RGB,
+        style: &GradStyle,
     ) -> std::fmt::Result
     where
         F: FnMut(&str, &Vec2, Style) -> std::fmt::Result,
     {
-        let (color, step) = get_step(start, end, self.width);
-        self.render_grad(set_str, pos, color, step)
+        let (color, step) = get_step(&style.start, &style.end, self.width);
+        self.render_grad(set_str, pos, color, step, style)
     }
 
     fn global_grad<F>(
@@ -125,17 +117,17 @@ impl<'a> StyledStr<'a> {
         set_str: F,
         area: &Rect,
         pos: Vec2,
-        start: &RGB,
-        end: &RGB,
+        style: &GradStyle,
     ) -> std::fmt::Result
     where
         F: FnMut(&str, &Vec2, Style) -> std::fmt::Result,
     {
-        let ((r, g, b), (rs, gs, bs)) = get_step(start, end, area.width());
+        let ((r, g, b), (rs, gs, bs)) =
+            get_step(&style.start, &style.end, area.width());
         let ox = (pos.x - area.x()) as f32;
         let color = (r + rs * ox, g + gs * ox, b + bs * ox);
 
-        self.render_grad(set_str, pos, color, (rs, gs, bs))
+        self.render_grad(set_str, pos, color, (rs, gs, bs), style)
     }
 
     fn render_grad<F>(
@@ -144,10 +136,12 @@ impl<'a> StyledStr<'a> {
         mut pos: Vec2,
         (mut r, mut g, mut b): (f32, f32, f32),
         (rs, gs, bs): (f32, f32, f32),
+        style: &GradStyle,
     ) -> std::fmt::Result
     where
         F: FnMut(&str, &Vec2, Style) -> std::fmt::Result,
     {
+        let base_style = Style::new().bg(style.bg).modifier(style.modifier);
         for grapheme in self.text.graphemes(true) {
             let gw = grapheme.width();
             if gw == 0 {
@@ -155,8 +149,7 @@ impl<'a> StyledStr<'a> {
             }
 
             let color = Color::Rgb(r as u8, g as u8, b as u8);
-            let style = Style::new().fg(color);
-            set_str(grapheme, &pos, style)?;
+            set_str(grapheme, &pos, base_style.fg(color))?;
 
             let ssize = gw as f32;
             (r, g, b) = (r + rs * ssize, g + gs * ssize, b + bs * ssize);

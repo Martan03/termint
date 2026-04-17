@@ -1,4 +1,3 @@
-use core::fmt;
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use unicode_width::UnicodeWidthStr;
@@ -75,21 +74,6 @@ impl Paragraph {
     #[must_use]
     pub fn empty() -> Self {
         Default::default()
-    }
-
-    /// Returns the raw text content as a [`String`].
-    ///
-    /// This joins all child elements using the configured separator, but
-    /// ignores the text wrapping.
-    pub fn get(&self) -> String {
-        let mut res = "".to_string();
-        for child in self.children.iter() {
-            if !res.is_empty() {
-                res += &self.separator;
-            }
-            res += &child.get();
-        }
-        res
     }
 
     /// Sets the separator string inserted child elements.
@@ -248,20 +232,8 @@ impl Text for Paragraph {
         fit
     }
 
-    fn get(&self) -> String {
-        let texts: Vec<String> =
-            self.children.iter().map(|c| c.get()).collect();
-        texts.join(&self.separator)
-    }
-
     fn get_align(&self) -> TextAlign {
         self.align
-    }
-}
-
-impl fmt::Display for Paragraph {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
     }
 }
 

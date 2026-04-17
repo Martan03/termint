@@ -14,6 +14,8 @@
 ### Changes:
 
 - Remove `Text::render_offset` (`Text::append_lines` should be used instead)
+- Remove `Text::get` and `Text::get_text`
+    - `Text::get` is replaced by `std::fmt::Display` implementation
 
 ### Fixes
 
