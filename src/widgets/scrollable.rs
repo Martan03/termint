@@ -277,7 +277,7 @@ where
 
         let h = child_node.area.height();
         let offset_y = Self::process_state(&self.ver_state, ver_active, h);
-        let w = child_node.area.height();
+        let w = child_node.area.width();
         let offset_x = Self::process_state(&self.hor_state, hor_active, w);
 
         let mut cid = 1;
