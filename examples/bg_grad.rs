@@ -52,8 +52,7 @@ impl Application for App {
         block.push(Spacer::new(), Constraint::Fill(1));
         block.push(center, 25);
         block.push(Spacer::new(), Constraint::Fill(1));
-        let help = "[←]Prev. grad. [→]Next grad. [r]Rotate grad. [Esc|q]Quit"
-            .fg(BORDER);
+        let help = "[←/→]Cycle grad. [r]Rotate grad. [Esc|q]Quit".fg(BORDER);
         block.push(help, 1..);
         block.into()
     }

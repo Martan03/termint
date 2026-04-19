@@ -3,49 +3,67 @@ use core::fmt;
 use crate::{
     buffer::Buffer,
     enums::Wrap,
-    geometry::{Rect, Vec2},
+    geometry::{Padding, Rect, Vec2},
+    prelude::TextAlign,
+    text::Line,
+    widgets::Widget,
 };
 
 /// A trait implemented by all the widgets that render styled or formatted
 /// text.
-pub trait Text {
-    /// Renders the [`Text`] into the given buffer within the provided [`Rect`]
-    /// bounds, starting at the given offset and applying the specified
-    /// wrapping strategy.
+pub trait Text: Widget {
+    /// Appends the lines of the [`Text`] into the given lines.
     ///
-    /// Returns the final position where the rendering ends.
+    /// It tries to append the text to the last line first before adding a new
+    /// line.
+    ///
+    /// The `size` represents the whole size allocated for the lines, so
+    /// widget takes into account how many lines are already in the `lines`.
+    ///
+    /// Returns `true` when the entire text fit within the size, otherwise
+    /// returns `false`.
     ///
     /// # Example
     /// ```rust
-    /// # use termint::{
-    /// #     geometry::Rect, text::Text, widgets::ToSpan,
-    /// #     enums::Wrap, buffer::Buffer
-    /// # };
-    /// let span = "Hello, Termint!".to_span();
+    /// use termint::{prelude::*, text::Text};
+    /// # fn get_text() -> Span { Span::new("Example") }
     ///
-    /// let rect = Rect::new(1, 1, 20, 1);
-    /// let mut buffer = Buffer::empty(rect);
+    /// let text = get_text();
     ///
-    /// // Renders text with offset of 3 with word wrapping
-    /// span.render_offset(&mut buffer, rect, 3, Some(Wrap::Word));
+    /// let mut lines = vec![];
+    /// text.append_lines(&mut lines, &Vec2::new(20, 3), Some(Wrap::Word));
     /// ```
-    fn render_offset(
-        &self,
-        buffer: &mut Buffer,
-        rect: Rect,
-        offset: usize,
+    fn append_lines<'a>(
+        &'a self,
+        lines: &mut Vec<Line<'a>>,
+        size: &Vec2,
         wrap: Option<Wrap>,
-    ) -> Vec2;
+    ) -> bool;
 
-    /// Returns the formatted representation of the text as a `String`.
-    fn get(&self) -> String;
+    /// Gets the set [`TextAlign`]ment of the text.
+    fn get_align(&self) -> TextAlign;
+}
 
-    /// Returns the raw, unformatted string content.
-    fn get_text(&self) -> &str;
+/// Generic text render function, which uses the `Text::append_lines` to get
+/// the lines and render them.
+pub fn text_render(
+    text: &dyn Text,
+    buffer: &mut Buffer,
+    mut rect: Rect,
+    ellipsis: &str,
+    align: TextAlign,
+) {
+    let mut lines = vec![];
+    let fit = text.append_lines(&mut lines, rect.size(), None);
 
-    /// Returns ANSI escape sequences representing the current style
-    /// (e.g., foreground/background colors, modifiers).
-    fn get_mods(&self) -> String;
+    if !fit && let Some(l) = lines.last_mut() {
+        l.add_ellipsis(rect.width(), ellipsis);
+    }
+
+    for line in lines {
+        line.render(buffer, rect, align);
+        rect = rect.inner(Padding::top(1));
+    }
 }
 
 impl fmt::Debug for dyn Text {
@@ -53,3 +71,30 @@ impl fmt::Debug for dyn Text {
         write!(f, "Converted text")
     }
 }
+
+macro_rules! impl_display_for_text {
+    ($($type:ty),* $(,)?) => {
+        $(impl std::fmt::Display for $type {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+            {
+                let mut lines = vec![];
+                let size = Vec2::new(usize::MAX, usize::MAX);
+                self.append_lines(&mut lines, &size, None);
+
+                for (i, line) in lines.iter().enumerate() {
+                    if i > 0 {
+                        writeln!(f)?;
+                    }
+                    write!(f, "{}", line)?;
+                }
+                Ok(())
+            }
+        })*
+    };
+}
+
+impl_display_for_text!(
+    crate::widgets::Span,
+    crate::widgets::Grad,
+    crate::widgets::Paragraph,
+);

@@ -39,7 +39,8 @@ macro_rules! borders {
 ///
 /// ## Usage:
 /// ```rust
-/// # use termint::{enums::Color, help, widgets::ToSpan};
+/// use termint::help;
+///
 /// help!(
 ///     "Usage":
 ///     "-t" ["value"] => "Tests program with [value]"
@@ -57,7 +58,10 @@ macro_rules! help {
     ($header:literal: $($rest:tt)*) => {
         println!(
             "{}:",
-            $crate::widgets::Span::new($header).fg($crate::enums::Color::Green)
+            $crate::style::Stylize::fg(
+                $crate::widgets::Span::new($header),
+                $crate::enums::Color::Green
+            )
         );
         help!($($rest)*);
     };
@@ -69,7 +73,10 @@ macro_rules! help {
     ) => {
         print!(
             "  {}",
-            $crate::widgets::Span::new($cmd).fg($crate::enums::Color::Yellow)
+            $crate::style::Stylize::fg(
+                $crate::widgets::Span::new($cmd),
+                $crate::enums::Color::Yellow
+            )
         );
         $(print!(" [{}]", $param);)*
         println!();
@@ -86,7 +93,10 @@ macro_rules! help {
     ) => {
         print!(
             "  {}",
-            $crate::widgets::Span::new($cmd).fg($crate::enums::Color::Yellow)
+            $crate::style::Stylize::fg(
+                $crate::widgets::Span::new($cmd),
+                $crate::enums::Color::Yellow
+            )
         );
         $(print!(" [{}]", $param);)*
         println!();

@@ -10,13 +10,19 @@
 mod text_trait;
 /// A trait implemented by all the widgets that render styled or formatted
 /// text.
-pub use text_trait::Text;
+pub use text_trait::{Text, text_render};
 
 mod parser;
 /// Parses the text so it can be rendered more easily. It can be used to get
 /// next line (or word) from the text using either word wrap or letter wrap.
 pub use parser::TextParser;
 
-mod text_token;
-/// Text token used by the `TextParser`
-pub use text_token::TextToken;
+mod line;
+pub use line::Line;
+
+mod styled_str;
+pub use styled_str::StyledStr;
+pub(crate) use styled_str::get_step;
+
+mod styles;
+pub use styles::{GradStyle, StrStyle};

@@ -55,6 +55,16 @@ impl RGB {
         }
     }
 
+    /// Interpolates between the current color and the other color.
+    pub fn lerp(&self, other: &RGB, progress: f32) -> Self {
+        let t = progress.clamp(0., 1.);
+        Self {
+            r: lerp(self.r, other.r, t),
+            g: lerp(self.g, other.g, t),
+            b: lerp(self.b, other.b, t),
+        }
+    }
+
     /// Divides [`RGB`] by given number
     pub fn div_by(&mut self, num: u8) {
         self.r /= num;
@@ -83,4 +93,9 @@ impl From<(f64, f64, f64)> for RGB {
     fn from(value: (f64, f64, f64)) -> Self {
         Self::from_hsl(value.0, value.1, value.2)
     }
+}
+
+fn lerp(a: u8, b: u8, t: f32) -> u8 {
+    let a = a as f32;
+    (a + (b as f32 - a) * t).round() as u8
 }

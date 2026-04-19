@@ -1,11 +1,13 @@
-use core::fmt;
 use std::hash::{DefaultHasher, Hash, Hasher};
+
+use unicode_width::UnicodeWidthStr;
 
 use crate::{
     buffer::Buffer,
     enums::Wrap,
-    prelude::{Rect, Vec2},
-    text::Text,
+    prelude::{TextAlign, Vec2},
+    style::Style,
+    text::{Line, Text, text_render},
     widgets::{Element, LayoutNode, Widget},
 };
 
@@ -50,6 +52,8 @@ pub struct Paragraph {
     children: Vec<Box<dyn Text>>,
     separator: String,
     wrap: Wrap,
+    align: TextAlign,
+    ellipsis: String,
 }
 
 impl Paragraph {
@@ -70,21 +74,6 @@ impl Paragraph {
     #[must_use]
     pub fn empty() -> Self {
         Default::default()
-    }
-
-    /// Returns the raw text content as a [`String`].
-    ///
-    /// This joins all child elements using the configured separator, but
-    /// ignores the text wrapping.
-    pub fn get(&self) -> String {
-        let mut res = "".to_string();
-        for child in self.children.iter() {
-            if !res.is_empty() {
-                res += &self.separator;
-            }
-            res += &child.get();
-        }
-        res
     }
 
     /// Sets the separator string inserted child elements.
@@ -111,6 +100,27 @@ impl Paragraph {
         self
     }
 
+    /// Sets the [`Paragraph`] text alignment.
+    ///
+    /// Default value is [`TextAlign::Left`].
+    #[must_use]
+    pub fn align(mut self, align: TextAlign) -> Self {
+        self.align = align;
+        self
+    }
+
+    /// Sets the ellipsis string to use when text overflows.
+    ///
+    /// The default value is `"..."`.
+    #[must_use]
+    pub fn ellipsis<T>(mut self, ellipsis: T) -> Self
+    where
+        T: AsRef<str>,
+    {
+        self.ellipsis = ellipsis.as_ref().to_string();
+        self
+    }
+
     /// Appends a child element to the end of the [`Paragraph`].
     pub fn push<T>(&mut self, child: T)
     where
@@ -122,47 +132,48 @@ impl Paragraph {
 
 impl<M: Clone + 'static> Widget<M> for Paragraph {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        let rect = layout.area;
-        let mut pos = Vec2::new(rect.x(), rect.y());
-        let mut size = Vec2::new(rect.width(), rect.height());
-        let mut offset = 0;
-
-        for child in self.children.iter() {
-            let crect = Rect::from_coords(pos, size);
-            let end =
-                child.render_offset(buffer, crect, offset, Some(self.wrap));
-
-            size.y = size.y.saturating_sub(end.y - pos.y);
-            pos.y = end.y;
-            offset = end.x + self.separator.len();
-
-            if end.y >= rect.y() + rect.height()
-                && end.x >= rect.x() + rect.width()
-            {
-                break;
-            }
-
-            if offset + self.separator.len() <= rect.width() && offset != 0 {
-                buffer.set_str(
-                    &self.separator,
-                    &Vec2::new(rect.x() + offset - 1, pos.y),
-                );
-            }
-        }
+        text_render(self, buffer, layout.area, &self.ellipsis, self.align);
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.size_letter_wrap(size.x),
-            Wrap::Word => self.height_word_wrap(size),
+        if size.x == 0 || size.y == 0 {
+            return 0;
         }
+
+        let mut lines = vec![];
+        self.append_lines(&mut lines, &Vec2::new(size.x, usize::MAX), None);
+        lines.len()
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.size_letter_wrap(size.y),
-            Wrap::Word => self.width_word_wrap(size),
+        if size.x == 0 || size.y == 0 {
+            return 0;
         }
+
+        let mut lines = vec![];
+        let inf_size = Vec2::new(usize::MAX, usize::MAX);
+        self.append_lines(&mut lines, &inf_size, None);
+        let max_width = lines.iter().map(|l| l.width).max().unwrap_or(0);
+
+        if size.y == 1 || max_width == 0 {
+            return max_width;
+        }
+
+        let mut low = max_width.div_ceil(size.y);
+        let mut high = max_width;
+        while low < high {
+            let mid = low + (high - low) / 2;
+
+            let mut lines = vec![];
+            self.append_lines(&mut lines, &Vec2::new(mid, usize::MAX), None);
+
+            if lines.len() <= size.y {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        low
     }
 
     fn layout_hash(&self) -> u64 {
@@ -170,7 +181,7 @@ impl<M: Clone + 'static> Widget<M> for Paragraph {
 
         self.children
             .iter()
-            .for_each(|c| c.get_text().hash(&mut hasher));
+            .for_each(|c| c.layout_hash().hash(&mut hasher));
         self.separator.hash(&mut hasher);
         self.wrap.hash(&mut hasher);
 
@@ -178,9 +189,51 @@ impl<M: Clone + 'static> Widget<M> for Paragraph {
     }
 }
 
-impl fmt::Display for Paragraph {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
+impl Text for Paragraph {
+    fn append_lines<'a>(
+        &'a self,
+        lines: &mut Vec<Line<'a>>,
+        size: &Vec2,
+        wrap: Option<Wrap>,
+    ) -> bool {
+        let wrap = wrap.unwrap_or(self.wrap);
+
+        let mut fit = true;
+        let mut sep: Option<(usize, usize)> = None;
+        for (i, child) in self.children.iter().enumerate() {
+            fit = child.append_lines(lines, size, Some(wrap));
+
+            if let Some((Some(line), w)) =
+                sep.take().map(|(i, w)| (lines.get_mut(i), w))
+                && line.width == w
+            {
+                line.pop();
+            }
+
+            if !fit || lines.len() > size.y {
+                break;
+            }
+
+            if i < self.children.len() - 1 && !self.separator.is_empty() {
+                let last_id = lines.len().saturating_sub(1);
+                if let Some(line) = lines.last_mut() {
+                    let sep_w = self.separator.width();
+
+                    if line.width + sep_w <= size.x {
+                        // TODO: Add style?
+                        line.push(&self.separator, sep_w, Style::default());
+                        sep = Some((last_id, line.width));
+                    } else {
+                        lines.push(Line::empty());
+                    }
+                }
+            }
+        }
+        fit
+    }
+
+    fn get_align(&self) -> TextAlign {
+        self.align
     }
 }
 
@@ -191,53 +244,9 @@ impl Default for Paragraph {
             children: Vec::new(),
             separator: " ".to_string(),
             wrap: Wrap::Word,
+            align: TextAlign::Left,
+            ellipsis: "...".to_string(),
         }
-    }
-}
-
-impl Paragraph {
-    /// Gets [`Paragraph`] height when using word wrap
-    fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut coords = Vec2::new(0, 0);
-
-        for child in self.children.iter() {
-            let words: Vec<&str> =
-                child.get_text().split_whitespace().collect();
-            for word in words {
-                if (coords.x == 0 && coords.x + word.len() > size.x)
-                    || (coords.x != 0 && coords.x + word.len() + 1 > size.x)
-                {
-                    coords.y += 1;
-                    coords.x = 0;
-                }
-
-                if coords.x != 0 {
-                    coords.x += 1;
-                }
-                coords.x += word.len();
-            }
-        }
-        coords.y + 1
-    }
-
-    /// Gets width of [`Paragraph`] when using word wrap
-    fn width_word_wrap(&self, size: &Vec2) -> usize {
-        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
-
-        while self.height_word_wrap(&guess) > size.y {
-            guess.x += 1;
-        }
-        guess.x
-    }
-
-    /// Gets size of other side of [`Paragraph`] when using letter wrap
-    /// When width given, gets height and other way around
-    fn size_letter_wrap(&self, size: usize) -> usize {
-        let mut len = 0;
-        for child in self.children.iter() {
-            len += child.get_text().len();
-        }
-        (len as f32 / size as f32).ceil() as usize
     }
 }
 
@@ -251,5 +260,11 @@ impl<M: Clone + 'static> From<Paragraph> for Box<dyn Widget<M>> {
 impl<M: Clone + 'static> From<Paragraph> for Element<M> {
     fn from(value: Paragraph) -> Self {
         Element::new(value)
+    }
+}
+
+impl From<Paragraph> for Box<dyn Text> {
+    fn from(value: Paragraph) -> Self {
+        Box::new(value)
     }
 }

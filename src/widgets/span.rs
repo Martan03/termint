@@ -1,20 +1,16 @@
-use std::{
-    borrow::Cow,
-    fmt,
-    hash::{DefaultHasher, Hash, Hasher},
-};
-
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::{
     buffer::Buffer,
-    enums::{Color, Modifier, Wrap},
-    prelude::{Rect, TextAlign, Vec2},
+    enums::{Modifier, Wrap},
+    prelude::{TextAlign, Vec2},
     style::{Style, Styleable},
-    text::{Text, TextParser},
+    text::{Line, Text, TextParser, text_render},
     widgets::{Element, LayoutNode, Widget},
 };
+
+mod to_span;
+pub use to_span::ToSpan;
 
 /// A widget for styling text where all characters share the same style.
 ///
@@ -111,30 +107,6 @@ impl Span {
         self
     }
 
-    /// Sets the foreground color of the [`Span`].
-    ///
-    /// The `fg` can be any type convertible to `Option<Color>`.
-    #[must_use]
-    pub fn fg<T>(mut self, fg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.style = self.style.fg(fg);
-        self
-    }
-
-    /// Sets the background color of the [`Span`].
-    ///
-    /// The `bg` can be any type convertible to `Option<Color>`.
-    #[must_use]
-    pub fn bg<T>(mut self, bg: T) -> Self
-    where
-        T: Into<Option<Color>>,
-    {
-        self.style = self.style.bg(bg);
-        self
-    }
-
     /// Replaces the current text modifiers with the given modifers.
     ///
     /// # Example
@@ -227,21 +199,17 @@ impl Span {
 
 impl<M: Clone + 'static> Widget<M> for Span {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        _ = self.render_offset(buffer, layout.area, 0, None);
+        text_render(self, buffer, layout.area, &self.ellipsis, self.align);
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.height_letter_wrap(size),
-            Wrap::Word => self.height_word_wrap(size),
-        }
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.height(size)
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => self.width_word_wrap(size),
-        }
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.width(size)
     }
 
     fn layout_hash(&self) -> u64 {
@@ -255,50 +223,37 @@ impl<M: Clone + 'static> Widget<M> for Span {
 }
 
 impl Text for Span {
-    fn render_offset(
-        &self,
-        buffer: &mut Buffer,
-        rect: Rect,
-        offset: usize,
+    fn append_lines<'a>(
+        &'a self,
+        lines: &mut Vec<Line<'a>>,
+        size: &Vec2,
         wrap: Option<Wrap>,
-    ) -> Vec2 {
-        if rect.is_empty() {
-            return Vec2::new(0, rect.y());
-        }
-
+    ) -> bool {
         let wrap = wrap.unwrap_or(self.wrap);
         let mut parser = TextParser::new(&self.text).wrap(wrap);
 
-        let mut pos = Vec2::new(rect.x() + offset, rect.y());
-        let mut fin_pos = pos;
+        let height = lines.len().saturating_sub(1);
+        let is_end = parser.is_end();
+        if size.x == 0 || height >= size.y || is_end {
+            return is_end;
+        }
 
-        let right_end = rect.x() + rect.width();
-        while pos.y <= rect.bottom() {
-            let line_len = right_end.saturating_sub(pos.x);
+        let mut line = lines.pop().unwrap_or_else(Line::empty);
+        for _ in height..size.y {
+            let line_len = size.x.saturating_sub(line.width);
             let Some((text, len)) = parser.next_line(line_len) else {
                 break;
             };
 
-            fin_pos.x = self.render_line(
-                buffer, &rect, &parser, text, len, &pos, line_len,
-            );
-            fin_pos.y = pos.y;
-            pos.x = rect.x();
-            pos.y += 1;
+            line.push(text, len, self.style);
+            lines.push(line);
+            line = Line::empty();
         }
-        fin_pos
+        parser.is_end()
     }
 
-    fn get(&self) -> String {
-        format!("{}{}\x1b[0m", self.get_mods(), self.text)
-    }
-
-    fn get_text(&self) -> &str {
-        &self.text
-    }
-
-    fn get_mods(&self) -> String {
-        self.style.to_string()
+    fn get_align(&self) -> TextAlign {
+        self.align
     }
 }
 
@@ -311,204 +266,6 @@ impl Default for Span {
             wrap: Default::default(),
             ellipsis: "...".to_string(),
         }
-    }
-}
-
-impl fmt::Display for Span {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
-    }
-}
-
-impl Span {
-    /// Renders one line of text and aligns it based on set alignment
-    fn render_line(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        parser: &TextParser,
-        line: &str,
-        mut len: usize,
-        pos: &Vec2,
-        line_len: usize,
-    ) -> usize {
-        let mut text = Cow::Borrowed(line);
-        if pos.y >= rect.bottom() && !parser.is_end() {
-            let el_width = self.ellipsis.width();
-            let target = line_len.saturating_sub(el_width);
-
-            let mut width = len;
-            let mut sid = line.len();
-
-            for (idx, grapheme) in line.grapheme_indices(true).rev() {
-                if width <= target
-                    && !grapheme.starts_with(char::is_whitespace)
-                {
-                    break;
-                }
-                width -= grapheme.width();
-                sid = idx;
-            }
-
-            let trunc = &line[..sid];
-            text = Cow::Owned(format!("{}{}", trunc, self.ellipsis));
-            len = width + el_width;
-        }
-
-        let x = match self.align {
-            TextAlign::Left => 0,
-            TextAlign::Center => rect.width().saturating_sub(len) >> 1,
-            TextAlign::Right => rect.width().saturating_sub(len),
-        };
-        buffer.set_str_styled(&text, &Vec2::new(pos.x + x, pos.y), self.style);
-        pos.x + x + len - 1
-    }
-
-    /// Gets height of the [`Span`] when using word wrap
-    fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut parser = TextParser::new(&self.text);
-
-        let mut pos = Vec2::new(0, 0);
-        loop {
-            if parser.next_line(size.x).is_none() {
-                break;
-            }
-            pos.y += 1;
-        }
-        pos.y
-    }
-
-    /// Gets width of the [`Span`] when using word wrap
-    fn width_word_wrap(&self, size: &Vec2) -> usize {
-        let mut guess =
-            Vec2::new(self.size_letter_wrap(size.y).saturating_sub(1), 0);
-
-        while self.height_word_wrap(&guess) > size.y {
-            let Some(val) = guess.x.checked_add(1) else {
-                break;
-            };
-            guess.x = val;
-        }
-        guess.x
-    }
-
-    /// Gets height of the [`Span`] when using letter wrap
-    fn height_letter_wrap(&self, size: &Vec2) -> usize {
-        self.text
-            .lines()
-            .map(|l| {
-                (l.chars().count() as f32 / size.x as f32).ceil() as usize
-            })
-            .sum()
-    }
-
-    /// Gets width of the [`Span`] when using letter wrap
-    fn width_letter_wrap(&self, size: &Vec2) -> usize {
-        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
-        while self.height_letter_wrap(&guess) > size.y {
-            guess.x += 1;
-        }
-        guess.x
-    }
-
-    /// Gets size of the [`Span`] when using letter wrap
-    fn size_letter_wrap(&self, size: usize) -> usize {
-        (self.text.chars().count() as f32 / size as f32).ceil() as usize
-    }
-}
-
-/// Enables creating [`Span`] by calling one of the functions on type
-/// implementing this trait.
-///
-/// It's recommended to use `std::fmt::Display` trait. Types implementing this
-/// trait will contain `ToSpan` as well and can be converted to `Span`.
-pub trait ToSpan {
-    /// Creates [`Span`] from string and sets its style to given value
-    fn style<T>(self, style: T) -> Span
-    where
-        T: Into<Style>;
-
-    /// Creates [`Span`] from string and sets its fg to given color
-    fn fg<T>(self, fg: T) -> Span
-    where
-        T: Into<Option<Color>>;
-
-    /// Creates [`Span`] from string and sets its bg to given color
-    fn bg<T>(self, bg: T) -> Span
-    where
-        T: Into<Option<Color>>;
-
-    /// Creates [`Span`] from string and sets its modifier to given value
-    fn modifier(self, modifier: Modifier) -> Span;
-
-    /// Creates [`Span`] from string and add given modifier to it
-    fn add_modifier(self, flag: Modifier) -> Span;
-
-    /// Creates [`Span`] from string and sets its alignment to given value
-    fn align(self, align: TextAlign) -> Span;
-
-    /// Creates [`Span`] from string and sets its wrapping to given value
-    fn wrap(self, wrap: Wrap) -> Span;
-
-    /// Creates [`Span`] from string and sets its ellipsis to given value
-    fn ellipsis<T>(self, ellipsis: T) -> Span
-    where
-        T: AsRef<str>;
-
-    /// Converts type to [`Span`]
-    fn to_span(self) -> Span;
-}
-
-impl<T> ToSpan for &T
-where
-    T: std::fmt::Display,
-{
-    fn style<S>(self, style: S) -> Span
-    where
-        S: Into<Style>,
-    {
-        Span::new(self.to_string()).style(style)
-    }
-
-    fn fg<C>(self, fg: C) -> Span
-    where
-        C: Into<Option<Color>>,
-    {
-        Span::new(self.to_string()).fg(fg)
-    }
-
-    fn bg<C>(self, bg: C) -> Span
-    where
-        C: Into<Option<Color>>,
-    {
-        Span::new(self.to_string()).bg(bg)
-    }
-
-    fn modifier(self, modifier: Modifier) -> Span {
-        Span::new(self.to_string()).modifier(modifier)
-    }
-
-    fn add_modifier(self, flag: Modifier) -> Span {
-        Span::new(self.to_string()).add_modifier(flag)
-    }
-
-    fn align(self, align: TextAlign) -> Span {
-        Span::new(self.to_string()).align(align)
-    }
-
-    fn wrap(self, wrap: Wrap) -> Span {
-        Span::new(self.to_string()).wrap(wrap)
-    }
-
-    fn ellipsis<R>(self, ellipsis: R) -> Span
-    where
-        R: AsRef<str>,
-    {
-        Span::new(self.to_string()).ellipsis(ellipsis.as_ref())
-    }
-
-    fn to_span(self) -> Span {
-        Span::new(self.to_string())
     }
 }
 

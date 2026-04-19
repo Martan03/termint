@@ -5,6 +5,7 @@ use crate::{
     enums::{Color, RGB},
     geometry::Padding,
     prelude::{Direction, Rect, Vec2},
+    text::get_step,
     widgets::{Element, LayoutNode, Spacer, Widget},
 };
 
@@ -248,13 +249,12 @@ where
 impl<M> BgGrad<M> {
     /// Renders horizontal background gradient
     fn hor_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let step = self.get_step(rect.width() as i16 - 1);
-        let (mut r, mut g, mut b) =
-            (self.bg_start.r, self.bg_start.g, self.bg_start.b);
+        let ((mut r, mut g, mut b), (rs, gs, bs)) =
+            get_step(&self.bg_start, &self.bg_end, rect.width());
 
         for x in rect.x()..rect.width() + rect.x() {
-            let bg = Color::Rgb(r, g, b);
-            (r, g, b) = self.add_step((r, g, b), step);
+            let bg = Color::Rgb(r as u8, g as u8, b as u8);
+            (r, g, b) = (r + rs, g + gs, b + bs);
 
             for y in rect.y()..rect.height() + rect.y() {
                 buffer.set_bg(bg, &Vec2::new(x, y));
@@ -264,43 +264,17 @@ impl<M> BgGrad<M> {
 
     /// Renders vertical background gradient
     fn ver_render(&self, buffer: &mut Buffer, rect: &Rect) {
-        let step = self.get_step(rect.height() as i16 - 1);
-        let (mut r, mut g, mut b) =
-            (self.bg_start.r, self.bg_start.g, self.bg_start.b);
+        let ((mut r, mut g, mut b), (rs, gs, bs)) =
+            get_step(&self.bg_start, &self.bg_end, rect.height());
 
         for y in rect.y()..rect.height() + rect.y() {
-            let bg = Color::Rgb(r, g, b);
-            (r, g, b) = self.add_step((r, g, b), step);
+            let bg = Color::Rgb(r as u8, g as u8, b as u8);
+            (r, g, b) = (r + rs, g + gs, b + bs);
 
             for x in rect.x()..rect.width() + rect.x() {
                 buffer.set_bg(bg, &Vec2::new(x, y));
             }
         }
-    }
-
-    /// Gets step per character based on start and eng background color
-    fn get_step(&self, len: i16) -> (i16, i16, i16) {
-        if len <= 0 {
-            return (0, 0, 0);
-        }
-        (
-            (self.bg_end.r as i16 - self.bg_start.r as i16) / len,
-            (self.bg_end.g as i16 - self.bg_start.g as i16) / len,
-            (self.bg_end.b as i16 - self.bg_start.b as i16) / len,
-        )
-    }
-
-    /// Adds given step to RGB value in tuple
-    fn add_step(
-        &self,
-        rgb: (u8, u8, u8),
-        step: (i16, i16, i16),
-    ) -> (u8, u8, u8) {
-        (
-            (rgb.0 as i16 + step.0) as u8,
-            (rgb.1 as i16 + step.1) as u8,
-            (rgb.2 as i16 + step.2) as u8,
-        )
     }
 }
 

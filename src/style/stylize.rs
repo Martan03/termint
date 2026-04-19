@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::style::Styleable;
 
 macro_rules! generate_stylize_trait {
@@ -164,7 +166,7 @@ macro_rules! impl_stylize {
                     T: Into<Option<crate::enums::Color>>
                 {
                     let mut widget: $to = self.into();
-                    widget.style_mut().fg = color.into();
+                    widget.style_mut().bg = color.into();
                     widget
                 }
 
@@ -223,4 +225,5 @@ generate_stylize_trait! {
 impl_stylize! {
     &str => crate::widgets::Span,
     String => crate::widgets::Span,
+    Cow<'_, str> => crate::widgets::Span,
 }

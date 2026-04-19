@@ -6,6 +6,16 @@
 
 - Add `Stylize` and `Styleable` traits for better styling
     - Such as `.red()`, `.on_white()` and `.bold()`
+- Add `Line` and `StyledStr` for better text parsing
+- Add `Text::append_lines` to the `Text` trait
+- Add text alignment and ellipsis into `Paragraph`
+- Add `Text` trait implementation for `Paragraph`
+
+### Changes:
+
+- Remove `Text::render_offset` (`Text::append_lines` should be used instead)
+- Remove `Text::get` and `Text::get_text`
+    - `Text::get` is replaced by `std::fmt::Display` implementation
 
 ### Fixes
 

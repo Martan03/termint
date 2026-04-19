@@ -1,19 +1,13 @@
-use core::fmt;
-use std::{
-    borrow::Cow,
-    cmp::min,
-    hash::{DefaultHasher, Hash, Hasher},
-};
-
-use unicode_segmentation::UnicodeSegmentation;
-use unicode_width::UnicodeWidthStr;
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::{
     buffer::Buffer,
     enums::{Color, Modifier, RGB, Wrap},
-    geometry::{Direction, Rect, TextAlign, Vec2},
+    geometry::{Direction, TextAlign, Vec2},
     style::Style,
-    text::{Text, TextParser},
+    text::{
+        GradStyle, Line, StrStyle, Text, TextParser, get_step, text_render,
+    },
     widgets::layout::LayoutNode,
 };
 
@@ -216,7 +210,7 @@ impl Grad {
 
 impl<M: Clone + 'static> Widget<M> for Grad {
     fn render(&self, buffer: &mut Buffer, layout: &LayoutNode) {
-        _ = self.render_offset(buffer, layout.area, 0, None);
+        text_render(self, buffer, layout.area, &self.ellipsis, self.align);
     }
 
     fn layout_hash(&self) -> u64 {
@@ -229,334 +223,122 @@ impl<M: Clone + 'static> Widget<M> for Grad {
     }
 
     fn height(&self, size: &Vec2) -> usize {
-        self.inner_height(size)
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.height(size)
     }
 
     fn width(&self, size: &Vec2) -> usize {
-        self.inner_width(size)
+        let mut parser = TextParser::new(&self.text).wrap(self.wrap);
+        parser.width(size)
     }
 }
 
 impl Text for Grad {
-    fn render_offset(
-        &self,
-        buffer: &mut Buffer,
-        rect: Rect,
-        offset: usize,
+    fn append_lines<'a>(
+        &'a self,
+        lines: &mut Vec<Line<'a>>,
+        size: &Vec2,
         wrap: Option<Wrap>,
-    ) -> Vec2 {
-        if rect.is_empty() {
-            return Vec2::new(0, rect.y());
+    ) -> bool {
+        let wrap = wrap.unwrap_or(self.wrap);
+        let mut parser = TextParser::new(&self.text).wrap(wrap);
+        let frags = self.get_frags(&mut parser, lines, size);
+        if frags.is_empty() {
+            return true;
         }
 
+        let fit = parser.is_end();
         match self.direction {
             Direction::Vertical => {
-                self.render_vertical(buffer, &rect, offset, wrap)
+                self.get_lines_vert(lines, frags, parser, size)
             }
-            Direction::Horizontal => {
-                self.render_horizontal(buffer, &rect, offset, wrap)
-            }
+            Direction::Horizontal => self.get_lines_hor(lines, frags, fit),
         }
+        fit
     }
 
-    fn get(&self) -> String {
-        let step = self.get_step(self.text.len() as i16 - 1);
-        let (mut r, mut g, mut b) =
-            (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-
-        let mut res = self.get_mods();
-        for c in self.text.chars() {
-            res += &format!("{}{c}", Color::Rgb(r, g, b).to_fg());
-            (r, g, b) = self.add_step((r, g, b), step);
-        }
-        res += "\x1b[0m";
-
-        res
-    }
-
-    fn get_text(&self) -> &str {
-        &self.text
-    }
-
-    fn get_mods(&self) -> String {
-        format!(
-            "{}{}",
-            self.modifier,
-            self.bg.map_or_else(|| "".to_string(), |bg| bg.to_bg()),
-        )
-    }
-}
-
-impl fmt::Display for Grad {
-    /// Automatically converts [`Grad`] to String when printing
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.get())
+    fn get_align(&self) -> TextAlign {
+        self.align
     }
 }
 
 impl Grad {
-    fn inner_height(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.height_letter_wrap(size),
-            Wrap::Word => self.height_word_wrap(size),
-        }
-    }
-
-    fn inner_width(&self, size: &Vec2) -> usize {
-        match self.wrap {
-            Wrap::Letter => self.width_letter_wrap(size),
-            Wrap::Word => self.width_word_wrap(size),
-        }
-    }
-
-    fn render_vertical(
+    fn get_frags<'a>(
         &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-    ) -> Vec2 {
-        let height = min(
-            self.inner_height(rect.size()).saturating_sub(1),
-            rect.height(),
-        );
-        let step = self.get_step(height as i16);
-        self._render(
-            buffer,
-            rect,
-            offset,
-            wrap,
-            (0, 0, 0),
-            step,
-            |b, a, t, l, p, r, s| self.render_ver_line(b, a, t, l, p, r, s),
-        )
-    }
-
-    fn render_horizontal(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-    ) -> Vec2 {
-        let width = if self.inner_height(rect.size()) <= 1 {
-            self.text.chars().count()
-        } else {
-            rect.width()
-        };
-        let step = self.get_step(width as i16);
-        self._render(
-            buffer,
-            rect,
-            offset,
-            wrap,
-            step,
-            (0, 0, 0),
-            |b, a, t, l, p, r, s| self.render_hor_line(b, a, t, l, p, r, s),
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn _render<F>(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        offset: usize,
-        wrap: Option<Wrap>,
-        step_x: (i16, i16, i16),
-        step_y: (i16, i16, i16),
-        render_line: F,
-    ) -> Vec2
-    where
-        F: Fn(
-            &mut Buffer,
-            &Rect,
-            &str,
-            usize,
-            &Vec2,
-            (u8, u8, u8),
-            (i16, i16, i16),
-        ),
-    {
-        let wrap = wrap.unwrap_or(self.wrap);
-        let mut parser = TextParser::new(&self.text).wrap(wrap);
-
-        let mut pos = Vec2::new(rect.x() + offset, rect.y());
-        let mut fin_pos = pos;
-
-        let mut rgb = (self.fg_start.r, self.fg_start.g, self.fg_start.b);
-        if self.text.chars().count() + offset >= rect.width() {
-            for _ in 0..offset {
-                rgb = self.add_step(rgb, step_x);
-            }
+        parser: &mut TextParser<'a>,
+        lines: &mut Vec<Line<'a>>,
+        size: &Vec2,
+    ) -> Vec<(&'a str, usize)> {
+        let height = lines.len().saturating_sub(1);
+        if size.x == 0 || height >= size.y || parser.is_end() {
+            return vec![];
         }
 
-        let right_end = rect.x() + rect.width();
-        while pos.y <= rect.bottom() {
-            let line_len = right_end.saturating_sub(pos.x);
-            let Some((raw_text, mut len)) = parser.next_line(line_len) else {
+        let mut frags = Vec::new();
+        let last_width = lines.last().map(|l| l.width).unwrap_or_default();
+        let mut fwidth = size.x.saturating_sub(last_width);
+
+        for _ in height..size.y {
+            let Some(line) = parser.next_line(fwidth) else {
                 break;
             };
-
-            let mut text = Cow::Borrowed(raw_text);
-            if pos.y >= rect.bottom() && !parser.is_end() {
-                let el_width = self.ellipsis.width();
-                let target = line_len.saturating_sub(el_width);
-
-                let mut width = len;
-                let mut sid = raw_text.len();
-
-                for (idx, grapheme) in raw_text.grapheme_indices(true).rev() {
-                    if width <= target
-                        && !grapheme.starts_with(char::is_whitespace)
-                    {
-                        break;
-                    }
-                    width -= grapheme.width();
-                    sid = idx;
-                }
-
-                let trunc = &raw_text[..sid];
-                text = Cow::Owned(format!("{}{}", trunc, self.ellipsis));
-                len = width + el_width;
-            }
-
-            render_line(buffer, rect, &text, len, &pos, rgb, step_x);
-            (fin_pos.x, fin_pos.y) =
-                ((pos.x + len).saturating_sub(rect.x()), pos.y);
-            (pos.x, pos.y) = (rect.x(), pos.y + 1);
-            rgb = self.add_step(rgb, step_y);
+            frags.push(line);
+            fwidth = size.x;
         }
-        fin_pos
+        frags
     }
 
-    /// Renders line with horizontal gradient
-    #[allow(clippy::too_many_arguments)]
-    fn render_hor_line(
+    /// Assumes frags is not empty, otherwise it will not work.
+    fn get_lines_vert<'a>(
         &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        line: &str,
-        len: usize,
-        pos: &Vec2,
-        (mut r, mut g, mut b): (u8, u8, u8),
-        step: (i16, i16, i16),
+        lines: &mut Vec<Line<'a>>,
+        frags: Vec<(&'a str, usize)>,
+        mut parser: TextParser<'a>,
+        size: &Vec2,
     ) {
-        let offset = self.get_align_offset(rect, len);
-        for _ in 0..offset {
-            (r, g, b) = self.add_step((r, g, b), step);
+        let mut height = frags.len();
+        while parser.next_line(size.x).is_some() {
+            height += 1;
         }
 
-        let mut style = Style::new()
-            .fg(Color::Rgb(r, g, b))
+        let ((mut r, mut g, mut b), (rs, gs, bs)) =
+            get_step(&self.fg_start, &self.fg_end, height);
+        let base_style = Style::new().bg(self.bg).modifier(self.modifier);
+
+        let mut line = lines.pop().unwrap_or_else(Line::empty);
+        for (text, len) in frags {
+            let col = Color::Rgb(r as u8, g as u8, b as u8);
+            let style = StrStyle::Static(base_style.fg(col));
+            line.push(text, len, style);
+            lines.push(line);
+
+            line = Line::empty();
+            (r, g, b) = (r + rs, g + gs, b + bs);
+        }
+    }
+
+    /// Assumes frags is not empty, otherwise it will not work.
+    fn get_lines_hor<'a>(
+        &self,
+        lines: &mut Vec<Line<'a>>,
+        frags: Vec<(&'a str, usize)>,
+        fits: bool,
+    ) {
+        let gstyle = GradStyle::new(self.fg_start, self.fg_end)
             .bg(self.bg)
             .modifier(self.modifier);
+        let style = if frags.len() <= 1 && fits {
+            StrStyle::LocalGrad(gstyle)
+        } else {
+            StrStyle::GlobalGrad(gstyle)
+        };
 
-        let mut coords = Vec2::new(pos.x + offset, pos.y);
-        for c in line.chars() {
-            buffer[coords].char(c).style(style);
-
-            coords.x += 1;
-            (r, g, b) = self.add_step((r, g, b), step);
-            style = style.fg(Color::Rgb(r, g, b));
+        let mut line = lines.pop().unwrap_or_else(Line::empty);
+        for (text, len) in frags {
+            line.push(text, len, style.clone());
+            lines.push(line);
+            line = Line::empty();
         }
-    }
-
-    /// Renders line with vertical gradient
-    #[allow(clippy::too_many_arguments)]
-    fn render_ver_line(
-        &self,
-        buffer: &mut Buffer,
-        rect: &Rect,
-        line: &str,
-        len: usize,
-        pos: &Vec2,
-        (r, g, b): (u8, u8, u8),
-        _step: (i16, i16, i16),
-    ) {
-        let offset = self.get_align_offset(rect, len);
-        let style = Style::new().fg(Color::Rgb(r, g, b)).bg(self.bg);
-        buffer.set_str_styled(line, &Vec2::new(pos.x + offset, pos.y), style);
-    }
-
-    /// Gets text alignment offset
-    fn get_align_offset(&self, rect: &Rect, len: usize) -> usize {
-        match self.align {
-            TextAlign::Left => 0,
-            TextAlign::Center => rect.width().saturating_sub(len) >> 1,
-            TextAlign::Right => rect.width().saturating_sub(len),
-        }
-    }
-
-    /// Gets step per character based on start and end foreground color
-    fn get_step(&self, len: i16) -> (i16, i16, i16) {
-        (
-            (self.fg_end.r as i16 - self.fg_start.r as i16) / len,
-            (self.fg_end.g as i16 - self.fg_start.g as i16) / len,
-            (self.fg_end.b as i16 - self.fg_start.b as i16) / len,
-        )
-    }
-
-    /// Adds given step to RGB value in tuple
-    fn add_step(
-        &self,
-        rgb: (u8, u8, u8),
-        step: (i16, i16, i16),
-    ) -> (u8, u8, u8) {
-        (
-            (rgb.0 as i16 + step.0) as u8,
-            (rgb.1 as i16 + step.1) as u8,
-            (rgb.2 as i16 + step.2) as u8,
-        )
-    }
-
-    /// Gets height of the [`Grad`] when using word wrap
-    fn height_word_wrap(&self, size: &Vec2) -> usize {
-        let mut parser = TextParser::new(&self.text);
-
-        let mut pos = Vec2::new(0, 0);
-        loop {
-            if parser.next_line(size.x).is_none() {
-                break;
-            }
-            pos.y += 1;
-        }
-        pos.y
-    }
-
-    /// Gets width of the [`Grad`] when using word wrap
-    fn width_word_wrap(&self, size: &Vec2) -> usize {
-        let mut guess =
-            Vec2::new(self.size_letter_wrap(size.y).saturating_sub(1), 0);
-
-        while self.height_word_wrap(&guess) > size.y {
-            guess.x += 1;
-        }
-        guess.x
-    }
-
-    /// Gets height of the [`Grad`] when using letter wrap
-    fn height_letter_wrap(&self, size: &Vec2) -> usize {
-        self.text
-            .lines()
-            .map(|l| {
-                (l.chars().count() as f32 / size.x as f32).ceil() as usize
-            })
-            .sum()
-    }
-
-    /// Gets width of the [`Grad`] when using letter wrap
-    fn width_letter_wrap(&self, size: &Vec2) -> usize {
-        let mut guess = Vec2::new(self.size_letter_wrap(size.y), 0);
-        while self.height_letter_wrap(&guess) > size.y {
-            guess.x += 1;
-        }
-        guess.x
-    }
-
-    /// Gets size of the [`Grad`] when using letter wrap
-    fn size_letter_wrap(&self, size: usize) -> usize {
-        (self.text.chars().count() as f32 / size as f32).ceil() as usize
     }
 }
 

@@ -2,7 +2,11 @@ extern crate termint;
 
 #[cfg(test)]
 mod tests {
-    use termint::{enums::Color, modifiers, text::Text, widgets::Grad};
+    use termint::{
+        enums::{Color, Modifier},
+        modifiers,
+        widgets::Grad,
+    };
 
     /// Tests creating new grad
     #[test]
@@ -19,7 +23,7 @@ mod tests {
             Color::Rgb(150, 100, 255).to_fg(),
             Color::Rgb(175, 80, 255).to_fg(),
         );
-        assert_eq!(grad.get(), assert_val);
+        assert_eq!(grad.to_string(), assert_val);
     }
 
     /// Tests creating grad with white background, bold and underline
@@ -29,9 +33,10 @@ mod tests {
             .modifier(modifiers!(BOLD, UNDERLINED))
             .bg(Color::White);
         let assert_val = format!(
-            "\x1b[1;4m{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
-            Color::White.to_bg(),
+            "{}{}{}G{}r{}a{}d{}i{}e{}n{}t\x1b[0m",
+            Modifier::BOLD | Modifier::UNDERLINED,
             Color::Rgb(0, 220, 255).to_fg(),
+            Color::White.to_bg(),
             Color::Rgb(25, 200, 255).to_fg(),
             Color::Rgb(50, 180, 255).to_fg(),
             Color::Rgb(75, 160, 255).to_fg(),
@@ -40,6 +45,6 @@ mod tests {
             Color::Rgb(150, 100, 255).to_fg(),
             Color::Rgb(175, 80, 255).to_fg(),
         );
-        assert_eq!(grad.get(), assert_val);
+        assert_eq!(grad.to_string(), assert_val);
     }
 }

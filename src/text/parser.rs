@@ -1,7 +1,7 @@
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-use crate::enums::Wrap;
+use crate::{enums::Wrap, prelude::Vec2};
 
 /// Parses the text so it can be rendered more easily. It can be used to get
 /// next line (or word, but it's mainly for line) from the text using either
@@ -36,6 +36,7 @@ use crate::enums::Wrap;
 ///     println!("{} ({} chars)", line, len);
 /// }
 /// ```
+#[derive(Debug, Clone)]
 pub struct TextParser<'a> {
     text: Option<&'a str>,
     wrap: Wrap,
@@ -89,14 +90,46 @@ impl<'a> TextParser<'a> {
     /// }
     /// ```
     pub fn next_line(&mut self, max_width: usize) -> Option<(&'a str, usize)> {
-        if self.text.is_none() {
-            return None;
-        }
-
+        self.text?;
         match self.wrap {
             Wrap::Letter => self.lw_next_line(max_width),
             Wrap::Word => self.ww_next_line(max_width),
         }
+    }
+
+    /// Gets the minimum width of the text based on the height.
+    pub fn width(&mut self, size: &Vec2) -> usize {
+        if size.x == 0 || size.y == 0 {
+            return 0;
+        }
+
+        let width = self.text.unwrap_or_default().width();
+        if width == 0 {
+            return 0;
+        }
+
+        let mut low = width.div_ceil(size.y).max(1);
+        let mut high = width;
+        while low < high {
+            let mid = low + (high - low) / 2;
+            let mut parser = self.clone();
+            let height = parser.inner_height(mid);
+
+            if height <= size.y {
+                high = mid;
+            } else {
+                low = mid + 1
+            }
+        }
+        low
+    }
+
+    /// Gets the minimum height of the text based on the width.
+    pub fn height(&mut self, size: &Vec2) -> usize {
+        if size.x == 0 || size.y == 0 {
+            return 0;
+        }
+        self.inner_height(size.x)
     }
 
     /// Gets next line from the text using word wrap. Same as calling
@@ -132,7 +165,7 @@ impl<'a> TextParser<'a> {
             }
 
             if grapheme == "\n" {
-                let (idx, w) = last.unwrap_or_else(|| {
+                let (idx, w) = last.unwrap_or({
                     if was_whitespace { (0, 0) } else { (id, width) }
                 });
                 let line = &text[..idx];
@@ -154,9 +187,11 @@ impl<'a> TextParser<'a> {
             was_whitespace = is_whitespace;
         }
 
-        let (idx, w) = was_whitespace
-            .then(|| last.unwrap_or((0, 0)))
-            .unwrap_or((text.len(), width));
+        let (idx, w) = if was_whitespace {
+            last.unwrap_or((0, 0))
+        } else {
+            (text.len(), width)
+        };
         let line = &text[..idx];
 
         self.text = None;
@@ -210,6 +245,16 @@ impl<'a> TextParser<'a> {
     /// Checks if text was read to the end.
     pub fn is_end(&self) -> bool {
         self.text.is_none()
+    }
+}
+
+impl<'a> TextParser<'a> {
+    fn inner_height(&mut self, width: usize) -> usize {
+        let mut height = 0;
+        while self.next_line(width).is_some() {
+            height += 1;
+        }
+        height
     }
 }
 

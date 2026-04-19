@@ -286,7 +286,11 @@ where
         let size = Vec2::new(rect.width().saturating_sub(l + r), 1);
 
         let trect = Rect::from_coords(pos, size);
-        _ = self.title.render_offset(buffer, trect, 0, None);
+        let mut lines = vec![];
+        self.title.append_lines(&mut lines, trect.size(), None);
+        if let Some(line) = lines.first() {
+            line.render(buffer, trect, self.title.get_align());
+        }
 
         self.child.render(buffer, &layout.children[0]);
     }
@@ -306,7 +310,8 @@ where
             size.x.saturating_sub(width),
             size.y.saturating_sub(height),
         );
-        max(self.child.width(&size), self.title.get_text().len()) + width
+        let twidth = self.title.width(&Vec2::new(size.x, 1));
+        max(self.child.width(&size), twidth) + width
     }
 
     fn children(&self) -> Vec<&Element<M>> {
@@ -316,7 +321,7 @@ where
     fn layout_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
 
-        self.title.get_text().hash(&mut hasher);
+        self.title.layout_hash().hash(&mut hasher);
         self.borders.hash(&mut hasher);
 
         hasher.finish()
