@@ -264,47 +264,34 @@ where
         }
 
         let child_node = &layout.children[0];
+
         let ver_active = child_node.area.height() > layout.area.height();
         let hor_active = child_node.area.width() > layout.area.width();
 
         let mut viewport = layout.area;
-        if ver_active {
+        let mut cid = 1;
+        if self.vertical.is_some() && !layout.children[cid].area.is_empty() {
             viewport.size.x = viewport.size.x.saturating_sub(1);
+            cid += 1;
         }
-        if hor_active {
+        if self.horizontal.is_some() && !layout.children[cid].area.is_empty() {
             viewport.size.y = viewport.size.y.saturating_sub(1);
         }
 
-        let h = child_node.area.height();
-        let offset_y = Self::process_state(&self.ver_state, ver_active, h);
-        let w = child_node.area.width();
-        let offset_x = Self::process_state(&self.hor_state, hor_active, w);
-
         let mut cid = 1;
-        let mut draw_scrollbar = |a: bool, e: &Option<Element<M>>, r: Rect| {
+        let mut draw_scrollbar = |a: bool, e: &Option<Element<M>>| {
             if a && let Some(e) = e {
                 let snode = &layout.children[cid];
-                Self::scrollbar(buffer, snode, e, r);
+                e.render(buffer, &snode);
                 cid += 1;
             }
         };
 
-        let vrect = Rect::new(
-            layout.area.right(),
-            layout.area.y(),
-            1,
-            viewport.height(),
-        );
-        draw_scrollbar(ver_active, &self.vertical, vrect);
+        draw_scrollbar(ver_active, &self.vertical);
+        draw_scrollbar(hor_active, &self.horizontal);
 
-        let hrect = Rect::new(
-            layout.area.x(),
-            layout.area.bottom(),
-            viewport.width(),
-            1,
-        );
-        draw_scrollbar(hor_active, &self.horizontal, hrect);
-
+        let offset_y = Self::state_offset(&self.ver_state);
+        let offset_x = Self::state_offset(&self.hor_state);
         self.render_content(buffer, viewport, child_node, offset_x, offset_y);
     }
 
@@ -363,13 +350,6 @@ where
         self.horizontal.is_some().hash(&mut hasher);
         self.vertical.is_some().hash(&mut hasher);
 
-        if let Some(state) = &self.hor_state {
-            state.get().hash(&mut hasher);
-        }
-        if let Some(state) = &self.ver_state {
-            state.get().hash(&mut hasher);
-        }
-
         hasher.finish()
     }
 
@@ -381,54 +361,69 @@ where
             return;
         }
 
-        let mut size = area.size;
-        let mut ver_scroll = false;
-        let mut hor_scroll = false;
-        let calc_size = |size: &mut Vec2| {
-            if has_ver {
-                size.y = self.child.height(size);
+        let mut size = *area.size();
+        let mut csize = Vec2::new(area.width(), area.height());
+        let (mut vscroll, mut hscroll) = (false, false);
+
+        if has_ver && has_hor {
+            csize.y = self.child.height(&Vec2::new(usize::MAX, usize::MAX));
+            csize.x = self.child.width(&Vec2::new(usize::MAX, csize.y));
+
+            vscroll = csize.y > area.height();
+            hscroll = csize.x > area.width();
+
+            if vscroll && !hscroll && csize.x > size.x.saturating_sub(1) {
+                hscroll = true;
+            } else if hscroll && !vscroll && csize.y > size.y.saturating_sub(1)
+            {
+                vscroll = true;
             }
-            if has_hor {
-                size.x = self.child.width(size);
-            }
-        };
 
-        let mut test_size = Vec2::new(
-            if has_hor { usize::MAX } else { size.x },
-            if has_ver { usize::MAX } else { size.y },
-        );
-        calc_size(&mut test_size);
-
-        if has_ver && test_size.y > size.y {
-            ver_scroll = true;
-            size.x = size.x.saturating_sub(1);
-        }
-
-        if has_hor && test_size.x > size.x {
-            hor_scroll = true;
-            size.y = size.y.saturating_sub(1);
-
-            if has_ver && !ver_scroll && test_size.y > size.y {
-                ver_scroll = true;
+            if vscroll {
                 size.x = size.x.saturating_sub(1);
             }
+            if hscroll {
+                size.y = size.y.saturating_sub(1);
+            }
+        } else if has_ver {
+            csize.y = self.child.height(&Vec2::new(size.x, usize::MAX));
+            if csize.y > size.y {
+                vscroll = true;
+                size.x = size.x.saturating_sub(1);
+                csize.y = self.child.height(&Vec2::new(size.x, usize::MAX));
+            }
+        } else if has_hor {
+            csize.x = self.child.width(&Vec2::new(usize::MAX, size.y));
+            if csize.x > size.x {
+                hscroll = true;
+                size.y = size.y.saturating_sub(1);
+                csize.x = self.child.width(&Vec2::new(usize::MAX, size.y));
+            }
         }
 
-        test_size = Vec2::new(
-            if has_hor { usize::MAX } else { size.x },
-            if has_ver { usize::MAX } else { size.y },
-        );
-        if ver_scroll || hor_scroll {
-            calc_size(&mut test_size);
+        let mut crect = Rect::from_coords(*area.pos(), size);
+
+        let mut cid = 1;
+        if self.vertical.is_some() {
+            let s = vscroll as usize;
+            let srect = Rect::new(area.right(), area.y(), s, size.y);
+            node.children[cid].layout(self.vertical.as_ref().unwrap(), srect);
+
+            crect.size.x = csize.x;
+            cid += 1;
+        }
+        if self.horizontal.is_some() {
+            let s = hscroll as usize;
+            let srect = Rect::new(area.x(), area.bottom(), size.x, s);
+            node.children[cid]
+                .layout(self.horizontal.as_ref().unwrap(), srect);
+
+            crect.size.y = csize.y;
         }
 
-        let child_rect = Rect::new(
-            area.x(),
-            area.y(),
-            if hor_scroll { test_size.x } else { size.x },
-            if ver_scroll { test_size.y } else { size.y },
-        );
-        node.children[0].layout(&self.child, child_rect);
+        Self::process_state(&self.ver_state, vscroll, crect.height());
+        Self::process_state(&self.hor_state, hscroll, crect.width());
+        node.children[0].layout(&self.child, crect);
     }
 
     fn on_event(&self, node: &LayoutNode, e: &MouseEvent) -> EventResult<M> {
@@ -473,18 +468,6 @@ where
         buffer.merge(cutout);
     }
 
-    /// Renders the scrollbar
-    fn scrollbar(
-        buffer: &mut Buffer,
-        layout: &LayoutNode,
-        scroll: &Element<M>,
-        rect: Rect,
-    ) {
-        let mut temp_node = layout.clone();
-        temp_node.area = rect;
-        scroll.render(buffer, &temp_node);
-    }
-
     fn process_state(
         state: &Option<Rc<Cell<ScrollbarState>>>,
         is_active: bool,
@@ -501,6 +484,10 @@ where
         }
 
         st.get().offset
+    }
+
+    fn state_offset(state: &Option<Rc<Cell<ScrollbarState>>>) -> usize {
+        state.as_ref().map(|s| s.get().offset).unwrap_or_default()
     }
 
     fn handle_mouse(&self, area: Rect, event: &MouseEvent) -> EventResult<M> {
