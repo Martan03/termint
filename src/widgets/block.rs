@@ -9,10 +9,10 @@ use crate::{
     buffer::Buffer,
     enums::{Border, BorderType, Color},
     geometry::Padding,
-    prelude::{Constraint, Direction, Rect, Vec2},
+    prelude::{Constraint, Direction, Rect, TextAlign, Vec2},
     style::{Style, Stylize},
     text::Text,
-    widgets::{Element, Layout, LayoutNode, Spacer, Span, Widget},
+    widgets::{Element, Layout, LayoutNode, Spacer, Widget},
 };
 
 /// A widget that wraps another widget and adds border and title.
@@ -40,7 +40,8 @@ use crate::{
 /// ```
 #[derive(Debug)]
 pub struct Block<M: 'static = (), W = Element<M>> {
-    title: Box<dyn Text>,
+    titles: Vec<Box<dyn Text>>,
+    bot_titles: Vec<Box<dyn Text>>,
     borders: Border,
     border_type: BorderType,
     border_style: Style,
@@ -60,7 +61,8 @@ impl<M> Block<M, Element<M>> {
         T: Into<Element<M>>,
     {
         Self {
-            title: Box::new(Span::new("")),
+            titles: vec![],
+            bot_titles: vec![],
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
@@ -71,17 +73,60 @@ impl<M> Block<M, Element<M>> {
 }
 
 impl<M, W> Block<M, W> {
-    /// Sets the title at the top of the [`Block`].
+    /// Adds the title to the top of the [`Block`].
     ///
     /// This is typically used for section labels in your TUI.
     ///
     /// The `title` can be any type implementing [`Text`] trait.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use termint::prelude::*;
+    ///
+    /// Block::empty()
+    ///     .title("Left1")
+    ///     .title(Grad::new("Left2", (0, 255, 0), (255, 0, 0)))
+    ///     .title("Center".align(TextAlign::Center))
+    ///     .title("Right".red().align(TextAlign::Right));
+    ///
+    /// // Renders (without colors)
+    /// // ┌Left1─Left2────Center──────────Right┐
+    /// // └────────────────────────────────────┘
+    /// ```
     #[must_use]
     pub fn title<T>(mut self, title: T) -> Self
     where
         T: Into<Box<dyn Text>>,
     {
-        self.title = title.into();
+        self.titles.push(title.into());
+        self
+    }
+
+    /// Adds the title to the bottom of the [`Block`].
+    ///
+    /// The `title` can be any type implementing [`Text`] trait.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use termint::prelude::*;
+    ///
+    /// Block::empty()
+    ///     .title_bottom("Left1")
+    ///     .title_bottom(Grad::new("Left2", (0, 255, 0), (255, 0, 0)))
+    ///     .title_bottom("Center".align(TextAlign::Center))
+    ///     .title_bottom("Right".red().align(TextAlign::Right));
+    ///
+    /// // Renders (without colors)
+    /// // ┌────────────────────────────────────┐
+    /// // └Left1─Left2────Center──────────Right┘
+    /// ```
+    pub fn title_bottom<T>(mut self, title: T) -> Self
+    where
+        T: Into<Box<dyn Text>>,
+    {
+        self.bot_titles.push(title.into());
         self
     }
 
@@ -144,7 +189,8 @@ impl<M: Clone + 'static> Block<M, Spacer> {
     #[must_use]
     pub fn empty() -> Self {
         Self {
-            title: Box::new(Span::new("")),
+            titles: vec![],
+            bot_titles: vec![],
             borders: Border::ALL,
             border_type: BorderType::Normal,
             border_style: Default::default(),
@@ -162,7 +208,8 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
     #[must_use]
     pub fn vertical() -> Self {
         Self {
-            title: Box::new(Span::new("")),
+            titles: vec![],
+            bot_titles: vec![],
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),
@@ -178,7 +225,8 @@ impl<M: Clone + 'static> Block<M, Layout<M>> {
     #[must_use]
     pub fn horizontal() -> Self {
         Self {
-            title: Box::new(Span::new("")),
+            titles: vec![],
+            bot_titles: vec![],
             borders: Border::ALL,
             border_type: Default::default(),
             border_style: Default::default(),
@@ -285,12 +333,11 @@ where
         let pos = Vec2::new(rect.x() + l, rect.y());
         let size = Vec2::new(rect.width().saturating_sub(l + r), 1);
 
-        let trect = Rect::from_coords(pos, size);
-        let mut lines = vec![];
-        self.title.append_lines(&mut lines, trect.size(), None);
-        if let Some(line) = lines.first() {
-            line.render(buffer, trect, self.title.get_align());
-        }
+        let mut trect = Rect::from_coords(pos, size);
+        self.render_title(buffer, trect, &self.titles);
+
+        trect.pos.y = rect.bottom();
+        self.render_title(buffer, trect, &self.bot_titles);
 
         self.child.render(buffer, &layout.children[0]);
     }
@@ -310,8 +357,15 @@ where
             size.x.saturating_sub(width),
             size.y.saturating_sub(height),
         );
-        let twidth = self.title.width(&Vec2::new(size.x, 1));
-        max(self.child.width(&size), twidth) + width
+
+        let size = Vec2::new(size.x, 1);
+        let mut twidth: usize =
+            self.titles.iter().map(|t| t.width(&size)).sum();
+
+        let bwidth = self.bot_titles.iter().map(|t| t.width(&size)).sum();
+        twidth = twidth.max(bwidth) + self.titles.len().saturating_sub(1);
+
+        max(max(self.child.width(&size), twidth) + width, size.x)
     }
 
     fn children(&self) -> Vec<&Element<M>> {
@@ -321,7 +375,9 @@ where
     fn layout_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
 
-        self.title.layout_hash().hash(&mut hasher);
+        self.titles
+            .iter()
+            .for_each(|t| t.layout_hash().hash(&mut hasher));
         self.borders.hash(&mut hasher);
 
         hasher.finish()
@@ -358,6 +414,52 @@ impl<M, W> Block<M, W> {
         );
 
         (t, r, b, l)
+    }
+
+    fn render_title(&self, buf: &mut Buffer, area: Rect, t: &[Box<dyn Text>]) {
+        if t.is_empty() || area.is_empty() {
+            return;
+        }
+
+        let mut lrect = area.clone();
+        let (mut clines, mut cwidth) = (vec![], 0);
+        let (mut rlines, mut rwidth) = (vec![], 0);
+        for title in t {
+            let mut lines = vec![];
+            title.append_lines(&mut lines, &Vec2::new(usize::MAX, 1), None);
+
+            let Some(line) = lines.into_iter().next() else {
+                continue;
+            };
+
+            let (l, w) = match title.get_align() {
+                TextAlign::Left => {
+                    line.render(buf, lrect, TextAlign::Left);
+                    lrect = lrect.inner(Padding::left(line.width + 1));
+                    continue;
+                }
+                TextAlign::Center => (&mut clines, &mut cwidth),
+                TextAlign::Right => (&mut rlines, &mut rwidth),
+            };
+            *w += line.width;
+            l.push(line);
+        }
+
+        cwidth += clines.len().saturating_sub(1);
+        let coffset = area.width().saturating_sub(cwidth) / 2;
+        let mut crect = area.inner(Padding::left(coffset));
+        for line in clines {
+            line.render(buf, crect, TextAlign::Left);
+            crect = crect.inner(Padding::left(line.width + 1));
+        }
+
+        rwidth += rlines.len().saturating_sub(1);
+        let roffset = area.width().saturating_sub(rwidth);
+        let mut rrect = area.inner(Padding::left(roffset));
+        for line in rlines {
+            line.render(buf, rrect, TextAlign::Left);
+            rrect = rrect.inner(Padding::left(line.width + 1));
+        }
     }
 
     /// Adds horizontal border to the buffer
