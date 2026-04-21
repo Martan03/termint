@@ -651,19 +651,19 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             return EventResult::None;
         }
 
-        let m = self.on_event_header(node, e);
+        let mut cid = 1;
+        let m = self.on_event_hf(&self.header, node, e, &mut cid);
+        if !m.is_none() {
+            return m;
+        }
+
+        let m = self.on_event_hf(&self.footer, node, e, &mut cid);
         if !m.is_none() {
             return m;
         }
 
         let offset = self.state.borrow().offset;
-        let mut cid = 1 + offset * self.widths.len();
-        if self.header.is_some() {
-            cid += self.widths.len();
-        }
-        if self.footer.is_some() {
-            cid += self.widths.len();
-        }
+        let mut cid = cid + offset * self.widths.len();
 
         let scrollbar = node.children[0].area.width();
         let width = node.area.width().saturating_sub(scrollbar);
@@ -945,22 +945,23 @@ impl<M: Clone + 'static> Table<M> {
         height
     }
 
-    fn on_event_header(
+    fn on_event_hf(
         &self,
+        row: &Option<Row<M>>,
         node: &LayoutNode,
         event: &MouseEvent,
+        cid: &mut usize,
     ) -> EventResult<M> {
-        let Some(header) = &self.header else {
+        let Some(row) = row else {
             return EventResult::None;
         };
 
-        let mut cid = 1;
-        for child in header.cells.iter() {
-            let m = child.on_event(&node.children[cid], event);
+        for child in row.cells.iter() {
+            let m = child.on_event(&node.children[*cid], event);
             if !m.is_none() {
                 return m;
             }
-            cid += 1;
+            *cid += 1;
         }
         EventResult::None
     }

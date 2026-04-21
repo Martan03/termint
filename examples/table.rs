@@ -38,6 +38,8 @@ impl Application for App {
     type Message = Message;
 
     fn view(&self, _frame: &Frame) -> Element<Self::Message> {
+        let active_cnt = self.employees.iter().filter(|e| e.active).count();
+
         let table = Table::new(
             get_rows(&self.employees),
             [
@@ -50,7 +52,12 @@ impl Application for App {
         )
         .header(vec!["ID", "Name", "Email", "Status"])
         .header_separator(BorderType::Normal)
-        .footer(vec!["ID", "Name", "Email", "Status"])
+        .footer(vec![
+            "".to_span(),
+            format!("Total: {}", self.employees.len()).to_span(),
+            "".to_span(),
+            format!("{} Active", active_cnt).to_span(),
+        ])
         .footer_separator(BorderType::Normal)
         .selected_row_style((BG, SELL))
         .selected_column_style(SELL)
