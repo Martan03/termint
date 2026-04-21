@@ -10,6 +10,9 @@
 - Add `Text::append_lines` to the `Text` trait
 - Add text alignment and ellipsis into `Paragraph`
 - Add `Text` trait implementation for `Paragraph`
+- Add bottom title to `Block` (`Block::title_bottom`)
+- Add support for multiple titles to `Block`
+- Add `row_span` and `col_span` support to `Grid`
 
 ### Changes:
 
