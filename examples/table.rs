@@ -50,6 +50,8 @@ impl Application for App {
         )
         .header(vec!["ID", "Name", "Email", "Status"])
         .header_separator(BorderType::Normal)
+        .footer(vec!["ID", "Name", "Email", "Status"])
+        .footer_separator(BorderType::Normal)
         .selected_row_style((BG, SELL))
         .selected_column_style(SELL)
         .selected_cell_style((BGL, SEL))

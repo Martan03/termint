@@ -65,6 +65,8 @@ type TableHandler<M> = Box<dyn Fn(usize, usize) -> M>;
 pub struct Table<M: 'static = ()> {
     header: Option<Row<M>>,
     header_separator: Option<BorderType>,
+    footer: Option<Row<M>>,
+    footer_separator: Option<BorderType>,
     rows: Vec<Row<M>>,
     selected_row_style: Style,
     selected_column_style: Style,
@@ -86,6 +88,7 @@ struct TableMetrics {
     widths: Vec<usize>,
     heights: Vec<usize>,
     header_height: usize,
+    footer_height: usize,
     scrollbar: bool,
     rect: Rect,
 }
@@ -128,6 +131,8 @@ impl<M: Clone> Table<M> {
         Self {
             header: None,
             header_separator: None,
+            footer: None,
+            footer_separator: None,
             rows: rows.into_iter().map(Into::into).collect(),
             selected_row_style: Style::default(),
             selected_column_style: Style::default(),
@@ -167,6 +172,30 @@ impl<M: Clone> Table<M> {
     #[must_use]
     pub fn header_separator(mut self, separator: BorderType) -> Self {
         self.header_separator = Some(separator);
+        self
+    }
+
+    /// Adds given footer to the [`Table`].
+    ///
+    /// Footer is displayed at the bottom of the [`Table`] and always visible.
+    ///
+    /// The `footer` is type convertible into [`Row`].
+    #[must_use]
+    pub fn footer<H>(mut self, footer: H) -> Self
+    where
+        H: Into<Row<M>>,
+    {
+        self.footer = Some(footer.into());
+        self
+    }
+
+    /// Sets the footer separator of the [`Table`].
+    ///
+    /// Footer separator is a horizontal border above the footer and together
+    /// with the footer is at the bottom of the [`Table`] and always visible.
+    #[must_use]
+    pub fn footer_separator(mut self, separator: BorderType) -> Self {
+        self.footer_separator = Some(separator);
         self
     }
 
@@ -432,7 +461,9 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 
         let mut cid = 1;
         let header_height =
-            self.render_header(buffer, layout, &mut rect, &mut cid);
+            self.render_fh(buffer, layout, &mut rect, &mut cid, true);
+        let footer_height =
+            self.render_fh(buffer, layout, &mut rect, &mut cid, false);
         rect.size.x = rect.width().saturating_sub(snode.area.width());
 
         let offset = self.state.borrow().offset;
@@ -444,7 +475,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 
         if let Some(col) = selected_col {
             let mut base_cid = 1;
-            if self.header.is_none() {
+            if self.header.is_none() && self.footer.is_none() {
                 base_cid += offset * self.widths.len();
             }
 
@@ -475,11 +506,16 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             rect = rect.inner(Padding::top(row_height));
         }
 
-        let crect =
-            layout.area.inner((header_height, snode.area.width(), 0, 0));
+        let crect = layout.area.inner((
+            header_height,
+            snode.area.width(),
+            footer_height,
+            0,
+        ));
         self.set_sel_style(buffer, &crect, col_x, col_w, row_rect);
     }
 
+    // TODO: fix height when header or footer is taller then one row
     fn height(&self, size: &Vec2) -> usize {
         let widths = self.calc_widths(size.x);
         let height: usize = self
@@ -487,9 +523,12 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             .iter()
             .map(|r| Self::row_height(size.y, r, &widths))
             .sum();
+
         height
             + self.header.is_some() as usize
             + self.header_separator.is_some() as usize
+            + self.footer.is_some() as usize
+            + self.footer_separator.is_some() as usize
     }
 
     fn width(&self, size: &Vec2) -> usize {
@@ -511,6 +550,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
     fn children(&self) -> Vec<&Element<M>> {
         std::iter::once(&self.dummy)
             .chain(self.header.iter().flat_map(|h| h.cells.iter()))
+            .chain(self.footer.iter().flat_map(|f| f.cells.iter()))
             .chain(self.rows.iter().flat_map(|r| r.cells.iter()))
             .collect()
     }
@@ -519,6 +559,7 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         let mut hasher = DefaultHasher::new();
 
         self.header_separator.hash(&mut hasher);
+        self.footer_separator.hash(&mut hasher);
         self.widths.hash(&mut hasher);
         self.column_spacing.hash(&mut hasher);
         self.force_scrollbar.hash(&mut hasher);
@@ -537,7 +578,8 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
             area.right(),
             area.y() + metrics.header_height,
             metrics.scrollbar as usize,
-            area.height().saturating_sub(metrics.header_height),
+            area.height()
+                .saturating_sub(metrics.header_height + metrics.footer_height),
         );
 
         if self.auto_scroll {
@@ -548,18 +590,29 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         let mut cur_y = metrics.rect.y();
         let mut cid = 1;
 
-        if let Some(header_row) = &self.header {
-            let mut cur_x = metrics.rect.x();
-            let sep_height = self.header_separator.is_some() as usize;
+        let fh_conf = [
+            (&self.header, &self.header_separator),
+            (&self.footer, &self.footer_separator),
+        ];
+        for (i, (row, sep)) in fh_conf.iter().enumerate() {
+            let Some(fh) = row else {
+                continue;
+            };
 
-            let height = metrics.header_height.saturating_sub(sep_height);
-            for (col_idx, cell) in header_row.cells.iter().enumerate() {
-                let cell_area = Rect::new(
-                    cur_x,
-                    area.y(),
-                    metrics.widths[col_idx],
-                    height,
-                );
+            let mut cur_x = metrics.rect.x();
+            let sep_height = sep.is_some() as usize;
+
+            let is_header = i == 0;
+            let (y, height) = if is_header {
+                (area.y(), metrics.header_height.saturating_sub(sep_height))
+            } else {
+                let h = metrics.footer_height.saturating_sub(sep_height);
+                ((area.bottom() + 1).saturating_sub(h), h)
+            };
+
+            for (col_idx, cell) in fh.cells.iter().enumerate() {
+                let cell_area =
+                    Rect::new(cur_x, y, metrics.widths[col_idx], height);
                 node.children[cid].layout(cell, cell_area);
                 cur_x += metrics.widths[col_idx] + self.column_spacing;
                 cid += 1;
@@ -608,6 +661,9 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
         if self.header.is_some() {
             cid += self.widths.len();
         }
+        if self.footer.is_some() {
+            cid += self.widths.len();
+        }
 
         let scrollbar = node.children[0].area.width();
         let width = node.area.width().saturating_sub(scrollbar);
@@ -631,34 +687,54 @@ impl<M: Clone + 'static> Widget<M> for Table<M> {
 impl<M: Clone + 'static> Table<M> {
     fn calc_metrics(&self, area: Rect) -> TableMetrics {
         let mut widths = self.calc_widths(area.width());
+
         let mut header_height = self.calc_header_height(&area, &widths);
-        let mut inner_rect = area.inner(Padding::top(header_height));
+        let mut footer_height = self.calc_footer_height(&area, &widths);
+
+        let mut rect = area.inner((header_height, 0, footer_height, 0));
         let (mut heights, total) = self.calc_heights(&widths);
 
-        let scrollbar = self.force_scrollbar || inner_rect.height() < total;
+        let scrollbar = self.force_scrollbar || rect.height() < total;
         if scrollbar {
-            inner_rect = area.inner(Padding::right(1));
-            widths = self.calc_widths(inner_rect.width());
-            header_height = self.calc_header_height(&inner_rect, &widths);
+            rect = area.inner(Padding::right(1));
+            widths = self.calc_widths(rect.width());
+
+            header_height = self.calc_header_height(&rect, &widths);
+            footer_height = self.calc_footer_height(&rect, &widths);
+
             (heights, _) = self.calc_heights(&widths);
-            inner_rect = inner_rect.inner(Padding::top(header_height));
+            rect = rect.inner((header_height, 0, footer_height, 0));
         }
 
         TableMetrics {
             widths,
             heights,
             header_height,
+            footer_height,
             scrollbar,
-            rect: inner_rect,
+            rect,
         }
     }
 
-    fn calc_header_height(&self, rect: &Rect, widths: &[usize]) -> usize {
-        let mut header_height = self.header_separator.is_some() as usize;
-        if let Some(header) = &self.header {
-            header_height += Self::row_height(rect.height(), header, widths);
+    fn calc_header_height(&self, r: &Rect, widths: &[usize]) -> usize {
+        Self::calc_fh_height(&self.header, &self.header_separator, r, widths)
+    }
+
+    fn calc_footer_height(&self, r: &Rect, widths: &[usize]) -> usize {
+        Self::calc_fh_height(&self.footer, &self.footer_separator, r, widths)
+    }
+
+    fn calc_fh_height(
+        row: &Option<Row<M>>,
+        sep: &Option<BorderType>,
+        rect: &Rect,
+        widths: &[usize],
+    ) -> usize {
+        let mut height = sep.is_some() as usize;
+        if let Some(row) = row {
+            height += Self::row_height(rect.height(), row, widths);
         }
-        header_height
+        height
     }
 
     /// Gets calculated column widths based on the given size
@@ -826,32 +902,46 @@ impl<M: Clone + 'static> Table<M> {
         }
     }
 
-    fn render_header(
+    fn render_fh(
         &self,
         buffer: &mut Buffer,
         node: &LayoutNode,
         rect: &mut Rect,
         cid: &mut usize,
+        is_header: bool,
     ) -> usize {
-        let Some(header) = &self.header else {
+        let (row, sep) = if is_header {
+            (&self.header, &self.header_separator)
+        } else {
+            (&self.footer, &self.footer_separator)
+        };
+
+        let Some(row) = row else {
             return 0;
         };
 
         let mut height = node.children[*cid].area.height();
-        for child in header.cells.iter() {
-            let cnode = &node.children[*cid];
-            child.render(buffer, cnode);
+        for child in &row.cells {
+            child.render(buffer, &node.children[*cid]);
             *cid += 1;
         }
 
-        if let Some(separator) = &self.header_separator {
-            let line =
-                separator.get(Border::TOP).to_string().repeat(rect.width());
-            buffer.set_str(line, &Vec2::new(rect.x(), rect.y() + height));
+        if let Some(sep) = sep {
+            let line = sep.get(Border::TOP).to_string().repeat(rect.width());
+            let y = if is_header {
+                rect.y() + height
+            } else {
+                rect.bottom().saturating_sub(height)
+            };
+            buffer.set_str(line, &Vec2::new(rect.x(), y));
             height += 1;
         }
 
-        *rect = rect.inner(Padding::top(height));
+        *rect = if is_header {
+            rect.inner(Padding::top(height))
+        } else {
+            rect.inner(Padding::bottom(height))
+        };
         height
     }
 
