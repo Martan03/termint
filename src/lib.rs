@@ -36,7 +36,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! termint = "0.8.1"
+//! termint = "0.9.0"
 //! ```
 //!
 //! ### Features
