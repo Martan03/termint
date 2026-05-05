@@ -82,9 +82,9 @@ impl<M, W> Block<M, W> {
     /// # Example
     ///
     /// ```
-    /// use termint::prelude::*;
+    /// use termint::{prelude::*, widgets::Grad};
     ///
-    /// Block::empty()
+    /// Block::<(), _>::empty()
     ///     .title("Left1")
     ///     .title(Grad::new("Left2", (0, 255, 0), (255, 0, 0)))
     ///     .title("Center".align(TextAlign::Center))
@@ -110,9 +110,9 @@ impl<M, W> Block<M, W> {
     /// # Example
     ///
     /// ```
-    /// use termint::prelude::*;
+    /// use termint::{prelude::*, widgets::Grad};
     ///
-    /// Block::empty()
+    /// Block::<(), _>::empty()
     ///     .title_bottom("Left1")
     ///     .title_bottom(Grad::new("Left2", (0, 255, 0), (255, 0, 0)))
     ///     .title_bottom("Center".align(TextAlign::Center))
