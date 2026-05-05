@@ -57,7 +57,12 @@ impl Application for App {
             label_layout.push(Spacer, 1);
 
             let bar = ProgressBar::new(state.clone())
-                .style(Style::new().bg(color).fg(color))
+                .style(Style::new().fg(color))
+                .dyn_label(|p| {
+                    format!("{}%", (p * 100.) as usize)
+                        .align(TextAlign::Center)
+                        .into()
+                })
                 .on_click(move |p| Message::Seek(i, p));
             pb_layout.push(bar, 1);
             pb_layout.push(Spacer, 1);

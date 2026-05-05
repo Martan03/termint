@@ -49,11 +49,7 @@ impl<'a> Line<'a> {
 
     /// Renders the current [`Line`] into the [`Buffer`].
     pub fn render(&self, buffer: &mut Buffer, rect: Rect, align: TextAlign) {
-        let x_offset = match align {
-            TextAlign::Left => 0,
-            TextAlign::Center => rect.width().saturating_sub(self.width) / 2,
-            TextAlign::Right => rect.width().saturating_sub(self.width),
-        };
+        let x_offset = self.align_offset(&rect, align);
 
         let mut pos = *rect.pos();
         pos.x += x_offset;
@@ -95,6 +91,15 @@ impl<'a> Line<'a> {
                 self.parts.push(frag);
                 break;
             }
+        }
+    }
+
+    /// Gets the align offset of the line.
+    pub fn align_offset(&self, rect: &Rect, align: TextAlign) -> usize {
+        match align {
+            TextAlign::Left => 0,
+            TextAlign::Center => rect.width().saturating_sub(self.width) / 2,
+            TextAlign::Right => rect.width().saturating_sub(self.width),
         }
     }
 }

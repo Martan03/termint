@@ -271,10 +271,11 @@ where
     /// widgets that don't change the layout structure (such as
     /// [`List`](crate::widgets::List) selected item).
     pub fn rerender(&mut self) -> Result<(), Error> {
-        let wid = self.prev_widget.take().ok_or(Error::NoPreviousWidget)?;
-
         let rect = self.get_rect()?;
-        self.render_widget(wid, rect);
+
+        let wid = self.prev_widget.take().ok_or(Error::NoPreviousWidget)?;
+        self.inner_w_render(&wid, &wid, rect);
+        self.prev_widget = Some(wid);
         Ok(())
     }
 
@@ -326,7 +327,6 @@ where
                     _ => {}
                 }
                 action |= app.event(event);
-                action |= Action::RELAYOUT;
             }
 
             let now = Instant::now();
@@ -385,33 +385,43 @@ where
     }
 
     fn render_widget(&mut self, widget: Element<M>, rect: Rect) {
-        let mut buffer = Buffer::empty(rect);
-
         let dummy: Element<M> = Spacer::new().into();
+
+        let prev_widget = self.prev_widget.take();
         let prev = if self.relayout {
             self.relayout = false;
             &dummy
         } else {
-            self.prev_widget.as_ref().unwrap_or(&dummy)
+            prev_widget.as_ref().unwrap_or(&dummy)
         };
 
+        self.inner_w_render(&widget, prev, rect);
+        self.prev_widget = Some(widget);
+    }
+
+    fn inner_w_render(
+        &mut self,
+        cur: &Element<M>,
+        prev: &Element<M>,
+        rect: Rect,
+    ) {
+        let mut buffer = Buffer::empty(rect);
         match &self.small {
             Some(small)
-                if rect.width() < widget.width(rect.size())
-                    || rect.height() < widget.height(rect.size()) =>
+                if rect.width() < cur.width(rect.size())
+                    || rect.height() < cur.height(rect.size()) =>
             {
                 self.layout.diff(prev, small);
                 self.layout.layout(small, rect);
                 small.render(&mut buffer, &self.layout);
             }
             _ => {
-                self.layout.diff(prev, &widget);
-                self.layout.layout(&widget, rect);
-                widget.render(&mut buffer, &self.layout);
+                self.layout.diff(prev, cur);
+                self.layout.layout(cur, rect);
+                cur.render(&mut buffer, &self.layout);
             }
         };
 
-        self.prev_widget = Some(widget);
         match &self.prev {
             Some(prev) => buffer.render_diff(prev),
             None => buffer.render(),

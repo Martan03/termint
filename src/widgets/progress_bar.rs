@@ -2,9 +2,11 @@ use std::{cell::Cell, rc::Rc};
 
 use crate::{
     buffer::Buffer,
+    enums::Color,
     prelude::{MouseButton, MouseEvent, Rect, Vec2},
     style::{Style, Styleable},
     term::backend::MouseEventKind,
+    text::Text,
     widgets::{Element, EventResult, LayoutNode, Widget},
 };
 
@@ -51,7 +53,16 @@ pub struct ProgressBar<M> {
     style: Style,
     track_char: char,
     track_style: Style,
+    label: Option<ProgressLabel>,
     handlers: Vec<(MouseButton, ProgressBarHandler<M>)>,
+}
+
+/// Represents the [`ProgressBar`] label.
+pub enum ProgressLabel {
+    /// Static text widget.
+    Static(Box<dyn Text>),
+    /// Closure that generates a new text widget based on the progress.
+    Dynamic(Box<dyn Fn(f64) -> Box<dyn Text>>),
 }
 
 impl<M> ProgressBar<M> {
@@ -76,6 +87,7 @@ impl<M> ProgressBar<M> {
             thumb_chars: vec!['▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'],
             track_char: ' ',
             track_style: Default::default(),
+            label: None,
             handlers: vec![],
         }
     }
@@ -142,6 +154,29 @@ impl<M> ProgressBar<M> {
         S: Into<Style>,
     {
         self.track_style = style.into();
+        self
+    }
+
+    /// Sets a [`ProgressBar`] label to the given text widget.
+    ///
+    /// `text` can be any type convertible into `Box<dyn Text>>`.
+    pub fn label<T>(mut self, text: T) -> Self
+    where
+        T: Into<Box<dyn Text>>,
+    {
+        self.label = Some(ProgressLabel::Static(text.into()));
+        self
+    }
+
+    /// Sets a [`ProgressBar`] label to the given dynamic label.
+    ///
+    /// `builder` is a closure, which accepts the current progress (`f64`) and
+    /// returns the label text widget.
+    pub fn dyn_label<F>(mut self, builder: F) -> Self
+    where
+        F: Fn(f64) -> Box<dyn Text> + 'static,
+    {
+        self.label = Some(ProgressLabel::Dynamic(Box::new(builder)));
         self
     }
 
@@ -232,6 +267,8 @@ impl<M: Clone + 'static> Widget<M> for ProgressBar<M> {
             &track_pos,
             self.track_style,
         );
+
+        self.render_label(buffer, rect, full_cells);
     }
 
     fn height(&self, _size: &Vec2) -> usize {
@@ -274,6 +311,79 @@ impl<M> ProgressBar<M> {
         let frac = len - full_cells as f64;
         let head_id = (frac * (self.thumb_chars.len() - 1) as f64).round();
         (full_cells, head_id as usize)
+    }
+
+    fn render_label(&self, buffer: &mut Buffer, rect: Rect, full: usize) {
+        let mut render_text = |text: &Box<dyn Text>| {
+            let mut lines = vec![];
+            text.append_lines(&mut lines, rect.size(), None);
+            let Some(line) = lines.first() else {
+                return;
+            };
+
+            let align = text.get_align();
+            line.render(buffer, rect, align);
+            let offset = line.align_offset(&rect, align);
+            self.recolor_label(buffer, &rect, line.width, offset, full);
+        };
+
+        match &self.label {
+            Some(ProgressLabel::Static(text)) => {
+                render_text(text);
+            }
+            Some(ProgressLabel::Dynamic(builder)) => {
+                let progress = self.state.get().clamp(0.0, 1.0);
+                render_text(&builder(progress));
+            }
+            _ => {}
+        }
+    }
+
+    fn recolor_label(
+        &self,
+        buffer: &mut Buffer,
+        rect: &Rect,
+        width: usize,
+        offset: usize,
+        full: usize,
+    ) {
+        let (thumb_color, track_color) = self.label_colors();
+        let mut set_cols = |x, bg, fg| {
+            let pos = Vec2::new(x, rect.y());
+            if let Some(c) = bg {
+                buffer[pos].bg = c;
+            }
+            if let Some(c) = fg {
+                buffer[pos].fg = c;
+            }
+        };
+
+        let base_x = rect.x() + offset;
+        for x in base_x..base_x + width {
+            if x < rect.x() + full {
+                let fg = track_color.unwrap_or(Color::Black);
+                set_cols(x, thumb_color, Some(fg));
+            } else {
+                set_cols(x, track_color, thumb_color);
+            }
+        }
+    }
+
+    fn label_colors(&self) -> (Option<Color>, Option<Color>) {
+        let full_thumb_char = self.thumb_chars.last().copied().unwrap_or(' ');
+        let thumb_color = if full_thumb_char.is_whitespace() {
+            self.style.bg.or(self.style.fg)
+        } else {
+            self.style.fg.or(self.style.bg)
+        };
+
+        let track_color = if self.track_char.is_whitespace() {
+            self.track_style.bg.or(self.track_style.fg)
+        } else {
+            self.track_style.fg.or(self.track_style.bg)
+        };
+
+        (thumb_color, track_color)
     }
 }
 

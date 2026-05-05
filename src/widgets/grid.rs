@@ -62,6 +62,8 @@ struct GridChild<M: 'static = ()> {
     pub child: Element<M>,
     pub row: usize,
     pub col: usize,
+    pub row_span: usize,
+    pub col_span: usize,
 }
 
 impl<M> Grid<M> {
@@ -123,11 +125,26 @@ impl<M> Grid<M> {
     where
         T: Into<Element<M>>,
     {
+        self.push_span(child, col, row, 1, 1);
+    }
+
+    pub fn push_span<T>(
+        &mut self,
+        child: T,
+        col: usize,
+        row: usize,
+        col_span: usize,
+        row_span: usize,
+    ) where
+        T: Into<Element<M>>,
+    {
         self.children.push(GridChild {
             child: child.into(),
             row,
             col,
-        })
+            col_span,
+            row_span,
+        });
     }
 }
 
@@ -184,11 +201,18 @@ impl<M: Clone + 'static> Widget<M> for Grid<M> {
         let (rows, rows_pos) = Self::get_size(&self.rows, area.height());
 
         for (i, item) in self.children.iter().enumerate() {
+            let xspan =
+                item.col_span.clamp(1, cols.len().saturating_sub(item.col));
+            let yspan =
+                item.row_span.clamp(1, rows.len().saturating_sub(item.row));
+
+            let width: usize = cols[item.col..item.col + xspan].iter().sum();
+            let height: usize = rows[item.row..item.row + yspan].iter().sum();
             let crect = Rect::new(
                 area.x() + cols_pos[item.col],
                 area.y() + rows_pos[item.row],
-                cols[item.col],
-                rows[item.row],
+                width,
+                height,
             );
             node.children[i].layout(&item.child, crect);
         }
@@ -217,15 +241,13 @@ impl<M> Grid<M> {
 
         let mut sizes = Vec::new();
         let mut positions = Vec::new();
-        let mut fills = Vec::new();
         for unit in units {
             let len = match unit {
                 Unit::Length(len) => *len,
                 Unit::Percent(p) => size * p / 100,
                 Unit::Fill(f) => {
                     fills_total += f;
-                    fills.push(sizes.len());
-                    *f
+                    0
                 }
             };
             sizes.push(len);
@@ -238,11 +260,16 @@ impl<M> Grid<M> {
         }
 
         let mut pos = 0;
-        let remain = size.saturating_sub(total);
+        let mut remain = size.saturating_sub(total);
         for (i, row) in units.iter().enumerate() {
             match row {
                 Unit::Fill(f) => {
-                    sizes[i] = remain * f / fills_total;
+                    let fsize = remain * f / fills_total;
+                    sizes[i] = fsize;
+
+                    remain -= fsize;
+                    fills_total -= f;
+
                     positions[i] = pos;
                     pos += sizes[i];
                 }

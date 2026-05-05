@@ -73,15 +73,27 @@ impl Application for App {
             _ => Action::NONE,
         }
     }
+
+    fn poll_timeout(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(0)
+    }
 }
 
 impl App {
     fn key_listener(&mut self, key: KeyEvent) -> Action {
         match key.code {
-            KeyCode::Down => self.ver_state.set(self.ver_state.get().next()),
-            KeyCode::Up => self.ver_state.set(self.ver_state.get().prev()),
-            KeyCode::Right => self.hor_state.set(self.hor_state.get().next()),
-            KeyCode::Left => self.hor_state.set(self.hor_state.get().prev()),
+            KeyCode::Down | KeyCode::Char('j') => {
+                self.ver_state.set(self.ver_state.get().next())
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                self.ver_state.set(self.ver_state.get().prev())
+            }
+            KeyCode::Right | KeyCode::Char('l') => {
+                self.hor_state.set(self.hor_state.get().next())
+            }
+            KeyCode::Left | KeyCode::Char('h') => {
+                self.hor_state.set(self.hor_state.get().prev())
+            }
             KeyCode::Esc | KeyCode::Char('q') => return Action::QUIT,
             _ => return Action::NONE,
         }
