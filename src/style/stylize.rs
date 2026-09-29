@@ -74,13 +74,13 @@ macro_rules! generate_stylize_trait {
                     self.fg(crate::enums::Color::$color)
                 }
 
-                #[doc = concat!(
-                    "Sets the background color to [`Color::",
-                    stringify!($color),
-                    "`](crate::enums::Color::",
-                    stringify!($color), ")."
-                )]
                 paste::paste! {
+                    #[doc = concat!(
+                        "Sets the background color to [`Color::",
+                        stringify!($color),
+                        "`](crate::enums::Color::",
+                        stringify!($color), ")."
+                    )]
                     fn [<on_ $cname>](self) -> Self::Output {
                         self.bg(crate::enums::Color::$color)
                     }
