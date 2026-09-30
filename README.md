@@ -36,7 +36,7 @@ cargo add termint
 
 ```toml
 [dependencies]
-termint = "0.9.0"
+termint = "0.9.1"
 ```
 
 ### Features

@@ -1,5 +1,11 @@
 # Termint changelog
 
+## v0.9.1
+
+### Fixes
+
+- Fix doc attribute on `paste!` invocation
+
 ## v0.9.0
 
 ### Features
